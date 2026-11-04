@@ -34,3 +34,15 @@ Cause UNKNOWN. Repository/head, enablement, existing workflow state, changed-pat
 - Fixed qualification/cleanup-native-execution.json records initial POSIX C2 public43 and source-context foundation/Windows diagnostic4. Exact C2 workflow path and existing packages/** foundation witness select the next push. Existing real triggers remain; no timing/IR1/creator path matches this control-only diff.
 - Existing CI case goes RED for missing record then full19/19 GREEN, zero skips1.902677s; actionlint/diff pass. Runtime snapshot729inputs/all171output hashes and receiptSHA98925fd6 remain unchanged; ordinary735 is the earlier actual proof ataba7af4e, not a new trigger-head suite.
 - Check old927 jobs immediately before the one no-force push; reconcile any duplicate before execution. If event creation is still absent, stop with finite facts; no blind push/dispatch/auth changes. A successful later route would not establish the historical transport cause.
+
+
+## Initial native event creation
+
+The single root-authorized explicit-user-helper control push is clean/pushed2762f02960301faa29e2dbef0eea5df918cae66b. It creates exactly C2 POSIX authority41811099917 (Linux126510253073, Darwin126510253308) and native foundation41811099798 (Linux126510252620, Darwin126510252833, Windows126510257172), all initially in progress. Old927 remains0runs, no duplicates. No timing/IR1/creator run is selected. C2 public43 per target is underway; native acceptance pending. Source735 remains actual ataba7af4e, runtime729/171/all output hashes/receipt unchanged; control-only CI19 passes separately. A successful known helper route does not establish the historical missing-event cause. No retry/dispatch/permanent auth change or credential logging.
+
+Reflection: the finite trigger record and existing CI path-witness assertions structurally preserve intended job selection without a global retry framework. The source proof and trigger head are distinct, and a successful user-helper push is not historical transport diagnosis. Existing scoped notes/commands capture this wave; no generic skill change is needed.
+
+
+## Final native compatibility outcome
+
+Foundation41811099798 at2762f029 is completed overallFAIL because Windows remainsRED; Linux and Darwin jobs succeed independently. Linuxjob126510252620 completedSUCCESS10:15:33UTC:14/14foundation phases, publicupgrade1/1zero237.201766s, dependencyownership12/12zero79.669055s, claim23/23zero236.023957s, backup11/11zero297.059256s. Logs/archive/validated artifacts `/tmp/factory-cleanup-native-control-linux-41811099798-{job.log,evidence.zip,artifacts/}`. Darwin15/15 phases/FULL31/31zero54.361905s; Windows13phases10pass/3fail(fixtures,learning-fixture-diagnostic,cleanup-reads), directdiagnostic2/4. No retries, all original expectations/bounds survive. Prior927 finalruncheck remains0, no duplicate or timing/IR1/creator event.
