@@ -77,6 +77,16 @@ test('release providers selection exercises public descriptor guards without nat
   assert.doesNotMatch(result.stdout, /selected provider install binds/);
 });
 
+test('release dependency ownership selection performs read-only inspection without native acquisition', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'dependency-ownership'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /read-only dependency inspection refuses an unowned repository without creating installation state/);
+  assert.doesNotMatch(result.stdout, /native installed dependency ownership/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

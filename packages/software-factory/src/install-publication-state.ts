@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { directoryIdentity, readBoundInstallCandidateReceipt, scanOwnedTree, verifyBoundInstallCandidate,
   type CandidateReceipt, type TreeEntry } from './install-candidate.js';
 import type { Claim } from './store.js';
+import { inspectOwnedToolchain, type OwnedToolchainInspection, type ToolchainInspectionMode } from './owned-toolchain.js';
 
 const SHA = /^[0-9a-f]{64}$/;
 const ID = /^\d+:\d+$/;
@@ -13,7 +14,7 @@ export interface PublicationIntent {
   candidateReceiptSha256: string; candidateIdentity: string; installIdentity: string; toolchainIdentity: string;
 }
 export interface PublicationLayout { receipt: CandidateReceipt; intent: PublicationIntent | null;
-  install: 'candidate' | 'published'; toolchain: 'candidate' | 'published' }
+  install: 'candidate' | 'published'; toolchain: 'candidate' | 'published'; toolchainInspection?: OwnedToolchainInspection }
 function fail(message: string): never { throw new Error(`install publication: ${message}`); }
 function absent(path: string): boolean {
   try { lstatSync(path); return false; }
@@ -72,7 +73,8 @@ function verifySubtree(path: string, expectedIdentity: string, rows: TreeEntry[]
   const measured = scanOwnedTree(path, 'candidate');
   if (JSON.stringify(measured.rows) !== JSON.stringify(rows)) fail('published subtree inventory differs');
 }
-export function verifyPublicationLayout(common: string, claim: Claim): PublicationLayout {
+export function verifyPublicationLayout(common: string, claim: Claim,
+  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }): PublicationLayout {
   const recorded = claim.maintenance;
   if (!recorded || recorded.kind !== 'install' || !recorded.candidate || !recorded.targetReleaseSha256)
     fail('bound install claim required');
@@ -97,15 +99,20 @@ export function verifyPublicationLayout(common: string, claim: Claim): Publicati
     || !recorded.ticketConsumed || !['modifying', 'validating'].includes(recorded.phase))
     fail('publication intent differs from claim');
   const positions = {} as { install: 'candidate' | 'published'; toolchain: 'candidate' | 'published' };
+  let toolchainInspection: OwnedToolchainInspection | undefined;
   for (const name of ['install', 'toolchain'] as const) {
     const source = join(binding.path, name), target = join(common, 'factory', name);
     const atSource = !absent(source), atTarget = !absent(target);
     if (atSource === atTarget) fail('publication step has missing or conflicting tree');
     positions[name] = atSource ? 'candidate' : 'published';
-    verifySubtree(atSource ? source : target, intent[`${name}Identity`], subtreeRows(receipt, name));
+    if (name === 'toolchain') {
+      if (toolchainMode.purpose === 'dependency-repair' && atSource) fail('repair inspection requires published toolchain');
+      toolchainInspection = inspectOwnedToolchain(atSource ? source : target, intent.toolchainIdentity,
+        subtreeRows(receipt, name), toolchainMode);
+    } else verifySubtree(atSource ? source : target, intent.installIdentity, subtreeRows(receipt, name));
   }
   if (positions.toolchain === 'published' && positions.install !== 'published') fail('publication order differs');
   const expectedRoot = ['candidate-receipt.json', ...(['install', 'toolchain'] as const).filter(name => positions[name] === 'candidate')].sort();
   if (JSON.stringify(readdirSync(binding.path).sort()) !== JSON.stringify(expectedRoot)) fail('candidate remainder differs');
-  return { receipt, intent, ...positions };
+  return { receipt, intent, ...positions, ...(toolchainInspection ? { toolchainInspection } : {}) };
 }

@@ -1,20 +1,12 @@
-import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { inspectInstalledState } from './installed-state.js';
+import { realpathSync } from 'node:fs';
 import { dirname, join, sep } from 'node:path';
 import { createCodexAdapter } from './adapters/codex.js';
 import { createCopilotAdapter } from './adapters/copilot.js';
 import type { AgentAdapter } from './adapters/types.js';
-import { directoryIdentity } from './install-candidate.js';
-import { readInstalledReceipt } from './install-publication.js';
-import { inspectInstalledUpgrade } from './upgrade-installed.js';
-import { publicationIntentPath, readPublicationRecord, verifyPublicationLayout } from './install-publication-state.js';
-import { validateBoundProviderSources, validateRetainedProviderSources, type VerifiedInstallSelection } from './installation-bindings.js';
+import { validateBoundProviderSources, type VerifiedInstallSelection } from './installation-bindings.js';
 import { sendDesktopNotification } from './native/notifications.js';
 import type { NotificationSender } from './notifications.js';
-import { validateReleaseBundle } from './release.js';
-import { readOwnedReleaseManifest } from './owned-release.js';
-import { readActiveInstalledCompletion, readInstalledCompletion, type Claim } from './store.js';
-import { repositoryIdentity } from './workspace.js';
 
 type Providers = VerifiedInstallSelection['providers'];
 export interface InstalledBindings {
@@ -23,7 +15,6 @@ export interface InstalledBindings {
   readonly notificationSender: NotificationSender;
 }
 function fail(): never { throw new Error('installed binding refused'); }
-function hash(bytes: Buffer): string { return createHash('sha256').update(bytes).digest('hex'); }
 function nativeEnvironment(): Record<string, string> {
   const selected: Record<string, string> = {};
   for (const name of ['HOME', 'PATH', 'TMPDIR', 'LANG', 'LC_ALL', 'TERM', 'CODEX_HOME',
@@ -77,59 +68,9 @@ export function installedCommonForCli(modulePath: string): string | null {
   return join(common, 'factory', 'install', 'runtime', 'dist', 'cli.js') === modulePath ? common : null;
 }
 
-/** Verify durable ownership after temporary stage cleanup, before CLI dispatch or provider construction. */
+/** Strict startup and upgrade ownership never select damage inspection. */
 export async function inspectInstalledOwnership(common: string, repository?: string, retained = false) {
-  try {
-    if (realpathSync(common) !== common) fail();
-    if (repository !== undefined && (await repositoryIdentity(repository)).common !== common) fail();
-    const factory = join(common, 'factory');
-    const active = readActiveInstalledCompletion(common);
-    directoryIdentity(factory);
-    if (active.kind === 'upgrade.completed') {
-      const upgraded = inspectInstalledUpgrade(common, active, retained);
-      if (JSON.stringify(readActiveInstalledCompletion(common)) !== JSON.stringify(active)) fail();
-      return upgraded;
-    }
-    const { receipt, sha256 } = readInstalledReceipt(common);
-    const { completion, repositoryId, release } = readInstalledCompletion(common, receipt.operationId);
-    if (JSON.stringify(active.completion) !== JSON.stringify(completion) || active.release !== release
-      || completion.version !== 1 || completion.operationId !== receipt.operationId
-      || completion.repositoryId !== receipt.repositoryId || repositoryId !== receipt.repositoryId
-      || completion.claimId !== receipt.claimId || completion.selectionDigest !== receipt.selectionDigest
-      || completion.manifestSha256 !== receipt.manifestSha256 || completion.receiptId !== receipt.receiptId
-      || completion.receiptSha256 !== sha256 || release !== receipt.release
-      || receipt.candidate.path !== join(factory, `install-candidate-${receipt.operationId}`)) fail();
-    const synthetic: Claim = { id: receipt.claimId, token: '', kind: 'maintenance', resourceKey: receipt.repositoryId,
-      invocationId: null, owner: { host: '', pid: 0, start: null }, maintenance: {
-        operationId: receipt.operationId, repositoryId: receipt.repositoryId, kind: 'install', release: receipt.release,
-        targetReleaseSha256: receipt.manifestSha256, selectionDigest: receipt.selectionDigest, artifactDigests: {},
-        targetSchema: receipt.targetSchema, stagePath: '', stageDigest: receipt.stageDigest, stageIdentity: null,
-        phase: 'validating', ownedReceiptId: receipt.receiptId, backupId: null, ticketNonceHash: null,
-        ticketConsumed: true, candidate: receipt.candidate,
-      } };
-    const layout = verifyPublicationLayout(common, synthetic);
-    if (!layout.intent || layout.install !== 'published' || layout.toolchain !== 'published'
-      || layout.intent.installIdentity !== receipt.installIdentity
-      || layout.intent.toolchainIdentity !== receipt.toolchainIdentity
-      || hash(readPublicationRecord(publicationIntentPath(common, receipt.operationId))) !== receipt.publicationIntentSha256) fail();
-    const runtime = join(factory, 'install', 'runtime');
-    const manifest = retained ? readOwnedReleaseManifest(runtime, receipt.manifestSha256) : validateReleaseBundle(runtime, receipt.manifestSha256);
-    const platform = `${process.platform}-${process.arch}`;
-    if (manifest.version !== receipt.release || manifest.platform !== platform
-      || manifest.node.sha256 !== layout.receipt.nodeArchiveSha256
-      || (!retained && JSON.stringify(layout.receipt.omittedLinks) !== JSON.stringify(['bin/corepack', 'bin/npm', 'bin/npx']))
-      || hash(readFileSync(join(factory, 'toolchain', 'package-lock.json'))) !== layout.receipt.toolchainLockSha256
-      || hash(readFileSync(join(factory, 'toolchain', 'package-lock.json')))
-        !== hash(readFileSync(join(runtime, 'toolchain', 'package-lock.json')))
-      || process.versions.node !== '24.22.1') fail();
-    const nodePath = join(factory, 'install', 'node', 'bin', 'node');
-    const nodeFile = lstatSync(nodePath);
-    if (!nodeFile.isFile() || nodeFile.isSymbolicLink() || realpathSync(nodePath) !== nodePath) fail();
-    if (retained) validateRetainedProviderSources(layout.receipt.providers);
-    else validateBoundProviderSources(layout.receipt.providers);
-    if (JSON.stringify(readActiveInstalledCompletion(common)) !== JSON.stringify(active)) fail();
-    return { common, receipt, receiptSha256: sha256, completion, release, layout, nodePath };
-  } catch { fail(); }
+  return inspectInstalledState(common, repository, { purpose: 'strict', retained });
 }
 
 export async function loadInstalledBindings(modulePath: string, repository?: string, commonArg?: string): Promise<InstalledBindings | null> {
