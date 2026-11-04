@@ -655,8 +655,11 @@ test('metadata workflow prints only the closed refusal markers and never adverti
   const declared = [...table[1].matchAll(/'([^']*)'/g)].map(match => match[1]);
   assert.equal(table[1].replace(/'[^']*'/g, '').replace(/[,\s]/g, ''), '');
   assert.deepEqual(declared, expected);
-  const branch = workflow.match(/if \(\$collectionExit -eq 1 -and \$ready\.Count -eq 1 -and \$ready\[0\] -is \[string\] -and \$diagnosticMarkers -ccontains \$ready\[0\]\) \{([\s\S]*?)\n\s*\}/);
-  assert.ok(branch, 'diagnostics must require exit1, one primitive line and literal case-sensitive membership');
+  const branch = workflow.match(/if \(\$collectionExit -eq 1 -and \$ready\.Count -eq 1 -and \(Test-MetadataDiagnosticMarker \$ready\[0\]\)\) \{([\s\S]*?)\n\s*\}/);
+  assert.ok(branch, 'diagnostics must require exit1, one line and exact ordinal membership');
+  assert.match(workflow, /function Test-MetadataDiagnosticMarker\(\[object\]\$Value\)/);
+  assert.match(workflow, /if \(\$Value -isnot \[string\]\) \{ return \$false \}/);
+  assert.match(workflow, /\[string\]::Equals\(\$literal, \$Value, \[StringComparison\]::Ordinal\)/);
   assert.match(branch[1], /^\s*\[Console\]::Out\.WriteLine\(\[string\]\$ready\[0\]\)\s*$/);
   assert.doesNotMatch(branch[1], /GITHUB_OUTPUT|artifacts_ready|exit|prepare/i);
   assert.match(workflow, /\$ready\[0\] -ceq 'metadata-artifacts-ready'[\s\S]*AppendAllText\(\$env:GITHUB_OUTPUT[\s\S]*exit \$collectionExit/);

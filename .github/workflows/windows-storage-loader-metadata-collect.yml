@@ -69,12 +69,19 @@ jobs:
             'metadata-refused-inner-stderr', 'metadata-refused-inner-bounds', 'metadata-refused-inner-process',
             'metadata-refused-inner-protocol', 'metadata-refused-inner-changed', 'metadata-refused-wire', 'metadata-refused-prerequisite'
           )
+          function Test-MetadataDiagnosticMarker([object]$Value) {
+            if ($Value -isnot [string]) { return $false }
+            foreach ($literal in $diagnosticMarkers) {
+              if ([string]::Equals($literal, $Value, [StringComparison]::Ordinal)) { return $true }
+            }
+            return $false
+          }
           if (($collectionExit -eq 0 -or $collectionExit -eq 1) -and $ready.Count -eq 1 -and $ready[0] -ceq 'metadata-artifacts-ready') {
             [IO.File]::AppendAllText($env:GITHUB_OUTPUT, "artifacts_ready=true`n", [Text.UTF8Encoding]::new($false))
             # Exit1 remains a failed collection step and failed job after upload.
             exit $collectionExit
           }
-          if ($collectionExit -eq 1 -and $ready.Count -eq 1 -and $ready[0] -is [string] -and $diagnosticMarkers -ccontains $ready[0]) {
+          if ($collectionExit -eq 1 -and $ready.Count -eq 1 -and (Test-MetadataDiagnosticMarker $ready[0])) {
             [Console]::Out.WriteLine([string]$ready[0])
           }
           throw 'Metadata collection refused without export'
