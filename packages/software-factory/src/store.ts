@@ -34,6 +34,10 @@ export interface DependencyMaintenanceBinding {
   declarationSha256: string; lockSha256: string;
   backupAttempt?: DependencyBackupAttemptBinding | null;
   backup?: VerifiedMaintenanceBackup | null;
+  candidateAttempt?: { id: string; binding: DependencyCandidateAttemptBinding | null; events: { cursor: string; sha256: string }[] };
+}
+export interface DependencyCandidateAttemptBinding {
+  identity: string; sha256: string; rootIdentity: string; requestSha256: string;
 }
 export interface VerifiedMaintenanceBackup {
   id: string; identity: string; sha256: string; bytes: number; countDigest: string; receiptId: string; receiptSha256: string;
@@ -222,7 +226,7 @@ export function validateDependencyMaintenanceBinding(value: unknown): asserts va
   if (extra.length !== 0 && extra.length !== 2) throw new Error('incomplete dependency backup fields');
   if (!exactObject(value, ['version', 'bundleRoot', 'originalSha256', 'originalCompletionSha256',
     'expectedToolchainSha256', 'observedToolchainSha256', 'sourceIdentity', 'factoryIdentity', 'toolchainIdentity',
-    'declarationSha256', 'lockSha256', ...extra]) || value['version'] !== 1 || typeof value['bundleRoot'] !== 'string'
+    'declarationSha256', 'lockSha256', ...extra, ...(value && typeof value === 'object' && Object.hasOwn(value, 'candidateAttempt') ? ['candidateAttempt'] : [])]) || value['version'] !== 1 || typeof value['bundleRoot'] !== 'string'
     || Buffer.byteLength(value['bundleRoot']) < 1 || Buffer.byteLength(value['bundleRoot']) > 4096
     || value['bundleRoot'].includes('\0')
     || !isAbsolute(value['bundleRoot']) || resolve(value['bundleRoot']) !== value['bundleRoot']
@@ -232,6 +236,21 @@ export function validateDependencyMaintenanceBinding(value: unknown): asserts va
     throw new Error('invalid dependency maintenance binding');
   if (Object.hasOwn(value, 'backupAttempt') && value['backupAttempt'] !== null) validateDependencyBackupAttempt(value['backupAttempt']);
   if (Object.hasOwn(value, 'backup') && value['backup'] !== null) validateMaintenanceBackup(value['backup']);
+  if (Object.hasOwn(value, 'candidateAttempt')) {
+    const attempt = value['candidateAttempt'];
+    if (!exactObject(attempt, ['id', 'binding', 'events']) || typeof attempt['id'] !== 'string' || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(attempt['id'])
+      || !Array.isArray(attempt['events']) || attempt['events'].length < 2 || attempt['events'].length > 4
+      || attempt['events'].some(event => !exactObject(event, ['cursor', 'sha256']) || typeof event['cursor'] !== 'string'
+        || !/^[1-9][0-9]{0,18}$/.test(event['cursor']) || typeof event['sha256'] !== 'string' || !/^[a-f0-9]{64}$/.test(event['sha256'])))
+      throw new Error('invalid dependency candidate attempt');
+    if (attempt['binding'] !== null) validateDependencyCandidateAttempt(attempt['binding']);
+  }
+}
+export function validateDependencyCandidateAttempt(value: unknown): asserts value is DependencyCandidateAttemptBinding {
+  if (!exactObject(value, ['identity', 'sha256', 'rootIdentity', 'requestSha256'])
+    || ['identity', 'rootIdentity'].some(key => typeof value[key] !== 'string' || !/^\d+:\d+$/.test(value[key]))
+    || ['sha256', 'requestSha256'].some(key => typeof value[key] !== 'string' || !/^[a-f0-9]{64}$/.test(value[key])))
+    throw new Error('invalid dependency candidate attempt binding');
 }
 
 export function validateDependencyBackupAttempt(value: unknown): asserts value is DependencyBackupAttemptBinding {
@@ -1022,7 +1041,7 @@ export class RepositoryStore {
         || intent.ticketConsumed || intent.ticketNonceHash !== null || intent.activeLauncher !== undefined
         || intent.upgradeIntentSha256 !== undefined || intent.upgradeReceipt !== undefined
         || intent.dependencies!.sourceIdentity !== this.forwardStorage?.identity
-        || (intent.dependencies!.backupAttempt ?? null) !== null || (intent.dependencies!.backup ?? null) !== null
+        || (intent.dependencies!.backupAttempt ?? null) !== null || (intent.dependencies!.backup ?? null) !== null || intent.dependencies!.candidateAttempt !== undefined
         || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()
         || this.database.prepare('SELECT id FROM attempts WHERE occupied=1 LIMIT 1').get())
         throw new Error('dependency admission requires exact ready idle current installation');
@@ -1062,7 +1081,8 @@ export class RepositoryStore {
       || (selected.backupId !== null && !/^[0-9a-f-]{36}$/i.test(selected.backupId))
       || (selected.backupId === null && ((selected.dependencies.backupAttempt ?? null) !== null || (selected.dependencies.backup ?? null) !== null))
       || (selected.dependencies.backup && (!selected.dependencies.backupAttempt || selected.dependencies.backup.id !== selected.backupId))
-      || selected.candidate !== null || selected.forward !== undefined
+      || (selected.candidate !== null && (!selected.dependencies.candidateAttempt?.binding || !selected.dependencies.backup))
+      || (selected.dependencies.candidateAttempt !== undefined && !selected.dependencies.backup) || selected.forward !== undefined
       || !exactObject(selected.artifactDigests, ['bundle']) || selected.artifactDigests['bundle'] !== selected.targetReleaseSha256
       || selected.stagePath !== join(handle.commonDir, 'factory/controller-staging', handle.operationId)
       || selected.ownedReceiptId !== null || selected.activeLauncher !== undefined || selected.upgradeIntentSha256 !== undefined
@@ -1131,6 +1151,83 @@ export class RepositoryStore {
       selected.dependencies!.backup = backup;
       this.saveDependencyBackupClaim(claim);
       this.event('maintenance.backup_bound', { operationId: handle.operationId, claimId: claim.id, backupId: backup.id });
+    });
+  }
+
+  /** Compare retained history in bounded pages and admit only this exact administrative suffix. */
+  verifyDependencyBackupEvents(copied: DatabaseSync, claim: Claim): number {
+    let cursor = 0n;
+    for (;;) {
+      const prior = copied.prepare('SELECT cursor,kind,data FROM observation_events WHERE cursor>? ORDER BY cursor LIMIT 128').all(cursor);
+      if (!prior.length) break;
+      const live = this.database.prepare('SELECT cursor,kind,data FROM observation_events WHERE cursor>? ORDER BY cursor LIMIT ?').all(cursor, prior.length);
+      if (JSON.stringify(live) !== JSON.stringify(prior)) throw new Error('dependency backup historical events changed');
+      cursor = BigInt(String(prior.at(-1)!['cursor']));
+    }
+    const suffix = this.database.prepare('SELECT cursor,kind,data FROM observation_events WHERE cursor>? ORDER BY cursor LIMIT 5').all(cursor);
+    const selected = claim.maintenance!, attempt = selected.dependencies!.candidateAttempt;
+    const expected = selected.dependencies!.backup ? [
+      { kind: 'maintenance.backup_bound', data: { operationId: selected.operationId, claimId: claim.id, backupId: selected.backupId } },
+      ...(attempt ? [{ kind: 'maintenance.candidate_attempted', data: { operationId: selected.operationId, claimId: claim.id, candidateId: attempt.id } }] : []),
+      ...(attempt?.binding ? [{ kind: 'maintenance.candidate_attempt_bound', data: { operationId: selected.operationId, claimId: claim.id, candidateId: attempt.id, attemptSha256: attempt.binding.sha256 } }] : []),
+      ...(selected.candidate ? [{ kind: 'maintenance.candidate_bound', data: { operationId: selected.operationId, claimId: claim.id, candidateId: attempt!.id, receiptSha256: selected.candidate.receiptSha256 } }] : [])
+    ] : [];
+    if (suffix.length !== expected.length || (attempt && attempt.events.length !== expected.length)) throw new Error('dependency backup administrative event count differs');
+    for (const [index, row] of suffix.entries()) {
+      const data = JSON.parse(String(row['data'])) as Record<string, unknown>, expectedRow = expected[index]!;
+      if (row['kind'] !== expectedRow.kind || !exactObject(data, [...Object.keys(expectedRow.data), 'at'])
+        || typeof data['at'] !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(data['at'])
+        || Object.entries(expectedRow.data).some(([key, value]) => data[key] !== value)) throw new Error('dependency backup administrative event differs');
+      if (attempt && (attempt.events[index]!.cursor !== String(row['cursor'])
+        || attempt.events[index]!.sha256 !== createHash('sha256').update(JSON.stringify(row)).digest('hex')))
+        throw new Error('dependency candidate administrative event bytes changed');
+    }
+    return suffix.length;
+  }
+
+  private lastDependencyEvent() {
+    const row = this.database.prepare('SELECT cursor,kind,data FROM observation_events ORDER BY cursor DESC LIMIT 1').get()!;
+    return { cursor: String(row['cursor']), sha256: createHash('sha256').update(JSON.stringify(row)).digest('hex') };
+  }
+
+  async reserveDependencyCandidateAttempt(handle: MaintenanceHandle, candidateId: string, validateBackup: () => void) {
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(candidateId)) throw new Error('invalid dependency candidate identity');
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!;
+      this.assertDependencyBackupOwner(claim);
+      if (!selected.dependencies!.backup || selected.dependencies!.candidateAttempt || selected.candidate) throw new Error('dependency candidate attempt already allocated or backup absent');
+      validateBackup(); this.assertDependencyBackupOwner(claim);
+      const first = this.lastDependencyEvent();
+      this.event('maintenance.candidate_attempted', { operationId: handle.operationId, claimId: claim.id, candidateId });
+      selected.dependencies!.candidateAttempt = { id: candidateId, binding: null, events: [first, this.lastDependencyEvent()] };
+      this.saveDependencyBackupClaim(claim);
+    });
+  }
+
+  async bindDependencyCandidateAttempt(handle: MaintenanceHandle, binding: DependencyCandidateAttemptBinding, validateBackup: () => void) {
+    validateDependencyCandidateAttempt(binding);
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!, attempt = selected.dependencies!.candidateAttempt;
+      this.assertDependencyBackupOwner(claim);
+      if (!selected.dependencies!.backup || !attempt || attempt.binding || selected.candidate) throw new Error('dependency candidate attempt cannot be rebound');
+      validateBackup(); this.assertDependencyBackupOwner(claim);
+      this.event('maintenance.candidate_attempt_bound', { operationId: handle.operationId, claimId: claim.id, candidateId: attempt.id, attemptSha256: binding.sha256 });
+      attempt.binding = binding; attempt.events.push(this.lastDependencyEvent()); this.saveDependencyBackupClaim(claim);
+    });
+  }
+
+  async bindDependencyCandidate(handle: MaintenanceHandle, candidate: CandidateBinding, validateCandidate: () => void) {
+    if (!exactObject(candidate, ['path', 'identity', 'treeDigest', 'receiptId', 'receiptSha256'])
+      || candidate.path !== join(handle.commonDir, 'factory', `dependency-candidate-${handle.operationId}`)
+      || !/^\d+:\d+$/.test(candidate.identity) || !/^[a-f0-9]{64}$/.test(candidate.treeDigest)
+      || !/^[0-9a-f-]{36}$/i.test(candidate.receiptId) || !/^[a-f0-9]{64}$/.test(candidate.receiptSha256)) throw new Error('invalid dependency candidate binding');
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!, attempt = selected.dependencies!.candidateAttempt;
+      this.assertDependencyBackupOwner(claim);
+      if (!selected.dependencies!.backup || !attempt?.binding || selected.candidate) throw new Error('dependency candidate cannot be rebound');
+      validateCandidate(); this.assertDependencyBackupOwner(claim);
+      this.event('maintenance.candidate_bound', { operationId: handle.operationId, claimId: claim.id, candidateId: attempt.id, receiptSha256: candidate.receiptSha256 });
+      selected.candidate = candidate; attempt.events.push(this.lastDependencyEvent()); this.saveDependencyBackupClaim(claim);
     });
   }
 

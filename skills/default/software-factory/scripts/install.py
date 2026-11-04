@@ -39,7 +39,7 @@ WINDOWS_HELPER_SHA = "f46ba4a408f8618d5e186ce29cf47bdac3411b67356136d79da4a0ed0c
 LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
-    "agents", "atomic-publication", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings", "installed-state", "dependency-state", "dependency-maintenance", "owned-toolchain",
+    "agents", "atomic-publication", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings", "installed-state", "dependency-state", "dependency-maintenance", "dependency-candidate", "dependency-candidate-entry", "install-preparation", "owned-toolchain",
     "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "upgrade-recovery-entry", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-backup", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "schema-forward", "forward-backup-entry", "store",
     "workflow", "workspace",
@@ -1015,6 +1015,51 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
         prepared.revalidate_sources()
         if extracted_node_tree(prepared.extracted_node_root, prepared.receipt["platform"]) != node_tree:
             refuse("private extracted Node changed after preparation")
+        adopt_npm_outputs(stage, seeded)
+        stage.check("")
+        return result
+    except BaseException:
+        stage.preserved = True
+        raise
+
+
+def prepare_dependency_candidate(prepared: PreparedSelection, repository: str, selection_sha256: str,
+                                 offline: bool, seed: str | None):
+    """Private imported bridge only. One authenticated Node owns claim, backup and candidate."""
+    if prepared.providers or prepared.provider_descriptor is not None or not isinstance(selection_sha256, str) or not re.fullmatch(r"[a-f0-9]{64}", selection_sha256):
+        refuse("exact fixed dependency candidate selection required")
+    stage = prepared.stage
+    canonical(repository, True)
+    seeded = private_npm_inputs(stage, offline, seed)
+    node_tree = extracted_node_tree(prepared.extracted_node_root, prepared.receipt["platform"])
+    request = {"schema": 1, "requestId": str(uuid.uuid4()), "repository": repository,
+               "dependencySelectionDigest": selection_sha256, "npm": {"offline": offline},
+               "stageRoot": str(stage.root), "stageIdentity": f"{stage.root.lstat().st_dev}:{stage.root.lstat().st_ino}",
+               "source": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
+                          "nodeArchivePath": str(prepared.source_node_archive)},
+               "snapshot": {"bundleRoot": str(prepared.snapshot_bundle_root), "nodeArchivePath": str(prepared.snapshot_node_archive),
+                            "extractedNodeRoot": str(prepared.extracted_node_root), "nodeTree": node_tree}}
+    data = (json.dumps(request, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+    if len(data) > 64 * 1024:
+        refuse("private dependency candidate request exceeds bound")
+    with stage.create("dependency-preparer-request.json") as output:
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+    prepared.revalidate_sources()
+    stage.check("")
+    executable = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
+    try:
+        response = bounded_child([str(executable), str(prepared.snapshot_bundle_root / "dist/dependency-candidate-entry.js"),
+                                  "--request", str(stage.root / "dependency-preparer-request.json")], stage, timeout_seconds=300)
+        if len(response) > 4096:
+            refuse("private dependency candidate response exceeds bound")
+        result = fields(json_bytes(response), {"operationId", "repositoryId", "claimId", "candidateDigest", "receiptSha256", "candidateBound"})
+        if result["candidateBound"] is not True or any(not isinstance(result[key], str) or not result[key] for key in result if key != "candidateBound"):
+            refuse("invalid dependency candidate receipt")
+        prepared.revalidate_sources()
+        if extracted_node_tree(prepared.extracted_node_root, prepared.receipt["platform"]) != node_tree:
+            refuse("private extracted Node changed after dependency candidate")
         adopt_npm_outputs(stage, seeded)
         stage.check("")
         return result

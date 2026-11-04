@@ -29,3 +29,8 @@ These are one current-run observations. Nested/concurrent span and attempt sums 
 - Parent owns next bounded deadline/Windows decisions and any Gemini fixture merge release. No native repeat, product optimization, provider/auth, general review or desktop action is authorized by this baseline.
 
 - Experiment trigger control: executable/schema/foundation/worker changes remain automatic; result Markdown and the workflow YAML itself are excluded. A future workflow-only experiment must deliberately add/change `packages/software-factory/qualification/selector-timing-experiment.json`, an explicit trigger. That marker was not created/changed in the Windows-only batch. Feature-branch workflow_dispatch availability is unverified; no test dispatch was performed.
+
+## Changed-selector compatibility observation
+
+- Exact3ff05c14 automatic41777010728/job126399607417 succeeded05:08:45UTC after isolated Gemini qualification registration. Original31fixtures pass50.874152s; notifications8.465621s/15s and learning16.329949s/30s,zero skips. Preflight/guard/exact2export upload pass. Schema2complete/fixtureExitCode0/2161records,51writers/48selfclose/10bound parent closes,0missingclosure/markers,all49selected endings. Shared source/runtime/closure/coverage reassessment passes.
+- Exports `/tmp/factory-gemini-context-darwin-41777010728-artifacts/`, joblog `/tmp/factory-gemini-context-darwin-41777010728-job.log`. This source differs from the earlier baseline; it is compatibility evidence, not controlled timing repair/comparison or old8f59cause proof. Later learning-copy changes were not present in this run.

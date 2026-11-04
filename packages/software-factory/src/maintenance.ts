@@ -177,7 +177,7 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
     || ((recorded.candidate ?? null) !== null && (!recorded.candidate || typeof recorded.candidate !== 'object'
       || Array.isArray(recorded.candidate) || Object.keys(recorded.candidate).sort().join(',') !== 'identity,path,receiptId,receiptSha256,treeDigest'
       || typeof recorded.candidate.path !== 'string'
-      || recorded.candidate.path !== join(commonDir, 'factory', `install-candidate-${recorded.operationId}`)
+      || recorded.candidate.path !== join(commonDir, 'factory', `${recorded.kind === 'dependencies' ? 'dependency' : 'install'}-candidate-${recorded.operationId}`)
       || typeof recorded.candidate.identity !== 'string' || !/^\d+:\d+$/.test(recorded.candidate.identity)
       || !SHA.test(recorded.candidate.treeDigest) || !UUID.test(recorded.candidate.receiptId)
       || !SHA.test(recorded.candidate.receiptSha256))))
@@ -188,7 +188,8 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
       || (recorded.backupId !== null && !UUID.test(recorded.backupId))
       || (recorded.backupId === null && (recorded.dependencies?.backupAttempt || recorded.dependencies?.backup))
       || (recorded.dependencies?.backup && (!recorded.dependencies.backupAttempt || recorded.dependencies.backup.id !== recorded.backupId))
-      || recorded.candidate !== null || recorded.stageDigest !== null
+      || (recorded.candidate !== null && (!recorded.dependencies.candidateAttempt?.binding || !recorded.dependencies.backup))
+      || (recorded.dependencies.candidateAttempt !== undefined && !recorded.dependencies.backup) || recorded.stageDigest !== null
       || recorded.stageIdentity !== null || recorded.ticketConsumed || recorded.ticketNonceHash !== null)
       throw new Error('dependency admission has no backup or publication authority');
   }
@@ -274,7 +275,8 @@ function redacted(intent: MaintenanceIntent) {
       expectedToolchainSha256: intent.dependencies.expectedToolchainSha256,
       observedToolchainSha256: intent.dependencies.observedToolchainSha256,
       backupAttempted: intent.backupId !== null, backupAttemptRecorded: Boolean(intent.dependencies.backupAttempt),
-      backupBound: Boolean(intent.dependencies.backup) } } : {}) };
+      backupBound: Boolean(intent.dependencies.backup), candidateAttempted: Boolean(intent.dependencies.candidateAttempt),
+      candidateBound: Boolean(intent.candidate) } } : {}) };
 }
 function handle(claim: Claim, commonDir: string): MaintenanceHandle {
   if (!claim.maintenance) throw new Error('typed maintenance claim required');
