@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Common test helpers for scripts/test-*.sh
+# Common test helpers for scripts/tests/*/*.sh
 
-readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 
 assert_equals() {
   local expected="$1"

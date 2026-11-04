@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
 readonly SCRIPT_PATH="$REPO_ROOT/scripts/cleanup-skill-workspaces.sh"
 workdir=""
 
