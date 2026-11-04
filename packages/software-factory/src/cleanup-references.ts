@@ -367,6 +367,32 @@ function selectionKeys(selection:CleanupSelection):CleanupCaptureKey[] {
   return [...selection.captures];
 }
 
+function reverseImpact(state:GraphState, selected:readonly CleanupCaptureKey[], budget:Budget) {
+  const dependents=new Map<string,string[]>(),reports=new Map<string,CleanupCaptureKey>();
+  const attempts=new Map<string,{invocationId:string;attemptId:string}>();
+  for(const report of state.analysis.reports){budget.tick();const key=nodeKey(captureNode(report.key));budget.retain([key,report.key]);reports.set(key,report.key);}
+  for(const attempt of state.attempts.values()){budget.tick();const key=nodeKey(attemptNode(attempt));
+    const value={invocationId:attempt.invocationId,attemptId:attempt.id};budget.retain([key,value]);attempts.set(key,value);}
+  for(const edge of state.analysis.edges){budget.tick();const dependency=nodeKey(edge.to),dependent=nodeKey(edge.from);
+    const list=dependents.get(dependency)??[];list.push(dependent);dependents.set(dependency,list);budget.retain([dependency,dependent]);}
+  for(const list of dependents.values()){budget.tick();list.sort(compare);budget.retain(list);}
+  const result=new Map<string,{reports:CleanupCaptureKey[];attempts:{invocationId:string;attemptId:string}[]}>();
+  for(const key of selected){const start=nodeKey(captureNode(key)),seen=new Set<string>(),pending=[start];
+    const foundReports=new Map<string,CleanupCaptureKey>(),foundAttempts=new Map<string,{invocationId:string;attemptId:string}>();
+    while(pending.length){budget.tick();const current=pending.pop()!;if(seen.has(current))continue;
+      seen.add(current);budget.retain(current);
+      const report=reports.get(current),attempt=attempts.get(current);
+      if(report){foundReports.set(current,report);budget.retain(report);}
+      if(attempt){foundAttempts.set(current,attempt);budget.retain(attempt);}
+      for(const dependent of dependents.get(current)??[]){budget.tick();pending.push(dependent);budget.retain(dependent);}
+    }
+    const closure={reports:[...foundReports.entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value),
+      attempts:[...foundAttempts.entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value)};
+    budget.retain(closure);result.set(start,closure);
+  }
+  return result;
+}
+
 /** Repository resolution precedes analysis. No caller can supply clearance, ownership, a view or a digest. */
 export async function inspectCleanupSelection(repository:string,selection:CleanupSelection,input:Partial<CleanupAnalysisBounds>={}):Promise<CleanupImpact>{
   const result:CleanupImpact={advisory:true,status:'blocked',impactSha256:null,snapshotSha256:null,blockers:[],captures:[],backups:[],pages:[],selectedLogicalBytes:null};
@@ -391,6 +417,11 @@ export async function inspectCleanupSelection(repository:string,selection:Cleanu
     if(!analysis)budget.retain(snapshot);
     if(analysis)blockers.push(...analysis.blockers);
     const protectedKeys=new Set(analysis?.protected.map(nodeKey)??[]);let total=0n,measured=true;
+    const exceptional=new Set<string>(),reviewNonOutput=new Set<string>();
+    if(selection.kind==='captures')for(const [values,seen] of [[selection.exceptional,exceptional],[selection.reviewNonOutput,reviewNonOutput]] as const)
+      for(const key of values){budget.tick();const id=nodeKey(captureNode(key));budget.retain(id);seen.add(id);}
+    const impacts=state&&analysis?.status==='complete'&&selection.kind==='captures'&&exceptional.size
+      ?reverseImpact(state,selection.exceptional,budget):null;
     const selectedDigests:unknown[]=[];
     for(const key of keys){budget.tick();const node=captureNode(key),header=state?.headers.get(key.captureId);
       const row:CleanupImpactCapture={key,disposition:'refused',logicalBytes:null,payloadSha256:null,affectedReports:[],affectedAttempts:[],verificationWillFail:false,requiresExplicitConfirmation:false};
@@ -402,22 +433,37 @@ export async function inspectCleanupSelection(repository:string,selection:Cleanu
       if(value){row.payloadSha256=value.sha256;selectedDigests.push([nodeKey(node),value.sha256,value.sequenceSha256,value.bytes]);}else measured=false;
       const owner=state?.invocations.get(key.invocationId);
       if(!owner||owner.stage!=='finalized'||owner.outcome===null)blockers.push({code:'unassessed-recovery',node});
-      if(protectedKeys.has(nodeKey(node))||['report','request'].includes(header.channel))row.disposition='protected';
+      const id=nodeKey(node),permanent=['report','request','context'].includes(header.channel)
+        ||state?.invocations.get(key.invocationId)?.inputCaptureId===key.captureId;
+      if(permanent||protectedKeys.has(id)&&!exceptional.has(id))row.disposition='protected';
       else if(header.state==='pruned'){row.disposition='already-pruned';blockers.push({code:'pruned',node});}
+      else if(exceptional.has(id)){
+        if(!protectedKeys.has(id)||!impacts){row.disposition='protected';const blocker:CleanupBlocker={code:'opaque',node};budget.retain(blocker);blockers.push(blocker);}
+        else {const impact=impacts.get(id)!;row.disposition='exceptional-impact';row.affectedReports=impact.reports;
+          row.affectedAttempts=impact.attempts;row.verificationWillFail=true;row.requiresExplicitConfirmation=true;}
+      }
+      else if(protectedKeys.has(id))row.disposition='protected';
       else if(header.channel==='stdout'||header.channel==='stderr'){
         const attempt=header.attemptId===null?undefined:state?.attempts.get(header.attemptId);
         if(!attempt||attempt.kind!=='command'||attempt.invocationId!==key.invocationId||attempt.runId!==owner?.runId)
           blockers.push({code:'ownership',node});
         else row.disposition='eligible';
       }
+      else if(reviewNonOutput.has(id)&&['event','result','validated-result'].includes(header.channel)){
+        const attempt=header.attemptId===null?undefined:state?.attempts.get(header.attemptId);
+        if(header.attemptId!==null&&(!attempt||attempt.invocationId!==key.invocationId||attempt.runId!==owner?.runId))
+          blockers.push({code:'ownership',node});
+        else {row.disposition='eligible';row.requiresExplicitConfirmation=true;}
+      }
       else row.disposition='protected';
     }
-    if(selection.kind==='captures'&&selection.exceptional.length)for(const key of selection.exceptional)blockers.push({code:'opaque',node:captureNode(key)});
     const after=readCleanupSnapshotAuthority(identity.root,identity.common,store,tuples,()=>budget.tick());budget.tick();
     if(authority.sha256===null||after.sha256!==authority.sha256||!isDeepStrictEqual(after.backups,authority.backups))blockers.push({code:'unstable',node:null});
     if(selection.kind==='backups')for(const backup of authority.backups)if(backup.status!=='owned')blockers.push({code:'ownership',node:null});
     const unique=[...new Map(blockers.map(value=>[JSON.stringify(value),value])).entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value);
-    if(unique.length)for(const row of captures)if(row.disposition==='eligible')row.disposition='refused';
+    if(unique.length)for(const row of captures){if(row.disposition==='eligible')row.disposition='refused';
+      if(row.disposition==='exceptional-impact'){row.disposition='protected';row.affectedReports=[];row.affectedAttempts=[];
+        row.verificationWillFail=false;row.requiresExplicitConfirmation=false;}}
     result.captures=captures;result.blockers=unique;result.selectedLogicalBytes=keys.length&&measured?String(total):null;
     const records=[...captures,...authority.backups,...unique];const pages:CleanupImpact['pages'][number][]=[];
     let page:typeof records=[];let bytes=256;
@@ -433,7 +479,9 @@ export async function inspectCleanupSelection(repository:string,selection:Cleanu
     }
     budget.tick();
     return result;
-  }catch(error){for(const row of captures)if(row.disposition==='eligible')row.disposition='refused';return {...result,captures,pages:[],status:'blocked',impactSha256:null,snapshotSha256:null,
+  }catch(error){for(const row of captures){if(row.disposition==='eligible')row.disposition='refused';
+    if(row.disposition==='exceptional-impact'){row.disposition='protected';row.affectedReports=[];row.affectedAttempts=[];
+      row.verificationWillFail=false;row.requiresExplicitConfirmation=false;}}return {...result,captures,pages:[],status:'blocked',impactSha256:null,snapshotSha256:null,
     blockers:[...blockers,{code:error instanceof AnalysisLimit?'limit':'unstable',node:null,...(error instanceof AnalysisLimit?{limit:error.field}:{})}]};}
   finally{store?.close();}
 }
