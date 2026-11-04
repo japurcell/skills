@@ -176,6 +176,48 @@ export function validateMetadataWire(bytes, selectedSha256) {
   return value;
 }
 
+const sdkNamePattern = /^Windows Software Development Kit - Windows 10\.0\.26100\.[0-9]{1,6}$/;
+const productCodePattern = /^\{[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\}$/;
+const sdkRegistrationReasons = ['none', 'bounds', 'unreadable', 'malformed', 'changed', 'link', 'closure', 'unsupported-binding'];
+const sdkMetadataReasons = ['sdk-registration-absent', 'sdk-registration-ambiguous', 'sdk-registration-blocked'];
+const validRegistryText = (value, maxUnits) => text(value, maxUnits) &&
+  !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value);
+
+// This is a separate strict route. The historical schema-1 validator remains exact.
+export function validateSdkRegistrationMetadataWire(bytes, selectedSha256) {
+  if (!Buffer.isBuffer(bytes) || bytes.length > 1048576 || !hex(selectedSha256)) fail();
+  let value;
+  try { value = JSON.parse(bytes.toString('utf8')); } catch { fail(); }
+  if (bytes.toString('utf8') !== `${JSON.stringify(value)}\n` ||
+      !closed(value, ['scope', 'schema', 'state', 'reason', 'selectionAuthority', 'buildAuthority', 'nativeAuthority',
+        'sourceSelectionSha256', 'host', 'installations', 'sdkVersions', 'files', 'sdkCoverage', 'sdkRegistration']) ||
+      value.scope !== scope || value.schema !== 2 ||
+      !closed(value.sdkRegistration, ['version', 'status', 'reason', 'records'])) fail();
+  const sdk = value.sdkRegistration;
+  if (sdk.version !== 1 || !['single-candidate', 'absent', 'ambiguous', 'blocked'].includes(sdk.status) ||
+      !sdkRegistrationReasons.includes(sdk.reason) || !Array.isArray(sdk.records) || sdk.records.length > 8 ||
+      (sdk.status === 'blocked') !== (sdk.reason !== 'none') ||
+      (sdk.status === 'single-candidate' && sdk.records.length !== 1) ||
+      (sdk.status === 'absent' && sdk.records.length !== 0) ||
+      (sdk.status === 'ambiguous' && sdk.records.length < 2) ||
+      (sdk.status === 'blocked' && sdk.records.length !== 0) ||
+      Buffer.byteLength(JSON.stringify(sdk), 'utf8') > 32768 ||
+      sdk.records.some(row => !closed(row, ['view', 'productCode', 'displayName', 'displayVersion', 'publisher']) ||
+        !['x64', 'x86'].includes(row.view) ||
+        !(row.productCode === null || (typeof row.productCode === 'string' && productCodePattern.test(row.productCode))) ||
+        !validRegistryText(row.displayName, 511) || !sdkNamePattern.test(row.displayName) ||
+        !validRegistryText(row.displayVersion, 127) || !validRegistryText(row.publisher, 255)) ||
+      (value.state === 'observed' && sdk.status !== 'single-candidate') ||
+      (value.reason === 'sdk-registration-absent' && sdk.status !== 'absent') ||
+      (value.reason === 'sdk-registration-ambiguous' && sdk.status !== 'ambiguous') ||
+      (value.reason === 'sdk-registration-blocked' && sdk.status !== 'blocked') ||
+      (!reasons.includes(value.reason) && !sdkMetadataReasons.includes(value.reason))) fail();
+  const legacy = { ...value, schema: 1, reason: sdkMetadataReasons.includes(value.reason) ? 'sdk-provenance-unproven' : value.reason };
+  delete legacy.sdkRegistration;
+  validateMetadataWire(Buffer.from(`${JSON.stringify(legacy)}\n`), selectedSha256);
+  return value;
+}
+
 // Observe an already-created process. This seam supplies no executable/path route.
 // Default zero exit; the fixed collector caller can explicitly accept blocked exit1.
 // Both real EOF events remain mandatory, and the caller validates exit/state coupling.
@@ -284,7 +326,7 @@ async function main() {
         refusal.selectionAuthority === false && refusal.buildAuthority === false && refusal.nativeAuthority === false) {
       process.stdout.write(`${JSON.stringify(refusal)}\n`); process.exitCode = 1; return;
     }
-    const metadata = validateMetadataWire(captured.bytes, selectedSha256);
+    const metadata = validateSdkRegistrationMetadataWire(captured.bytes, selectedSha256);
     if (metadata.host.windowsVersion !== selected.windowsVersion ||
         captured.exitCode !== (metadata.state === 'observed' ? 0 : 1)) fail();
     process.stdout.write(`${JSON.stringify(metadata)}\n`);
