@@ -191,36 +191,37 @@ test('native stop and crash controls require their actual intended exit outcome'
 test('build diagnostics accept only the complete fixed producer grammar', () => {
   for (const category of buildCategories) {
     const tool = category === 'tool-signature' ? 'vswhere' : 'none';
-    assert.deepEqual(parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t2\t${category}\tnone\tnone\t0\t${tool}\n`),
-      { category, code: 'none', source: 'none', line: 0, tool });
+    const condition = category === 'tool-signature' ? 'status-not-valid' : 'none';
+    assert.deepEqual(parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\t${category}\tnone\tnone\t0\t${tool}\t${condition}\n`),
+      { category, code: 'none', source: 'none', line: 0, tool, condition });
   }
-  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t2\tcompile\tC2065\tprobe\t123\tnone\r\n'),
-    { category: 'compile', code: 'C2065', source: 'probe', line: 123, tool: 'none' });
-  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t2\tmissing-msvc\tnone\tnone\t0\tnone\n'),
-    { category: 'missing-msvc', code: 'none', source: 'none', line: 0, tool: 'none' });
+  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t3\tcompile\tC2065\tprobe\t123\tnone\tnone\r\n'),
+    { category: 'compile', code: 'C2065', source: 'probe', line: 123, tool: 'none', condition: 'none' });
+  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t3\tmissing-msvc\tnone\tnone\t0\tnone\tnone\n'),
+    { category: 'missing-msvc', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
 });
 
 test('path-bearing, forged, multiline and oversized build data is fully redacted', () => {
-  for (const value of ['C:\\private\\tool.exe failed', 'OWNED_IMAGE_BUILD\t2\tC:\\private\tnone\tnone\t0\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tC2065: secret\tprobe\t123\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tC2065\tC:\\private.cpp\t123\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tC2065\tprobe\t999999\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\thost\tnone\tnone\t0\tnone\nsecret\n', 'x'.repeat(513),
-    'OWNED_IMAGE_BUILD\t2\thost\tnone\tnone\t0\tnone\n\n',
-    'OWNED_IMAGE_BUILD\t2\thost\tC2065\tprobe\t1\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tLNK2019\tprobe\t1\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tC2065\tprobe\t01\tnone\n'])
-    assert.deepEqual(parseBuildDiagnostic(value), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none' });
+  for (const value of ['C:\\private\\tool.exe failed', 'OWNED_IMAGE_BUILD\t3\tC:\\private\tnone\tnone\t0\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tC2065: secret\tprobe\t123\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tC2065\tC:\\private.cpp\t123\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tC2065\tprobe\t999999\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\thost\tnone\tnone\t0\tnone\tnone\nsecret\n', 'x'.repeat(513),
+    'OWNED_IMAGE_BUILD\t3\thost\tnone\tnone\t0\tnone\tnone\n\n',
+    'OWNED_IMAGE_BUILD\t3\thost\tC2065\tprobe\t1\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tLNK2019\tprobe\t1\tnone\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tC2065\tprobe\t01\tnone\tnone\n'])
+    assert.deepEqual(parseBuildDiagnostic(value), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
 });
 
 test('driver failure output validates phase, finite case and fixed compiler fields again', () => {
   for (const category of ['launch', 'timeout', 'cap', 'interrupted'])
     assert.equal(formatFailure({ phase: 'build', category }),
-      `Owned image native qualification failed phase=build case=none category=${category} code=none source=none line=0 tool=none\n`);
+      `Owned image native qualification failed phase=build case=none category=${category} code=none source=none line=0 tool=none condition=none\n`);
   assert.equal(formatFailure({ phase: 'case', name: 'fail-detach', category: 'native' }),
-    'Owned image native qualification failed phase=case case=fail-detach category=native code=none source=none line=0 tool=none\n');
-  assert.equal(formatFailure({ phase: 'build', ...parseBuildDiagnostic('OWNED_IMAGE_BUILD\t2\tcompile\tC2065\tprobe\t123\tnone\n') }),
-    'Owned image native qualification failed phase=build case=none category=compile code=C2065 source=probe line=123 tool=none\n');
+    'Owned image native qualification failed phase=case case=fail-detach category=native code=none source=none line=0 tool=none condition=none\n');
+  assert.equal(formatFailure({ phase: 'build', ...parseBuildDiagnostic('OWNED_IMAGE_BUILD\t3\tcompile\tC2065\tprobe\t123\tnone\tnone\n') }),
+    'Owned image native qualification failed phase=build case=none category=compile code=C2065 source=probe line=123 tool=none condition=none\n');
   for (const value of [{ phase: 'C:\\secret', name: 'positive', category: 'native' },
     { phase: 'case', name: 'positive\nsecret', category: 'native' },
     { phase: 'host', category: 'C:\\secret' }, { phase: 'pin', category: 'native' },
@@ -229,7 +230,7 @@ test('driver failure output validates phase, finite case and fixed compiler fiel
     { phase: 'build', category: 'compile', code: 'C2065\n', source: 'probe', line: 4 },
     { phase: 'host', category: 'host', secret: 'C:\\private' }]) {
     const output = formatFailure(value);
-    assert.equal(output, 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none\n');
+    assert.equal(output, 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n');
   }
 });
 
@@ -241,38 +242,73 @@ test('public driver reports a fixed host phase without invoking a native build',
       env: { ...process.env, WINDOWS_OWNED_IMAGE_EVIDENCE: root } });
     assert.equal(result.status, 1);
     assert.equal(result.stdout, '');
-    assert.equal(result.stderr, 'Owned image native qualification failed phase=host case=none category=host code=none source=none line=0 tool=none\n');
+    assert.equal(result.stderr, 'Owned image native qualification failed phase=host case=none category=host code=none source=none line=0 tool=none condition=none\n');
     assert.deepEqual(readdirSync(root), []);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('signature-stage diagnostics identify only a closed tool role', () => {
   for (const tool of ['vswhere', 'compiler', 'linker']) {
-    const parsed = parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\t${tool}\n`);
-    assert.deepEqual(parsed, { category: 'tool-signature', code: 'none', source: 'none', line: 0, tool });
+    const parsed = parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\t${tool}\tstatus-not-valid\n`);
+    assert.deepEqual(parsed, { category: 'tool-signature', code: 'none', source: 'none', line: 0, tool, condition: 'status-not-valid' });
     assert.equal(formatFailure({ phase: 'build', ...parsed }),
-      `Owned image native qualification failed phase=build case=none category=tool-signature code=none source=none line=0 tool=${tool}\n`);
+      `Owned image native qualification failed phase=build case=none category=tool-signature code=none source=none line=0 tool=${tool} condition=status-not-valid\n`);
   }
 });
 
 test('tool roles reject forged phase, category, case and private values', () => {
-  const unexpected = 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none\n';
+  const unexpected = 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n';
   for (const value of [{ phase: 'host', category: 'host', tool: 'compiler' },
     { phase: 'pin', category: 'pin', tool: 'linker' }, { phase: 'case', name: 'positive', category: 'native', tool: 'vswhere' },
-    { phase: 'build', category: 'compile', tool: 'compiler' }, { phase: 'build', category: 'tool-signature', tool: 'none' },
-    { phase: 'build', name: 'positive', category: 'tool-signature', tool: 'compiler' },
-    { phase: 'build', category: 'tool-signature', tool: 'C:\\private\\cl.exe' },
-    { phase: 'build', category: 'tool-signature', tool: 'compiler\nprivate' },
-    { phase: 'build', category: 'tool-signature', tool: 'compiler\n' },
-    { phase: 'build', category: 'tool-signature', tool: 'x'.repeat(513) },
-    { phase: 'build', category: 'tool-signature', tool: ['compiler'] }])
+    { phase: 'build', category: 'compile', tool: 'compiler' }, { phase: 'build', category: 'tool-signature', tool: 'none', condition: 'status-not-valid' },
+    { phase: 'build', name: 'positive', category: 'tool-signature', tool: 'compiler', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'C:\\private\\cl.exe', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'compiler\nprivate', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'compiler\n', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'x'.repeat(513), condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: ['compiler'], condition: 'status-not-valid' }])
     assert.equal(formatFailure(value), unexpected);
-  for (const text of ['OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tnone\n',
-    'OWNED_IMAGE_BUILD\t2\tcompile\tnone\tnone\t0\tcompiler\n',
-    'OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tC:\\private\\cl.exe\n',
-    'OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tcompiler\nprivate\n',
-    'OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tcompiler\n\n',
-    `OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\t${'x'.repeat(513)}\n`,
+  for (const text of ['OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tnone\tstatus-not-valid\n',
+    'OWNED_IMAGE_BUILD\t3\tcompile\tnone\tnone\t0\tcompiler\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tC:\\private\\cl.exe\tstatus-not-valid\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tcompiler\nprivate\tstatus-not-valid\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tcompiler\tstatus-not-valid\n\n',
+    `OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\t${'x'.repeat(513)}\tstatus-not-valid\n`,
     'OWNED_IMAGE_BUILD\t1\ttool-signature\tnone\tnone\t0\n'])
-    assert.deepEqual(parseBuildDiagnostic(text), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none' });
+    assert.deepEqual(parseBuildDiagnostic(text), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
+});
+
+test('signature diagnostics expose only a closed rejection condition', () => {
+  for (const tool of ['vswhere', 'compiler', 'linker']) {
+    for (const condition of ['status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure']) {
+      const parsed = parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\t${tool}\t${condition}\n`);
+      assert.deepEqual(parsed, { category: 'tool-signature', code: 'none', source: 'none', line: 0, tool, condition });
+      assert.equal(formatFailure({ phase: 'build', ...parsed }),
+        `Owned image native qualification failed phase=build case=none category=tool-signature code=none source=none line=0 tool=${tool} condition=${condition}\n`);
+    }
+  }
+});
+
+test('signature conditions reject forged context and private or malformed values', () => {
+  const unexpected = 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n';
+  for (const value of [{ phase: 'host', category: 'host', condition: 'api-failure' },
+    { phase: 'case', name: 'positive', category: 'native', condition: 'status-not-valid' },
+    { phase: 'build', category: 'compile', condition: 'subject-mismatch' },
+    { phase: 'build', name: 'positive', category: 'tool-signature', tool: 'vswhere', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'none', condition: 'status-not-valid' },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: 'none' },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: 'C:\\private\\certificate' },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: 'status-not-valid\nprivate' },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: 'status-not-valid\n' },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: 'x'.repeat(513) },
+    { phase: 'build', category: 'tool-signature', tool: 'vswhere', condition: ['api-failure'] }])
+    assert.equal(formatFailure(value), unexpected);
+  for (const text of ['OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\tnone\n',
+    'OWNED_IMAGE_BUILD\t3\thost\tnone\tnone\t0\tnone\tapi-failure\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\tC:\\private\\certificate\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\tapi-failure\nprivate\n',
+    'OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\tapi-failure\n\n',
+    `OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\t${'x'.repeat(513)}\n`,
+    'OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tvswhere\n'])
+    assert.deepEqual(parseBuildDiagnostic(text), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
 });

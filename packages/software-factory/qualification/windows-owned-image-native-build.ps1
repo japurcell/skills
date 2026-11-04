@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $diagnosticCategory = 'host'
 $diagnosticTool = 'none'
+$diagnosticCondition = 'none'
 $compilerDiagnostic = @{ code = 'none'; source = 'none'; line = 0 }
 $diagnosticHelpersLoaded = $false
 try {
@@ -27,13 +28,17 @@ try {
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
     function Assert-MicrosoftTool([string]$Path, [string]$Role) {
         $script:diagnosticTool = 'none'
+        $script:diagnosticCondition = 'none'
         $script:diagnosticCategory = 'missing-msvc'
         if (-not [IO.File]::Exists($Path) -or ((Get-Item -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'tool' }
         $script:diagnosticCategory = 'tool-signature'
         $script:diagnosticTool = $Role
+        $script:diagnosticCondition = 'api-failure'
         $signature = Get-AuthenticodeSignature -LiteralPath $Path
-        if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(?:^|, )O=Microsoft Corporation(?:,|$)') { throw 'tool-signature' }
+        $script:diagnosticCondition = Get-OwnedImageSignatureCondition $signature
+        if ($script:diagnosticCondition -cne 'none') { throw 'tool-signature' }
         $script:diagnosticTool = 'none'
+        $script:diagnosticCondition = 'none'
     }
     Assert-MicrosoftTool $vswhere 'vswhere'
     $diagnosticCategory = 'missing-msvc'
@@ -126,10 +131,10 @@ try {
     exit 0
 } catch {
     # No exception text or operational tool/path inventory in console output.
-    $safeDiagnostic = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone"
+    $safeDiagnostic = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone"
     if ($diagnosticHelpersLoaded) {
-        try { $safeDiagnostic = Format-OwnedImageBuildDiagnostic $diagnosticCategory $compilerDiagnostic $diagnosticTool }
-        catch { $safeDiagnostic = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone" }
+        try { $safeDiagnostic = Format-OwnedImageBuildDiagnostic $diagnosticCategory $compilerDiagnostic $diagnosticTool $diagnosticCondition }
+        catch { $safeDiagnostic = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone" }
     }
     [Console]::Error.WriteLine($safeDiagnostic)
     exit 1

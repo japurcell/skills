@@ -21,15 +21,26 @@ function Get-OwnedImageCompilerDiagnostic {
     return $empty
 }
 
+function Get-OwnedImageSignatureCondition {
+    param([object]$Signature)
+    try {
+        if ($Signature.Status -ne 'Valid') { return 'status-not-valid' }
+        if ($null -eq $Signature.SignerCertificate) { return 'signer-absent' }
+        if ($Signature.SignerCertificate.Subject -notmatch '(?:^|, )O=Microsoft Corporation(?:,|$)') { return 'subject-mismatch' }
+        return 'none'
+    } catch { return 'api-failure' }
+}
+
 function Format-OwnedImageBuildDiagnostic {
-    param([string]$Category, [object]$Compiler = @{ code = 'none'; source = 'none'; line = 0 }, [object]$Tool = 'none')
-    $unexpected = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone"
+    param([string]$Category, [object]$Compiler = @{ code = 'none'; source = 'none'; line = 0 }, [object]$Tool = 'none', [object]$Condition = 'none')
+    $unexpected = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone"
     if ($Category -cnotin @('host', 'path', 'existing-build', 'missing-msvc', 'tool-signature', 'compiler-version',
         'source', 'compile', 'build-cap', 'source-changed', 'binary', 'report', 'unexpected')) { return $unexpected }
-    if ($Tool -isnot [string]) { return $unexpected }
+    if ($Tool -isnot [string] -or $Condition -isnot [string]) { return $unexpected }
     if ($Category -ceq 'tool-signature') {
         if ($Tool -cnotin @('vswhere', 'compiler', 'linker')) { return $unexpected }
-    } elseif ($Tool -cne 'none') { return $unexpected }
+        if ($Condition -cnotin @('status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure')) { return $unexpected }
+    } elseif ($Tool -cne 'none' -or $Condition -cne 'none') { return $unexpected }
     if ($Compiler -isnot [Collections.IDictionary] -or $Compiler.Count -ne 3 -or
         @($Compiler.Keys | Where-Object { $_ -cnotin @('code', 'source', 'line') }).Count -ne 0) { return $unexpected }
     $code = $Compiler['code']; $source = $Compiler['source']; $number = $Compiler['line']
@@ -43,5 +54,5 @@ function Format-OwnedImageBuildDiagnostic {
         if ($source -ceq 'none') { if ($number -ne 0) { return $unexpected } }
         elseif ($source -cnotin @('probe', 'shared', 'fixture', 'fixture-dll') -or $number -lt 1 -or $number -gt 4096) { return $unexpected }
     } else { return $unexpected }
-    return "OWNED_IMAGE_BUILD`t2`t$Category`t$code`t$source`t$number`t$Tool"
+    return "OWNED_IMAGE_BUILD`t3`t$Category`t$code`t$source`t$number`t$Tool`t$Condition"
 }
