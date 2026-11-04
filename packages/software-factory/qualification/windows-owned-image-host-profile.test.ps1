@@ -71,6 +71,53 @@ try {
         if ($field -eq 'sibling') { $bad.Module.Path = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Security-other', 'Microsoft.PowerShell.Security.psd1') }
         if (Test-OwnedImageSecurityOrigin $inbox $bad) { throw 'bad-origin' }
     }
+    $stage = 'fixed-relations'
+    $manifestBase = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Management')
+    $manifestPath = [IO.Path]::Combine($manifestBase, 'Microsoft.PowerShell.Management.psd1')
+    $binaryPath = [IO.Path]::Combine($homeRoot, 'Microsoft.PowerShell.Commands.Management.dll')
+    foreach ($kind in @('Manifest', 'Binary', 'Script', 'SyntheticOther')) {
+        foreach ($baseCase in @('selected-manifest-directory', 'selected-WinPS-host-directory', 'inbox-root', 'other')) {
+            foreach ($pathCase in @('exact-selected-manifest', 'known-fixed-Management-binary-under-selected-host', 'other')) {
+                $observedBase = switch ($baseCase) {
+                    'selected-manifest-directory' { $manifestBase }; 'selected-WinPS-host-directory' { $homeRoot }
+                    'inbox-root' { $inbox }; 'other' { $manifestBase + '-other' }
+                }
+                $observedPath = switch ($pathCase) {
+                    'exact-selected-manifest' { $manifestPath }; 'known-fixed-Management-binary-under-selected-host' { $binaryPath }
+                    'other' { $binaryPath + '.other' }
+                }
+                $module = [pscustomobject]@{ ModuleType = $kind; ModuleBase = $observedBase; Path = $observedPath }
+                $relation = Get-OwnedImageManagementRelation $homeRoot $module
+                $expectedKind = if ($kind -ceq 'SyntheticOther') { 'unknown' } else { $kind.ToLowerInvariant() }
+                if ($relation.kind -cne $expectedKind -or $relation.base -cne $baseCase -or $relation.path -cne $pathCase -or $relation.baseType -cne 'string') { throw 'relations' }
+            }
+        }
+    }
+    $relationFacts = @{ profile = 'winps-inbox-only'; origin = 'refused'; availability = 'unavailable'; stage = 'management-origin'; field = 'base'
+        relation = @{ kind = 'binary'; base = 'selected-WinPS-host-directory'; path = 'exact-selected-manifest'; baseType = 'string' } }
+    $relationExpected = "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`trefused`tunavailable`tmanagement-origin`tbase" + [Environment]::NewLine +
+        "OWNED_IMAGE_RELATION`t1`tbinary`tselected-WinPS-host-directory`texact-selected-manifest`tstring"
+    if ((Format-OwnedImageHostProfile $relationFacts) -cne $relationExpected) { throw 'relation-wire' }
+    foreach ($change in @('context', 'kind', 'base', 'path', 'type', 'extra')) {
+        $forged = @{ profile = 'winps-inbox-only'; origin = 'refused'; availability = 'unavailable'; stage = 'management-origin'; field = 'base'
+            relation = @{ kind = 'binary'; base = 'selected-WinPS-host-directory'; path = 'exact-selected-manifest'; baseType = 'string' } }
+        if ($change -ceq 'context') { $forged.stage = 'utility-origin' }
+        if ($change -ceq 'kind') { $forged.relation.kind = 'C:\private' }
+        if ($change -ceq 'base') { $forged.relation.base = "other`nprivate" }
+        if ($change -ceq 'path') { $forged.relation.path = 'x' * 513 }
+        if ($change -ceq 'type') { $forged.relation.kind = @('binary') }
+        if ($change -ceq 'extra') { $forged.relation.extra = 'private' }
+        if ((Format-OwnedImageHostProfile $forged) -cne "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tunverified`tunavailable`tunknown`tunknown") { throw 'forged-relation' }
+    }
+    $uninspectable = Get-OwnedImageManagementRelation $homeRoot $null
+    if ($uninspectable.kind -cne 'unknown' -or $uninspectable.base -cne 'other' -or $uninspectable.path -cne 'other' -or $uninspectable.baseType -cne 'other') { throw 'unknown-relation' }
+    $partial = Get-OwnedImageManagementRelation $homeRoot ([pscustomobject]@{ ModuleBase = $inbox; Path = $manifestPath })
+    if ($partial.kind -cne 'unknown' -or $partial.base -cne 'inbox-root' -or $partial.path -cne 'exact-selected-manifest') { throw 'independent-relation' }
+    foreach ($tag in @('null', 'single-string-array', 'other')) {
+        $rawBase = switch ($tag) { 'null' { $null }; 'single-string-array' { ,@($homeRoot) }; 'other' { [pscustomobject]@{ private = 'value' } } }
+        $typed = Get-OwnedImageManagementRelation $homeRoot ([pscustomobject]@{ ModuleType = @('Binary'); ModuleBase = $rawBase; Path = [pscustomobject]@{ private = 'value' } })
+        if ($typed.baseType -cne $tag -or $typed.base -cne 'other' -or $typed.path -cne 'other' -or $typed.kind -cne 'unknown') { throw 'typed-relation' }
+    }
     $stage = 'fixed-stage-projection'
     foreach ($role in @('Management', 'Utility', 'Security')) {
         $script:failModule = 'Microsoft.PowerShell.' + $role
@@ -80,7 +127,9 @@ try {
             $suffix = if ($field -ceq 'import') { '-import' } else { '-origin' }
             if ($facts.stage -cne ($role.ToLowerInvariant() + $suffix) -or $facts.field -cne $field -or
                 $facts.availability -cne 'unavailable' -or $facts.origin -ceq 'inbox') { throw 'module-stage' }
-            if ((Format-OwnedImageHostProfile $facts) -notmatch '^OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t(refused|unverified)\tunavailable\t[a-z-]+\t[a-z-]+$') { throw 'module-wire' }
+            if ($role -ceq 'Management' -and $field -ceq 'base') {
+                if ($facts.relation.base -cne 'selected-WinPS-host-directory' -or $facts.relation.path -cne 'exact-selected-manifest') { throw 'refusal-relation' }
+            } elseif ((Format-OwnedImageHostProfile $facts) -notmatch '^OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t(refused|unverified)\tunavailable\t[a-z-]+\t[a-z-]+$') { throw 'module-wire' }
         }
     }
     $script:failModule = ''; $script:failField = ''

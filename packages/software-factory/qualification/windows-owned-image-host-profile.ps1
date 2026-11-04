@@ -19,6 +19,49 @@ function Test-OwnedImageSecurityOrigin {
     } catch { return $false }
 }
 
+function Get-OwnedImageManagementRelation {
+    param([string]$HostHome, [object]$Module)
+    $relation = @{ kind = 'unknown'; base = 'other'; path = 'other'; baseType = 'other' }
+    try {
+        $hostDirectory = [IO.Path]::GetFullPath($HostHome)
+        $inbox = [IO.Path]::Combine($hostDirectory, 'Modules')
+        $manifestDirectory = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Management')
+        $manifest = [IO.Path]::Combine($manifestDirectory, 'Microsoft.PowerShell.Management.psd1')
+        $binary = [IO.Path]::Combine($hostDirectory, 'Microsoft.PowerShell.Commands.Management.dll')
+    } catch { return $relation }
+    # Independent observations never change the predicate or emit raw metadata.
+    try {
+        $kind = $Module.ModuleType
+        if ($kind -is [string] -or $kind -is [Management.Automation.ModuleType]) {
+            if ($kind -eq 'Manifest') { $relation.kind = 'manifest' }
+            elseif ($kind -eq 'Binary') { $relation.kind = 'binary' }
+            elseif ($kind -eq 'Script') { $relation.kind = 'script' }
+        }
+    } catch { }
+    try {
+        $baseValue = $Module.ModuleBase
+        if ($null -eq $baseValue) { $relation.baseType = 'null' }
+        elseif ($baseValue -is [string]) {
+            $relation.baseType = 'string'
+            $base = [IO.Path]::GetFullPath($baseValue)
+            if ([string]::Equals($base, $manifestDirectory, [StringComparison]::OrdinalIgnoreCase)) { $relation.base = 'selected-manifest-directory' }
+            elseif ([string]::Equals($base, $hostDirectory, [StringComparison]::OrdinalIgnoreCase)) { $relation.base = 'selected-WinPS-host-directory' }
+            elseif ([string]::Equals($base, $inbox, [StringComparison]::OrdinalIgnoreCase)) { $relation.base = 'inbox-root' }
+        } elseif ($baseValue -is [Array] -and $baseValue.Rank -eq 1 -and $baseValue.Length -eq 1 -and $baseValue[0] -is [string]) {
+            $relation.baseType = 'single-string-array'
+        }
+    } catch { }
+    try {
+        $pathValue = $Module.Path
+        if ($pathValue -is [string]) {
+            $path = [IO.Path]::GetFullPath($pathValue)
+            if ([string]::Equals($path, $manifest, [StringComparison]::OrdinalIgnoreCase)) { $relation.path = 'exact-selected-manifest' }
+            elseif ([string]::Equals($path, $binary, [StringComparison]::OrdinalIgnoreCase)) { $relation.path = 'known-fixed-Management-binary-under-selected-host' }
+        }
+    } catch { }
+    return $relation
+}
+
 function Initialize-OwnedImageInboxProfile {
     param([string]$HostHome, [string]$ExpectedInbox, [string]$Profile)
     $facts = @{ profile = 'winps-inbox-only'; origin = 'unverified'; availability = 'unavailable'; stage = 'environment'; field = 'path' }
@@ -54,7 +97,11 @@ function Initialize-OwnedImageInboxProfile {
             $facts.field = 'manifest'
             if (-not [string]::Equals([IO.Path]::GetFullPath($loaded[0].Path), $manifest, [StringComparison]::OrdinalIgnoreCase)) { $facts.origin = 'refused'; return $facts }
             $facts.field = 'base'
-            if (-not [string]::Equals([IO.Path]::GetFullPath($loaded[0].ModuleBase), $directory, [StringComparison]::OrdinalIgnoreCase)) { $facts.origin = 'refused'; return $facts }
+            if (-not [string]::Equals([IO.Path]::GetFullPath($loaded[0].ModuleBase), $directory, [StringComparison]::OrdinalIgnoreCase)) {
+                $facts.origin = 'refused'
+                if ($role -ceq 'management') { $facts.relation = Get-OwnedImageManagementRelation $HostHome $loaded[0] }
+                return $facts
+            }
         }
         $facts.stage = 'cmdlet-resolution'; $facts.field = 'resolution'
         $commands = @(Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -All -ErrorAction Stop)
@@ -77,12 +124,27 @@ function Format-OwnedImageHostProfile {
         'management-origin' = @('count', 'name', 'manifest', 'base'); 'utility-origin' = @('count', 'name', 'manifest', 'base'); 'security-origin' = @('count', 'name', 'manifest', 'base')
         'cmdlet-resolution' = @('resolution', 'count'); 'cmdlet-origin' = @('path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base')
         ready = @('none'); unknown = @('unknown') }
-    if ($Facts -isnot [Collections.IDictionary] -or $Facts.Count -ne 5 -or
-        @($Facts.Keys | Where-Object { $_ -cnotin @('profile', 'origin', 'availability', 'stage', 'field') }).Count -ne 0 -or
+    if ($Facts -isnot [Collections.IDictionary]) { return $fallback }
+    $hasRelation = $Facts.Contains('relation')
+    $expectedCount = if ($hasRelation) { 6 } else { 5 }
+    if ($Facts.Count -ne $expectedCount -or
+        @($Facts.Keys | Where-Object { $_ -cnotin @('profile', 'origin', 'availability', 'stage', 'field', 'relation') }).Count -ne 0 -or
         $Facts.profile -cne 'winps-inbox-only' -or $Facts.origin -cnotin @('inbox', 'refused', 'unverified') -or
         $Facts.availability -cnotin @('available', 'unavailable') -or $Facts.stage -isnot [string] -or $Facts.field -isnot [string] -or
         @($checks.Keys) -cnotcontains $Facts.stage -or
         $checks[$Facts.stage] -cnotcontains $Facts.field) { return $fallback }
+    if ($hasRelation) {
+        $relation = $Facts.relation
+        if ($Facts.origin -cne 'refused' -or $Facts.availability -cne 'unavailable' -or $Facts.stage -cne 'management-origin' -or $Facts.field -cne 'base' -or
+            $relation -isnot [Collections.IDictionary] -or $relation.Count -ne 4 -or
+            @($relation.Keys | Where-Object { $_ -cnotin @('kind', 'base', 'path', 'baseType') }).Count -ne 0 -or
+            $relation.kind -isnot [string] -or $relation.base -isnot [string] -or $relation.path -isnot [string] -or $relation.baseType -isnot [string] -or
+            $relation.kind -cnotin @('manifest', 'binary', 'script', 'unknown') -or
+            $relation.base -cnotin @('selected-manifest-directory', 'selected-WinPS-host-directory', 'inbox-root', 'other') -or
+            $relation.path -cnotin @('exact-selected-manifest', 'known-fixed-Management-binary-under-selected-host', 'other') -or
+            $relation.baseType -cnotin @('string', 'null', 'single-string-array', 'other') -or
+            ($relation.baseType -cne 'string' -and $relation.base -cne 'other')) { return $fallback }
+    }
     if ($Facts.stage -ceq 'ready') {
         if ($Facts.origin -cne 'inbox' -or $Facts.availability -cne 'available') { return $fallback }
     } elseif ($Facts.stage -ceq 'unknown') {
@@ -91,5 +153,7 @@ function Format-OwnedImageHostProfile {
         if ($Facts.origin -cne 'refused' -or $Facts.availability -cne 'available') { return $fallback }
     } elseif ($Facts.availability -cne 'unavailable' -or $Facts.origin -ceq 'inbox' -or
         ($Facts.origin -ceq 'refused' -and $Facts.field -cin @('assignment', 'import', 'resolution'))) { return $fallback }
-    return "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`t$($Facts.origin)`t$($Facts.availability)`t$($Facts.stage)`t$($Facts.field)"
+    $wire = "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`t$($Facts.origin)`t$($Facts.availability)`t$($Facts.stage)`t$($Facts.field)"
+    if ($hasRelation) { $wire += [Environment]::NewLine + "OWNED_IMAGE_RELATION`t1`t$($relation.kind)`t$($relation.base)`t$($relation.path)`t$($relation.baseType)" }
+    return $wire
 }
