@@ -146,3 +146,21 @@ test('Darwin timing push selection includes executable/schema changes and exclud
   ]) assert.equal(selected(path), false, path);
   assert.ok(patterns.includes('packages/software-factory/qualification/selector-timing-experiment.json'), 'explicit deliberate experiment control required');
 });
+
+
+test('Gemini source-contract qualification is isolated from canonical provider selection', () => {
+  const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'gemini-contract'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /synthetic Gemini text is a proposed candidate rather than provider success/);
+  assert.match(result.stdout, /cannot distinguish unmarked internal stop from ordinary completion/);
+  assert.match(result.stdout, /tests 83/);
+  for (const args of [['adapters', '--provider', 'gemini'], ['qualification', '--area', 'gemini-contract', '--provider', 'gemini']]) {
+    const refused = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000, env });
+    assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+    assert.match(refused.stderr, /no tests match supplied filters/);
+    assert.equal(refused.stdout, '');
+  }
+});
