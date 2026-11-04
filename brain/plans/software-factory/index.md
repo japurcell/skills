@@ -140,3 +140,5 @@
 - [Darwin compiler-own diagnostics DEFER](research/darwin-compiler-diagnostic-defer-2026-11-04.md)
 
 - [Windows Phase A host-bootstrap observation](research/windows-metadata-phase-a-observation-2026-11-04.md)
+
+- [C3c library action closure source and proof](../../../packages/software-factory/qualification/cleanup-actions.md)

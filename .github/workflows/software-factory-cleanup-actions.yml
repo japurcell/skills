@@ -1,0 +1,84 @@
+name: Software factory POSIX cleanup action closure
+
+on:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - packages/software-factory/src/**
+      - packages/software-factory/scripts/**
+      - packages/software-factory/toolchain/**
+      - packages/software-factory/package*.json
+      - packages/software-factory/test/cleanup-action-closure.test.mjs
+      - packages/software-factory/test/fixtures/repository.mjs
+      - packages/software-factory/qualification/cleanup-actions-*.qualification.mjs
+      - skills/default/software-factory/**
+      - .github/workflows/software-factory-cleanup-actions.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup-actions:
+    name: Cleanup action closure ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+          - os: macos-15
+            target: darwin-arm64
+    env:
+      FACTORY_TARGET: ${{ matrix.target }}
+      CI: 'true'
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Select exact qualification Python
+        id: python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.14'
+      - name: Bootstrap exact native Node and archive
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/cleanup-actions-bootstrap
+        run: node packages/software-factory/scripts/qualification-bootstrap.mjs
+      - name: Install exact development and offline fixture cache inputs
+        timeout-minutes: 5
+        working-directory: packages/software-factory
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/cleanup-actions-npm-cache
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/cleanup-actions-user.npmrc
+          NPM_CONFIG_GLOBALCONFIG: ${{ runner.temp }}/cleanup-actions-global.npmrc
+        run: |
+          touch "$NPM_CONFIG_USERCONFIG" "$NPM_CONFIG_GLOBALCONFIG"
+          node "$FACTORY_NPM_CLI" ci --ignore-scripts --no-audit --no-fund
+          mkdir -m 700 "$RUNNER_TEMP/cleanup-actions-toolchain"
+          cp toolchain/package.json toolchain/package-lock.json "$RUNNER_TEMP/cleanup-actions-toolchain/"
+          node "$FACTORY_NPM_CLI" ci --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/cleanup-actions-toolchain"
+      - name: Check types and build the frozen source
+        timeout-minutes: 3
+        working-directory: packages/software-factory
+        env:
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/cleanup-actions-npm-cache
+          NPM_CONFIG_USERCONFIG: ${{ runner.temp }}/cleanup-actions-user.npmrc
+          NPM_CONFIG_GLOBALCONFIG: ${{ runner.temp }}/cleanup-actions-global.npmrc
+        run: |
+          node "$FACTORY_NPM_CLI" run typecheck
+          node "$FACTORY_NPM_CLI" run build
+      - name: Run genuine public learning closure qualification
+        timeout-minutes: 10
+        env:
+          FACTORY_TEST_PYTHON: ${{ steps.python.outputs.python-path }}
+          FACTORY_ATOMIC_PYTHON: ${{ steps.python.outputs.python-path }}
+          FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/cleanup-actions-npm-cache
+        run: node packages/software-factory/scripts/test.mjs qualification --area cleanup-actions-public

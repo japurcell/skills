@@ -334,7 +334,7 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
   return {analysis,budget,invocations,attempts,headers,payloads,content};
 }
 
-/** Bounded advisory graph. Only exact learning v1 reports are understood; other reports block payload eligibility. */
+/** Bounded advisory graph. Exact learning v1 and closed library action compatibility reports are understood; other reports block payload eligibility. */
 export function analyzeCleanupReferences(store: CleanupReadStore,input:Partial<CleanupAnalysisBounds>={}):ReferenceAnalysis {
   return analyze(store,new Budget(bounds(input))).analysis;
 }

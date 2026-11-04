@@ -523,3 +523,60 @@ test('cleanup learning closure has isolated POSIX qualification and preserves th
   assert.match(refused.stderr, /no tests match supplied filters/);
   assert.equal(refused.stdout, '');
 });
+
+test('cleanup action closure has isolated POSIX qualification and preserves existing learning closure proof', () => {
+  const dispatch = new URL('../scripts/test.mjs', import.meta.url).href;
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_SELECTOR_TIMING_ROOT;
+  for (const [platform, arch, supported] of [['darwin', 'arm64', true], ['linux', 'x64', true], ['win32', 'x64', false]]) {
+    for (const [area, file] of [['cleanup-actions', 'test/cleanup-action-closure.test.mjs'], ['cleanup-actions-public', 'qualification/cleanup-actions-public.qualification.mjs']]) {
+      const program = `
+        import assert from 'node:assert/strict';
+        import childProcess from 'node:child_process';
+        import { EventEmitter } from 'node:events';
+        import { syncBuiltinESMExports } from 'node:module';
+        Object.defineProperty(process, 'platform', { value: ${JSON.stringify(platform)} });
+        Object.defineProperty(process, 'arch', { value: ${JSON.stringify(arch)} });
+        let launches = 0;
+        childProcess.spawn = (command, args, options) => {
+          assert.equal(++launches, 1);
+          assert.equal(command, process.execPath);
+          assert.deepEqual(args, ['--test-concurrency=1', '--test', ${JSON.stringify(file)}]);
+          assert.deepEqual(options, { cwd: new URL('../', ${JSON.stringify(dispatch)}), stdio: 'inherit' });
+          const child = new EventEmitter();
+          setImmediate(() => child.emit('exit', 7, null));
+          return child;
+        };
+        syncBuiltinESMExports();
+        await import(${JSON.stringify(dispatch)});
+        assert.equal(launches, ${supported ? 1 : 0});
+        assert.equal(process.exitCode, ${supported ? 7 : 1});
+      `;
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, 'qualification', '--area', area], { encoding: 'utf8', timeout: 5000, env });
+      assert.ifError(result.error);
+      assert.equal(result.status, supported ? 7 : 1, result.stdout + result.stderr);
+      assert.equal(result.signal, null);
+      if (!supported) assert.match(result.stderr, /unsupported qualification target: win32-x64/);
+    }
+  }
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-cleanup-actions.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /os: ubuntu-24.04\n\s+target: linux-x64/);
+  assert.match(workflow, /os: macos-15\n\s+target: darwin-arm64/);
+  assert.doesNotMatch(workflow, /windows-|continue-on-error|--test-name-pattern|--prefix toolchain/);
+  assert.match(workflow, /python-version: '3.13.14'/);
+  assert.match(workflow, /qualification-bootstrap\.mjs/);
+  assert.match(workflow, /cp toolchain\/package\.json toolchain\/package-lock\.json/);
+  assert.match(workflow, /--prefix "\$RUNNER_TEMP\/cleanup-actions-toolchain"/);
+  assert.match(workflow, /FACTORY_ATOMIC_PYTHON:.*steps\.python\.outputs\.python-path/);
+  assert.match(workflow, /FACTORY_TEST_NPM_CACHE_SEED:.*runner\.temp/);
+  assert.match(workflow, /timeout-minutes: 10[\s\S]*run: node packages\/software-factory\/scripts\/test\.mjs qualification --area cleanup-actions-public/);
+  const baseWorkflow = readFileSync(new URL('../../../.github/workflows/software-factory-cleanup-learning.yml', import.meta.url), 'utf8');
+  assert.match(baseWorkflow, /qualification --area cleanup-learning-public/);
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(foundation, /cleanup-actions/);
+  const refused = spawnSync(process.execPath, [fileURLToPath(new URL(dispatch)), 'maintenance', '--operation', 'cleanup'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+  assert.match(refused.stderr, /no tests match supplied filters/);
+  assert.equal(refused.stdout, '');
+});
