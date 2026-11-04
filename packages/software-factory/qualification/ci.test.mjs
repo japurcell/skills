@@ -64,3 +64,19 @@ test('Linux public install and upgrade qualification is registered and invoked o
   assert.match(workflow, /- name: Run Linux public install and upgrade qualification[\s\S]*?if: matrix\.target == 'linux-x64'[\s\S]*?timeout-minutes: 15[\s\S]*?FACTORY_TEST_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_TEST_NPM_CACHE_SEED:\s*\$\{\{\s*runner\.temp\s*\}\}/);
   assert.match(workflow, /run: node packages\/software-factory\/scripts\/test\.mjs qualification --area upgrade-publication-linux/);
 });
+
+test('read-only dependency ownership qualification is explicit and Linux CI supplies its authenticated native inputs', () => {
+  const selector = readFileSync(new URL('../scripts/test.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  assert.match(selector, /dependency-state-native\.qualification\.mjs'[\s\S]*area: 'dependency-ownership'/);
+  assert.match(workflow, /- name: Run Linux read-only dependency ownership qualification[\s\S]*?if: matrix\.target == 'linux-x64'[\s\S]*?timeout-minutes: 15[\s\S]*?FACTORY_TEST_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_TEST_NPM_CACHE_SEED:\s*\$\{\{\s*runner\.temp\s*\}\}/);
+  assert.match(workflow, /run: node packages\/software-factory\/scripts\/test\.mjs qualification --area dependency-ownership/);
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/test.mjs', import.meta.url)), 'qualification', '--area', 'dependency-ownership'], {
+    encoding: 'utf8', timeout: 5000, env,
+  });
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout + result.stderr, /exact pinned Node archive required|requires Darwin arm64 or Linux x64/);
+});
