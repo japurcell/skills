@@ -5,7 +5,7 @@ import { readPublicationRecord } from './install-publication-state.js';
 import { readInstalledReceipt } from './install-publication.js';
 import { backupFileDigest, maintenanceBackupPath, openImmutableMaintenanceBackup } from './maintenance-backup.js';
 import { assertForwardIntegrity, assertForwardRuntime, forwardCounts, knownForwardShape, type ForwardShape } from './schema-forward.js';
-import { openCleanupReadStore, type CleanupActivityEvidence, type CleanupOperationEvidence, type CleanupOperationEvent, type CleanupRecoveryClaim } from './store.js';
+import { assertCleanupSnapshotView, openCleanupReadStore, type CleanupReadStore, type CleanupActivityEvidence, type CleanupOperationEvidence, type CleanupOperationEvent, type CleanupRecoveryClaim } from './store.js';
 import { readUpgradeInstalledReceipt } from './upgrade-installed.js';
 import { upgradeDirectory } from './upgrade-publication-state.js';
 import { repositoryIdentity } from './workspace.js';
@@ -61,7 +61,8 @@ function directory(path: string, privateMode = true): CleanupObservedParent {
     && info.uid === BigInt(process.getuid!()) && (!privateMode || (info.mode & 0o777n) === 0o700n));
   return { path, identity: `${info.dev}:${info.ino}`, provenance: 'currently-observed' };
 }
-function record(path: string) {
+interface ObservedRecord { path: string; sha256: string; identity: string; bytes: number }
+function record(path: string, observations?: ObservedRecord[]) {
   const before = lstatSync(path, { bigint: true });
   requireFact(before.uid === BigInt(process.getuid!()));
   const bytes = readPublicationRecord(path), after = lstatSync(path, { bigint: true });
@@ -69,7 +70,9 @@ function record(path: string) {
     && Buffer.from(bytes.toString('utf8')).equals(bytes));
   const value: unknown = JSON.parse(bytes.toString('utf8'));
   requireFact(cleanupObject(value));
-  return { value, sha256: hash(bytes), identity: `${before.dev}:${before.ino}` };
+  const result = { value, sha256: hash(bytes), identity: `${before.dev}:${before.ino}` };
+  observations?.push({ path, sha256: result.sha256, identity: result.identity, bytes: bytes.length });
+  return result;
 }
 function readEvidence(common: string, operationId: string) {
   const store = openCleanupReadStore(common);
@@ -80,7 +83,8 @@ function known(event: CleanupOperationEvent): asserts event is Extract<CleanupOp
 }
 
 /** A ready row and no claim do not establish clearance: authenticate the newest terminal and operation suffix too. */
-function recoveryAt(common: string, evidence: CleanupOperationEvidence): CleanupRecoveryDependencies {
+function recoveryAt(common: string, evidence: CleanupOperationEvidence,
+  readOperation = (operationId: string) => readEvidence(common, operationId), observations?: ObservedRecord[]): CleanupRecoveryDependencies {
   const dependencies: CleanupRecoveryDependency[] = [], factory = join(common, 'factory');
   if (present(join(factory, 'bootstrap-incomplete'))) dependencies.push({ reason: 'bootstrap-marker' });
   if (present(join(factory, 'upgrade-incomplete'))) dependencies.push({ reason: 'upgrade-marker' });
@@ -94,10 +98,10 @@ function recoveryAt(common: string, evidence: CleanupOperationEvidence): Cleanup
     const terminal = evidence.newestCompletion, newest = evidence.newestOperation;
     known(terminal); known(newest);
     requireFact(terminal.data.repositoryId === evidence.snapshot.repositoryId && typeof terminal.data.operationId === 'string');
-    const unique = readEvidence(common, terminal.data.operationId).completion;
+    const unique = readOperation(terminal.data.operationId).completion;
     requireFact(same(unique, terminal));
     if (terminal.kind === 'upgrade.completed') {
-      record(join(upgradeDirectory(common, terminal.data.operationId), 'new-receipt.json'));
+      record(join(upgradeDirectory(common, terminal.data.operationId), 'new-receipt.json'), observations);
       const owned = readUpgradeInstalledReceipt(common, terminal.data.operationId), receipt = owned.receipt;
       requireFact(owned.sha256 === terminal.data.receiptSha256 && owned.identity === terminal.data.receiptIdentity
         && receipt.repositoryId === evidence.snapshot.repositoryId && receipt.release === evidence.snapshot.release
@@ -106,7 +110,7 @@ function recoveryAt(common: string, evidence: CleanupOperationEvidence): Cleanup
         && receipt.originalSha256 === terminal.data.originalInstalledSha256);
     } else {
       requireFact(terminal.kind === 'install.completed');
-      record(join(factory, 'installed-receipt.json'));
+      record(join(factory, 'installed-receipt.json'), observations);
       const owned = readInstalledReceipt(common), receipt = owned.receipt;
       requireFact(owned.sha256 === terminal.data.receiptSha256 && receipt.operationId === terminal.data.operationId
         && receipt.repositoryId === evidence.snapshot.repositoryId && receipt.release === evidence.snapshot.release
@@ -136,7 +140,8 @@ export async function inspectCleanupRecoveryDependencies(repository: string): Pr
   } catch { return { status: 'blocked', authority: 'unassessed', dependencies: [{ reason: 'repository-unavailable' }] }; }
 }
 
-function authenticateBackup(root: string, common: string, selection: CleanupBackupKey, evidence: CleanupOperationEvidence): OwnedBackup {
+function authenticateBackup(root: string, common: string, selection: CleanupBackupKey, evidence: CleanupOperationEvidence,
+  observations?: ObservedRecord[]): OwnedBackup {
   const completion = evidence.completion; known(completion);
   requireFact(completion.kind === 'upgrade.completed' && completion.data.operationId === selection.operationId
     && completion.data.repositoryId === evidence.snapshot.repositoryId);
@@ -144,13 +149,13 @@ function authenticateBackup(root: string, common: string, selection: CleanupBack
   const path = maintenanceBackupPath(common, selection.operationId, selection.backupId), backup = dirname(path);
   const parents = [directory(root, false), directory(common, false), directory(factory), directory(upgrade),
     directory(join(factory, 'maintenance-backups')), directory(dirname(backup)), directory(backup)];
-  record(join(upgrade, 'new-receipt.json'));
+  record(join(upgrade, 'new-receipt.json'), observations);
   const installed = readUpgradeInstalledReceipt(common, selection.operationId), receipt = installed.receipt;
   requireFact(installed.sha256 === completion.data.receiptSha256 && installed.identity === completion.data.receiptIdentity
     && receipt.receiptId === completion.data.receiptId && receipt.claimId === completion.data.claimId
     && receipt.repositoryId === completion.data.repositoryId && receipt.selectionDigest === completion.data.selectionDigest
     && receipt.manifestSha256 === completion.data.manifestSha256 && receipt.originalSha256 === completion.data.originalInstalledSha256);
-  const originalRecord = record(join(upgrade, 'original.json')), original = originalRecord.value;
+  const originalRecord = record(join(upgrade, 'original.json'), observations), original = originalRecord.value;
   exact(original, ['version','launcher','root','common','repositoryId','release','factoryIdentity','completion','receipt','receiptSha256',
     'install','toolchain','providers','toolchainLockSha256']);
   requireFact(hash(JSON.stringify(original)) === receipt.originalSha256 && original.version === 1
@@ -161,7 +166,7 @@ function authenticateBackup(root: string, common: string, selection: CleanupBack
     && cleanupObject(original.receipt) && original.receipt.repositoryId === original.repositoryId
     && original.receipt.operationId === original.completion.operationId && original.receipt.release === original.release
     && hash(`${JSON.stringify(original.receipt)}\n`) === original.receiptSha256 && same(original.launcher, receipt.launcher));
-  const intentRecord = record(join(upgrade, 'intent.json')), intent = intentRecord.value;
+  const intentRecord = record(join(upgrade, 'intent.json'), observations), intent = intentRecord.value;
   exact(intent, ['version','operationId','repositoryId','claimId','selectionDigest','originalSha256','backupReceiptSha256','candidate',
     'stageDigest','stageIdentity','operationIdentity','oldDirectoryIdentity','markerTemplateIdentity','markerTemplateSha256','atomicBinding',
     'oldInstall','oldToolchain','newInstall','newToolchain']);
@@ -172,7 +177,7 @@ function authenticateBackup(root: string, common: string, selection: CleanupBack
     && intent.operationIdentity === parents[3]!.identity && same(intent.candidate, receipt.candidate)
     && same(intent.oldInstall, original.install) && same(intent.oldToolchain, original.toolchain)
     && cleanupObject(intent.atomicBinding) && same(intent.atomicBinding.launcher, original.launcher));
-  const boundRecord = record(join(backup, 'backup-receipt.json')), bound = boundRecord.value;
+  const boundRecord = record(join(backup, 'backup-receipt.json'), observations), bound = boundRecord.value;
   exact(bound, ['version','receiptId','operationId','backupId','repositoryId','sourceShape','sourceRelease','sourceIdentity',
     'selectionDigest','requestSha256','sha256','identity','bytes','countDigest']);
   requireFact(boundRecord.sha256 === receipt.backupReceiptSha256 && bound.version === 1
@@ -184,7 +189,7 @@ function authenticateBackup(root: string, common: string, selection: CleanupBack
     && typeof bound.identity === 'string' && /^\d+:\d+$/.test(bound.identity)
     && typeof bound.sha256 === 'string' && SHA.test(bound.sha256) && typeof bound.countDigest === 'string' && SHA.test(bound.countDigest)
     && Number.isSafeInteger(bound.bytes) && Number(bound.bytes) > 0 && Number(bound.bytes) <= 512 * 1024 * 1024);
-  const request = record(join(backup, 'backup-request.json'));
+  const request = record(join(backup, 'backup-request.json'), observations);
   exact(request.value, ['source','target']);
   requireFact(request.sha256 === bound.requestSha256 && request.value.source === join(factory, 'history.sqlite') && request.value.target === path);
   noBackupSidecars(path);
@@ -234,6 +239,57 @@ function authenticateBackup(root: string, common: string, selection: CleanupBack
       intentSha256: receipt.intentSha256, claimId: receipt.claimId } };
 }
 
+function resolveAt(root: string, common: string, key: CleanupBackupKey, evidence: CleanupOperationEvidence,
+  recovery: CleanupRecoveryDependencies, readOperation: (operationId: string) => CleanupOperationEvidence,
+  observations?: ObservedRecord[]): CleanupBackupResolution {
+  const refuse = (reason: BackupRefusal['reason']): BackupRefusal => ({ status: 'refused', selection: key, reason });
+  if (evidence.completion.status === 'missing') {
+    return recovery.status === 'blocked' ? { status: 'protected', selection: key, ownership: 'unassessed', backup: null, dependencies: recovery.dependencies }
+      : refuse('authority-missing');
+  }
+  if (evidence.completion.status === 'ambiguous') return refuse('authority-ambiguous');
+  if (evidence.completion.status !== 'known') return refuse('authority-invalid');
+  if (evidence.completion.kind !== 'upgrade.completed') return refuse('unsupported-kind');
+  let backup: OwnedBackup;
+  try { backup = authenticateBackup(root, common, key, evidence, observations); } catch { return refuse('backup-invalid'); }
+  if (!same(evidence, readOperation(key.operationId)))
+    return { status: 'protected', selection: key, ownership: 'unassessed', backup: null, dependencies: [{ reason: 'authority-changed' }] };
+  if (recovery.status === 'blocked') return { status: 'protected', selection: key, ownership: 'authenticated', backup, dependencies: recovery.dependencies };
+  return backup;
+}
+
+/**
+ * Internal advisory adapter: the caller owns one already-open existing-only view.
+ * All DB joins stay in that transaction. The digest includes raw sidecar observations;
+ * repeating this adapter around analysis detects changed filesystem evidence.
+ */
+export function readCleanupSnapshotAuthority(root: string, common: string, store: CleanupReadStore,
+  selections: readonly CleanupBackupKey[] = [], checkDeadline: () => void = () => {}): { recovery: CleanupRecoveryDependencies; backups: CleanupBackupResolution[]; sha256: string | null } {
+  const observations: ObservedRecord[] = [];
+  try {
+    assertCleanupSnapshotView(store,common);
+    checkDeadline();
+    requireFact(process.platform === 'darwin' || process.platform === 'linux');
+    requireFact(selections.length <= 20 && selections.every(key => UUID.test(key.operationId) && UUID.test(key.backupId)));
+    const parents = [directory(root,false),directory(common,false),directory(join(common,'factory'))];
+    const readOperation = (operationId: string) => store.readCleanupOperationEvidence({ operationId });
+    const evidence = readOperation('00000000-0000-4000-8000-000000000000');
+    const recovery = recoveryAt(common,evidence,readOperation,observations);
+    const tupleEvidence = selections.map(key => { checkDeadline();const value=readOperation(key.operationId);checkDeadline();return value; });
+    requireFact(tupleEvidence.every(row => same(row.snapshot,evidence.snapshot)));
+    const backups = selections.map((key,index) => { checkDeadline();const value=resolveAt(root,common,key,tupleEvidence[index]!,recovery,readOperation,observations);checkDeadline();return value; });
+    const markers = ['bootstrap-incomplete','upgrade-incomplete'].map(name => ({ name, present: present(join(common,'factory',name)) }));
+    requireFact(parents.every(parent => directory(parent.path,parent.path !== root && parent.path !== common).identity === parent.identity));
+    assertCleanupSnapshotView(store,common);
+    checkDeadline();
+    return { recovery, backups, sha256: hash(JSON.stringify({ version: 1, evidence, tupleEvidence, parents, markers,
+      observations: observations.sort((a,b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0), recovery, backups })) };
+  } catch {
+    return { recovery: { status: 'blocked', authority: 'unassessed', dependencies: [{ reason: 'repository-unavailable' }] },
+      backups: selections.map(selection => ({ status: 'refused', selection, reason: 'repository-unavailable' })), sha256: null };
+  }
+}
+
 /** One selected tuple, never a path or filesystem discovery request. Historical counts come only from the authenticated copy. */
 export async function resolveOwnedCleanupBackup(repository: string, selection: CleanupBackupKey): Promise<CleanupBackupResolution> {
   const key = cleanupObject(selection) && typeof selection.operationId === 'string' && typeof selection.backupId === 'string'
@@ -246,18 +302,6 @@ export async function resolveOwnedCleanupBackup(repository: string, selection: C
     assertForwardRuntime();
     const { root, common } = await repositoryIdentity(repository), evidence = readEvidence(common, key.operationId);
     const recovery = recoveryAt(common, evidence);
-    if (evidence.completion.status === 'missing') {
-      return recovery.status === 'blocked' ? { status: 'protected', selection: key, ownership: 'unassessed', backup: null, dependencies: recovery.dependencies }
-        : refuse('authority-missing');
-    }
-    if (evidence.completion.status === 'ambiguous') return refuse('authority-ambiguous');
-    if (evidence.completion.status !== 'known') return refuse('authority-invalid');
-    if (evidence.completion.kind !== 'upgrade.completed') return refuse('unsupported-kind');
-    let backup: OwnedBackup;
-    try { backup = authenticateBackup(root, common, key, evidence); } catch { return refuse('backup-invalid'); }
-    if (!same(evidence, readEvidence(common, key.operationId)))
-      return { status: 'protected', selection: key, ownership: 'unassessed', backup: null, dependencies: [{ reason: 'authority-changed' }] };
-    if (recovery.status === 'blocked') return { status: 'protected', selection: key, ownership: 'authenticated', backup, dependencies: recovery.dependencies };
-    return backup;
+    return resolveAt(root,common,key,evidence,recovery,operationId => readEvidence(common,operationId));
   } catch { return refuse('repository-unavailable'); }
 }
