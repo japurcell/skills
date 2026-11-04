@@ -87,6 +87,17 @@ test('release dependency ownership selection performs read-only inspection witho
   assert.doesNotMatch(result.stdout, /native installed dependency ownership/);
 });
 
+test('release dependency claim foundation selection refuses unsupported admission without native acquisition', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'dependency-claim'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /generic dependency admission refuses without an installed exact-selection binding/);
+  assert.match(result.stdout, /dependency inspection rejects extra or unsupported selection before creating managed state/);
+  assert.doesNotMatch(result.stdout, /genuine (?:installed|upgraded) dependency admission races/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
