@@ -33,6 +33,19 @@ export interface ActiveInstalledCompletion {
   kind: 'install.completed' | 'upgrade.completed'; completion: InstalledCompletion;
   repositoryId: string; release: string;
 }
+export type CleanupOperationEvent = { status: 'missing' | 'ambiguous' }
+  | { status: 'opaque'; cursor: string; reason: 'invalid-type' | 'oversized' | 'malformed' | 'unknown-format' }
+  | { status: 'known'; cursor: string; kind: string; sha256: string; data: Record<string, unknown> };
+export type CleanupRecoveryClaim = { status: 'opaque'; id: string | null }
+  | { status: 'known'; id: string; kind: Claim['kind']; operationId: string | null;
+      maintenanceKind: MaintenanceKind | null; phase: MaintenancePhase | null; backupId: string | null; stagePath: string | null };
+export type CleanupActivityEvidence = { status: 'clear' }
+  | { status: 'blocked'; source: 'attempt' | 'invocation'; id: string | null; cursor: string };
+export interface CleanupOperationEvidence {
+  snapshot: CleanupSnapshot; completion: CleanupOperationEvent; backupBound: CleanupOperationEvent;
+  newestOperation: CleanupOperationEvent; newestCompletion: CleanupOperationEvent;
+  claims: CleanupRecoveryClaim[]; occupiedAttempts: boolean; activity: CleanupActivityEvidence;
+}
 export interface DependencyMaintenanceBinding {
   version: 1; bundleRoot: string; originalSha256: string; originalCompletionSha256: string;
   expectedToolchainSha256: string; observedToolchainSha256: string;
@@ -111,6 +124,46 @@ export class NotificationMetadataError extends Error { constructor(readonly stat
 function exactObject(value: unknown, keys: string[]): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) &&
     Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
+}
+
+/** These event projections never forward an unknown body, owner token or operator note. */
+function cleanupOperationEvent(rows: Record<string, unknown>[]): CleanupOperationEvent {
+  if (!rows.length) return { status: 'missing' };
+  if (rows.length !== 1) return { status: 'ambiguous' };
+  const row = rows[0]!, cursor = String(row['cursor']); cleanupCursor(cursor);
+  const opaque = (reason: 'invalid-type' | 'oversized' | 'malformed' | 'unknown-format'): CleanupOperationEvent => ({ status: 'opaque', cursor, reason });
+  if (row['body_type'] !== 'text' || typeof row['kind'] !== 'string') return opaque('invalid-type');
+  if (BigInt(String(row['bytes'])) > 8192n) return opaque('oversized');
+  if (typeof row['data'] !== 'string') return opaque('invalid-type');
+  let data: unknown;
+  try { data = JSON.parse(row['data']); } catch { return opaque('malformed'); }
+  if (!cleanupObject(data) || !cleanupId(data.at)) return opaque('unknown-format');
+  const uuid = (value: unknown) => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  const sha = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  const owner = (value: unknown) => cleanupObject(value) && exactObject(value, ['host','pid','start'])
+    && cleanupId(value.host) && Number.isSafeInteger(value.pid) && Number(value.pid) > 0 && cleanupId(value.start);
+  const kind = row['kind'];
+  let allowed: string[];
+  if (kind === 'install.completed' || kind === 'upgrade.completed') {
+    allowed = ['version','operationId','repositoryId','claimId','selectionDigest','manifestSha256','receiptId','receiptSha256','controllerOwner','at',
+      ...(kind === 'install.completed' ? ['stageIdentity'] : ['receiptIdentity','launcherOwner','originalCompletionSha256','originalInstalledSha256'])];
+    if (!exactObject(data, allowed) || data.version !== 1 || ![data.operationId,data.repositoryId,data.claimId,data.receiptId].every(uuid)
+      || ![data.selectionDigest,data.manifestSha256,data.receiptSha256].every(sha) || !owner(data.controllerOwner)
+      || kind === 'install.completed' && (typeof data.stageIdentity !== 'string' || !/^\d+:\d+$/.test(data.stageIdentity))
+      || kind === 'upgrade.completed' && (!owner(data.launcherOwner) || !sha(data.originalCompletionSha256)
+        || !sha(data.originalInstalledSha256) || typeof data.receiptIdentity !== 'string' || !/^\d+:\d+$/.test(data.receiptIdentity))) return opaque('unknown-format');
+  } else if (kind === 'maintenance.backup_bound') {
+    if (!exactObject(data, ['operationId','claimId','backupId','at']) || ![data.operationId,data.claimId,data.backupId].every(uuid)) return opaque('unknown-format');
+  } else if (kind === 'maintenance.completed_recovery_inspected') {
+    allowed = ['operationId','receiptId','receiptSha256','note','controllerState','controllerLimitation','launcherState','launcherLimitation',
+      'originalLauncherState','originalLauncherLimitation','childClosure','operatorConfirmed','at'];
+    if (!exactObject(data, allowed) || !uuid(data.operationId) || !uuid(data.receiptId) || !sha(data.receiptSha256)
+      || data.childClosure !== 'operator-confirmed-unknown' || data.operatorConfirmed !== true
+      || ['controllerState','launcherState','originalLauncherState'].some(key => !['not_live','unknown'].includes(String((data as Record<string, unknown>)[key])))
+      || ['note','controllerLimitation','launcherLimitation','originalLauncherLimitation'].some(key => !cleanupId((data as Record<string, unknown>)[key]))) return opaque('unknown-format');
+    data = { operationId: data.operationId, receiptId: data.receiptId, receiptSha256: data.receiptSha256, at: data.at };
+  } else return opaque('unknown-format');
+  return { status: 'known', cursor, kind, sha256: cleanupHash(row['data']), data: data as Record<string, unknown> };
 }
 
 function text(value: string, label: string) {
@@ -193,7 +246,7 @@ export function openMaintenanceStore(commonDir: string) {
 }
 
 export type CleanupReadStore = Pick<RepositoryStore, 'close' | 'readCleanupSnapshot' | 'pageCleanupInvocationFacts'
-  | 'pageCleanupAttemptFacts' | 'pageCleanupCaptureHeaders' | 'measureCleanupCaptures' | 'readCleanupCapture' | 'readCleanupAttempt' | 'readCleanupEvent'>;
+  | 'pageCleanupAttemptFacts' | 'pageCleanupCaptureHeaders' | 'measureCleanupCaptures' | 'readCleanupCapture' | 'readCleanupAttempt' | 'readCleanupEvent' | 'readCleanupOperationEvidence'>;
 
 /** Existing-only view. All pages share one read-only SQLite transaction until close(). */
 export function openCleanupReadStore(commonDir: string): CleanupReadStore {
@@ -230,6 +283,7 @@ export function openCleanupReadStore(commonDir: string): CleanupReadStore {
       readCleanupCapture: (input: Parameters<RepositoryStore['readCleanupCapture']>[0]) => read(() => store.readCleanupCapture(input)),
       readCleanupAttempt: (input: Parameters<RepositoryStore['readCleanupAttempt']>[0]) => read(() => store.readCleanupAttempt(input)),
       readCleanupEvent: (input: Parameters<RepositoryStore['readCleanupEvent']>[0]) => read(() => store.readCleanupEvent(input)),
+      readCleanupOperationEvidence: (input: Parameters<RepositoryStore['readCleanupOperationEvidence']>[0]) => read(() => store.readCleanupOperationEvidence(input)),
     });
   } catch (error) { database.close(); throw error; }
 }
@@ -507,6 +561,137 @@ export class RepositoryStore {
     const statement = this.database.prepare(`SELECT coalesce(max(${table === 'observation_events' ? 'cursor' : 'rowid'}),0) AS cursor FROM ${table}`);
     statement.setReadBigInts(true);
     const cursor = String(statement.get()!['cursor']); cleanupCursor(cursor); return cursor;
+  }
+
+  /** Exact operator clearance is a committed row AND its unique event, never the absence of an owner. */
+  private cleanupActivity(): CleanupActivityEvidence {
+    const cleared = (invocation: 'a.invocation_id' | 'i.id') => `EXISTS (
+      SELECT 1 FROM clearances c WHERE CASE WHEN typeof(c.data)='text' AND octet_length(c.data)<=16384 AND json_valid(c.data) THEN
+        typeof(c.id)='text' AND octet_length(c.id) BETWEEN 1 AND 256 AND typeof(c.claim_id)='text' AND octet_length(c.claim_id) BETWEEN 1 AND 256
+        AND json_type(c.data)='object' AND json_type(c.data,'$.id')='text' AND json_type(c.data,'$.claimId')='text'
+        AND json_extract(c.data,'$.id')=c.id AND json_extract(c.data,'$.claimId')=c.claim_id
+        AND json_type(c.data,'$.invocationId')='text' AND json_extract(c.data,'$.invocationId')=${invocation}
+        AND json_extract(c.data,'$.basis')='operator_confirmed' AND json_extract(c.data,'$.inspection') IN ('not_live','unknown')
+        AND json_type(c.data,'$.note')='text' AND octet_length(json_extract(c.data,'$.note')) BETWEEN 1 AND 256
+        AND length(trim(json_extract(c.data,'$.note')))>0
+        AND (json_type(c.data,'$.details') IS NULL OR json_type(c.data,'$.details')='object' AND octet_length(json_extract(c.data,'$.details'))<=8192)
+        AND NOT EXISTS (SELECT 1 FROM json_each(c.data) WHERE key NOT IN ('id','claimId','invocationId','note','basis','inspection','details'))
+        AND (SELECT count(*) FROM json_each(c.data))=6+(json_type(c.data,'$.details') IS NOT NULL)
+        AND (SELECT count(*) FROM (SELECT 1 FROM observation_events e WHERE e.kind='owner.cleared' AND
+          CASE WHEN typeof(e.data)='text' AND octet_length(e.data)<=8192 AND json_valid(e.data) THEN
+            json_type(e.data)='object' AND json_type(e.data,'$.claimId')='text' AND json_type(e.data,'$.clearanceId')='text'
+            AND json_type(e.data,'$.invocationId')='text' AND json_extract(e.data,'$.claimId')=c.claim_id
+            AND json_extract(e.data,'$.clearanceId')=c.id AND json_extract(e.data,'$.invocationId')=${invocation}
+            AND json_extract(e.data,'$.basis')='operator_confirmed' AND json_type(e.data,'$.at')='text'
+            AND octet_length(json_extract(e.data,'$.at')) BETWEEN 1 AND 256
+            AND (SELECT count(*) FROM json_each(e.data))=5
+            AND NOT EXISTS (SELECT 1 FROM json_each(e.data) WHERE key NOT IN ('claimId','invocationId','clearanceId','basis','at'))
+          ELSE 0 END LIMIT 2))=1
+      ELSE 0 END)`;
+    const attempt = this.database.prepare(`SELECT a.rowid AS cursor,
+      CASE WHEN typeof(a.id)='text' AND octet_length(a.id)<=256 THEN a.id END AS id
+      FROM attempts a LEFT JOIN invocations i ON i.id=a.invocation_id LEFT JOIN operations o ON o.id=a.operation_id
+      WHERE (CASE WHEN typeof(a.data)='text' AND octet_length(a.data)<=65536 AND json_valid(a.data) THEN
+        typeof(a.occupied)='integer' AND a.occupied=0 AND json_type(a.data)='object'
+        AND typeof(a.id)='text' AND octet_length(a.id) BETWEEN 1 AND 256 AND json_extract(a.data,'$.id')=a.id
+        AND json_type(a.data,'$.id')='text' AND json_type(a.data,'$.invocationId')='text' AND json_type(a.data,'$.operationId')='text'
+        AND json_type(a.data,'$.runId')='text' AND json_type(a.data,'$.operationKey')='text' AND json_type(a.data,'$.kind')='text'
+        AND octet_length(json_extract(a.data,'$.invocationId')) BETWEEN 1 AND 256 AND octet_length(json_extract(a.data,'$.operationId')) BETWEEN 1 AND 256
+        AND octet_length(json_extract(a.data,'$.runId')) BETWEEN 1 AND 256 AND octet_length(json_extract(a.data,'$.operationKey')) BETWEEN 1 AND 256
+        AND json_extract(a.data,'$.invocationId')=a.invocation_id AND json_extract(a.data,'$.operationId')=a.operation_id
+        AND json_extract(a.data,'$.kind')=a.kind AND a.kind IN ('agent','command')
+        AND json_extract(a.data,'$.runId')=i.run_id AND o.run_id=i.run_id AND json_extract(a.data,'$.operationKey')=o.operation_key
+        AND json_type(a.data,'$.quiescent')='true' AND json_extract(a.data,'$.launch') IN ('admitted','started','not_started','unknown')
+        AND (json_type(a.data,'$.outcome')='null' OR json_extract(a.data,'$.outcome') IN ('succeeded','failed','needs_input','interrupted'))
+        AND (CASE WHEN json_type(a.data,'$.outcome')='null' THEN json_extract(a.data,'$.launch') IN ('admitted','started') AND json_type(a.data,'$.evidence')='null'
+          ELSE json_extract(a.data,'$.launch') IN ('started','not_started','unknown')
+            AND NOT (json_extract(a.data,'$.launch')='not_started' AND json_extract(a.data,'$.outcome')='succeeded')
+            AND json_type(a.data,'$.evidence')='text' AND octet_length(json_extract(a.data,'$.evidence')) BETWEEN 1 AND 256
+            AND instr(json_extract(a.data,'$.evidence'),char(0))=0 END)
+        AND (CASE WHEN json_extract(a.data,'$.launch')='started' THEN
+          json_type(a.data,'$.owner')='object' AND (SELECT count(*) FROM json_each(a.data,'$.owner'))=3
+          AND NOT EXISTS (SELECT 1 FROM json_each(a.data,'$.owner') WHERE key NOT IN ('host','pid','start'))
+          AND json_type(a.data,'$.owner.host')='text' AND octet_length(json_extract(a.data,'$.owner.host')) BETWEEN 1 AND 256
+          AND instr(json_extract(a.data,'$.owner.host'),char(0))=0
+          AND json_type(a.data,'$.owner.pid')='integer' AND json_extract(a.data,'$.owner.pid') BETWEEN 1 AND 9007199254740991
+          AND (json_type(a.data,'$.owner.start')='null' OR json_type(a.data,'$.owner.start')='text' AND octet_length(json_extract(a.data,'$.owner.start')) BETWEEN 1 AND 256)
+        ELSE json_type(a.data,'$.owner')='null' END)
+        AND (CASE WHEN json_extract(a.data,'$.cleanupBasis')='operator_confirmed' THEN ${cleared('a.invocation_id')}
+          ELSE json_type(a.data,'$.cleanupBasis') IS NULL AND json_extract(a.data,'$.launch') IN ('started','not_started','unknown')
+            AND json_extract(a.data,'$.outcome') IN ('succeeded','failed','needs_input','interrupted')
+            AND NOT (json_extract(a.data,'$.launch')='not_started' AND json_extract(a.data,'$.outcome')='succeeded')
+            AND json_type(a.data,'$.evidence')='text' AND octet_length(json_extract(a.data,'$.evidence')) BETWEEN 1 AND 256 END)
+      ELSE 0 END) IS NOT TRUE ORDER BY a.rowid LIMIT 1`);
+    attempt.setReadBigInts(true);
+    const blockedAttempt = attempt.get();
+    if (blockedAttempt) return { status: 'blocked', source: 'attempt', id: cleanupId(blockedAttempt['id']) ? blockedAttempt['id'] : null,
+      cursor: String(blockedAttempt['cursor']) };
+    const invocation = this.database.prepare(`SELECT i.rowid AS cursor,
+      CASE WHEN typeof(i.id)='text' AND octet_length(i.id)<=256 THEN i.id END AS id FROM invocations i WHERE (
+      CASE WHEN typeof(i.data)='text' AND octet_length(i.data)<=65536 AND json_valid(i.data) THEN
+        json_type(i.data)='object' AND typeof(i.id)='text' AND octet_length(i.id) BETWEEN 1 AND 256 AND json_extract(i.data,'$.id')=i.id
+        AND json_type(i.data,'$.id')='text' AND json_type(i.data,'$.runId')='text' AND json_type(i.data,'$.worktreeId')='text'
+        AND octet_length(json_extract(i.data,'$.runId')) BETWEEN 1 AND 256 AND octet_length(json_extract(i.data,'$.worktreeId')) BETWEEN 1 AND 256
+        AND json_extract(i.data,'$.runId')=i.run_id AND json_extract(i.data,'$.worktreeId')=i.worktree_id
+        AND json_extract(i.data,'$.stage') IN ('starting','running','shutting_down','finalized')
+        AND (CASE WHEN json_extract(i.data,'$.stage')='finalized' THEN
+          json_extract(i.data,'$.outcome') IN ('succeeded','failed','needs_input','interrupted','cancelled')
+          AND json_extract(i.data,'$.cleanup') IN ('complete','unknown')
+          AND (json_extract(i.data,'$.cleanup')='complete' OR ${cleared('i.id')})
+        ELSE json_type(i.data,'$.outcome')='null' AND json_type(i.data,'$.cleanup') IS NULL AND ${cleared('i.id')} END)
+      ELSE 0 END) IS NOT TRUE ORDER BY i.rowid LIMIT 1`);
+    invocation.setReadBigInts(true);
+    const blockedInvocation = invocation.get();
+    return blockedInvocation ? { status: 'blocked', source: 'invocation', id: cleanupId(blockedInvocation['id']) ? blockedInvocation['id'] : null,
+      cursor: String(blockedInvocation['cursor']) } : { status: 'clear' };
+  }
+
+  /** Exact operation equality, LIMIT 2 uniqueness and SQL body/type bounds precede JavaScript decoding. */
+  readCleanupOperationEvidence(input: { operationId: string }): CleanupOperationEvidence {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.operationId))
+      throw new Error('invalid cleanup operation identity');
+    return this.cleanupRead(() => {
+      const columns = `cursor,typeof(data) AS body_type,octet_length(data) AS bytes,
+        CASE WHEN typeof(kind)='text' AND octet_length(kind)<=256 THEN kind END AS kind,
+        CASE WHEN typeof(data)='text' AND octet_length(data)<=8192 THEN data END AS data`;
+      const operation = `CASE WHEN json_valid(data) THEN json_extract(data,'$.operationId') END=?`;
+      const read = (where: string, keyed: boolean, unique = true) => {
+        const statement = this.database.prepare(`SELECT ${columns} FROM observation_events WHERE ${where} ORDER BY cursor DESC LIMIT ${unique ? 2 : 1}`);
+        statement.setReadBigInts(true);
+        return cleanupOperationEvent(keyed ? statement.all(input.operationId) : statement.all());
+      };
+      const snapshot = this.readCleanupSnapshot();
+      const statement = this.database.prepare(`SELECT
+        CASE WHEN typeof(id)='text' AND octet_length(id)<=256 THEN id END AS id,
+        CASE WHEN typeof(data)='text' AND octet_length(data)<=8192 THEN data END AS data,
+        CASE WHEN json_valid(data) THEN id=json_extract(data,'$.id') AND token=json_extract(data,'$.token')
+          AND kind=json_extract(data,'$.kind') AND resource_key=json_extract(data,'$.resourceKey') ELSE 0 END AS consistent
+        FROM owner_claims ORDER BY rowid LIMIT 2`);
+      const claims: CleanupRecoveryClaim[] = statement.all().map(row => {
+        const id = cleanupId(row['id']) ? row['id'] : null;
+        const opaque: CleanupRecoveryClaim = { status: 'opaque', id };
+        if (!id || row['consistent'] !== 1 || typeof row['data'] !== 'string') return opaque;
+        let value: unknown;
+        try { value = JSON.parse(row['data']); } catch { return opaque; }
+        if (!cleanupObject(value) || !['worktree','dashboard','maintenance'].includes(String(value.kind))) return opaque;
+        if (value.kind !== 'maintenance') return { status: 'known', id, kind: value.kind as 'worktree' | 'dashboard',
+          operationId: null, maintenanceKind: null, phase: null, backupId: null, stagePath: null };
+        const selected = value.maintenance;
+        if (!cleanupObject(selected) || selected.repositoryId !== snapshot.repositoryId || value.resourceKey !== snapshot.repositoryId
+          || !cleanupId(selected.operationId) || !['install','upgrade','dependencies','repair','uninstall','cleanup'].includes(String(selected.kind))
+          || !['preparing','handoff-ready','modifying','validating'].includes(String(selected.phase))
+          || !(selected.backupId === null || cleanupId(selected.backupId))
+          || typeof selected.stagePath !== 'string' || Buffer.byteLength(selected.stagePath) > 4096) return opaque;
+        return { status: 'known', id, kind: 'maintenance', operationId: selected.operationId,
+          maintenanceKind: selected.kind as MaintenanceKind, phase: selected.phase as MaintenancePhase,
+          backupId: selected.backupId as string | null, stagePath: selected.stagePath };
+      });
+      return { snapshot, completion: read(`kind LIKE '%.completed' AND ${operation}`, true),
+        backupBound: read(`kind='maintenance.backup_bound' AND ${operation}`, true),
+        newestCompletion: read("kind LIKE '%.completed'", false, false),
+        newestOperation: read("kind LIKE 'maintenance.%' OR kind LIKE '%.completed'", false, false), claims,
+        occupiedAttempts: Boolean(this.database.prepare('SELECT 1 FROM attempts WHERE occupied<>0 LIMIT 1').get()), activity: this.cleanupActivity() };
+    });
   }
 
   readCleanupSnapshot(): CleanupSnapshot {
