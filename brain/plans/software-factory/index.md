@@ -138,3 +138,5 @@
 - [C3b learning closure source and proof](research/cleanup-c3b-learning-closure-2026-11-04.md)
 
 - [Darwin compiler-own diagnostics DEFER](research/darwin-compiler-diagnostic-defer-2026-11-04.md)
+
+- [Windows Phase A host-bootstrap observation](research/windows-metadata-phase-a-observation-2026-11-04.md)
