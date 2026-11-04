@@ -94,3 +94,10 @@ Stop after the one native result. Root chooses the next bounded action from actu
 ## Coordinator checkpoint
 
 Source37fb36df is normally integrated at24a50393 with all four task blobs byte-identical. Integrated63 Windows plus17 CI checks pass80/80, zero skips,5235.065916ms; syntax/actionlint/diff pass (`/tmp/factory-owned-creator-coordinator-integrated.log`). The actual push range matches neither IR1 native nor Darwin timing; no unchanged experiment is selected. Root authorized one exact-head native Windows experiment after this checkpoint. MSVC compilation, actual creator/debug scheduling/CRT teardown, final count and all34 native predicates are still unproved. The source preservation packet is `/tmp/factory-owned-creator-final-preservation.log`.
+
+
+## Single native workflow outcome
+
+Single changed creator candidate run41790791621/job126443439270 at60b7ded250f9690ba6ee2c1246274d6fc6e8bd2b FAIL07:14:17UTC beforeMSVC/nativecases. Publicprotocol62pass/1fail/0skip,6081.8706ms: new late-COMPLETE owned-descendant-pipe timeout test expects fullwire, but actualcapture ends RESULT none LF withoutCOMPLETE (line1035,711.3055ms). No delivered lateCOMPLETE/nativecompile/creatorcount/34case result is established. Guardrefused/uploadskipped/artifactinventoryempty. Log `/tmp/factory-owned-creator-41790791621-job.log`. No cause/repair claim or retry; qualification reproduction/repair requires separately bounded root task, preserving test expectation/bounds/guards.
+
+Portable80/80 evidence remains valid for its Darwin-hosted run. The Windows public protocol failure is an actual cross-platform qualification gap, not an environmental diagnosis or evidence about Win32 creator cleanup. The original60 controls remain preserved. No skip, expectation weakening, deletion or unchanged rerun is authorized by this retained result.
