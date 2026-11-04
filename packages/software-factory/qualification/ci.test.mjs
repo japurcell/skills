@@ -232,3 +232,24 @@ test('repair inspection native jobs retain independent Linux and Darwin budgets 
   const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(foundation, /repair-inspection/);
 });
+
+
+test('cleanup reads stay separately selectable without advertising cleanup mutation', () => {
+  const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'cleanup-reads'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /cleanup read-only view holds a consistent snapshot across concurrent updates/);
+  assert.match(result.stdout, /cleanup reads empty retained history without treating absent claims as recovery clearance/);
+  assert.match(result.stdout, /tests 12/);
+  for (const args of [['maintenance', '--operation', 'cleanup'], ['maintenance']]) {
+    const refused = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000, env });
+    assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+    assert.match(refused.stderr, /no tests match supplied filters|not implemented/);
+    assert.equal(refused.stdout, '');
+  }
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  assert.match(foundation, /run\('cleanup-reads', \['scripts\/test\.mjs', 'qualification', '--area', 'cleanup-reads'\]\)/);
+});

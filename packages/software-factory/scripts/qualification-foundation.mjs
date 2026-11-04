@@ -86,6 +86,8 @@ try {
     run('atomic-publication-native-linux-x64', ['scripts/test.mjs', 'qualification', '--area', 'atomic-publication']);
   }
   run('store', ['scripts/test.mjs', 'store']);
+  // Portable read-only SQLite proof stays separate from the original store/fixture lists.
+  run('cleanup-reads', ['scripts/test.mjs', 'qualification', '--area', 'cleanup-reads']);
   const placementPassed = run('placement', ['--test', 'test/placement.test.mjs']);
   if (process.platform === 'darwin' && !placementPassed) {
     run('filesystem-diagnostic', ['scripts/qualification-filesystem.mjs']);

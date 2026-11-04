@@ -23,6 +23,7 @@
 - [lifecycle-specification.md](lifecycle-specification.md)
 - [map.md](map.md)
 - [observability-ui-specification.md](observability-ui-specification.md)
+- [research/cleanup-c1-typed-readers-2026-11-04.md](research/cleanup-c1-typed-readers-2026-11-04.md)
 - [research/cleanup-interface-feasibility-2026-11-04.md](research/cleanup-interface-feasibility-2026-11-04.md)
 - [research/cleanup-reference-boundaries-2026-10-22.md](research/cleanup-reference-boundaries-2026-10-22.md)
 - [research/copilot-protocol-preflight-2026-10-22.md](research/copilot-protocol-preflight-2026-10-22.md)
