@@ -1,11 +1,12 @@
 // Explicit native entry point. Missing Windows/MSVC/runtime prerequisites fail.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync, existsSync, lstatSync, copyFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, lstatSync, copyFileSync, realpathSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cases, limit, readBounded, validateNative } from './windows-owned-image.mjs';
 import { parseBuildObservation, formatFailure } from './windows-owned-image-diagnostics.mjs';
+import { inboxEnvironment, parseProfile, formatProfile } from './windows-owned-image-host-profile.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const evidence = resolve(process.env.WINDOWS_OWNED_IMAGE_EVIDENCE ?? 'windows-owned-image-evidence');
@@ -42,19 +43,27 @@ function run(application, args, maximum, timeout) {
 try {
   if (process.platform !== 'win32' || process.arch !== 'x64' || process.version !== 'v24.22.1' || interrupted || existsSync(evidence)) throw new Error('host');
   mkdirSync(evidence, { recursive: false });
-  const powershell = join(process.env.SystemRoot ?? '', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const selectedHost = join(process.env.SystemRoot ?? '', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const powershell = realpathSync(selectedHost);
   if (!lstatSync(powershell).isFile()) throw new Error('host');
+  const buildEnvironment = inboxEnvironment(process.env, powershell, selectedHost);
   // Build output is private. Never print compiler paths, versions or logs.
   diagnostic = { phase: 'build', category: 'launch' };
   const build = spawnSync(powershell, ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
     '-File', join(here, 'windows-owned-image-native-build.ps1'), '-Evidence', evidence],
-  { windowsHide: true, shell: false, encoding: 'utf8', timeout: 180000, maxBuffer: 1048576 });
+  { windowsHide: true, shell: false, encoding: 'utf8', timeout: 180000, maxBuffer: 1048576, env: buildEnvironment });
   diagnostic = { phase: 'build', ...parseBuildObservation(build.stderr) };
   if (build.error || build.signal !== null) diagnostic = { phase: 'build', category: build.error?.code === 'ETIMEDOUT'
     ? 'timeout' : build.error?.code === 'ENOBUFS' ? 'cap' : 'launch' };
   if (interrupted) diagnostic = { phase: 'build', category: 'interrupted' };
   writeFileSync(join(evidence, 'build-launch.private.json'), JSON.stringify({ status: build.status, signal: build.signal,
     stdout: build.stdout ?? '', stderr: build.stderr ?? '', error: build.error ? 'launch' : null }), { flag: 'wx' });
+  let profile = null;
+  try { profile = parseProfile(readBounded(join(evidence, 'host-profile.private.tsv'), 512)); } catch { }
+  process.stdout.write(formatProfile(profile));
+  if (!profile || profile.origin !== 'inbox' || profile.availability !== 'available') {
+    diagnostic = { phase: 'build', category: 'host' }; throw new Error('host-profile');
+  }
   if (build.status !== 0 || build.signal !== null || build.error || interrupted) throw new Error('build');
   diagnostic = { phase: 'build', category: 'report' };
   const report = JSON.parse(readBounded(join(evidence, 'build.private.json')));

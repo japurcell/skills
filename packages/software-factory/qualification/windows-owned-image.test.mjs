@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildCategories, parseBuildDiagnostic, formatFailure } from './windows-owned-image-diagnostics.mjs';
 import * as diagnosticApi from './windows-owned-image-diagnostics.mjs';
+import * as hostProfile from './windows-owned-image-host-profile.mjs';
 
 // Public seam: bounded native evidence -> fixed sanitized qualification result.
 const positive = () => [
@@ -367,4 +368,41 @@ test('module canary rejects forged metadata, multiline/oversize data and inconsi
     { module: { ...value.module, direct: 'imported' } }])
     assert.equal(formatFailure({ phase: 'build', ...value, ...patch }),
       'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n');
+});
+
+const selectedWinPs = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+test('candidate child environment contains only the selected WinPS inbox module path', () => {
+  const original = { SystemRoot: 'C:\\Windows', PATH: 'retained', PSModulePath: 'inherited-core', pSmOdUlEpAtH: 'inherited-user',
+    WinPSModulePath: 'inherited-other', FACTORY_OWNED_IMAGE_INBOX: 'forged' };
+  const environment = hostProfile.inboxEnvironment(original, selectedWinPs, selectedWinPs);
+  assert.equal(environment.PSModulePath, 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Modules');
+  assert.equal(environment.FACTORY_OWNED_IMAGE_INBOX, environment.PSModulePath);
+  assert.equal(environment.FACTORY_OWNED_IMAGE_PROFILE, 'winps-inbox-only');
+  assert.equal(environment.PATH, 'retained');
+  assert.deepEqual(Object.keys(environment).filter(key => key.toLowerCase() === 'psmodulepath'), ['PSModulePath']);
+  assert.equal(Object.keys(environment).some(key => key.toLowerCase() === 'winpsmodulepath'), false);
+  assert.equal(original.PSModulePath, 'inherited-core');
+});
+
+test('candidate environment refuses an alternate, relative or noncanonical host', () => {
+  for (const host of ['powershell.exe', 'C:\\foreign\\powershell.exe', '\\\\remote\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',
+    'C:\\Windows\\SysWOW64\\WindowsPowerShell\\v1.0\\powershell.exe'])
+    assert.throws(() => hostProfile.inboxEnvironment({}, host, selectedWinPs), { message: 'host-profile' });
+  for (const root of ['C:\\Win[1]', 'C:\\Win*', 'C:\\Win?', 'C:\\Win;other', 'C:\\Win\nprivate']) {
+    const host = `${root}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
+    assert.throws(() => hostProfile.inboxEnvironment({}, host, host), { message: 'host-profile' });
+  }
+});
+
+test('host-profile facts expose only a coherent closed origin and availability result', () => {
+  assert.deepEqual(hostProfile.parseProfile('OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\n'),
+    { profile: 'winps-inbox-only', origin: 'inbox', availability: 'available' });
+  for (const text of ['OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tunavailable\n',
+    'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tC:\\private\tavailable\n',
+    'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\nprivate\n', 'x'.repeat(513)])
+    assert.equal(hostProfile.parseProfile(text), null);
+  assert.equal(hostProfile.formatProfile({ profile: 'winps-inbox-only', origin: 'inbox', availability: 'available' }),
+    'Owned image host profile=winps-inbox-only origin=inbox availability=available\n');
+  assert.equal(hostProfile.formatProfile({ profile: 'winps-inbox-only', origin: 'C:\\private', availability: 'available' }),
+    'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable\n');
 });
