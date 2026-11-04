@@ -76,6 +76,7 @@
 - [research/windows-handle-lifetime-decision-2026-11-04.md](research/windows-handle-lifetime-decision-2026-11-04.md)
 - [research/windows-hook-job-completion-2026-10-22.md](research/windows-hook-job-completion-2026-10-22.md)
 - [research/windows-node-launch-equivalence-2026-10-22.md](research/windows-node-launch-equivalence-2026-10-22.md)
+- [research/windows-owned-creator-lifetime-contract-2026-11-04.md](research/windows-owned-creator-lifetime-contract-2026-11-04.md)
 - [research/windows-route-native-diagnosis-2026-11-03.md](research/windows-route-native-diagnosis-2026-11-03.md)
 - [research/windows-startup-artifacts-2026-10-21.md](research/windows-startup-artifacts-2026-10-21.md)
 - [research/windows-startup-feasibility-2026-10-22.md](research/windows-startup-feasibility-2026-10-22.md)
