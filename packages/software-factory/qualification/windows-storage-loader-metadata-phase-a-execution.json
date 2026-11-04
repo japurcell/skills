@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "scope": "windows-storage-loader-phase-a-execution-control",
+  "purpose": "one-initial-fixed-host-bootstrap-observation",
+  "rootExecutionDecision": "released-phase-a-observation-only",
+  "approvedCodeCommit": "0a4bf76e5ac94d598000bcf8b8ca640ae4d3b2dc",
+  "integratedProofHead": "15726865bd832818935c2a755d7e70da82becb36",
+  "source10Commit": "222924947e2a9b4c24a1d7c3eddaa426b0d15403",
+  "testedSources": [
+    {
+      "path": ".github/workflows/windows-storage-loader-metadata.yml",
+      "gitBlob": "b1449909f239730bce9e59b2ce58fddb2534edd9",
+      "sha256": "7f46a5c880b25220f0eb67782d94327496a552b373f0c744dadc34a65ef1eceb"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-bootstrap.mjs",
+      "gitBlob": "b2387a2d61bb0ea347531f2cb2e99f055d3bcd99",
+      "sha256": "850410f19101a31930741ead88eb4c87dadfcbc1aa5c150150f7e084931676a5"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-workflow.test.mjs",
+      "gitBlob": "f068bbc79823ba6c9b5cc489f3ccd5d29c805297",
+      "sha256": "e607ad7be3c54fe701fb21e4d583d464d6de7a9670ee27b0f195db53e90a9c13"
+    }
+  ],
+  "sourceProof": {
+    "portableTests": 16,
+    "failures": 0,
+    "skipped": 0,
+    "psCheck": "ParseInput-only-not-executed",
+    "receipt": {
+      "inputs": 732,
+      "outputs": 180,
+      "sha256": "d8a91790fa5d38f9cd769b4175af94c40891106751c6596ff793b303e48846fe"
+    }
+  },
+  "execution": {
+    "workflow": ".github/workflows/windows-storage-loader-metadata.yml",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "event": "push",
+    "mode": "bootstrap-only",
+    "maximumRuns": 1,
+    "manualDispatch": false,
+    "retry": false,
+    "jobMinutes": 10,
+    "stepMaximumMinutes": 5
+  },
+  "externalPrerequisiteProfile": {
+    "runner": "github-hosted-windows-2025",
+    "assumptions": [
+      "independently trusted hosted Windows installation",
+      "independently trusted System32 WindowsPowerShell installation",
+      "authenticated workflow and source installation",
+      "protected OS/source namespaces throughout observation"
+    ],
+    "establishedBySelfHashOrMarker": false
+  },
+  "node": {
+    "version": "24.22.1",
+    "archiveUrl": "https://nodejs.org/download/release/v24.22.1/node-v24.22.1-win-x64.zip",
+    "archiveSha256": "d2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5",
+    "executableSha256": "d702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5",
+    "archiveMaximumBytes": 150000000,
+    "executableMaximumBytes": 134217728,
+    "archiveDeadlineMs": 120000
+  },
+  "observation": {
+    "host": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "osVersion": "observe-actual-complete-Environment-OSVersion-Version",
+    "powershellSha256": "observe-before-after-and-compare-with-closed-record",
+    "stdoutMaximumBytes": 1048576,
+    "stderrMaximumBytes": 8192,
+    "wireMaximumBytes": 4096,
+    "captureDeadlineMs": 294000,
+    "teardownMaximumMs": 1000
+  },
+  "artifacts": {
+    "names": [
+      "bootstrap.json",
+      "control.json"
+    ],
+    "maximumFiles": 2,
+    "retentionDays": 14,
+    "failureExports": false
+  },
+  "selectionAuthority": false,
+  "buildAuthority": false,
+  "nativeAuthority": false,
+  "collectorExecutionReleased": false,
+  "toolExecutionReleased": false,
+  "sdkInstallationReleased": false,
+  "helperOrCanaryExecutionReleased": false,
+  "providerOrDesktopExecutionReleased": false,
+  "nextGate": "Root independently assesses observed tuple and external premises before separately releasing a frozen metadata-only collector selection; no automatic phase B",
+  "rootExecutionDecisionUtc": "2026-11-04T13:28:22.069573+00:00"
+}
