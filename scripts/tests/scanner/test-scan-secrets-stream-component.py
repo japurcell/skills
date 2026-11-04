@@ -13,7 +13,7 @@ import unittest
 def redact(value):
     return value[:4] + "..." + value[-4:]
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 
 # Independent legacy oracle: deliberately operates on whole test-only strings.
 ORACLE_PATTERNS = [

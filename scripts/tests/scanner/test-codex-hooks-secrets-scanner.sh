@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
 
 python3 - "$REPO_ROOT/.codex/global-hooks.json" <<'PY'
 import json
@@ -60,4 +60,4 @@ clean_stop="$(scan Stop block)"
 jq -e '.systemMessage == "scan-secrets: pass; 0 modified files"' >/dev/null <<<"$clean_stop"
 
 printf 'PASS: Codex scan-secrets public envelopes\n'
-python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" codex
+python3 "$REPO_ROOT/scripts/tests/scanner/test-scan-secrets-capture.py" codex

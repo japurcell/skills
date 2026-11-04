@@ -8,11 +8,12 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import tempfile
 
 from tool_guard_corpus import PROVIDERS, decision, encode, envelope, fixtures, script_path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def main() -> int:

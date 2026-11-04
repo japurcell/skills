@@ -9,9 +9,11 @@ import subprocess
 import sys
 import tempfile
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+
 from hook_test_support import hook_entrypoint, raw_tool_envelope
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 HOOKS = {provider: hook_entrypoint(ROOT, provider, "scan-secrets.py")
          for provider in ("copilot", "gemini", "codex")}
 PROVIDERS = tuple(HOOKS)

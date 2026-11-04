@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
 
 workdir="$(setup_test_workdir)"
 cleanup() {

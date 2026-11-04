@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/tests/support/security-test-support.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../support/security-test-support.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/scanner-test-support.sh"
 
 SECURITY_SCANNER_LOG_SUFFIX=""
@@ -116,7 +116,7 @@ PY
 }
 
 main() {
-  python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" gemini
+  python3 "$REPO_ROOT/scripts/tests/scanner/test-scan-secrets-capture.py" gemini
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
   test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode

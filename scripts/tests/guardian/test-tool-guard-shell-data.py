@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import shutil
 import shlex
 import tempfile
@@ -12,7 +14,7 @@ import unittest
 from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, file_operation_fixtures, script_path
 from tool_guard_test_support import invoke_guard, native_decision
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 
 
 class ShellDataTests(unittest.TestCase):

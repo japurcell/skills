@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import tempfile
 import unittest
 
@@ -11,7 +13,7 @@ from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity
 from tool_guard_test_support import invoke_guard, native_decision
 from tool_guard_corpus import full_shell_envelope
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def text(*codes: int) -> str:
