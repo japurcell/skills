@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "purpose": "initial-c2-native-and-storage-qualification",
+  "sourceHead": "927f78bf62fa5e3ce3f7f35f39046c6bf3d65504",
+  "ordinaryProof": {
+    "head": "aba7af4e05ded06eace8e38a139965ba2077d496",
+    "files": 59,
+    "tests": 735
+  },
+  "receipt": {
+    "inputs": 729,
+    "outputs": 171,
+    "sha256": "98925fd67888f369fcfc5206f12d66620adc4bfa246b9b2148c2b25cf6469e92"
+  },
+  "publicBackup": {
+    "targets": [
+      "linux-x64",
+      "darwin-arm64"
+    ],
+    "area": "cleanup-backups-public",
+    "tests": 43
+  },
+  "foundation": {
+    "targets": [
+      "linux-x64",
+      "darwin-arm64",
+      "win32-x64"
+    ],
+    "windowsDiagnosticTests": 4
+  }
+}

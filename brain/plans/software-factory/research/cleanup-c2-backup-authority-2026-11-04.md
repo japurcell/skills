@@ -35,3 +35,25 @@
 ## Integrated ordinary proof
 
 Ordinary integration acceptance MET at exactaba7af4e05ded06eace8e38a139965ba2077d496:59files/735tests,735pass,zero fail/cancelled/skips/todo,216.683029s/exit0. Freeze09:35:13-09:38:50UTC ended only after fullEOF and cleanhead/729input/171output/receiptSHA98925fd6/actualNodeSHA6f320694/pinnedchildPATH/Python/offlineundici postflight. Exactcommand `/tmp/factory-cleanup-c2-composed-command.sh`, entrylist `/tmp/factory-cleanup-c2-ordinary-entries.txt`, profile `/private/tmp/factory-cleanup-c2-integration-profile/profile.json`, full log `/tmp/factory-cleanup-c2-integrated-ordinary-composed.log`, exactfacts `/tmp/factory-cleanup-c2-composed-postflight.json`. An earlier <1s exit127 orchestration launch never started tests because the wrapper pinned its own PATH before resolving RTK; separate `*-launch127.*` logs retained. Corrected wrapper resolves RTK in the original parent environment before the unchanged saved command applies pinned child env. No source/test change, skip or bound/guard weakening. Linux/Darwin public43 each remain pending; Windows C2 unsupported/C1open.
+
+
+## Native event-creation checkpoint
+
+Single authorized push927f78bf62fa5e3ce3f7f35f39046c6bf3d65504 is remote-verified. Exact-head Actions and check-suite APIs return0 through09:45UTC, so public43 per POSIX target is pending without run IDs. Push range contains no recognized CI skip directive and no Windows owned-image trigger path. Actual registry changes retain Darwin context compatibility selection; no dispatch/retry or event-gap cause is asserted.
+
+Reflection: POSIX target refusal is enforced by the tested dispatcher target field. Parent RTK resolution before pinned child env is encoded in the corrected proof driver and repeatable handoff recipe. Existing freeze/cache/receipt rules and the bounded event diagnosis cover this wave; no generic skill or separate learning note is needed.
+
+
+## Initial native qualification head
+
+The single root-authorized explicit-user-helper control push is clean/pushed2762f02960301faa29e2dbef0eea5df918cae66b. It creates exactly C2 POSIX authority41811099917 (Linux126510253073, Darwin126510253308) and native foundation41811099798 (Linux126510252620, Darwin126510252833, Windows126510257172), all initially in progress. Old927 remains0runs, no duplicates. No timing/IR1/creator run is selected. C2 public43 per target is underway; native acceptance pending. Source735 remains actual ataba7af4e, runtime729/171/all output hashes/receipt unchanged; control-only CI19 passes separately. A successful known helper route does not establish the historical missing-event cause. No retry/dispatch/permanent auth change or credential logging.
+
+
+## Accepted POSIX native qualification
+
+Root accepted bounded POSIX C2 acceptance after run41811099917 at exact2762f02960301faa29e2dbef0eea5df918cae66b. Linuxjob126510253073 passes43/43, zero fail/cancelled/skips/todo128.752688s (completed10:01:17UTC). Darwinjob126510253308 passes43/43,zero124.334363s (completed10:01:20UTC). Both exact bootstrap/dependency-cache/types/build steps pass. Full logs `/tmp/factory-cleanup-c2-native-{linux,darwin}-41811099917-job.log` retained. Combined with source/focused8/public43/affected54 and ordinary735, this meets C2 POSIX only. Windows C2 unsupported/C1open, C1 recovery.authority unassessed, no C3b-d/claim/pruning/CLI/whole-cleanup acceptance. C3a private source is separately released; no new test or retry selected.
+
+
+## Final native compatibility outcome
+
+Foundation41811099798 at2762f029 is completed overallFAIL because Windows remainsRED; Linux and Darwin jobs succeed independently. Linuxjob126510252620 completedSUCCESS10:15:33UTC:14/14foundation phases, publicupgrade1/1zero237.201766s, dependencyownership12/12zero79.669055s, claim23/23zero236.023957s, backup11/11zero297.059256s. Logs/archive/validated artifacts `/tmp/factory-cleanup-native-control-linux-41811099798-{job.log,evidence.zip,artifacts/}`. Darwin15/15 phases/FULL31/31zero54.361905s; Windows13phases10pass/3fail(fixtures,learning-fixture-diagnostic,cleanup-reads), directdiagnostic2/4. No retries, all original expectations/bounds survive. Prior927 finalruncheck remains0, no duplicate or timing/IR1/creator event.

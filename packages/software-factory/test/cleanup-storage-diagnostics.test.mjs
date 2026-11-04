@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-// This fixed grammar is the entire diagnostic export. Permission bits are not ACL authority.
+// Only these fixed grammars may be exported. Permission bits are not ACL authority.
 const recordPattern = /^cleanup-sidecar-v1 role=(wal|shm|journal) regular=(true|false) symbolicLink=(true|false) singleLink=(true|false) groupOtherBitsClear=(true|false)$(?![\s\S])/;
+const failurePattern = /^cleanup-fixture-v1 stage=(repository|initialize|seed|action|base|placement-(command|flags|options|keys|encoding|timeout|max-buffer|windows-hide|path|environment)|admission|observation|count|restore|cleanup|other) role=(none|wal|shm|journal|other) vector=(none|regular|symbolicLink|singleLink|groupOtherBitsClear|all|other) code=(assertion|stat-canary|ENOENT|EACCES|EPERM|other)$(?![\s\S])/;
 const fixtureProgram = String.raw`
   import assert from 'node:assert/strict';
   import childProcess from 'node:child_process';
@@ -12,6 +13,26 @@ const fixtureProgram = String.raw`
   import { syncBuiltinESMExports } from 'node:module';
   import { createRepository } from ${JSON.stringify(new URL('./fixtures/repository.mjs', import.meta.url).href)};
   import { initializeRepositoryStore, openCleanupReadStore } from ${JSON.stringify(new URL('../dist/store.js', import.meta.url).href)};
+
+  function assertPlacementOptions(options, directory) {
+    const expected = { encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
+      env: { ...process.env, FACTORY_PLACEMENT_PATH: directory } };
+    diagnosticStage = 'placement-keys';
+    assert.deepEqual(Object.keys(options).sort(), Object.keys(expected).sort());
+    for (const [field, stage] of [['encoding', 'placement-encoding'], ['timeout', 'placement-timeout'],
+      ['maxBuffer', 'placement-max-buffer'], ['windowsHide', 'placement-windows-hide']]) {
+      diagnosticStage = stage;
+      assert.equal(options[field], expected[field]);
+    }
+    diagnosticStage = 'placement-environment';
+    assert.ok(options.env !== null && typeof options.env === 'object');
+    diagnosticStage = 'placement-path';
+    assert.equal(options.env.FACTORY_PLACEMENT_PATH, expected.env.FACTORY_PLACEMENT_PATH);
+    diagnosticStage = 'placement-environment';
+    assert.deepEqual(options.env, expected.env);
+    diagnosticStage = 'placement-options';
+    assert.deepEqual(options, expected);
+  }
 
   function observe(database) {
     const original = fs.lstatSync;
@@ -40,12 +61,16 @@ const fixtureProgram = String.raw`
     };
   }
 
+  let diagnosticStage = 'repository', diagnosticRole = 'none', diagnosticVector = 'none';
+  FIXTURE_BEGIN
   const repository = createRepository();
   const common = fs.realpathSync(join(repository.path, '.git'));
   const database = join(common, 'factory/history.sqlite');
   let store;
   try {
+    diagnosticStage = 'initialize';
     store = await initializeRepositoryStore(common, { release: 'fixture' });
+    diagnosticStage = 'seed';
     const run = await store.createRun();
     const worktree = await store.registerWorktree({ path: repository.path, registration: 'fixture' });
     const invocation = await store.startInvocation({ runId: run.id, worktreeId: worktree.id,
@@ -55,8 +80,29 @@ const fixtureProgram = String.raw`
     await store.appendCapture({ id: input.id, chunks: [{ sequence: 1, text: 'saved input 🌍' }], state: 'complete' });
     await store.saveInvocationMetadata(invocation.id, { settings: {}, workflow: 'workflow.ts', selectedCommit: null,
       inputCaptureId: input.id, question: null, contexts: [] });
+    diagnosticStage = 'action';
     FIXTURE_ACTION
-  } finally { store?.close(); repository.dispose(); }
+  } FIXTURE_BODY_CATCH finally { diagnosticStage = 'cleanup'; store?.close(); repository.dispose(); }
+  FIXTURE_END
+`;
+
+const boundedFailureReporter = String.raw`
+  let failureReported = false;
+  function reportFixtureFailure(error) {
+    if (failureReported) return;
+    failureReported = true;
+    const stage = ['repository', 'initialize', 'seed', 'action', 'base', 'placement-command', 'placement-flags',
+      'placement-options', 'placement-keys', 'placement-encoding', 'placement-timeout', 'placement-max-buffer',
+      'placement-windows-hide', 'placement-path', 'placement-environment',
+      'admission', 'observation', 'count', 'restore', 'cleanup'].includes(diagnosticStage) ? diagnosticStage : 'other';
+    const role = ['none', 'wal', 'shm', 'journal'].includes(diagnosticRole) ? diagnosticRole : 'other';
+    const vector = ['none', 'regular', 'symbolicLink', 'singleLink', 'groupOtherBitsClear', 'all'].includes(diagnosticVector) ? diagnosticVector : 'other';
+    const code = error?.code === 'ERR_ASSERTION' ? 'assertion'
+      : error?.message === 'PRIVATE_DIAGNOSTIC_CANARY' ? 'stat-canary'
+      : ['ENOENT', 'EACCES', 'EPERM'].includes(error?.code) ? error.code : 'other';
+    fs.writeSync(2, 'cleanup-fixture-v1 stage=' + stage + ' role=' + role + ' vector=' + vector + ' code=' + code + '\n');
+  }
+  try {
 `;
 
 function runProgram(program) {
@@ -78,7 +124,8 @@ function runProgram(program) {
     assert.fail('diagnostic child failed (error=' + error + '; status=' + status + '; signal=' + signal + ')');
   }
   // Retain no child error text: even an unexpected fixture failure may name paths.
-  const failure = child.stderr.includes('ERR_MODULE_NOT_FOUND') ? 'module-unavailable'
+  const records = child.stderr.split('\n').filter(line => failurePattern.test(line));
+  const failure = records.length === 1 ? records[0] : child.stderr.includes('ERR_MODULE_NOT_FOUND') ? 'module-unavailable'
     : child.stderr.includes('PRIVATE_DIAGNOSTIC_CANARY') ? 'forbidden-stat-field'
     : child.stderr.includes('undefined') ? 'missing-observation'
     : child.stderr.includes('AssertionError') ? 'assertion' : 'other';
@@ -88,14 +135,41 @@ function runProgram(program) {
   return { status: child.status, lines, failure };
 }
 
-function run(action) {
-  return runProgram(fixtureProgram.replace('FIXTURE_ACTION', action));
+function run(action, diagnose = false) {
+  return runProgram(fixtureProgram.replace('FIXTURE_ACTION', action)
+    .replace('FIXTURE_BEGIN', diagnose ? boundedFailureReporter : '')
+    .replace('FIXTURE_BODY_CATCH', diagnose ? 'catch (error) { reportFixtureFailure(error); throw error; }' : '')
+    .replace('FIXTURE_END', diagnose ? '} catch (error) { reportFixtureFailure(error); process.exitCode = 1; }' : ''));
 }
 
 test('cleanup diagnostic child buffer refusal exports only closed process facts', () => {
   assert.throws(() => runProgram(String.raw`
     process.stderr.write('PRIVATE_DIAGNOSTIC_CANARY /private/canary S-1-canary '.repeat(8192));
   `), { message: /^diagnostic child failed \(error=ENOBUFS; status=(none|zero|nonzero|other); signal=(none|SIGTERM|SIGKILL|SIGINT|SIGBREAK|SIGABRT|other)\)$/ });
+});
+
+test('cleanup synthetic fixture preserves a large assertion failure as one closed nonzero record', () => {
+  const result = run(String.raw`
+    const dispose = repository.dispose;
+    repository.dispose = () => {
+      dispose();
+      throw new Error('PRIVATE_DIAGNOSTIC_CANARY cleanup /private/canary');
+    };
+    throw new assert.AssertionError({ actual: 'PRIVATE_DIAGNOSTIC_CANARY /private/canary S-1-canary '.repeat(8192), expected: 'fixture' });
+  `, true);
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.lines, []);
+  assert.equal(result.failure, 'cleanup-fixture-v1 stage=action role=none vector=none code=assertion');
+});
+
+test('cleanup synthetic placement option mismatch exports only its closed field stage', () => {
+  const result = run(String.raw`
+    assertPlacementOptions({ encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
+      env: { ...process.env, FACTORY_PLACEMENT_PATH: 'PRIVATE_DIAGNOSTIC_CANARY /private/canary S-1-canary' } }, join(common, 'factory'));
+  `, true);
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.lines, []);
+  assert.equal(result.failure, 'cleanup-fixture-v1 stage=placement-path role=none vector=none code=assertion');
 });
 
 test('cleanup sidecar diagnostic grammar rejects extra, path-bearing and arbitrary fields', () => {
@@ -110,6 +184,7 @@ test('cleanup sidecar observation preserves each original refusal and exports on
   const result = run(String.raw`
     const realLstat = fs.lstatSync;
     const realSpawn = childProcess.spawnSync;
+    diagnosticStage = 'base';
     const base = realLstat(database + '-wal', { bigint: true });
     const canary = 'PRIVATE_DIAGNOSTIC_CANARY';
     let placementCalls = 0;
@@ -117,19 +192,24 @@ test('cleanup sidecar observation preserves each original refusal and exports on
     // child boundary. The separate native positive case retains actual placement.
     if (process.platform === 'win32') childProcess.spawnSync = (command, args, options) => {
       placementCalls++;
+      diagnosticStage = 'placement-command';
       assert.equal(command, join(process.env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'));
+      diagnosticStage = 'placement-flags';
       assert.equal(args.length, 5);
       assert.deepEqual(args.slice(0, 4), ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command']);
       assert.equal(typeof args[4], 'string');
       assert.ok(args[4].length > 0);
-      assert.deepEqual(options, { encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
-        env: { ...process.env, FACTORY_PLACEMENT_PATH: join(common, 'factory') } });
+      diagnosticStage = 'placement-options';
+      assertPlacementOptions(options, join(common, 'factory'));
+      diagnosticStage = 'admission';
       return { status: 0, signal: null, stdout: '{"driveType":3,"filesystem":"NTFS"}' };
     };
     syncBuiltinESMExports();
     try {
     for (const role of ['wal', 'shm', 'journal']) {
       for (const failed of ['regular', 'symbolicLink', 'singleLink', 'groupOtherBitsClear', 'all']) {
+        diagnosticRole = role;
+        diagnosticVector = failed;
         let observations = 0;
         const target = database + '-' + role;
         const selected = {
@@ -157,7 +237,9 @@ test('cleanup sidecar observation preserves each original refusal and exports on
         };
         syncBuiltinESMExports();
         const finish = observe(database);
+        diagnosticStage = 'admission';
         assert.throws(() => openCleanupReadStore(common), { message: 'forward store sidecar is not private regular storage' });
+        diagnosticStage = 'observation';
         const record = finish();
         assert.equal(observations, 1);
         assert.equal(record, 'cleanup-sidecar-v1 role=' + role
@@ -170,13 +252,18 @@ test('cleanup sidecar observation preserves each original refusal and exports on
         syncBuiltinESMExports();
       }
     }
+    diagnosticStage = 'count';
     assert.equal(placementCalls, process.platform === 'win32' ? 15 : 0);
+    } catch (error) {
+      reportFixtureFailure(error);
+      throw error;
     } finally {
+      diagnosticStage = 'restore';
       fs.lstatSync = realLstat;
       childProcess.spawnSync = realSpawn;
       syncBuiltinESMExports();
     }
-  `);
+  `, true);
   assert.equal(result.status, 0, 'controlled predicate observation failed: ' + result.failure);
   assert.deepEqual(result.lines, []);
 });

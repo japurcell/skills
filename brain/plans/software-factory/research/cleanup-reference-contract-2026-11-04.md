@@ -187,3 +187,13 @@ Explicit risks/dependencies: C2 acceptance and a complete accepted recovery read
 - The external authenticated advisory launcher derives C2 recovery/backup facts itself. A caller cannot supply a clear boolean, evidence digest, backup ownership assertion or other authority. Private graph helpers may accept only internally derived typed facts.
 - The C1 read snapshot and C2 recovery observation must agree on database/repository identity, schema/release and high-water identities. Mismatch, unverifiable relation or drift yields unstable/blocked, never eligibility assembled from mixed observations. The concrete external interface and coherence checks must be resolved before C3a edits if ambiguous.
 - An advisory digest is bound to the observed snapshot and is never a mutation capability. Future C4 must recompute under the accepted exclusion/claim protocol before acting. C3 source remains explicitly root-release gated; this clarification is accepted design, not runtime acceptance.
+
+
+## Selected C3a source interface
+
+Root SOURCE RELEASE after accepted ordinary735: sole backend owner /root/cleanup_base_advisory now implements C3a privately. The selected public async inspectCleanupSelection(repository, selection, bounds) resolves authenticated repository identity and internally opens one existing-only C1 view; callers supply no store, recovery boolean/digest or ownership assertions. All DB facts share the same WAL read transaction. The smallest same-authenticated-view C2 adapter/shared bounded SQL extraction is allowed, preserving exact existing C2 decoders and authority semantics, no rawDB/generic framework. Recheck FS marker/receipt facts and require DB/repository/schema/release/high-water/content-digest coherence; mismatch yields unstable/blocked. C3b-d/CLI/mutation remain unreleased; POSIX C2 native profiles pending, Windows unsupported.
+
+
+## C3a proof registration boundary
+
+Root placed the genuine install->upgrade package proof in qualification/cleanup-advisory-public.qualification.mjs while fast graph cases remain test/cleanup-reference-graph.test.mjs. Same cases and sibling fixture import only; preserve both at handback. The ordinary profile intentionally unsets the Node archive, so archive-dependent public proof is explicitly selected native qualification, not default test discovery or dropped coverage. No new registration before clean source handback.
