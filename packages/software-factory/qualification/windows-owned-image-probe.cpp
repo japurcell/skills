@@ -5,6 +5,7 @@
 #include <bcrypt.h>
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <process.h>
@@ -493,15 +494,46 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
     CaptureCount(CountPhase::ProbeReturn);
 }
 
+// This in-memory gate owns no kernel object. Accounting must finish before a
+// creator can touch the process-wide evidence/handle tracker.
+static_assert(std::atomic<bool>::is_always_lock_free, "qualification requires a lock-free startup gate");
+struct CreatorGate
+{
+    const ULONGLONG start;
+    std::atomic<bool> released{ false }, returned{ false };
+    explicit CreatorGate(ULONGLONG began) : start(began) {}
+    bool Enter()
+    {
+        while (!released.load(std::memory_order_acquire))
+        {
+            if (GetTickCount64() - start > 10000) return false;
+            Sleep(1);
+        }
+        return GetTickCount64() - start <= 10000;
+    }
+};
+
+[[noreturn]] void PinUnjoinedCreator()
+{
+    // Never unwind data, close handles/streams or inspect a live creator.
+    // Only the unchanged external transport watchdog bounds this refusal.
+    for (;;) Sleep(INFINITE);
+}
+
 struct OwnerLoss
 {
     Child* child;
     const std::wstring* root;
+    CreatorGate gate;
+    bool entered = false;
     bool reached = false;
+    OwnerLoss(Child* target, const std::wstring* directory, ULONGLONG start) : child(target), root(directory), gate(start) {}
 };
 unsigned __stdcall LoseDebuggerThread(void* argument)
 {
     OwnerLoss* state = static_cast<OwnerLoss*>(argument);
+    if (!state->gate.Enter()) { state->gate.returned.store(true, std::memory_order_release); return 0; }
+    state->entered = true;
     try { Probe(*state->child, *state->root, "stop-created"); }
     catch (const char* failure) { state->reached = strcmp(failure, "stop") == 0; }
     catch (...) { state->reached = false; }
@@ -513,6 +545,75 @@ unsigned __stdcall LoseDebuggerThread(void* argument)
     }
     // Intentionally leave the first event uncontinued. The documented default
     // kills this newly created debuggee when its owning debugger thread exits.
+    state->gate.returned.store(true, std::memory_order_release);
+    return 0;
+}
+
+struct TargetOutcome
+{
+    const char* failure = "none";
+    const char* failurePhase = "probe";
+    bool entered = false, eligible = true, cleanup = false;
+};
+struct TargetWork
+{
+    Child* child;
+    const std::wstring* root;
+    const std::string* name;
+    CreatorGate gate;
+    TargetOutcome outcome;
+    TargetWork(Child* target, const std::wstring* directory, const std::string* selected, ULONGLONG start) :
+        child(target), root(directory), name(selected), gate(start) {}
+};
+void RunTarget(TargetWork& work)
+{
+    Child& child = *work.child;
+    const std::string& name = *work.name;
+    const char*& failure = work.outcome.failure;
+    const char*& failurePhase = work.outcome.failurePhase;
+    work.outcome.entered = true;
+    try
+    {
+        if (Is(name, "owner-interruption"))
+        {
+            failurePhase = "owner-interruption";
+            std::wstring root = *work.root;
+            OwnerLoss state{ &child, &root, work.gate.start };
+            Handle owner(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, LoseDebuggerThread, &state, 0, nullptr)));
+            if (!owner.Valid()) work.outcome.eligible = false;
+            Require(owner.Valid(), "host");
+            state.gate.released.store(true, std::memory_order_release);
+            // No debug calls occur on this observer thread.
+            // Do not unwind state still referenced by a live debugger thread.
+            if (WaitForSingleObject(owner.value, 4000) != WAIT_OBJECT_0) ExitProcess(2);
+            if (!state.gate.returned.load(std::memory_order_acquire)) PinUnjoinedCreator();
+            if (!state.entered) work.outcome.eligible = false;
+            bool terminated = child.process.Valid() && WaitForSingleObject(child.process.value, 1000) == WAIT_OBJECT_0;
+            child.attached = false; child.pending = false;
+            child.debugProcess = nullptr; child.debugThread = nullptr;
+            Require(state.reached && terminated && child.MarkerBits() == 0, "host");
+            failure = "owner-loss";
+        }
+        else
+        {
+            failurePhase = "probe";
+            Probe(child, *work.root, name);
+            failurePhase = "none";
+        }
+    }
+    catch (const char* code) { failure = code; }
+    catch (...) { failure = "host"; }
+    // Attached cleanup must run on the thread that created the debuggee.
+    work.outcome.cleanup = child.Stop();
+    CaptureCount(CountPhase::ChildStopped);
+}
+unsigned __stdcall OwnTarget(void* argument)
+{
+    TargetWork* work = static_cast<TargetWork*>(argument);
+    if (work->gate.Enter()) RunTarget(*work);
+    // The operation's automatic objects have unwound. A signaled thread wait
+    // is still required to prove CRT/DLL teardown has completed.
+    work->gate.returned.store(true, std::memory_order_release);
     return 0;
 }
 }
@@ -544,6 +645,7 @@ int wmain(int argc, wchar_t** argv)
     const char* failure = "none";
     const char* failurePhase = "survival-create";
     bool cleanup = true, survival = false, controlStopped = false;
+    bool childStopped = false, creatorEligible = true;
     printf("OWNED\t1\t%s\n", name.c_str());
     CaptureCount(CountPhase::EntryOutput);
     try
@@ -554,28 +656,22 @@ int wmain(int argc, wchar_t** argv)
         while (control.MarkerBits() != 7 && GetTickCount64() < ready) Sleep(1);
         Require(control.MarkerBits() == 7 && control.markers->debugger == 0, "host");
         CaptureCount(CountPhase::ControlReady);
-        if (Is(name, "owner-interruption"))
-        {
-            failurePhase = "owner-interruption";
-            std::wstring root = argv[1];
-            OwnerLoss state{ &child, &root };
-            Handle owner(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, LoseDebuggerThread, &state, 0, nullptr)));
-            Require(owner.Valid(), "host");
-            // No debug calls occur on this observer thread.
-            // Do not unwind state still referenced by a live debugger thread.
-            if (WaitForSingleObject(owner.value, 4000) != WAIT_OBJECT_0) ExitProcess(2);
-            bool terminated = child.process.Valid() && WaitForSingleObject(child.process.value, 1000) == WAIT_OBJECT_0;
-            child.attached = false; child.pending = false;
-            child.debugProcess = nullptr; child.debugThread = nullptr;
-            Require(state.reached && terminated && child.MarkerBits() == 0, "host");
-            failure = "owner-loss";
-        }
-        else
-        {
-            failurePhase = "probe";
-            Probe(child, argv[1], name);
-            failurePhase = "none";
-        }
+        failurePhase = "probe";
+        std::wstring root = argv[1];
+        TargetWork state{ &child, &root, &name, start };
+        Handle creator(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, OwnTarget, &state, 0, nullptr)));
+        if (!creator.Valid()) { creatorEligible = false; throw "host"; }
+        state.gate.released.store(true, std::memory_order_release);
+        // Only the join may run while the creator owns child/global evidence.
+        ULONGLONG elapsed = GetTickCount64() - start;
+        if (elapsed > 10000) PinUnjoinedCreator();
+        if (WaitForSingleObject(creator.value, static_cast<DWORD>(10000 - elapsed)) != WAIT_OBJECT_0 ||
+            GetTickCount64() - start > 10000 || !state.gate.returned.load(std::memory_order_acquire)) PinUnjoinedCreator();
+        creator.Close();
+        if (!state.outcome.entered) { creatorEligible = false; throw "host"; }
+        failure = state.outcome.failure; failurePhase = state.outcome.failurePhase;
+        cleanup = state.outcome.cleanup; creatorEligible = state.outcome.eligible;
+        childStopped = true;
     }
     catch (const char* code) { failure = code; }
     catch (...) { failure = "host"; }
@@ -583,8 +679,12 @@ int wmain(int argc, wchar_t** argv)
     Check earlyClear = Check::NotReached, rejectedClear = Check::NotReached, countQuery = Check::NotReached;
     Check countNonincrease = Check::NotReached, leakedZero = Check::NotReached;
     // Every cleanup attempt runs independently and cannot erase the first failure.
-    cleanup = child.Stop();
-    CaptureCount(CountPhase::ChildStopped);
+    if (!childStopped)
+    {
+        cleanup = child.Stop();
+        CaptureCount(CountPhase::ChildStopped);
+    }
+    cleanup = cleanup && creatorEligible;
     if (child.process.Valid())
     {
         if (child.MarkerBits() == 7 && child.markers->early == 0 &&

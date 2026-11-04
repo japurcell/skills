@@ -981,3 +981,67 @@ test('owned phase-wire transport and artifact guard preserve the actual failed e
   assert.equal(timed.timedOut, true);
   assert.equal(diagnosticApi.parseNativeDiagnostic(timed, 'positive'), null);
 });
+
+test('a complete receipt from a still-running owned controller cannot override its actual deadline', { timeout: 5000 }, async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write(process.argv[1]); setInterval(()=>{},1000)', positive()], 4096, 700);
+  assert.equal(result.timedOut, true);
+  assert.equal(result.capped, false);
+  assert.equal(result.stdout, positive());
+  assert.equal(validateNative(result.stdout, 'positive').qualified, true);
+  const root = evidence();
+  try {
+    const file = join(root, 'driver.private.json');
+    const driver = JSON.parse(readFileSync(file, 'utf8'));
+    driver.cases[0] = { name: 'positive', exitCode: result.exitCode, signal: result.signal, capped: result.capped, timedOut: result.timedOut };
+    writeFileSync(file, JSON.stringify(driver));
+    writeFileSync(join(root, 'positive.private.tsv'), result.stdout);
+    assert.throws(() => prepareUpload(root), { message: 'receipt' });
+    assert.equal(readdirSync(root).includes('upload'), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('an owned controller exiting zero with incomplete cleanup cannot inherit a forged complete driver result', { timeout: 5000 }, async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const partial = positive().slice(0, positive().indexOf('CLEANUP\t'));
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write(process.argv[1])', partial], 4096, 2000);
+  assert.equal(result.exitCode, 0);
+  assert.equal(result.signal, null);
+  assert.equal(result.timedOut, false);
+  assert.equal(result.capped, false);
+  assert.equal(result.stdout, partial);
+  assert.equal(validateNative(result.stdout, 'positive').cleanup, false);
+  const root = evidence();
+  try {
+    writeFileSync(join(root, 'positive.private.tsv'), result.stdout);
+    assert.throws(() => prepareUpload(root), { message: 'receipt' });
+    assert.equal(readdirSync(root).includes('upload'), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a late COMPLETE through an owned descendant pipe cannot clear an earlier controller timeout', { timeout: 5000 }, async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  // Both processes are created solely by this test. The descendant has a finite
+  // one-second lifetime and retains only the output pipes after its parent dies.
+  const descendant = 'setTimeout(()=>process.stdout.write(process.argv[1]),1000)';
+  const controller = 'const {spawn}=require("node:child_process"); process.stdout.write(process.argv[1]);' +
+    'spawn(process.execPath,["-e",process.argv[2],"COMPLETE\\n"],{windowsHide:true,shell:false,stdio:["ignore",1,2]}); setInterval(()=>{},1000)';
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', controller, positive().replace('COMPLETE\n', ''), descendant], 4096, 700);
+  assert.equal(result.timedOut, true);
+  assert.equal(result.capped, false);
+  assert.equal(result.stdout, positive());
+  assert.equal(validateNative(result.stdout, 'positive').qualified, true);
+  const root = evidence();
+  try {
+    const file = join(root, 'driver.private.json');
+    const driver = JSON.parse(readFileSync(file, 'utf8'));
+    driver.cases[0] = { name: 'positive', exitCode: result.exitCode, signal: result.signal, capped: result.capped, timedOut: result.timedOut };
+    writeFileSync(file, JSON.stringify(driver));
+    writeFileSync(join(root, 'positive.private.tsv'), result.stdout);
+    assert.throws(() => prepareUpload(root), { message: 'receipt' });
+    assert.equal(readdirSync(root).includes('upload'), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
