@@ -80,3 +80,12 @@ Validate atomically with the existing refusal/46-state row and native exit1/no-s
 ## Unresolved facts
 
 The additional handles' identity, number, exact creating operation and lifetime remain unknown. The primary contracts inspected do not identify them, promise aggregate restoration after CNG or detach, or justify an undocumented debug-object/type claim. No third-party Windows implementation was used as an equivalence argument. The original native failure remains the controlling evidence.
+
+
+## Observed single phase experiment
+
+The authorized run41785489720/job126426550884 at92c96edf completed06:26:56UTC with failure. The60 protocol checks and fixed inbox/available/ready profile passed. First positive case returned native1/nonempty stderr, none/clear, cleanup=false and survival/flush/close=true. The successful final count query again reported increase; explicit owned-zero and all reached close contributors passed.
+
+The coherent phase row reports entry-output equal to baseline and every later checkpoint above baseline. Both hash enter/leave pairs are equal; target-scope and entry-output-to-final are above. These are aggregate interval relations only: no handle count/identity, API/OS cause, leak/cache explanation or historical repair is established. The original failed assertion remains decisive. Guard refused, upload skipped and artifact inventory is empty. Fixed two-line evidence: `/tmp/factory-handle-phases-41785489720-failed.log`; complete job: `/tmp/factory-handle-phases-41785489720-job.log`.
+
+The one experiment is spent. Root subsequently accepted the separately documented [owned creator-lifetime candidate](windows-owned-creator-lifetime-contract-2026-11-04.md), whose native experiment remains pending; there is no retry, policy adjustment,34-case acceptance, namespace/closure/Node-equivalence or helper/product admission from this result.
