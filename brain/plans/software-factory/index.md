@@ -144,3 +144,5 @@
 - [C3c library action closure source and proof](../../../packages/software-factory/qualification/cleanup-actions.md)
 
 - [C3d external advisory launcher and format contract](research/cleanup-advisory-launcher-contract-2026-11-04.md)
+
+- [Phase B metadata-only source contract](../../../packages/software-factory/qualification/windows-storage-loader-metadata-collect.md)
