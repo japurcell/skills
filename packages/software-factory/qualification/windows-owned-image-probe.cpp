@@ -43,6 +43,50 @@ struct StopEvidence
     }
 };
 
+enum class CountPhase : size_t { Baseline, EntryOutput, ControlReady, PinHashEnter, PinHashLeave, DebugCreateEnter, DebugCreateLeave,
+    FirstEvent, ImageHashEnter, ImageHashLeave, Continued, Detached, ProbeReturn, ChildStopped, ControlStopped, ChildReleased, Final };
+struct CountSample { Check query = Check::NotReached; DWORD value = 0; };
+std::array<CountSample, 17> countSamples{};
+bool countSamplesValid = true;
+void RecordCount(CountPhase phase, DWORD value, bool queried)
+{
+    auto& sample = countSamples[static_cast<size_t>(phase)];
+    if (sample.query != Check::NotReached) { countSamplesValid = false; return; }
+    sample.query = queried ? Check::Pass : Check::Fail;
+    if (queried) sample.value = value;
+}
+void CaptureCount(CountPhase phase)
+{
+    if (countSamples[static_cast<size_t>(phase)].query != Check::NotReached) { countSamplesValid = false; return; }
+    DWORD value = 0;
+    BOOL queried = GetProcessHandleCount(GetCurrentProcess(), &value);
+    RecordCount(phase, value, queried != FALSE);
+}
+char CompareCounts(CountPhase before, CountPhase after)
+{
+    const auto& a = countSamples[static_cast<size_t>(before)];
+    const auto& b = countSamples[static_cast<size_t>(after)];
+    if (a.query != Check::Pass || b.query != Check::Pass) return 'u';
+    return b.value < a.value ? 'b' : b.value > a.value ? 'a' : 'e';
+}
+void WriteCountPhases(const char* name)
+{
+    if (!countSamplesValid || countSamples[0].query != Check::Pass) return;
+    fprintf(stderr, "OWNED_IMAGE_HANDLE_PHASES\t1\t%s", name);
+    for (CountPhase phase : { CountPhase::EntryOutput, CountPhase::ControlReady, CountPhase::PinHashEnter, CountPhase::PinHashLeave,
+        CountPhase::DebugCreateEnter, CountPhase::DebugCreateLeave, CountPhase::FirstEvent, CountPhase::ImageHashEnter, CountPhase::ImageHashLeave,
+        CountPhase::Continued, CountPhase::Detached, CountPhase::ProbeReturn, CountPhase::ChildStopped, CountPhase::ControlStopped,
+        CountPhase::ChildReleased, CountPhase::Final })
+    {
+        Check query = countSamples[static_cast<size_t>(phase)].query;
+        char relation = query == Check::NotReached ? 'n' : query == Check::Fail ? 'f' : CompareCounts(CountPhase::Baseline, phase);
+        fprintf(stderr, "\t%c", relation);
+    }
+    fprintf(stderr, "\t%c\t%c\t%c\t%c\n", CompareCounts(CountPhase::PinHashEnter, CountPhase::PinHashLeave),
+        CompareCounts(CountPhase::ImageHashEnter, CountPhase::ImageHashLeave), CompareCounts(CountPhase::ControlReady, CountPhase::ChildReleased),
+        CompareCounts(CountPhase::EntryOutput, CountPhase::Final));
+}
+
 void Log(const char* operation, unsigned long long value)
 {
     if (details) fprintf(details, "%s\t%llu\n", operation, value);
@@ -280,13 +324,14 @@ struct Identity
     FILE_ID_INFO id{};
     std::array<unsigned char, 32> hash{};
 };
-Identity Identify(HANDLE file)
+Identity Identify(HANDLE file, bool actualImage)
 {
     Identity identity;
     Require(GetFileInformationByHandleEx(file, FileIdInfo, &identity.id, sizeof(identity.id)) != FALSE, "query");
     LARGE_INTEGER length{}, zero{};
     Require(GetFileSizeEx(file, &length) && length.QuadPart > 0 && length.QuadPart <= 16777216 &&
         SetFilePointerEx(file, zero, nullptr, FILE_BEGIN), "query");
+    CaptureCount(actualImage ? CountPhase::ImageHashEnter : CountPhase::PinHashEnter);
     BCRYPT_ALG_HANDLE algorithm = nullptr;
     BCRYPT_HASH_HANDLE hash = nullptr;
     NTSTATUS status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_SHA256_ALGORITHM, nullptr, 0);
@@ -306,6 +351,8 @@ Identity Identify(HANDLE file)
     if (BCryptFinishHash(hash, identity.hash.data(), static_cast<ULONG>(identity.hash.size()), 0) < 0) ok = false;
     if (!CheckedClose(hashClose, BCryptDestroyHash(hash) >= 0)) closed = false;
     if (!CheckedClose(algorithmClose, BCryptCloseAlgorithmProvider(algorithm, 0) >= 0)) closed = false;
+    // Leave a failing query's existing private error capture undisturbed.
+    if (ok) CaptureCount(actualImage ? CountPhase::ImageHashLeave : CountPhase::PinHashLeave);
     Require(ok, "query");
     Log("volume", identity.id.VolumeSerialNumber);
     if (details)
@@ -342,7 +389,7 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
         Is(name, "different-image") ? L"\\alternate\\canary.exe" : L"\\fixture\\canary.exe");
     pin.Set(CreateFileW(expected.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     Require(pin.Valid(), "identity");
-    Identity expectedIdentity = Identify(pin.value);
+    Identity expectedIdentity = Identify(pin.value, false);
     if (Is(name, "wrong-hash")) expectedIdentity.hash[0] ^= 1;
     if (replacement)
     {
@@ -363,7 +410,9 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
     LONG mode = Is(name, "deadline") ? 1 : Is(name, "output-limit") ? 2 : Is(name, "crash") ? 3 : 0;
     // Stop immediately after the one resume uses a waiting fixture to avoid races.
     if (Is(name, "stop-resume")) mode = 1;
+    CaptureCount(CountPhase::DebugCreateEnter);
     child.Create(executable, fixtureRoot, true, mode);
+    CaptureCount(CountPhase::DebugCreateLeave);
     if (Is(name, "fail-event")) throw "event";
     Require(WaitForDebugEvent(&child.event, 1000) != FALSE, "event"); child.pending = true;
     Require(child.event.dwProcessId == child.pid && child.event.dwThreadId == child.tid &&
@@ -376,6 +425,7 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
         child.event.dwProcessId, child.event.dwThreadId, child.event.dwDebugEventCode,
         GetProcessId(info.hProcess), GetThreadId(info.hThread));
     Barrier(child, "created", name);
+    CaptureCount(CountPhase::FirstEvent);
     if (Is(name, "fail-suspend")) throw "suspend";
     DWORD previous = SuspendThread(child.thread.value);
     Log("suspend-return", previous); printf("SUSPEND\t%lu\n", previous);
@@ -389,7 +439,7 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
     actual.Set(duplicate);
     Require(CloseHandle(info.hFile) != FALSE, "handle"); info.hFile = nullptr;
     if (Is(name, "fail-query")) throw "query";
-    Identity identity = Identify(actual.value);
+    Identity identity = Identify(actual.value, true);
     bool idMatch = identity.id.VolumeSerialNumber == expectedIdentity.id.VolumeSerialNumber &&
         memcmp(identity.id.FileId.Identifier, expectedIdentity.id.FileId.Identifier, 16) == 0;
     bool hashMatch = identity.hash == expectedIdentity.hash;
@@ -406,11 +456,13 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
     Require(ContinueDebugEvent(child.pid, child.tid, DBG_CONTINUE) != FALSE, "continue"); child.pending = false;
     printf("CONTINUE\t1\n");
     Barrier(child, "continued", name);
+    CaptureCount(CountPhase::Continued);
     if (Is(name, "fail-detach")) throw "detach";
     Require(GetProcessId(child.process.value) == child.pid && WaitForSingleObject(child.process.value, 0) == WAIT_TIMEOUT, "detach");
     Require(DebugActiveProcessStop(child.pid) != FALSE, "detach"); child.attached = false;
     printf("DETACH\t1\n");
     child.CloseDebugHandles();
+    CaptureCount(CountPhase::Detached);
     if (Is(name, "fail-postcondition")) throw "postcondition";
     BOOL debugging = TRUE;
     Require(CheckRemoteDebuggerPresent(child.process.value, &debugging) != FALSE, "postcondition");
@@ -438,6 +490,7 @@ void Probe(Child& child, const std::wstring& root, const std::string& name)
     DWORD exit = 0;
     Require(GetExitCodeProcess(child.process.value, &exit) != FALSE, "exit");
     if (exit != 0) throw "crash";
+    CaptureCount(CountPhase::ProbeReturn);
 }
 
 struct OwnerLoss
@@ -485,12 +538,14 @@ int wmain(int argc, wchar_t** argv)
     if (BCryptCloseAlgorithmProvider(warm, 0) < 0) return 2;
     DWORD before = 0, after = 0;
     if (!GetProcessHandleCount(GetCurrentProcess(), &before)) return 2;
+    RecordCount(CountPhase::Baseline, before, true);
     ULONGLONG start = GetTickCount64();
     Child child, control;
     const char* failure = "none";
     const char* failurePhase = "survival-create";
     bool cleanup = true, survival = false, controlStopped = false;
     printf("OWNED\t1\t%s\n", name.c_str());
+    CaptureCount(CountPhase::EntryOutput);
     try
     {
         control.Create(std::wstring(argv[1]) + L"\\fixture\\canary.exe", std::wstring(argv[1]) + L"\\fixture", false, 1);
@@ -498,6 +553,7 @@ int wmain(int argc, wchar_t** argv)
         ULONGLONG ready = GetTickCount64() + 1000;
         while (control.MarkerBits() != 7 && GetTickCount64() < ready) Sleep(1);
         Require(control.MarkerBits() == 7 && control.markers->debugger == 0, "host");
+        CaptureCount(CountPhase::ControlReady);
         if (Is(name, "owner-interruption"))
         {
             failurePhase = "owner-interruption";
@@ -528,6 +584,7 @@ int wmain(int argc, wchar_t** argv)
     Check countNonincrease = Check::NotReached, leakedZero = Check::NotReached;
     // Every cleanup attempt runs independently and cannot erase the first failure.
     cleanup = child.Stop();
+    CaptureCount(CountPhase::ChildStopped);
     if (child.process.Valid())
     {
         if (child.MarkerBits() == 7 && child.markers->early == 0 &&
@@ -541,6 +598,7 @@ int wmain(int argc, wchar_t** argv)
     printf("OUTPUT\t%lu\t%lu\t%d\t%d\n", child.output.bytes, child.error.bytes, child.output.eof ? 1 : 0, child.error.eof ? 1 : 0);
     survival = control.process.Valid() && WaitForSingleObject(control.process.value, 0) == WAIT_TIMEOUT && control.MarkerBits() == 7;
     controlStopped = control.Stop();
+    CaptureCount(CountPhase::ControlStopped);
     cleanup = cleanup && controlStopped;
     printf("CONTROL\t%d\t%d\n", survival ? 1 : 0, controlStopped ? 1 : 0);
     if (child.markers && !Observe(earlyClear, child.markers->early == 0)) cleanup = false;
@@ -550,8 +608,9 @@ int wmain(int argc, wchar_t** argv)
         child.markers && !Observe(rejectedClear, child.MarkerBits() == 0)) cleanup = false;
     if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' }))
     { failure = "pipe"; failurePhase = "output-check"; }
-    child.Release(); control.Release();
+    child.Release(); CaptureCount(CountPhase::ChildReleased); control.Release();
     if (!Observe(countQuery, GetProcessHandleCount(GetCurrentProcess(), &after) != FALSE)) closed = false;
+    RecordCount(CountPhase::Final, after, countQuery == Check::Pass);
     Log("handles-before", before); Log("handles-after", after);
     bool increased = after > before;
     bool ownedZero = ownedHandles == 0;
@@ -576,6 +635,7 @@ int wmain(int argc, wchar_t** argv)
                 State(closeIdentity), State(closeQuery), closed ? 1 : 0);
             fprintf(stderr, "\t%s\t%s\t%s\t%s\t%s\t%s\n", State(ownedClose), State(mappingClose), State(debugClose),
                 State(hashClose), State(algorithmClose), State(ownerFileClose));
+            if (countQuery == Check::Pass && increased) WriteCountPhases(name.c_str());
         }
     }
     return cleanup && survival && flushed && fileClosed ? 0 : 1;
