@@ -44,6 +44,22 @@ void Require(bool condition, const char* failure)
 }
 bool Is(const std::string& name, const char* value) { return name == value; }
 
+// Fixed public vocabulary only. Never forward the private RESULT text or OS data.
+const char* RefusalReason(const char* failure)
+{
+    const struct { const char* privateCode; const char* publicReason; } reasons[] = {
+        { "none", "clear" }, { "event", "event-check" }, { "image-handle", "image-handle-check" },
+        { "duplicate", "duplicate-check" }, { "query", "query-check" }, { "suspend", "suspend-check" },
+        { "identity", "identity-check" }, { "continue", "continue-check" }, { "detach", "detach-check" },
+        { "postcondition", "debugger-check" }, { "resume", "resume-check" }, { "stop", "requested-stop" },
+        { "deadline", "deadline-reached" }, { "output-limit", "output-cap" }, { "crash", "child-crash" },
+        { "owner-loss", "owner-interrupted" }, { "launch", "launch-check" }, { "marker", "marker-check" },
+        { "exit", "exit-check" }, { "pipe", "pipe-check" }, { "handle", "handle-check" }, { "host", "host-check" }
+    };
+    for (const auto& reason : reasons) if (strcmp(failure, reason.privateCode) == 0) return reason.publicReason;
+    return "unknown";
+}
+
 struct Pipe
 {
     Handle read, write;
@@ -439,16 +455,19 @@ int wmain(int argc, wchar_t** argv)
     ULONGLONG start = GetTickCount64();
     Child child, control;
     const char* failure = "none";
+    const char* failurePhase = "survival-create";
     bool cleanup = true, survival = false, controlStopped = false;
     printf("OWNED\t1\t%s\n", name.c_str());
     try
     {
         control.Create(std::wstring(argv[1]) + L"\\fixture\\canary.exe", std::wstring(argv[1]) + L"\\fixture", false, 1);
+        failurePhase = "survival-ready";
         ULONGLONG ready = GetTickCount64() + 1000;
         while (control.MarkerBits() != 7 && GetTickCount64() < ready) Sleep(1);
         Require(control.MarkerBits() == 7 && control.markers->debugger == 0, "host");
         if (Is(name, "owner-interruption"))
         {
+            failurePhase = "owner-interruption";
             std::wstring root = argv[1];
             OwnerLoss state{ &child, &root };
             Handle owner(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, LoseDebuggerThread, &state, 0, nullptr)));
@@ -462,7 +481,12 @@ int wmain(int argc, wchar_t** argv)
             Require(state.reached && terminated && child.MarkerBits() == 0, "host");
             failure = "owner-loss";
         }
-        else Probe(child, argv[1], name);
+        else
+        {
+            failurePhase = "probe";
+            Probe(child, argv[1], name);
+            failurePhase = "none";
+        }
     }
     catch (const char* code) { failure = code; }
     catch (...) { failure = "host"; }
@@ -487,7 +511,8 @@ int wmain(int argc, wchar_t** argv)
     if (!Is(name, "stop-resume") && Is(failure, "none") == false &&
         !Is(failure, "deadline") && !Is(failure, "output-limit") && !Is(failure, "crash") &&
         child.markers && child.MarkerBits() != 0) cleanup = false;
-    if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' })) failure = "pipe";
+    if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' }))
+    { failure = "pipe"; failurePhase = "output-check"; }
     child.Release(); control.Release();
     if (!GetProcessHandleCount(GetCurrentProcess(), &after)) closed = false;
     Log("handles-before", before); Log("handles-after", after);
@@ -497,5 +522,8 @@ int wmain(int argc, wchar_t** argv)
     printf("HANDLES\t%u\nELAPSED\t%llu\nRESULT\t%s\nCOMPLETE\n", leaked, GetTickCount64() - start, failure);
     bool flushed = fflush(details) == 0;
     bool fileClosed = fclose(details) == 0; details = nullptr;
+    if (!(cleanup && survival && flushed && fileClosed))
+        fprintf(stderr, "OWNED_IMAGE_REFUSAL\t1\t%s\t%s\t%s\t%d\t%d\t%d\t%d\n", name.c_str(),
+            failurePhase, RefusalReason(failure), cleanup ? 1 : 0, survival ? 1 : 0, flushed ? 1 : 0, fileClosed ? 1 : 0);
     return cleanup && survival && flushed && fileClosed ? 0 : 1;
 }
