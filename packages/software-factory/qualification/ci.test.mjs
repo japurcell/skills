@@ -419,3 +419,49 @@ test('cleanup advisory qualification is explicit POSIX-only and keeps genuine pu
   assert.match(refused.stderr, /no tests match supplied filters/);
   assert.equal(refused.stdout, '');
 });
+
+
+test('loader source-contract selection never registers native loading and binds explicit Python profiles', () => {
+  const dispatch = new URL('../scripts/test.mjs', import.meta.url).href;
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_SELECTOR_TIMING_ROOT;
+  assert.ok(env.FACTORY_TEST_PYTHON, 'CI requires independently selected Python');
+  assert.equal(env.FACTORY_WINDOWS_LOADER_TEST_PYTHON, env.FACTORY_TEST_PYTHON, 'loader contract profile must explicitly select the same Python');
+  for (const exitCode of [0, 7]) {
+    const program = `
+      import assert from 'node:assert/strict';
+      import childProcess from 'node:child_process';
+      import { EventEmitter } from 'node:events';
+      import { syncBuiltinESMExports } from 'node:module';
+      let launches = 0;
+      childProcess.spawn = (command, args, options) => {
+        assert.equal(++launches, 1);
+        assert.equal(command, process.execPath);
+        assert.deepEqual(args, ['--test', 'test/windows-storage-loader-contract.test.mjs']);
+        assert.deepEqual(options, { cwd: new URL('../', ${JSON.stringify(dispatch)}), stdio: 'inherit' });
+        const child = new EventEmitter();
+        setImmediate(() => child.emit('exit', ${exitCode}, null));
+        return child;
+      };
+      syncBuiltinESMExports();
+      await import(${JSON.stringify(dispatch)});
+      assert.equal(launches, 1);
+      assert.equal(process.exitCode, ${exitCode});
+    `;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, 'qualification', '--area', 'windows-storage-loader-contract'], { encoding: 'utf8', timeout: 5000, env });
+    assert.ifError(result.error);
+    assert.equal(result.status, exitCode, result.stdout + result.stderr);
+    assert.equal(result.signal, null);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, '');
+  }
+  const refused = spawnSync(process.execPath, [fileURLToPath(new URL(dispatch)), 'qualification', '--area', 'windows-storage-loader-native'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+  assert.match(refused.stderr, /no tests match supplied filters/);
+  assert.equal(refused.stdout, '');
+  for (const name of ['software-factory-qualification.yml', 'darwin-selector-timing.yml']) {
+    const workflow = readFileSync(new URL(`../../../.github/workflows/${name}`, import.meta.url), 'utf8');
+    assert.match(workflow, /FACTORY_WINDOWS_LOADER_TEST_PYTHON:.*steps\.python\.outputs\.python-path/);
+  }
+});
