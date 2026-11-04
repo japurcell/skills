@@ -1,5 +1,7 @@
 """Public CLI protocol controls; no Windows API invocation."""
 import json
+import os
+import shutil
 import subprocess
 import sys
 import unittest
@@ -213,12 +215,14 @@ function python {
     $global:LASTEXITCODE=$TestsExit
 }
 """
+    powershell = os.environ.get('FACTORY_TEST_PWSH') or shutil.which('pwsh')
+    self.assertTrue(powershell, 'PowerShell is required for workflow controls')
     with tempfile.TemporaryDirectory(prefix='owner-workflow-control-') as directory:
         script = Path(directory) / 'actual-workflow.ps1'
         script.write_text(stub + '\n' + body, encoding='utf-8')
         for owner_exit, tests_exit, expected in [(0,0,0),(1,0,1),(0,1,1),(1,2,2)]:
             with self.subTest(owner=owner_exit, tests=tests_exit):
-                result = subprocess.run(['/Users/adam/homebrew/bin/pwsh','-NoLogo','-NoProfile','-NonInteractive',
+                result = subprocess.run([powershell,'-NoLogo','-NoProfile','-NonInteractive',
                     '-File',str(script),'-OwnerExit',str(owner_exit),'-TestsExit',str(tests_exit)],
                     capture_output=True,text=True,timeout=3,env={})
                 self.assertEqual(result.returncode, expected)
