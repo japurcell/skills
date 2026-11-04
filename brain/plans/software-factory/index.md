@@ -107,3 +107,5 @@
 - [research/dependencies-repair-contract-2026-11-04.md](research/dependencies-repair-contract-2026-11-04.md)
 - [research/uninstall-contract-2026-11-04.md](research/uninstall-contract-2026-11-04.md)
 - [research/installation-repair-contract-2026-11-04.md](research/installation-repair-contract-2026-11-04.md)
+- [ExecPlan.history-2026-11-04-windows-diagnostics.md](ExecPlan.history-2026-11-04-windows-diagnostics.md)
+- [research/darwin-selector-diagnosis-2026-11-04.md](research/darwin-selector-diagnosis-2026-11-04.md)
