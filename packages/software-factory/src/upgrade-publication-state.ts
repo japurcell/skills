@@ -5,6 +5,7 @@ import { directoryIdentity, readBoundInstallCandidateReceipt, scanOwnedTree, ver
 import { readPublicationRecord, writePublicationRecord } from './install-publication-state.js';
 import { openMaintenanceStore, type CandidateBinding, type MaintenanceHandle } from './store.js';
 import { assertOriginalInstallation, type OriginalInstallation } from './upgrade-original.js';
+import { inspectOwnedToolchain, toolchainRows, type OwnedToolchainInspection, type ToolchainInspectionMode } from './owned-toolchain.js';
 
 interface TreeBinding { identity: string; digest: string; entries: number; bytes: number }
 interface AtomicBinding { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string; launcher: import('./store.js').Owner }
@@ -145,7 +146,8 @@ function expectedReceipt(intent: UpgradeIntent, index: number) {
   return { version: 1, operationId: intent.operationId, step: STEP_NAMES[index], tree: trees[index] };
 }
 /** Exact ordered state includes a single rename that may have completed before its receipt. */
-export function inspectUpgradeLayout(common: string, claim: import('./store.js').Claim) {
+export function inspectUpgradeLayout(common: string, claim: import('./store.js').Claim,
+  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
   const intent = readUpgradeIntent(common, claim), directory = upgradeDirectory(common, intent.operationId);
   const names = readdirSync(directory).sort(), allowed = ['intent.json', 'old', 'original.json', 'marker-template.json', 'new-receipt.json',
     ...STEP_NAMES.map(name => `${name}.json`)];
@@ -161,14 +163,24 @@ export function inspectUpgradeLayout(common: string, claim: import('./store.js')
   const originalCandidate = readBoundInstallCandidateReceipt(intent.candidate, { operationId: intent.operationId,
     repositoryId: intent.repositoryId, claimId: intent.claimId, selectionDigest: intent.selectionDigest,
     manifestSha256: claim.maintenance!.targetReleaseSha256! });
+  if (toolchainMode.purpose === 'dependency-repair' && recorded !== 4)
+    throw new Error('repair inspection requires fully receipted published upgrade');
   const factory = join(common, 'factory'), candidate = intent.candidate.path, old = join(directory, 'old');
+  let toolchainInspection: OwnedToolchainInspection | undefined;
   const valid = (step: number) => {
     const oldInstall = join(step >= 1 ? old : factory, 'install');
     const newInstall = join(step >= 2 ? factory : candidate, 'install');
     const oldToolchain = join(step >= 3 ? old : factory, 'toolchain');
     const newToolchain = join(step >= 4 ? factory : candidate, 'toolchain');
     if (!sameTree(oldInstall, intent.oldInstall) || !sameTree(newInstall, intent.newInstall)
-      || !sameTree(oldToolchain, intent.oldToolchain) || !sameTree(newToolchain, intent.newToolchain)) return false;
+      || !sameTree(oldToolchain, intent.oldToolchain)) return false;
+    try {
+      toolchainInspection = inspectOwnedToolchain(newToolchain, intent.newToolchain.identity,
+        toolchainRows(originalCandidate.entries), toolchainMode);
+      if (toolchainMode.purpose === 'strict' && (toolchainInspection.observed.digest !== intent.newToolchain.digest
+        || toolchainInspection.observed.entries !== intent.newToolchain.entries
+        || toolchainInspection.observed.regularBytes !== intent.newToolchain.bytes)) return false;
+    } catch { return false; }
     const candidateNames = ['candidate-receipt.json', ...(step < 2 ? ['install'] : []), ...(step < 4 ? ['toolchain'] : [])].sort();
     const oldNames = [...(step >= 1 ? ['install'] : []), ...(step >= 3 ? ['toolchain'] : [])].sort();
     return JSON.stringify(readdirSync(candidate).sort()) === JSON.stringify(candidateNames)
@@ -178,7 +190,7 @@ export function inspectUpgradeLayout(common: string, claim: import('./store.js')
   if (valid(recorded)) position = recorded;
   else if (recorded < 4 && valid(recorded + 1)) position = recorded + 1;
   else throw new Error('upgrade layout identity or ordered position differs');
-  return { intent, originalCandidate, recorded, position };
+  return { intent, originalCandidate, recorded, position, toolchainInspection };
 }
 
 export function writeUpgradeStepReceipt(common: string, intent: UpgradeIntent, index: number): void {

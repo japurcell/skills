@@ -17,6 +17,16 @@ import type { ForwardShape } from './schema-forward.js';
 import type { Admission } from './accounting.js';
 
 export interface Owner { host: string; pid: number; start: string | null }
+export interface InstalledCompletion {
+  version: number; operationId: string; repositoryId: string; claimId: string; selectionDigest: string;
+  manifestSha256: string; receiptId: string; receiptSha256: string; receiptIdentity?: string;
+  controllerOwner?: Owner; launcherOwner?: Owner; stageIdentity?: string;
+  originalInstalledSha256?: string; originalCompletionSha256?: string;
+}
+export interface ActiveInstalledCompletion {
+  kind: 'install.completed' | 'upgrade.completed'; completion: InstalledCompletion;
+  repositoryId: string; release: string;
+}
 export interface Claim {
   id: string; token: string; kind: 'worktree' | 'dashboard' | 'maintenance'; resourceKey: string;
   invocationId: string | null; owner: Owner; endpoint?: { url: string; instanceId: string };
@@ -216,7 +226,7 @@ export function readInstalledCompletion(commonDir: string, operationId: string) 
 }
 
 /** One snapshot selects the latest installed completion. Invalid newest evidence never falls back. */
-function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: boolean) {
+function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: boolean): ActiveInstalledCompletion {
   const location = paths(commonDir, false);
   if (!pathAbsent(location.marker) || (!allowUpgradeMarker && !pathAbsent(join(commonDir, 'factory', 'upgrade-incomplete'))))
     throw new Error('incomplete installation; explicit recovery required');
@@ -234,15 +244,15 @@ function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: 
     if (repositories.length !== 1 || repository?.['state'] !== 'ready'
       || database.prepare("SELECT id FROM owner_claims WHERE kind='maintenance' LIMIT 1").get())
       throw new Error('installed repository is not ready');
-    const row = database.prepare("SELECT kind,data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed') ORDER BY cursor DESC LIMIT 1").get();
+    const row = database.prepare("SELECT kind,data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed','dependencies.completed','repair.completed','uninstall.completed','cleanup.completed') ORDER BY cursor DESC LIMIT 1").get();
     if (!row) throw new Error('active installed completion unavailable');
-    const completion = JSON.parse(String(row['data'])) as { version: number; operationId: string;
-      repositoryId: string; claimId: string; selectionDigest: string; manifestSha256: string;
-      receiptId: string; receiptSha256: string };
+    const kind = row['kind'];
+    if (kind !== 'install.completed' && kind !== 'upgrade.completed') throw new Error('unsupported installed completion kind');
+    const completion = JSON.parse(String(row['data'])) as InstalledCompletion;
     if (completion.version !== 1 || completion.repositoryId !== repository['id']
       || !/^[0-9a-f-]{36}$/i.test(completion.operationId)) throw new Error('active installed completion invalid');
     database.exec('COMMIT');
-    return { kind: String(row['kind']) as 'install.completed' | 'upgrade.completed', completion,
+    return { kind, completion,
       repositoryId: String(repository['id']), release: String(repository['release']) };
   } finally { database.close(); }
 }

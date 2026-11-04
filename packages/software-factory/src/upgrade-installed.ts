@@ -7,6 +7,7 @@ import { validateBoundProviderSources, validateRetainedProviderSources } from '.
 import { validateReleaseBundle } from './release.js';
 import { readOwnedReleaseManifest } from './owned-release.js';
 import type { CandidateBinding, Claim, Owner } from './store.js';
+import type { ToolchainInspectionMode } from './owned-toolchain.js';
 
 export interface UpgradeInstalledReceipt {
   version: 1; kind: 'upgrade'; receiptId: string; operationId: string; repositoryId: string; claimId: string;
@@ -40,7 +41,8 @@ export function readUpgradeInstalledReceipt(common: string, operationId: string)
 /** Verify committed upgrade bytes without executing either the old runtime or a provider. */
 export function inspectInstalledUpgrade(common: string, active: { completion: { operationId: string; repositoryId: string;
   claimId: string; selectionDigest: string; manifestSha256: string; receiptId: string; receiptSha256: string;
-  originalInstalledSha256?: string; originalCompletionSha256?: string; receiptIdentity?: string }; release: string }, retained = false) {
+  originalInstalledSha256?: string; originalCompletionSha256?: string; receiptIdentity?: string }; release: string }, retained = false,
+  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
   const { receipt, sha256, identity } = readUpgradeInstalledReceipt(common, active.completion.operationId), completion = active.completion;
   if (completion.repositoryId !== receipt.repositoryId || completion.claimId !== receipt.claimId
     || completion.selectionDigest !== receipt.selectionDigest || completion.manifestSha256 !== receipt.manifestSha256
@@ -60,7 +62,7 @@ export function inspectInstalledUpgrade(common: string, active: { completion: { 
       forward: { sourceShape: 'v7', currentShape: 'v7', sourceRelease: '', sourceIdentity: '', backup: {
         id: '', identity: '', sha256: '', bytes: 0, countDigest: '', receiptId: '', receiptSha256: receipt.backupReceiptSha256 } },
     } };
-  const layout = inspectUpgradeLayout(common, claim);
+  const layout = inspectUpgradeLayout(common, claim, toolchainMode);
   if (layout.recorded !== 4 || layout.position !== 4
     || JSON.stringify(layout.intent.atomicBinding.launcher) !== JSON.stringify(receipt.launcher))
     throw new Error('upgrade installed layout incomplete');
@@ -72,7 +74,8 @@ export function inspectInstalledUpgrade(common: string, active: { completion: { 
   const manifest = retained ? readOwnedReleaseManifest(runtime, receipt.manifestSha256) : validateReleaseBundle(runtime, receipt.manifestSha256);
   if (manifest.version !== receipt.release || manifest.platform !== `${process.platform}-${process.arch}`
     || manifest.node.sha256 !== layout.originalCandidate.nodeArchiveSha256
-    || hash(readFileSync(join(factory, 'toolchain', 'package-lock.json'))) !== layout.originalCandidate.toolchainLockSha256
+    || layout.toolchainInspection?.expected.rows.find(row => row.path === 'package-lock.json')?.sha256 !== layout.originalCandidate.toolchainLockSha256
+    || hash(readFileSync(join(runtime, 'toolchain', 'package-lock.json'))) !== layout.originalCandidate.toolchainLockSha256
     || (!retained && JSON.stringify(layout.originalCandidate.omittedLinks) !== JSON.stringify(['bin/corepack', 'bin/npm', 'bin/npx']))
     || process.versions.node !== '24.22.1') throw new Error('upgrade installed selection differs');
   if (retained) validateRetainedProviderSources(layout.originalCandidate.providers);
@@ -81,5 +84,5 @@ export function inspectInstalledUpgrade(common: string, active: { completion: { 
   if (!file.isFile() || file.isSymbolicLink() || realpathSync(nodePath) !== nodePath)
     throw new Error('upgrade installed Node differs');
   return { common, receipt, receiptSha256: sha256, completion, release: active.release,
-    layout: { receipt: layout.originalCandidate }, nodePath };
+    layout: { receipt: layout.originalCandidate, toolchainInspection: layout.toolchainInspection }, nodePath };
 }
