@@ -136,3 +136,5 @@
 - [Rejected Darwin compiler launch feasibility](research/darwin-native-compiler-rejection-2026-11-04.md)
 
 - [C3b learning closure source and proof](research/cleanup-c3b-learning-closure-2026-11-04.md)
+
+- [Darwin compiler-own diagnostics DEFER](research/darwin-compiler-diagnostic-defer-2026-11-04.md)
