@@ -123,3 +123,4 @@
 - [C3 retained-reference contract](research/cleanup-reference-contract-2026-11-04.md)
 - [Windows handle attribution limits](research/windows-handle-attribution-contract-2026-11-04.md)
 - [Windows handle trace feasibility](research/windows-handle-trace-contract-2026-11-04.md)
+- [C2 Actions event diagnosis](research/cleanup-c2-actions-trigger-diagnosis-2026-11-04.md)

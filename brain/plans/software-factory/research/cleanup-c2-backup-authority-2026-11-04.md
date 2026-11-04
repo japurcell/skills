@@ -35,3 +35,10 @@
 ## Integrated ordinary proof
 
 Ordinary integration acceptance MET at exactaba7af4e05ded06eace8e38a139965ba2077d496:59files/735tests,735pass,zero fail/cancelled/skips/todo,216.683029s/exit0. Freeze09:35:13-09:38:50UTC ended only after fullEOF and cleanhead/729input/171output/receiptSHA98925fd6/actualNodeSHA6f320694/pinnedchildPATH/Python/offlineundici postflight. Exactcommand `/tmp/factory-cleanup-c2-composed-command.sh`, entrylist `/tmp/factory-cleanup-c2-ordinary-entries.txt`, profile `/private/tmp/factory-cleanup-c2-integration-profile/profile.json`, full log `/tmp/factory-cleanup-c2-integrated-ordinary-composed.log`, exactfacts `/tmp/factory-cleanup-c2-composed-postflight.json`. An earlier <1s exit127 orchestration launch never started tests because the wrapper pinned its own PATH before resolving RTK; separate `*-launch127.*` logs retained. Corrected wrapper resolves RTK in the original parent environment before the unchanged saved command applies pinned child env. No source/test change, skip or bound/guard weakening. Linux/Darwin public43 each remain pending; Windows C2 unsupported/C1open.
+
+
+## Native event-creation checkpoint
+
+Single authorized push927f78bf62fa5e3ce3f7f35f39046c6bf3d65504 is remote-verified. Exact-head Actions and check-suite APIs return0 through09:45UTC, so public43 per POSIX target is pending without run IDs. Push range contains no recognized CI skip directive and no Windows owned-image trigger path. Actual registry changes retain Darwin context compatibility selection; no dispatch/retry or event-gap cause is asserted.
+
+Reflection: POSIX target refusal is enforced by the tested dispatcher target field. Parent RTK resolution before pinned child env is encoded in the corrected proof driver and repeatable handoff recipe. Existing freeze/cache/receipt rules and the bounded event diagnosis cover this wave; no generic skill or separate learning note is needed.
