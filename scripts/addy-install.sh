@@ -401,7 +401,11 @@ patterns = {
 def iter_text_files(skill_dir: Path):
     for directory, child_dirs, filenames in os.walk(skill_dir, followlinks=False):
         parent = Path(directory)
-        child_dirs[:] = [name for name in child_dirs if not helper.artifact_excluded(name, True, (parent / name).is_symlink()) and not (parent / name).is_symlink()]
+        child_dirs[:] = [
+            name for name in child_dirs
+            if not helper.artifact_excluded(name, True, (parent / name).is_symlink())
+            and not (parent / name).is_symlink()
+        ]
         for name in sorted(filenames):
             path = parent / name
             if helper.artifact_excluded(name, False, helper.is_link_or_junction(path)):

@@ -417,7 +417,7 @@ def main():
             "Output and limits:\n"
             "  Success writes one JSON object to stdout (exit 0). Errors go to stderr\n"
             "  (exit 2). recommendation_available=false means no catalog match; it is\n"
-            "  still a valid result with exit 0. Availability is not verified, and\n"
+            "  still a valid result with exit 0. Live availability is not verified, and\n"
             "  estimated cost is not a verified minimum. If token estimates or rates\n"
             "  are incomplete, ranking assumes equal uncached input/output unit rates\n"
             "  at ordinary context. GitHub Copilot estimates exclude retries, verification,\n"
@@ -486,7 +486,7 @@ def main():
         return 2
     try:
         if args.input == "-" or (args.input is None and not has_flags):
-            request = json.load(sys.stdin) if args.input == "-" or not sys.stdin.isatty() else {}
+            request = json.load(sys.stdin)
         elif args.input is None:
             request = {}
         else:

@@ -14,9 +14,13 @@ SKILL = Path(__file__).resolve().parents[1]
 ROUTE = SKILL / "scripts" / "route.py"
 
 
-def run_route(value, script=ROUTE):
-    return subprocess.run([sys.executable, str(script)], input=json.dumps(value),
+def run_cli(*arguments, input_text=None, script=ROUTE):
+    return subprocess.run([sys.executable, str(script), *arguments], input=input_text,
                           text=True, capture_output=True, check=False)
+
+
+def run_route(value, script=ROUTE):
+    return run_cli(input_text=json.dumps(value), script=script)
 
 
 def decision(value):
@@ -24,11 +28,6 @@ def decision(value):
     if result.returncode:
         raise AssertionError(result.stderr)
     return json.loads(result.stdout)
-
-
-def run_cli(*arguments, input_text=None, script=ROUTE, stdin=None):
-    return subprocess.run([sys.executable, str(script), *arguments], input=input_text,
-                          stdin=stdin, text=True, capture_output=True, check=False)
 
 
 class RouterCliTests(unittest.TestCase):
@@ -282,11 +281,16 @@ class RouterCliTests(unittest.TestCase):
                                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE, text=True)
         try:
-            stdout, stderr = process.communicate(timeout=5)
+            process.wait(timeout=5)
+            exited_before_stdin_close = True
         except subprocess.TimeoutExpired:
-            process.kill()
-            process.communicate()
-            self.fail("flags-only invocation waited for stdin")
+            exited_before_stdin_close = False
+        finally:
+            if process.poll() is None:
+                process.kill()
+            stdout, stderr = process.communicate(timeout=5)
+        self.assertTrue(exited_before_stdin_close,
+                        "flags-only invocation waited for stdin while its pipe remained open")
         self.assertEqual(process.returncode, 0, stderr)
         self.assertEqual(json.loads(stdout)["floor"], "Fast")
         master, slave = pty.openpty()

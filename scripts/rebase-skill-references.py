@@ -29,9 +29,14 @@ ARTIFACT_POLICY = {
 
 def artifact_excluded(name: str, is_directory: bool, is_link: bool) -> bool:
     return (
-        (is_directory or is_link) and name in ARTIFACT_POLICY["directory_names"]
-        or (not is_directory or is_link)
-        and (name in ARTIFACT_POLICY["file_names"] or name.endswith(ARTIFACT_POLICY["file_suffixes"]))
+        ((is_directory or is_link) and name in ARTIFACT_POLICY["directory_names"])
+        or (
+            (not is_directory or is_link)
+            and (
+                name in ARTIFACT_POLICY["file_names"]
+                or name.endswith(ARTIFACT_POLICY["file_suffixes"])
+            )
+        )
     )
 
 
@@ -40,9 +45,11 @@ def filtered_entries(directory: Path):
     with os.scandir(directory) as entries:
         for entry in entries:
             # A link can match either category, so stat only names whose type matters.
-            if (entry.name in ARTIFACT_POLICY["directory_names"]
-                    or entry.name in ARTIFACT_POLICY["file_names"]
-                    or entry.name.endswith(ARTIFACT_POLICY["file_suffixes"])):
+            if (
+                entry.name in ARTIFACT_POLICY["directory_names"]
+                or entry.name in ARTIFACT_POLICY["file_names"]
+                or entry.name.endswith(ARTIFACT_POLICY["file_suffixes"])
+            ):
                 is_link = entry.is_symlink()
                 is_directory = entry.is_dir(follow_symlinks=False)
                 if artifact_excluded(entry.name, is_directory, is_link):

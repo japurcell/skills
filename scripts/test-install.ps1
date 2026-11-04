@@ -2174,10 +2174,12 @@ function Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade {
         $homeDir = Join-Path $workdir 'home'
         New-FixtureRepo $repo
         $skill = Join-Path $repo 'skills/default/alpha'
-        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+        $artifacts = @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')
+        $payloads = @('keep/__PYCACHE__/item', 'keep/.PYTEST_CACHE/item', 'keep/a.PYC', 'types/.ruff_cache', 'types/allowed.pyc/item', 'tmp/item', 'build/item', '.hidden')
+        foreach ($relative in $artifacts) {
             Write-FixtureFile (Join-Path $skill $relative) @('source artifact')
         }
-        foreach ($relative in @('keep/__PYCACHE__/item', 'keep/.PYTEST_CACHE/item', 'keep/a.PYC', 'types/.ruff_cache', 'types/allowed.pyc/item', 'tmp/item', 'build/item', '.hidden')) {
+        foreach ($relative in $payloads) {
             Write-FixtureFile (Join-Path $skill $relative) @('runtime payload')
         }
         $external = Join-Path $workdir 'artifact-target'
@@ -2198,7 +2200,7 @@ function Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade {
         Set-Content -LiteralPath $installer -Value $text -Encoding utf8NoBOM -NoNewline
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
         $installed = Join-Path $homeDir '.agents/skills/alpha'
-        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+        foreach ($relative in $artifacts) {
             Assert-True -Condition (Test-Path -LiteralPath (Join-Path $skill $relative)) -Message "Expected source artifact preserved: $relative"
             Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $installed $relative))) -Message "Expected artifact excluded: $relative"
             Write-FixtureFile (Join-Path $installed $relative) @('stale artifact')
@@ -2207,10 +2209,10 @@ function Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade {
             New-Item -ItemType SymbolicLink -Path (Join-Path $installed 'scripts/link.pyc') -Target $external | Out-Null
         }
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
-        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+        foreach ($relative in $artifacts) {
             Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $installed $relative))) -Message "Expected stale artifact pruned: $relative"
         }
-        foreach ($relative in @('keep/__PYCACHE__/item', 'keep/.PYTEST_CACHE/item', 'keep/a.PYC', 'types/.ruff_cache', 'types/allowed.pyc/item', 'tmp/item', 'build/item', '.hidden', 'scripts/route.py')) {
+        foreach ($relative in ($payloads + 'scripts/route.py')) {
             Assert-True -Condition (Test-Path -LiteralPath (Join-Path $installed $relative)) -Message "Expected runtime payload preserved: $relative"
         }
         if ($linkedArtifact) {
