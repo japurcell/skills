@@ -24,6 +24,8 @@ The public scanner is `scripts/scan-secrets.py`; installation and gate entrypoin
 
 The real Git LFS cases require Git LFS on `PATH`; the verified environment used 3.8.0. Set `TEST_GIT_LFS` to an absolute Git LFS executable when it is not on `PATH`. Fixture-copy tests and scanner-only support remain private under `scripts/tests/scanner/`.
 
+Several scanner/security suites inspect or stop child processes, bind loopback sockets, or query `sysctl kern.clockrate`. Restricted sandboxes that deny `/bin/ps`, loopback binds, or this sysctl query can fail before the behavior under test runs. Use a test environment that permits these host checks; do not skip the affected cases.
+
 ## Tool Guardian and security reporting
 
 Canonical Guardian policy and hook behavior are owned by `hooks/`; generated provider outputs follow the generation rule above. Guardian policy suites are in `scripts/tests/guardian/`, including `bash scripts/tests/guardian/test-codex-hooks-tool-guard.sh` and `python3 scripts/tests/guardian/test-security-banners.py`. The banner suite exercises Guardian output and fixtures. `python3 scripts/tests/hooks/test-security-reporting.py` covers cross-cutting scanner and Guardian reporting, so it stays with hook integration evidence.
