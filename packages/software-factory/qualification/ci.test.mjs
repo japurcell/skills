@@ -164,3 +164,14 @@ test('Gemini source-contract qualification is isolated from canonical provider s
     assert.equal(refused.stdout, '');
   }
 });
+
+
+test('learning copy qualification is separately selectable without changing the original fixtures', () => {
+  const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'learning-toolchain-copy'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /selected learning compiler closure preserves regular-file bytes and remains independent/);
+  assert.match(result.stdout, /tests 1/);
+});
