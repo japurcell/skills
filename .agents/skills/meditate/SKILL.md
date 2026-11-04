@@ -2,6 +2,7 @@
 name: meditate
 description: Audit and evolve the brain vault - prune outdated content, discover cross-cutting principles, review skills for structural encoding opportunities. Triggers on "meditate", "audit the brain", "prune brain", "review skills", "consolidate notes", "prune notes".
 disable-model-invocation: true
+compatibility: Requires a POSIX-compatible sh shell for the bundled snapshot script.
 ---
 
 # Meditate

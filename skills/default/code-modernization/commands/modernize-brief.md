@@ -1,6 +1,6 @@
 ---
 description: Generate a phased Modernization Brief — the approved plan that transformation agents will execute against
-argument-hint: <system-dir> [target-stack]
+argument-hint: '<system-dir> [target-stack]'
 ---
 
 Synthesize everything in `analysis/$1/` into a **Modernization Brief** — the

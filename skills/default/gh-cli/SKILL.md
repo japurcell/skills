@@ -1,6 +1,7 @@
 ---
 name: gh-cli
 description: GitHub CLI (gh) comprehensive reference for repositories, issues, pull requests, Actions, projects, releases, gists, codespaces, organizations, extensions, and all GitHub operations from the command line.
+compatibility: Requires GitHub CLI (`gh`) for CLI operations; authenticate with `gh auth login` for account operations.
 ---
 
 # GitHub CLI (gh)

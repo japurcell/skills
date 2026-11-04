@@ -1,6 +1,6 @@
 ---
 description: Transform one legacy module to the target stack — idiomatic rewrite with behavior-equivalence tests
-argument-hint: <system-dir> <module> <target-stack>
+argument-hint: '<system-dir> <module> <target-stack>'
 ---
 
 Transform `legacy/$1` module **`$2`** into **$3**, with proof of behavioral

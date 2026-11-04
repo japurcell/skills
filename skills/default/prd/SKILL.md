@@ -2,6 +2,7 @@
 name: prd
 description: Create an implementation-ready PRD for a feature. Use for product requirements, feature specs, user stories, planning, or preparing for `/spec-to-tasks`. Do not implement or write code.
 disable-model-invocation: true
+argument-hint: '[<feature or change>]'
 ---
 
 # /prd

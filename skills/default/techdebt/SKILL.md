@@ -2,6 +2,7 @@
 name: techdebt
 description: Find and safely remove duplicated or redundant code in current context or a provided scope, e.g. `scope:git diff main..HEAD`.
 disable-model-invocation: true
+argument-hint: '[scope:<path or git diff range>]'
 ---
 
 # /techdebt

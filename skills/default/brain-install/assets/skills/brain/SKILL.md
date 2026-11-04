@@ -1,6 +1,7 @@
 ---
 name: brain
 description: Read/write brain files at brain/. Use when modifying any file in brain/. Use for any task that persists knowledge - reflection, planning, or direct edits. Use after debugging sessions, mistakes, corrections, architectural decisions, or any insight worth preserving across sessions. Use when the user says 'add to brain', 'remember this', or 'write a note'.
+compatibility: Requires Python 3.12+ only for manual indexing when hooks are unavailable.
 ---
 
 # Brain

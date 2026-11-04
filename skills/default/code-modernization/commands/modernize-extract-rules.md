@@ -1,6 +1,6 @@
 ---
 description: Mine business logic from legacy code into testable, human-readable rule specifications
-argument-hint: <system-dir> [module-pattern]
+argument-hint: '<system-dir> [module-pattern]'
 ---
 
 Extract the **business rules** embedded in `legacy/$1` into a structured,

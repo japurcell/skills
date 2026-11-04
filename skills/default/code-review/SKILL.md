@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Strict review of a PR, diff, commit range, branch, staged/unstaged changes, or AI patch. Finds only high-confidence issues introduced or exposed by the reviewed change.
+compatibility: Requires subagent dispatch, including for lightweight reviews.
 disable-model-invocation: true
 ---
 

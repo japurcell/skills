@@ -1,6 +1,7 @@
 ---
 name: execplan-implement
 description: ExecPlan implementation workflow. Use when implementing ExecPlans and you are the parent agent. Do not use if you are a subagent being delegated to.
+compatibility: Requires subagent dispatch with model and reasoning-effort controls.
 ---
 
 You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.

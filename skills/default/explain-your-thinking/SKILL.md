@@ -1,6 +1,7 @@
 ---
 name: explain-your-thinking
 description: Explain the basis for a prior decision or action.
+argument-hint: '[<decision or action>]'
 disable-model-invocation: true
 ---
 

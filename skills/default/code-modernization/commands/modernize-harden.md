@@ -1,6 +1,6 @@
 ---
 description: Security vulnerability scan with a reviewable remediation patch — OWASP, CWE, CVE, secrets, injection
-argument-hint: <system-dir> [--show-secrets]
+argument-hint: '<system-dir> [--show-secrets]'
 ---
 
 Run a **security hardening pass** on the legacy system: find

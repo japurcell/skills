@@ -1,7 +1,7 @@
 ---
 name: brain-install
 description: Install a portable brain vault, six local brain skills, and optional repository hooks, migrating existing guidance when present.
-argument-hint: "[target-repository] [--provider copilot|codex|gemini ...]"
+argument-hint: '[target-repository] [--provider copilot|codex|gemini ...]'
 disable-model-invocation: true
 compatibility: Python 3.12+; standard library only. Hooks support Copilot, Codex, and Gemini independently.
 ---

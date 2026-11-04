@@ -1,6 +1,7 @@
 ---
 name: delegate-to-subagents
 description: Pursue a long-running goal in a single session by co-ordinating subagents. Use when the user explicitly asks to delegate, spawn, dispatch, or fan out subagents.
+compatibility: Requires subagent dispatch with model and reasoning-effort controls.
 ---
 
 # Delegate to Subagents

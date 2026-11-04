@@ -1,6 +1,7 @@
 ---
 name: spec-to-tasks
 description: Use when the user wants to break down a SPEC, PRD, plan, or raw requirements into independent, bounded tasks. Do not use to write the spec or implement tasks.
+argument-hint: '[<spec path or text>] [output_directory <path>]'
 ---
 
 # /spec-to-tasks
