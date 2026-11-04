@@ -4,7 +4,7 @@ import { closeSync, fstatSync, mkdirSync, openSync, readSync, writeFileSync } fr
 import { availableParallelism, release } from 'node:os';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectEvidence, createEvidenceRoot, createCollector, hasSelectorCoverage } from './selector-timing.mjs';
+import { collectEvidence, createEvidenceRoot, createCollector, hasSelectorCoverage, hasFixtureHostCoverage } from './selector-timing.mjs';
 
 // Explicit qualification entry point. No workflow, provider, receipt or environment preflight is replaced.
 const cwd = fileURLToPath(new URL('../', import.meta.url));
@@ -34,9 +34,9 @@ try {
   let evidence;
   try { evidence = collectEvidence(root); }
   catch { evidence = { status: 'incomplete', records: [] }; }
-  if (!hasSelectorCoverage(evidence.records)) evidence.status = 'incomplete';
+  if (!hasSelectorCoverage(evidence.records) || !hasFixtureHostCoverage(evidence.records)) evidence.status = 'incomplete';
   const image = value => typeof value === 'string' && /^[a-zA-Z0-9._-]{1,64}$/.test(value) ? value : 'unavailable';
-  const metadata = { schema: 2, status: evidence.status, sourceSha, runtimeSha256, node: process.version, platform: process.platform, arch: process.arch,
+  const metadata = { schema: 3, status: evidence.status, sourceSha, runtimeSha256, node: process.version, platform: process.platform, arch: process.arch,
     availableParallelism: availableParallelism(), runtimeOsRelease: image(release()), runnerImage: image(process.env.ImageOS), runnerImageVersion: image(process.env.ImageVersion), fixtureExitCode,
     clock: 'host-monotonic-ms', attemptClock: 'persisted-utc-wall', cpu: 'emitting-process-only', records: evidence.records.length };
   writeFileSync(resolve(destination, 'selector-timing.jsonl'), evidence.records.map(record => JSON.stringify(record) + '\n').join(''), { flag: 'wx', mode: 0o600 });

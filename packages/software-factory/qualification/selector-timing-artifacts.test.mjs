@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { randomUUID } from 'node:crypto';
-import { createEvidenceRoot, createCollector, collectEvidence, hasSelectorCoverage, validateWorkerClosure } from './selector-timing.mjs';
+import { createEvidenceRoot, createCollector, collectEvidence, hasSelectorCoverage, hasFixtureHostCoverage, limits, validateWorkerClosure } from './selector-timing.mjs';
 import { stageSelectorTimingExports } from './selector-timing-artifacts.mjs';
 
 function fixture() {
@@ -13,7 +13,7 @@ function fixture() {
   collector.mark('worker-open'); collector.close();
   const records = collectEvidence(root).records;
   const context = { sourceSha: 'a'.repeat(40), runtimeSha256: 'b'.repeat(64) };
-  const metadata = { schema: 2, status: 'incomplete', ...context, node: 'v24.22.1', platform: 'darwin', arch: 'arm64',
+  const metadata = { schema: 3, status: 'incomplete', ...context, node: 'v24.22.1', platform: 'darwin', arch: 'arm64',
     availableParallelism: 3, runtimeOsRelease: '24.6.0', runnerImage: 'macos15', runnerImageVersion: '20261028.0489.1',
     fixtureExitCode: 1, clock: 'host-monotonic-ms', attemptClock: 'persisted-utc-wall', cpu: 'emitting-process-only', records: records.length };
   writeFileSync(join(directory, 'selector-timing.json'), JSON.stringify(metadata) + '\n', { mode: 0o600 });
@@ -80,8 +80,8 @@ test('artifact staging distinguishes bound observed closure from a child self re
   } finally { f.dispose(); }
 });
 
-test('complete case coverage still requires bound closure, and valid observed closure can stage complete evidence', () => {
-  for (const retainClosure of [false, true]) {
+test('complete original case coverage also requires all 36 correlated fixture hosts and distinct closure receipts', () => {
+  for (const [retainClosure, retainHosts] of [[false,true], [true,false], [true,true]]) {
     const f = fixture();
     try {
       let records = observedTimeline(f.records[0]);
@@ -98,7 +98,22 @@ test('complete case coverage still requires bound closure, and valid observed cl
         add({ stage:'case', phase:'end', fileId:file + '.test.mjs', caseId:String(caseId), spanId });
       }
       for (const operationClass of ['startup/git','startup/build','fake-agent','fixture-command']) add({ stage:'attempt', phase:'attempt.settled', at:'2026-11-04T04:20:00.000Z', invocationId:randomUUID(), attemptId:randomUUID(), operationClass });
+      if (retainHosts) {
+        // Independent contract counts, including the single known async interrupt host.
+        const launches = { 'learning':[2,4], 'learning-extraction-sources':[2,9,3], 'learning-extraction-paths':[5,2], 'learning-extraction-evidence':[3,1,1,2,1,1] };
+        for (const [file, cases] of Object.entries(launches)) for (let index = 0; index < cases.length; index++) for (let launch = 0; launch < cases[index]; launch++) {
+          const subject = randomUUID(), asynchronous = file === 'learning' && index === 1 && launch === 0;
+          const context = { fileId:file + '.test.mjs', caseId:String(index + 1) };
+          add({ ...context, stage:asynchronous ? 'worker-bind' : 'worker-bind-sync', subjectWorkerId:subject });
+          records.push({ ...template, ...context, workerId:subject, sequence:1, monoMs:monoMs++, stage:'worker-open' });
+          records.push({ ...template, ...context, workerId:subject, sequence:2, monoMs:monoMs++, stage:'fixture-host' });
+          // CPU may exceed wall; only a genuine self receipt owns these values.
+          records.push({ ...template, ...context, workerId:subject, sequence:3, monoMs:monoMs++, stage:'worker-close', wallMs:1, cpuUserUs:10000 });
+          add({ ...context, stage:asynchronous ? 'worker-close-observed' : 'worker-close-returned', subjectWorkerId:subject, exitCode:asynchronous ? 143 : 0, disposition:asynchronous ? 'failed' : 'ok' });
+        }
+      }
       add({ stage:'worker-close' });
+      assert.equal(hasFixtureHostCoverage(records), retainHosts);
       assert.equal(hasSelectorCoverage(records), true);
       if (!retainClosure) {
         const observed = records.find(record => record.stage === 'worker-close-observed');
@@ -109,7 +124,7 @@ test('complete case coverage still requires bound closure, and valid observed cl
       writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
       writeFileSync(join(f.directory, 'selector-timing.jsonl'), records.map(record => JSON.stringify(record) + '\n').join(''));
       const destination = join(f.root.path, 'upload');
-      if (retainClosure) { stageSelectorTimingExports(f.directory, destination, f.context); assert.deepEqual(readdirSync(destination).sort(), ['selector-timing.json', 'selector-timing.jsonl']); }
+      if (retainClosure && retainHosts) { stageSelectorTimingExports(f.directory, destination, f.context); assert.deepEqual(readdirSync(destination).sort(), ['selector-timing.json', 'selector-timing.jsonl']); }
       else { assert.throws(() => stageSelectorTimingExports(f.directory, destination, f.context)); assert.deepEqual(readdirSync(f.root.path).sort(), ['000.jsonl', 'owner.json']); }
     } finally { f.dispose(); }
   }
@@ -156,6 +171,100 @@ test('artifact staging refuses extra files, linked files and oversized exports',
       if (corruption === 'link') { rmSync(file); symlinkSync(join(f.root.path, '000.jsonl'), file); }
       if (corruption === 'oversize') writeFileSync(file, 'x'.repeat(16 * 1024 * 1024 + 1));
       assert.throws(() => stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context));
+    } finally { f.dispose(); }
+  }
+});
+
+
+function returnedTimeline(template) {
+  return observedTimeline(template).map(record => ({ ...record,
+    ...(record.stage === 'worker-bind' ? { stage:'worker-bind-sync', fileId:'learning.test.mjs', caseId:'1' } : {}),
+    ...(record.stage === 'cancel' ? { stage:'fixture-host', fileId:'learning.test.mjs', caseId:'1' } : {}),
+    ...(record.stage === 'worker-close-observed' ? { stage:'worker-close-returned', fileId:'learning.test.mjs', caseId:'1' } : {}),
+  }));
+}
+
+test('schema 3 staging accepts returned closure without inventing a killed host CPU receipt', () => {
+  const f = fixture();
+  try {
+    const records = returnedTimeline(f.records[0]);
+    assert.equal(validateWorkerClosure(records), true);
+    assert.equal(records.some(record => record.workerId === records[1].subjectWorkerId && record.stage === 'worker-close'), false);
+    f.metadata.records = records.length;
+    writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
+    writeFileSync(join(f.directory, 'selector-timing.jsonl'), records.map(record => JSON.stringify(record) + '\n').join(''));
+    stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context);
+    assert.deepEqual(readdirSync(join(f.root.path, 'upload')).sort(), ['selector-timing.json','selector-timing.jsonl']);
+  } finally { f.dispose(); }
+});
+
+test('schema 3 staging refuses swapped sync/async closure, spoofed labels, duplicate roles and invented parent CPU', () => {
+  for (const corruption of ['async-bind','async-close','labels','duplicate-host','cpu','early','unknown-subject','no-open','old-schema']) {
+    const f = fixture();
+    try {
+      let records = returnedTimeline(f.records[0]);
+      if (corruption === 'async-bind') records[1].stage = 'worker-bind';
+      if (corruption === 'async-close') records[4].stage = 'worker-close-observed';
+      if (corruption === 'labels') records[3].caseId = '2';
+      if (corruption === 'duplicate-host') records.splice(4, 0, { ...records[3], sequence:3, monoMs:4.5 });
+      if (corruption === 'cpu') records[4].cpuUserUs = 1;
+      if (corruption === 'early') records[4].monoMs = 3.5;
+      if (corruption === 'unknown-subject') records[3].workerId = randomUUID();
+      if (corruption === 'no-open') { records.splice(2, 1); records[2].sequence = 1; }
+      if (corruption === 'old-schema') f.metadata.schema = 2;
+      f.metadata.records = records.length;
+      writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
+      writeFileSync(join(f.directory, 'selector-timing.jsonl'), records.map(record => JSON.stringify(record) + '\n').join(''));
+      assert.throws(() => stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context), corruption);
+      assert.deepEqual(readdirSync(f.root.path).sort(), ['000.jsonl','owner.json']);
+    } finally { f.dispose(); }
+  }
+});
+
+test('a host self-close cannot replace its missing returned closure', () => {
+  const f = fixture();
+  try {
+    let records = returnedTimeline(f.records[0]);
+    records[4] = { ...records[3], sequence:3, monoMs:5, stage:'worker-close' };
+    records[5].sequence = 3;
+    assert.equal(validateWorkerClosure(records), false);
+    f.metadata.records = records.length;
+    writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
+    writeFileSync(join(f.directory, 'selector-timing.jsonl'), records.map(record => JSON.stringify(record) + '\n').join(''));
+    stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context);
+    assert.equal(JSON.parse(readFileSync(join(f.root.path, 'upload/selector-timing.json'), 'utf8')).status, 'incomplete');
+  } finally { f.dispose(); }
+});
+
+
+test('staging preserves the existing per-process byte cap even inside the aggregate export cap', () => {
+  const f = fixture();
+  try {
+    const template = f.records[0];
+    const records = Array.from({ length:limits.records }, (_, index) => ({ ...template, sequence:index + 1, monoMs:index + 1,
+      stage:index === 0 ? 'worker-open' : index === limits.records - 1 ? 'worker-close' : 'copy',
+      fileId:'learning-extraction-evidence.test.mjs', caseId:'1', spanId:randomUUID(), invocationId:randomUUID(), attemptId:randomUUID(),
+      at:'2026-11-04T04:20:00.000Z', wallMs:1.2345678901234567e100, cpuUserUs:1.2345678901234567e100, cpuSystemUs:1.2345678901234567e100 }));
+    const bytes = records.map(record => JSON.stringify(record) + '\n').join('');
+    assert.ok(Buffer.byteLength(bytes) > limits.processBytes); assert.ok(Buffer.byteLength(bytes) < limits.totalBytes);
+    f.metadata.records = records.length;
+    writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
+    writeFileSync(join(f.directory, 'selector-timing.jsonl'), bytes);
+    assert.throws(() => stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context));
+    assert.deepEqual(readdirSync(f.root.path).sort(), ['000.jsonl','owner.json']);
+  } finally { f.dispose(); }
+});
+
+
+test('schema 3 refuses coerced identifiers and labels even in incomplete exports', () => {
+  for (const [field, value] of [['workerId',[randomUUID()]], ['fileId',['learning.test.mjs']], ['caseId',1], ['spanId',[randomUUID()]], ['invocationId',[randomUUID()]], ['attemptId',[randomUUID()]], ['at',['2026-11-04T04:20:00.000Z']]]) {
+    const f = fixture();
+    try {
+      const record = { ...f.records[0], fileId:'learning.test.mjs', caseId:'1', [field]:value };
+      f.metadata.records = 1;
+      writeFileSync(join(f.directory, 'selector-timing.json'), JSON.stringify(f.metadata) + '\n');
+      writeFileSync(join(f.directory, 'selector-timing.jsonl'), JSON.stringify(record) + '\n');
+      assert.throws(() => stageSelectorTimingExports(f.directory, join(f.root.path, 'upload'), f.context), field);
     } finally { f.dispose(); }
   }
 });
