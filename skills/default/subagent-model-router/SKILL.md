@@ -12,7 +12,15 @@ Classify the task and use the bundled CLI to recommend an exact catalog model an
 
 Set `task.work` to `bounded`, `standard`, `coding`, `exploration`, `planning`, or `execplan`. Use `exploration` for bounded, low-risk exploration with clear requirements and straightforward verification; it is Fast. Use `standard` for exploration requiring substantive judgment or cross-file behavioral reasoning. Substantive judgment, agentic coding, deep debugging, and ordinary substantive review are at least Standard. High stakes, security sensitivity, difficult reasoning, repeated failures, or a best-quality request call for Premium. For reviews, set `task.review` to `mechanical`, `substantive`, or `security`. Read [review-routing.md](reference/review-routing.md) only when review type or risk classification is unclear.
 
-Supply supported facts in `task.risks`: `security_sensitive`, `high_stakes`, `unusually_difficult`, `repeated_reasoning_failures`, `user_requested_best_quality`, `new_evidence_raises_floor`, `stakes_or_ambiguity_increased`, or `important_review_miss`. Set `task.prior_important_miss` for a known relevant miss. Use `task.failure` for diagnosed `reasoning_gap`, `repeated_constraints_missed`, `repeated_reasoning_failures`, `new_evidence_raises_floor`, or `context_does_not_fit`; use the last only when no suitable same-tier configuration fits the required context. Set `task.selected_tier` when escalating a previous route.
+Classify each agent by its assigned responsibility, not the artifact it touches or its coordinator title. For work involving a plan:
+
+- Use `bounded` (Fast) for routine coordination: collecting updates, tracking progress, or applying agreed changes with straightforward verification.
+- Use `standard` (Standard) for substantive coordination: reconciling findings or resolving inconsistencies without redesigning the plan.
+- Use `planning` or `execplan` for creating or materially revising scope, architecture, dependencies, or sequencing. These decisions remain planning when updating an existing plan.
+
+Assess risk and difficulty for the assigned task independently. The plan author's model, effort, and tier do not become a coordinator's constraints or minimum tier. Coordination that owns security-sensitive or other high-risk judgment still requires Premium.
+
+Supply supported facts in `task.risks`: `security_sensitive`, `high_stakes`, `unusually_difficult`, `repeated_reasoning_failures`, `user_requested_best_quality`, `new_evidence_raises_floor`, `stakes_or_ambiguity_increased`, or `important_review_miss`. Set `task.prior_important_miss` for a known relevant miss. Use `task.failure` for diagnosed `reasoning_gap`, `repeated_constraints_missed`, `repeated_reasoning_failures`, `new_evidence_raises_floor`, or `context_does_not_fit`; use the last only when no suitable same-tier configuration fits the required context. Set `task.selected_tier` when escalating a previous route for this same task.
 
 Before recording a capability gap, check instructions, inputs, context, dependencies, permissions, tools, runtime availability, and verification quality. A failing test, build, or script alone does not establish a model capability gap. Preserve the original floor when availability alone requires a higher-tier configuration.
 

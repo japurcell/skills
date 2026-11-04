@@ -74,6 +74,66 @@
         "Requires confirmed exact model and effort for any final dispatch without requesting a full inventory."
       ],
       "files": []
+    },
+    {
+      "id": 7,
+      "eval_name": "routine-plan-update-coordination",
+      "prompt": "Select a model for an agent coordinating updates to an existing plan. The original author used gpt-6.1-sol at high, recorded as Premium, because the design was unusually difficult. This new agent collects three workers' status reports, copies their approved wording into the progress section, and checks the supplied completion checklist. All decisions are settled; the edits are reversible and straightforward to verify. There is no model or effort constraint for this agent. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
+      "expected_output": "Classifies the coordinator's own work as bounded and selects Fast gpt-6-luna at medium. The author's Premium route does not become this task's selected_tier, risk, or model/effort constraint. The supplied exact pair makes the final route dispatchable.",
+      "expectations": [
+        "Runs the CLI with task.work bounded, without planning or execplan classification.",
+        "Does not inherit the author's Premium selected_tier, unusually_difficult risk, or Sol/high constraints.",
+        "Returns Fast gpt-6-luna at medium with final dispatchable true using the supplied exact interface facts."
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "eval_name": "substantive-plan-update-coordination",
+      "prompt": "Select a model for an agent coordinating updates to an existing plan whose original author used Premium gpt-6.1-sol at high. Two workers disagree about which acceptance criteria are complete. The coordinator must read their test evidence, reconcile the conflicting reports, and update the plan's status and evidence links. It must preserve the agreed scope, architecture, dependencies, and sequencing. This requires ordinary judgment, with no security sensitivity or unusually difficult reasoning. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
+      "expected_output": "Classifies the reconciliation as standard, selects Standard gpt-6-luna at high, and confirms the exact pair for dispatch. It neither reduces substantive judgment to Fast nor applies the planning pool or inherits the author's Premium route.",
+      "expectations": [
+        "Runs the CLI with task.work standard for substantive reconciliation without redesigning the plan.",
+        "Does not inherit the author's selected_tier or model/effort constraints.",
+        "Returns Standard gpt-6-luna at high with final dispatchable true, rather than Fast or a mandatory planning model."
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "eval_name": "existing-plan-substantive-redesign",
+      "prompt": "Select a model for an agent described as the coordinator of updates to an existing plan. A new constraint invalidates the agreed service boundaries and creates a dependency cycle. This agent must choose a new decomposition, revise scope, and design a viable migration sequence. Resolving the competing constraints is unusually difficult. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
+      "expected_output": "Treats the agent's decisions as substantive planning despite its coordinator title and the existing artifact. Uses planning or execplan with unusually_difficult risk and selects Premium gpt-6.1-sol at high, confirmed dispatchable by the supplied exact pair.",
+      "expectations": [
+        "Runs the CLI with task.work planning or execplan because the task owns material planning decisions.",
+        "Sets unusually_difficult risk from this agent's assigned reasoning, preserving the Premium floor.",
+        "Returns Premium gpt-6.1-sol at high with final dispatchable true; does not downgrade because the plan already exists."
+      ],
+      "files": []
+    },
+    {
+      "id": 10,
+      "eval_name": "new-plan-substantive-design",
+      "prompt": "Select a model for an agent creating a plan for a migration across three coupled subsystems. The agent must choose service boundaries, settle scope, identify dependencies, and design the rollout order. The competing compatibility and availability constraints make the reasoning unusually difficult. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
+      "expected_output": "Uses planning or execplan with unusually_difficult risk, preserving Premium gpt-6.1-sol at high for difficult plan creation. The supplied exact pair makes the final route dispatchable.",
+      "expectations": [
+        "Runs the CLI with task.work planning or execplan for new substantive plan creation.",
+        "Sets unusually_difficult risk and returns Premium gpt-6.1-sol at high.",
+        "Confirms both supplied dispatch values before returning final dispatchable true."
+      ],
+      "files": []
+    },
+    {
+      "id": 11,
+      "eval_name": "security-sensitive-plan-coordination",
+      "prompt": "Select a model for an agent coordinating evidence updates to an existing rollout plan. The scope, architecture, dependencies, and sequencing are settled. The coordinator must adjudicate conflicting authentication-bypass review findings and decide whether the security acceptance criterion is satisfied before rollout. This agent owns that security-sensitive judgment, not only the transcription of an approved decision. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high, gpt-6.1-terra at high, and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
+      "expected_output": "Classifies the task as substantive coordination/security review, not planning merely because it updates a plan. Records security sensitivity or a security review, preserves a Premium floor, and selects gpt-6.1-terra at high from the ordinary pool. Confirms the supplied exact pair for dispatch.",
+      "expectations": [
+        "Uses standard or review work with task.review security or task.risks.security_sensitive true, rather than planning or execplan.",
+        "Preserves Premium for the coordinator's own security-sensitive responsibility instead of treating all coordination as Fast or Standard.",
+        "Returns Premium gpt-6.1-terra at high with final dispatchable true using the supplied exact pair."
+      ],
+      "files": []
     }
   ]
 }
