@@ -1,5 +1,5 @@
 // Public diagnostic wire boundary. Raw native/build output never passes through.
-import { cases } from './windows-owned-image.mjs';
+import { cases, limit } from './windows-owned-image.mjs';
 
 export const buildCategories = Object.freeze(['host', 'path', 'existing-build', 'missing-msvc', 'tool-signature',
   'compiler-version', 'source', 'compile', 'build-cap', 'source-changed', 'binary', 'report', 'unexpected']);
@@ -29,6 +29,41 @@ const validCompiler = (category, code, source, line) => {
   return source === 'none' ? line === 0 : ['probe', 'shared', 'fixture', 'fixture-dll'].includes(source) &&
     Number.isInteger(line) && line >= 1 && line <= 4096;
 };
+
+function validNative(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 3 ||
+      Object.keys(value).some(key => !['exit', 'status', 'stderr'].includes(key)) ||
+      !['present', 'absent', 'null'].includes(value.exit) || !['empty', 'nonempty'].includes(value.stderr)) return false;
+  if (value.exit !== 'present') return value.status === 'none';
+  return Number.isInteger(value.status) && value.status >= -2147483648 && value.status <= 4294967295 &&
+    (value.status !== 0 || value.stderr === 'nonempty');
+}
+
+function copyNative(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 3) return null;
+  const copy = {};
+  for (const key of ['exit', 'status', 'stderr']) {
+    const field = Object.getOwnPropertyDescriptor(value, key);
+    if (!field || !Object.hasOwn(field, 'value')) return null;
+    copy[key] = field.value;
+  }
+  return validNative(copy) ? copy : null;
+}
+
+export function nativeOutcome(result) {
+  try {
+    if (!result || typeof result !== 'object' || Array.isArray(result)) return null;
+    const error = Object.getOwnPropertyDescriptor(result, 'stderr');
+    if (!error || !Object.hasOwn(error, 'value') || typeof error.value !== 'string' || Buffer.byteLength(error.value) > limit) return null;
+    const stderr = error.value.length ? 'nonempty' : 'empty';
+    const exit = Object.getOwnPropertyDescriptor(result, 'exitCode');
+    if (!exit) return { exit: 'absent', status: 'none', stderr };
+    if (!Object.hasOwn(exit, 'value')) return null;
+    if (exit.value === null) return { exit: 'null', status: 'none', stderr };
+    const value = { exit: 'present', status: exit.value, stderr };
+    return validNative(value) ? value : null;
+  } catch { return null; }
+}
 
 export function parseBuildDiagnostic(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > 512) return empty();
@@ -63,8 +98,8 @@ const phaseCategories = {
 export function formatFailure(value) {
   try {
     if (!value || typeof value !== 'object' || Array.isArray(value) ||
-      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module'].includes(key))) return unexpected;
-    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module } = value;
+      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module', 'native'].includes(key))) return unexpected;
+    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module, native } = value;
     if (typeof phase !== 'string' || typeof category !== 'string' || typeof name !== 'string' ||
       !Object.hasOwn(phaseCategories, phase) || !phaseCategories[phase].includes(category) ||
       (phase === 'case' ? !cases.includes(name) : phase === 'pin' ? name !== 'none' && !cases.includes(name) : name !== 'none') ||
@@ -73,7 +108,10 @@ export function formatFailure(value) {
       !validCondition(category, condition) || condition !== 'none' && phase !== 'build') return unexpected;
     if (module === undefined ? moduleConditions.includes(condition) :
       phase !== 'build' || category !== 'tool-signature' || !validModule(module, condition)) return unexpected;
+    const nativeCopy = native === undefined ? undefined : copyNative(native);
+    if (native !== undefined && (phase !== 'case' || category !== 'native' || nativeCopy === null)) return unexpected;
     const extra = module === undefined ? '' : ` inbox=${module.inbox} core=${module.core} autoload=${module.autoload} direct=${module.direct}`;
-    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}\n`;
+    const outcome = nativeCopy === undefined ? '' : ` exit=${nativeCopy.exit} status=${nativeCopy.status} stderr=${nativeCopy.stderr}`;
+    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}${outcome}\n`;
   } catch { return unexpected; }
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateNative, cases, prepareUpload } from './windows-owned-image.mjs';
+import { validateNative, cases, prepareUpload, limit } from './windows-owned-image.mjs';
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -503,4 +503,62 @@ test('Security authority and captured cmdlet failures remain finite and context 
   assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', 'security-origin', 'authority')).field, 'authority');
   for (const stage of ['environment', 'management-origin', 'utility-origin', 'cmdlet-resolution'])
     assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', stage, 'authority')), null);
+});
+
+test('owned transport preserves real Node argv, exitCode and separate output contract', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const active = [];
+  const args = ['owned root [literal]', 'positive', 'owned details [literal]'];
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write(JSON.stringify(process.argv.slice(1))); process.stderr.write("synthetic-private"); process.exitCode=7', ...args],
+    4096, 2000, child => active.push(child === null ? 'closed' : 'started'));
+  assert.deepEqual(JSON.parse(result.stdout), args);
+  assert.equal(result.exitCode, 7); assert.equal(Object.hasOwn(result, 'statusCode'), false);
+  assert.equal(result.signal, null); assert.equal(result.stderr, 'synthetic-private');
+  assert.equal(result.capped, false); assert.equal(result.timedOut, false);
+  assert.deepEqual(active, ['started', 'closed']);
+  const normal = await runOwnedImageTransport(process.execPath, ['-e', 'process.stdout.write("owned")'], 4096, 2000);
+  assert.equal(normal.exitCode, 0); assert.equal(normal.stdout, 'owned'); assert.equal(normal.stderr, '');
+});
+
+test('owned transport retains its output cap and deadline refusal controls', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const capped = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write(Buffer.alloc(8192,65)); setInterval(()=>{},1000)'], 128, 2000);
+  assert.equal(capped.capped, true); assert.ok(Buffer.byteLength(capped.stdout) <= 128);
+  const timed = await runOwnedImageTransport(process.execPath, ['-e', 'setInterval(()=>{},1000)'], 4096, 700);
+  assert.equal(timed.timedOut, true); assert.equal(timed.capped, false);
+});
+
+test('native outcome projects only bounded exit presence/status and stderr flags', () => {
+  for (const status of [-2147483648, -1, 0, 1, 2, 2147483647, 2147483648, 4294967295]) {
+    const result = diagnosticApi.nativeOutcome({ exitCode: status, stderr: 'synthetic-private' });
+    assert.deepEqual(result, { exit: 'present', status, stderr: 'nonempty' });
+    assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native: result }),
+      `Owned image native qualification failed phase=case case=positive category=native code=none source=none line=0 tool=none condition=none exit=present status=${status} stderr=nonempty\n`);
+  }
+  assert.deepEqual(diagnosticApi.nativeOutcome({ stderr: '' }), { exit: 'absent', status: 'none', stderr: 'empty' });
+  assert.deepEqual(diagnosticApi.nativeOutcome({ exitCode: null, stderr: '' }), { exit: 'null', status: 'none', stderr: 'empty' });
+  for (const exit of ['absent', 'null'])
+    assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native: { exit, status: 'none', stderr: 'empty' } }),
+      `Owned image native qualification failed phase=case case=positive category=native code=none source=none line=0 tool=none condition=none exit=${exit} status=none stderr=empty\n`);
+});
+
+test('native outcome rejects raw values, forged status/context and contradictory success flags', () => {
+  const unexpected = 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n';
+  for (const result of [{ exitCode: -2147483649, stderr: '' }, { exitCode: 4294967296, stderr: '' },
+    { exitCode: '1', stderr: '' }, { exitCode: 1.5, stderr: '' }, { exitCode: NaN, stderr: '' },
+    { exitCode: [], stderr: '' }, { exitCode: 1, stderr: ['private'] }, { exitCode: 1, stderr: 'x'.repeat(limit + 1) }])
+    assert.equal(diagnosticApi.nativeOutcome(result), null);
+  const native = { exit: 'present', status: 1, stderr: 'empty' };
+  for (const patch of [{ phase: 'build' }, { category: 'receipt' }, { category: 'timeout' },
+    { native: { ...native, status: 'C:\\private' } }, { native: { ...native, exit: 'present\nprivate' } },
+    { native: { ...native, status: 4294967296 } }, { native: { ...native, stderr: 'private' } },
+    { native: { ...native, exit: 'absent' } }, { native: { ...native, status: 0 } },
+    { native: { ...native, extra: 'private' } }])
+    assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native, ...patch }), unexpected);
+  let statusReads = 0;
+  const changing = { exit: 'present', stderr: 'empty', get status() { return ++statusReads < 5 ? 1 : 'C:\\private'; } };
+  assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native: changing }), unexpected);
+  assert.equal(diagnosticApi.nativeOutcome({ get exitCode() { return 1; }, stderr: '' }), null);
 });
