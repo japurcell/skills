@@ -67,3 +67,8 @@ Current native evidence at exact2762f029, foundation41811099798/job126510257172:
 ## Final native compatibility outcome
 
 Foundation41811099798 at2762f029 is completed overallFAIL because Windows remainsRED; Linux and Darwin jobs succeed independently. Linuxjob126510252620 completedSUCCESS10:15:33UTC:14/14foundation phases, publicupgrade1/1zero237.201766s, dependencyownership12/12zero79.669055s, claim23/23zero236.023957s, backup11/11zero297.059256s. Logs/archive/validated artifacts `/tmp/factory-cleanup-native-control-linux-41811099798-{job.log,evidence.zip,artifacts/}`. Darwin15/15 phases/FULL31/31zero54.361905s; Windows13phases10pass/3fail(fixtures,learning-fixture-diagnostic,cleanup-reads), directdiagnostic2/4. No retries, all original expectations/bounds survive. Prior927 finalruncheck remains0, no duplicate or timing/IR1/creator event.
+
+
+## First-failure coordinator proof
+
+Integrated clean6d95c0081514b2fea07c0f9ad46c0ba3b37a6ae3 Diagnostic5(actualDarwinpositive included)+CI19 passes24/24,zero fail/cancelled/skips/todo1.898975s. JSsyntax/actionlint pass. Frozen main fullEOF/postflight10:29:42UTC matches729inputs171outputs/all output hashes/receiptSHA98925fd6/actualNodeSHA6f320694 and cleanhead, no rebuild/ordinary rerun. Logs `/tmp/factory-first-failure-integrated-{focused,syntax-diagnostic,syntax-ci,actionlint,postflight}.log`. Original12 blobbf75a7ed, diagnostic handbackblob5399a85f, nativepositive action and8192/10s are exact. One changed foundation-only Windows first-failure observation is authorized next; no creator/C2/IR1/timing path selection or fix/Windows admission claim.
