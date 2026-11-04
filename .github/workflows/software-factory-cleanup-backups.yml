@@ -12,6 +12,7 @@ on:
       - packages/software-factory/test/cleanup-backups.test.mjs
       - packages/software-factory/test/fixtures/repository.mjs
       - packages/software-factory/qualification/cleanup-backups-*.qualification.mjs
+      - packages/software-factory/qualification/cleanup-native-execution.json
       - skills/default/software-factory/**
       - .github/workflows/software-factory-cleanup-backups.yml
   workflow_dispatch:

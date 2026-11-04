@@ -288,6 +288,28 @@ test('cleanup reads launch the exact registered suite without advertising cleanu
 
 
 test('cleanup backup qualification launches only exact POSIX areas and retains independent public proof budgets', () => {
+  const controlPath = 'packages/software-factory/qualification/cleanup-native-execution.json';
+  const control = JSON.parse(readFileSync(new URL('./cleanup-native-execution.json', import.meta.url), 'utf8'));
+  assert.deepEqual(control, {
+    version: 1,
+    purpose: 'initial-c2-native-and-storage-qualification',
+    sourceHead: '927f78bf62fa5e3ce3f7f35f39046c6bf3d65504',
+    ordinaryProof: { head: 'aba7af4e05ded06eace8e38a139965ba2077d496', files: 59, tests: 735 },
+    receipt: { inputs: 729, outputs: 171, sha256: '98925fd67888f369fcfc5206f12d66620adc4bfa246b9b2148c2b25cf6469e92' },
+    publicBackup: { targets: ['linux-x64', 'darwin-arm64'], area: 'cleanup-backups-public', tests: 43 },
+    foundation: { targets: ['linux-x64', 'darwin-arm64', 'win32-x64'], windowsDiagnosticTests: 4 },
+  });
+  const nativeWorkflow = readFileSync(new URL('../../../.github/workflows/software-factory-cleanup-backups.yml', import.meta.url), 'utf8');
+  assert.ok(nativeWorkflow.includes(`      - ${controlPath}\n`));
+  const foundationWorkflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  const pushPaths = foundationWorkflow.split('  push:\n')[1].split('  workflow_dispatch:')[0];
+  assert.match(pushPaths, /'packages\/software-factory\/\*\*'/);
+  assert.ok(matchesGlob(controlPath, 'packages/software-factory/**'));
+  for (const name of ['windows-factory-owned-image.yml', 'darwin-selector-timing.yml', 'software-factory-repair-inspection.yml']) {
+    const text = readFileSync(new URL(`../../../.github/workflows/${name}`, import.meta.url), 'utf8');
+    const paths = [...text.split('    paths:\n')[1].split('\npermissions:')[0].matchAll(/^      - ([^\n]+)/gm)].map(match => match[1]);
+    assert.equal(paths.some(pattern => matchesGlob(controlPath, pattern)), false, name);
+  }
   const dispatch = new URL('../scripts/test.mjs', import.meta.url).href;
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

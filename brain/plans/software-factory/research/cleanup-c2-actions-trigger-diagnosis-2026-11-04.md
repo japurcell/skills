@@ -25,3 +25,12 @@
 ## Outcome
 
 Cause UNKNOWN. Repository/head, enablement, existing workflow state, changed-path matches and absence of skip instructions are verified. Public APIs expose neither an exact push delivery receipt nor a server rejection explaining the missing runs. New-workflow404, delayed events and the generic token rule are insufficient to select a correction. C2 ordinary735 is accepted; Linux/Darwin public43 remains pending without native evidence. Preserve current immutable head; root must choose a concrete next route before any dispatch/retry/source or authentication change.
+
+
+## Root-selected finite execution route
+
+- Identity-only API user is japurcell/id10947458/typeUser. Known gh executable /Users/adam/homebrew/bin/gh; its help confirms the credential helper protocol. No token/config values were inspected or printed.
+- Root authorized one initial-event push using temporary command configuration to reset helpers and explicitly select gh auth git-credential for github.com. [Git credential helper reset](https://git-scm.com/docs/gitcredentials) and [Git command configuration](https://git-scm.com/docs/git) define this scoped override; the official [gh authenticated Git implementation](https://github.com/cli/cli/blob/trunk/git/client.go) uses the same empty-scoped-helper then explicit gh helper pattern. No gh auth setup-git/login/switch or permanent configuration change is made.
+- Fixed qualification/cleanup-native-execution.json records initial POSIX C2 public43 and source-context foundation/Windows diagnostic4. Exact C2 workflow path and existing packages/** foundation witness select the next push. Existing real triggers remain; no timing/IR1/creator path matches this control-only diff.
+- Existing CI case goes RED for missing record then full19/19 GREEN, zero skips1.902677s; actionlint/diff pass. Runtime snapshot729inputs/all171output hashes and receiptSHA98925fd6 remain unchanged; ordinary735 is the earlier actual proof ataba7af4e, not a new trigger-head suite.
+- Check old927 jobs immediately before the one no-force push; reconcile any duplicate before execution. If event creation is still absent, stop with finite facts; no blind push/dispatch/auth changes. A successful later route would not establish the historical transport cause.
