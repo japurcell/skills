@@ -28,6 +28,7 @@
 - [research/cleanup-reference-boundaries-2026-10-22.md](research/cleanup-reference-boundaries-2026-10-22.md)
 - [research/copilot-protocol-preflight-2026-10-22.md](research/copilot-protocol-preflight-2026-10-22.md)
 - [research/darwin-timing-comparison-2026-11-04.md](research/darwin-timing-comparison-2026-11-04.md)
+- [research/darwin-build-observation-contract-2026-11-04.md](research/darwin-build-observation-contract-2026-11-04.md)
 - [research/desktop-notification-delivery/delegation-audit.md](research/desktop-notification-delivery/delegation-audit.md)
 - [research/desktop-notification-delivery/findings.md](research/desktop-notification-delivery/findings.md)
 - [research/embedded-graph-runtimes/findings.md](research/embedded-graph-runtimes/findings.md)
