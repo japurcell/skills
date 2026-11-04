@@ -6,6 +6,7 @@ import { cleanupCursor, cleanupHash, cleanupId, cleanupObject, type CleanupAttem
   type CleanupCaptureKey, type CleanupInvocationFact, type CleanupOpaque, type CleanupPage, type CleanupSnapshot } from './cleanup-read.js';
 import { readCleanupSnapshotAuthority, type CleanupBackupResolution } from './cleanup-backups.js';
 import { repositoryIdentity } from './workspace.js';
+import { analyzeLearningReferences, isLearningWorkflow } from './cleanup-learning.js';
 
 export type CleanupNode = { kind: 'invocation'; invocationId: string }
   | { kind: 'attempt'; invocationId: string; attemptId: string }
@@ -99,14 +100,14 @@ interface GraphState {
   attempts: Map<string,CleanupAttemptFact>; headers: Map<string,CleanupCaptureHeader>; payloads: Map<string,Payload>; content: string[];
 }
 function payload(store: CleanupReadStore, header: CleanupCaptureHeader, budget: Budget, decodeLimit: number|null,
-  block: (value: CleanupBlocker) => void): Payload|null {
+  block: (value: CleanupBlocker) => void, prefix?: readonly {sequence:number;text:string}[]): Payload|null {
   const node = captureNode({ invocationId: header.invocationId, captureId: header.id });
   if (header.state !== 'complete') { block({ code: header.state === 'pruned' ? 'pruned' : 'partial',node }); return null; }
   if (decodeLimit !== null && BigInt(header.logicalPayloadBytes) > BigInt(decodeLimit)) {
     block({ code: 'limit',node,limit: header.channel === 'report' ? 'reportBytes' : 'inputBytes' }); return null;
   }
   const raw = createHash('sha256'), sequence = createHash('sha256');
-  let after = '0', total = 0n; const texts: string[] = [];
+  let after = '0', total = 0n, prefixIndex = 0; const texts: string[] = [];
   while (true) {
     budget.add('pages');
     const page = store.readCleanupCapture({ invocationId: header.invocationId,captureId: header.id,after,limit: 20,byteBudget: 262144 });
@@ -120,6 +121,7 @@ function payload(store: CleanupReadStore, header: CleanupCaptureHeader, budget: 
       if (cleanupCursor(chunk.sequence) !== cleanupCursor(after)+1n || Buffer.from(chunk.text).toString('utf8') !== chunk.text) {
         block({ code: 'partial',node }); return null;
       }
+      if(prefix && prefixIndex<prefix.length){const expected=prefix[prefixIndex++]!;if(String(expected.sequence)!==chunk.sequence||expected.text!==chunk.text){block({code:'digest',node});return null;}}
       const bytes = Buffer.byteLength(chunk.text); budget.add('payloadBytes',bytes); total += BigInt(bytes);
       raw.update(chunk.text); sequence.update(JSON.stringify([chunk.sequence,String(bytes),cleanupHash(chunk.text)]));
       if (decodeLimit !== null) { if (total > BigInt(decodeLimit)) { block({code:'limit',node,limit:'inputBytes'}); return null; } budget.add('stateBytes',bytes*4);texts.push(chunk.text); }
@@ -128,6 +130,7 @@ function payload(store: CleanupReadStore, header: CleanupCaptureHeader, budget: 
     if (page.nextSequence !== after || page.hasMore && !page.chunks.length) { block({code:'partial',node}); return null; }
     if (!page.hasMore) break;
   }
+  if (prefix && prefixIndex!==prefix.length) {block({code:'digest',node});return null;}
   if (after !== header.lastSequence || total !== BigInt(header.logicalPayloadBytes)) { block({code:'digest',node}); return null; }
   const result = { sha256: raw.digest('hex'),sequenceSha256: sequence.digest('hex'),bytes:String(total),text:decodeLimit === null?null:texts.join('') };
   budget.retain({ ...result,text:null });
@@ -137,6 +140,7 @@ function payload(store: CleanupReadStore, header: CleanupCaptureHeader, budget: 
 function analyze(store: CleanupReadStore, budget: Budget): GraphState {
   const snapshot = store.readCleanupSnapshot(), invocations = new Map<string,CleanupInvocationFact>(), attempts = new Map<string,CleanupAttemptFact>();
   const headers = new Map<string,CleanupCaptureHeader>(), nodes = new Map<string,CleanupNode>(), edges = new Map<string,CleanupEdge>();
+  const recognizedReports:ReferenceAnalysis['reports'][number][]=[];
   const roots = new Set<string>(), blockers = new Map<string,CleanupBlocker>(), payloads = new Map<string,Payload>(), content: string[] = [];
   const block = (value: CleanupBlocker) => { const key = JSON.stringify(value); if (!blockers.has(key)) { budget.retain(value); blockers.set(key,value); } };
   const addNode = (node: CleanupNode) => { const key=nodeKey(node); if (!nodes.has(key)) { budget.add('nodes');budget.retain(node);nodes.set(key,node); } return key; };
@@ -164,10 +168,10 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
       if (!page.hasMore) { if(after!==through)block({code:'unstable',node:null,cursor:after});return; }
     }
   };
-  const readPayload = (header: CleanupCaptureHeader,decodeLimit: number|null) => {
+  const readPayload = (header: CleanupCaptureHeader,decodeLimit: number|null,prefix?: readonly {sequence:number;text:string}[]) => {
     const previous=payloads.get(header.id);
-    if (previous && (decodeLimit===null || previous.text!==null)) return previous;
-    const value=payload(store,header,budget,decodeLimit,block);
+    if (!prefix && previous && (decodeLimit===null || previous.text!==null)) return previous;
+    const value=payload(store,header,budget,decodeLimit,block,prefix);
     if (value) { payloads.set(header.id,{...value,text:null});factHash('payload',[nodeKey(captureNode({invocationId:header.invocationId,captureId:header.id})),value.sha256,value.sequenceSha256,value.bytes]); }
     return value;
   };
@@ -210,7 +214,7 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
         const value=readPayload(header,header.channel==='report'?131072:393216);
         if(value?.text!==null&&value?.text!==undefined){try{const parsed=json(value.text);if(header.channel==='request'&&(!exact(parsed,['question','context'])||typeof parsed.question!=='string'||typeof parsed.context!=='string'))block({code:'opaque',node});}
           catch(error){if(error instanceof AnalysisLimit)throw error;block({code:'malformed',node});}}
-        if(header.channel==='report')block({code:'opaque',node});
+
       }
     }
     for(const invocation of [...invocations.values()].sort((a,b)=>compare(a.id,b.id))) {
@@ -221,7 +225,7 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
         const header=ownedCapture(invocation.inputCaptureId,invocation.id,null,'context'),value=header&&readPayload(header,393216);
         if(value?.text!==null&&value?.text!==undefined) {
           let parsed:unknown;try{parsed=json(value.text);}catch(error){if(error instanceof AnalysisLimit)throw error;block({code:'malformed',node:captureNode({invocationId:invocation.id,captureId:invocation.inputCaptureId})});}
-          if(!exact(parsed,['inputs','question','contexts'])||!exact(parsed.inputs,[])||parsed.question!==invocation.question||!isDeepStrictEqual(parsed.contexts,invocation.contexts))
+          if(!exact(parsed,['inputs','question','contexts'])||(!exact(parsed.inputs,[])&&!isLearningWorkflow(invocation.workflow))||parsed.question!==invocation.question||!isDeepStrictEqual(parsed.contexts,invocation.contexts))
             block({code:'opaque',node:captureNode({invocationId:invocation.id,captureId:invocation.inputCaptureId})});
         }
       }
@@ -266,15 +270,17 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
         }
       } else if(attempt.agent) {
         root(from);const agent=attempt.agent;
-        for(const [captureId,channel]of [[agent.inputsCaptureId,'context'],[agent.resultCaptureId,'result'],[agent.outputCaptureId,'stdout'],[agent.validatedResultCaptureId,'validated-result']] as const){
-          if(captureId===null)continue;const header=ownedCapture(captureId,attempt.invocationId,attempt.id,channel);edge(from,captureNode({invocationId:attempt.invocationId,captureId}),'owned-capture');
+        for(const [captureId,channel]of [[agent.inputsCaptureId,'context'],[agent.resultCaptureId,'result'],[agent.outputCaptureId,null],[agent.validatedResultCaptureId,'validated-result']] as const){
+          if(captureId===null)continue;const header=ownedCapture(captureId,attempt.invocationId,attempt.id,channel??undefined);if(header&&channel===null&&!(captureId===agent.resultCaptureId?header.channel==='result':['stdout','stderr'].includes(header.channel)))block({code:'ownership',node:from});edge(from,captureNode({invocationId:attempt.invocationId,captureId}),'owned-capture');
           if(header&&channel==='context'){const value=readPayload(header,393216);if(value?.text){let parsed:unknown;try{parsed=json(value.text);}catch(error){if(error instanceof AnalysisLimit)throw error;block({code:'malformed',node:from});continue;}
             if(exact(parsed,['inputs','purpose','context','sourceCaptureId'])&&cleanupId(parsed.sourceCaptureId)){edge(from,captureNode({invocationId:attempt.invocationId,captureId:parsed.sourceCaptureId}),'source-input');const source=ownedCapture(parsed.sourceCaptureId,attempt.invocationId,null,'context');if(source)readPayload(source,393216);}}}
         }
-        // Inner producer reference contracts are released in C3b-C3d. Never assume an agent context is reference-free.
-        block({code:'opaque',node:from});
+        // Only the closed learning contracts below may interpret an agent context.
+        if(!isLearningWorkflow(owner?.workflow??null))block({code:'opaque',node:from});
       } else if(owned.length) {root(from);block({code:'opaque',node:from});}
     }
+    analyzeLearningReferences({invocations,attempts,headers,report:value=>recognizedReports.push(value),read:readPayload,owned:ownedCapture,edge,block,parse:json,retain:value=>budget.retain(value),tick:()=>budget.tick(),
+      event(invocationId,cursor){budget.add('pages');budget.add('sourceRows');const event=store.readCleanupEvent({invocationId,cursor});budget.tick();factHash('event',event);return event;}});
     for(const attempt of attempts.values())if(attempt.priorAttemptId!==null){const prior=attempts.get(attempt.priorAttemptId);
       if(prior&&operations.get(nodeKey(operationNode(prior)))?.loopKey!==operations.get(nodeKey(operationNode(attempt)))?.loopKey)
         block({code:'invalid-lineage',node:attemptNode(attempt)});}
@@ -298,6 +304,23 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
     }
     const expanded=new Set<string>(),pending=[...roots].sort(compare);while(pending.length){budget.tick();const key=pending.pop()!;if(expanded.has(key))continue;expanded.add(key);protectedKeys.add(key);for(const next of adjacency.get(key)??[])pending.push(next);}
   }catch(error){const value:CleanupBlocker={code:'limit',node:null,limit:error instanceof AnalysisLimit?error.field:'stateBytes'};blockers.set(JSON.stringify(value),value);}
+  // An attempt dependency includes every actual owned capture and its entire
+  // prior/reuse chain, even where the producer sampled no bytes from that stream.
+  // Complete content identity therefore follows reachability, not just decoding.
+  try {
+    for(const key of [...protectedKeys].sort(compare)) {
+      budget.tick();const node=nodes.get(key);if(node?.kind!=='capture')continue;
+      const header=headers.get(node.captureId);
+      if(!header){block({code:'missing',node});continue;}
+      if(header.invocationId!==node.invocationId){block({code:'foreign',node});continue;}
+      const cap=header.channel==='report'?131072:['context','request'].includes(header.channel)?393216:null;
+      if(cap!==null&&BigInt(header.logicalPayloadBytes)>BigInt(cap)) {
+        block({code:'limit',node,limit:header.channel==='report'?'reportBytes':'inputBytes'});continue;
+      }
+      readPayload(header,null);
+    }
+  }catch(error){const value:CleanupBlocker={code:error instanceof AnalysisLimit?'limit':'unstable',node:null,
+    ...(error instanceof AnalysisLimit?{limit:error.field}:{})};blockers.set(JSON.stringify(value),value);}
   const sortedEdges=[...edges.entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value);
   const protectedNodes=[...protectedKeys].sort(compare).map(key=>nodes.get(key)!).filter(Boolean);
   let sortedBlockers=[...blockers.entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value);
@@ -307,11 +330,11 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
     sortedBlockers=[...blockers.entries()].sort(([a],[b])=>compare(a,b)).map(([,value])=>value);}
   const complete=!sortedBlockers.length;
   const analysis:ReferenceAnalysis={status:complete?'complete':'blocked',snapshot,snapshotSha256:complete?snapshotSha256:null,
-    graphSha256,protected:protectedNodes,edges:sortedEdges,reports:[],blockers:sortedBlockers,usage:budget.usage()};
+    graphSha256,protected:protectedNodes,edges:sortedEdges,reports:recognizedReports,blockers:sortedBlockers,usage:budget.usage()};
   return {analysis,budget,invocations,attempts,headers,payloads,content};
 }
 
-/** Advisory graph only. C3a recognizes empty root inputs and generic command configuration; every report is opaque. */
+/** Bounded advisory graph. Only exact learning v1 reports are understood; other reports block payload eligibility. */
 export function analyzeCleanupReferences(store: CleanupReadStore,input:Partial<CleanupAnalysisBounds>={}):ReferenceAnalysis {
   return analyze(store,new Budget(bounds(input))).analysis;
 }
