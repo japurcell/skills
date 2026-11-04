@@ -4,10 +4,10 @@ import { dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { closeSync, fstatSync, lstatSync, mkdirSync, openSync, readSync, realpathSync, writeFileSync } from 'node:fs';
-import { captureMetadataProcess, validateControllerSelection, validateMetadataWire } from './windows-storage-loader-metadata.mjs';
+import { captureMetadataProcess, validateControllerSelection, validateSdkRegistrationMetadataWire } from './windows-storage-loader-metadata.mjs';
 
-const selectionSha256 = 'd4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359';
-const sourceCommit = '4b311737aa7484619dc304b3db84cfb463792c48';
+const selectionSha256 = '10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98';
+const sourceCommit = '5405a163b4e591705f9888440ec5cb8933c48d2c';
 const nodeSha256 = 'd702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5';
 const fail = () => { throw new Error('metadata-collection'); };
 
@@ -20,7 +20,7 @@ export function validateCollectionSelection(bytes) {
 }
 
 function validateResult(bytes, exitCode) {
-  const value = validateMetadataWire(bytes, selectionSha256);
+  const value = validateSdkRegistrationMetadataWire(bytes, selectionSha256);
   if (exitCode !== (value.state === 'observed' ? 0 : 1) ||
       value.host.windowsVersion !== '10.0.26100.0' || value.host.powershellVersion !== '5.1.26100.33648') fail();
   return value;

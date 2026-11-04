@@ -1,0 +1,56 @@
+{
+  "scope": "windows-sdk-registration-inert-integration",
+  "schema": 1,
+  "testedHead": "f252621d7b72e439d837c0203dc5558c1626748f",
+  "testedWorkingTree": true,
+  "sourceCommit": "5405a163b4e591705f9888440ec5cb8933c48d2c",
+  "contextSha256": "10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98",
+  "provenanceSha256": "45f71b4264e83eeb945d0ecb2263d892561487accc4d33705b600265596a2544",
+  "red": {
+    "tests": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0,
+    "durationMs": 37.646791,
+    "postflight": "/tmp/factory-sdk-outer-red-postflight.json"
+  },
+  "green": {
+    "tests": 43,
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "durationMs": 17115.843375,
+    "fullSeconds": 18.57028283298132,
+    "syntaxFiles": 3,
+    "parseOnlyPowerShellFiles": 2,
+    "postflight": "/tmp/factory-sdk-outer-green-postflight.json",
+    "log": "/tmp/factory-sdk-outer-green-pure.log"
+  },
+  "testedSources": [
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+      "sha256": "3d283b37da08b678f1ec39617b0905c7c2c3a3e0325c89ca5b7a77c0573efbe1"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-checks.test.mjs",
+      "sha256": "8bd6e6f13ec1b1785020584b0add47db3682877758c97c6428a3a52c8c52aa6a"
+    }
+  ],
+  "runtime": {
+    "inputs": 734,
+    "outputs": 186,
+    "qualificationInputs": 0,
+    "receiptSha256": "74c344f9798ecd29bbaec65c5358ebd068cd8c407ee577e845b668b3e6f867c9",
+    "nodeSha256": "6f32069480ec14d52b6d7b1f3c7124cfbbc46203abf5ddf5c65b127435f3f329"
+  },
+  "rootAcceptance": "scoped-inert-wrapper-context-only",
+  "selectionAuthority": false,
+  "buildAuthority": false,
+  "nativeAuthority": false,
+  "actualRegistryQueryReleased": false,
+  "windowsAbiProven": false,
+  "sdkAuthenticationProven": false,
+  "pushReleased": false
+}

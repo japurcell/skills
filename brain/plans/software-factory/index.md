@@ -158,5 +158,11 @@
 - [Metadata refusal diagnostic source contract](../../../packages/software-factory/qualification/windows-storage-loader-metadata-diagnostic.md)
 - [Changed-source metadata: validated blocked full wire](research/windows-metadata-diagnostic-observation-2026-11-04.md)
 - [Historical C3d1 native handoff](handoff.history-2026-11-04-c3d1-native.md)
-- [Bounded SDK registration identity source contract, source unreleased](research/sdk-registration-identity-contract-2026-11-04.md)
+- [Bounded SDK registration identity source contract](research/sdk-registration-identity-contract-2026-11-04.md)
 - [C3d2 H1 exceptional reverse impact source and integrated proof](../../../packages/software-factory/qualification/cleanup-exceptional.md)
+
+- [Pre-resume H1/SDK plan snapshot](ExecPlan.history-2026-11-04-sdk-resume.md)
+- [User-stop handoff history](handoff.history-2026-11-04-user-stop.md)
+- [Darwin parent launch brackets source contract](research/darwin-parent-launch-brackets-2026-11-04.md)
+
+- [Exact a66 finite native context evidence](research/h1-native-context-observation-2026-11-04.md)

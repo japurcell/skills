@@ -10,15 +10,20 @@ import { PassThrough } from 'node:stream';
 
 const entry = fileURLToPath(new URL('./windows-storage-loader-metadata-collect-result.mjs', import.meta.url));
 const cli = fileURLToPath(new URL('./windows-storage-loader-metadata.mjs', import.meta.url));
-const digest = 'd4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359';
+const digest = '10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98';
 const commit = '1234567890123456789012345678901234567890';
 const wire = value => Buffer.from(`${JSON.stringify(value)}\n`);
-const metadata = () => ({ scope: 'windows-storage-loader-metadata', schema: 1, state: 'blocked',
+const metadata = () => ({ scope: 'windows-storage-loader-metadata', schema: 2, state: 'blocked',
   reason: 'sdk-provenance-unproven', selectionAuthority: false, buildAuthority: false, nativeAuthority: false,
   sourceSelectionSha256: digest,
   host: { powershellVersion: '5.1.26100.33648', windowsVersion: '10.0.26100.0', architecture: 'x64',
     profile: 'winps-inbox-only', securityCommand: 'captured-inbox-Get-AuthenticodeSignature' },
-  installations: [], sdkVersions: [], files: [], sdkCoverage: 'prerequisite-samples-not-consumed-closure' });
+  installations: [], sdkVersions: [], files: [], sdkCoverage: 'prerequisite-samples-not-consumed-closure',
+  sdkRegistration: { version: 1, status: 'single-candidate', reason: 'none', records: [{
+    view: 'x64', productCode: '{01234567-89AB-CDEF-0123-456789ABCDEF}',
+    displayName: 'Windows Software Development Kit - Windows 10.0.26100.0',
+    displayVersion: '10.1.26100.1', publisher: 'Microsoft Corporation',
+  }] } });
 const refusal = () => ({ scope: 'windows-storage-loader-metadata', state: 'blocked', reason: 'host-profile',
   selectionAuthority: false, buildAuthority: false, nativeAuthority: false });
 const inert = script => spawn(process.execPath, ['--input-type=module', '-e', script], {
@@ -151,7 +156,7 @@ test('root selection uses its independently frozen exact bytes and source commit
   const bytes = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection.json', import.meta.url));
   const historical = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection-2229249.json', import.meta.url));
   assert.throws(() => validateCollectionSelection(historical), /metadata-collection/);
-  assert.equal(validateCollectionSelection(bytes).sourceCommit, '4b311737aa7484619dc304b3db84cfb463792c48');
+  assert.equal(validateCollectionSelection(bytes).sourceCommit, '5405a163b4e591705f9888440ec5cb8933c48d2c');
   for (const mutate of [v => { v.sourceCommit = commit; }, v => { v.windowsVersion = '10.0.26100.1'; },
     v => { v.sourceSha256['qualification/windows-storage-loader-metadata.mjs'] = 'd'.repeat(64); },
     v => { v.powershellSha256 = 'e'.repeat(64); }, v => { v.trusted = true; }]) {
@@ -173,7 +178,7 @@ test('fixed context checks actual selected source bytes and refuses a changed di
       copyFileSync(join(originalPackage, path), join(root, path));
     }
     const { verifyCollectionSources } = await import(pathToFileURL(join(root, resultPath)).href);
-    assert.equal(verifyCollectionSources().selected.sourceCommit, '4b311737aa7484619dc304b3db84cfb463792c48');
+    assert.equal(verifyCollectionSources().selected.sourceCommit, '5405a163b4e591705f9888440ec5cb8933c48d2c');
     appendFileSync(join(root, 'qualification/windows-storage-loader-fixture.py'), '\n# changed disposable control\n');
     assert.throws(() => verifyCollectionSources(), /metadata-collection/);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -223,7 +228,7 @@ test('only two fresh artifact files preserve blocked failure and observed succes
       assert.deepEqual(readFileSync(join(result.artifactDirectory, 'metadata.json')), wire(value));
       const control = JSON.parse(readFileSync(join(result.artifactDirectory, 'control.json')));
       assert.deepEqual(control, { scope: 'windows-storage-loader-metadata-execution-control', schema: 1,
-        phase: 'metadata-only', sourceCommit: '4b311737aa7484619dc304b3db84cfb463792c48', collectionSourceCommit: commit,
+        phase: 'metadata-only', sourceCommit: '5405a163b4e591705f9888440ec5cb8933c48d2c', collectionSourceCommit: commit,
         sourceSelectionSha256: digest, state: value.state, collectorExitCode: code,
         selectionAuthority: false, buildAuthority: false, nativeAuthority: false });
       assert.throws(() => prepareCollectionArtifacts(wire(value), code, root, commit));
@@ -268,4 +273,47 @@ test('separate workflow fixes its route, Node bootstrap and exact two-file artif
   assert.match(bootstrap, /150000000/);
   assert.match(bootstrap, /120000/);
   assert.doesNotMatch(bootstrap, /Expand-Archive|Start-Process|Invoke-Expression|npm |npx |--version|--help/);
+});
+
+// Root-selected literals are independent protocol prerequisites, never candidate-derived.
+test('new SDK live context requires exact Root selection and matching digest sidecar', async () => {
+  const { createHash } = await import('node:crypto');
+  const { validateCollectionSelection } = await import(entry);
+  const bytes = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection.json', import.meta.url));
+  const sidecar = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection.sha256', import.meta.url), 'utf8');
+  const approved = '10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98';
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), approved);
+  assert.equal(sidecar, `${approved}  windows-storage-loader-metadata-controller-selection.json\n`);
+  assert.equal(validateCollectionSelection(bytes).sourceCommit, '5405a163b4e591705f9888440ec5cb8933c48d2c');
+  for (const name of ['4b311737', '2229249']) {
+    const historical = readFileSync(new URL(`./windows-storage-loader-metadata-controller-selection-${name}.json`, import.meta.url));
+    assert.throws(() => validateCollectionSelection(historical), /metadata-collection/);
+  }
+});
+
+test('new SDK live context admits v2 and refuses historical v1 without exporting artifacts', async () => {
+  const { observeCollectionProcess, classifyCollectionProcess, prepareCollectionArtifacts } = await import(entry);
+  const { validateMetadataWire, validateSdkRegistrationMetadataWire } = await import(cli);
+  const approved = '10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98';
+  const value = { ...metadata(), schema: 2, sourceSelectionSha256: approved,
+    sdkRegistration: { version: 1, status: 'single-candidate', reason: 'none', records: [{
+      view: 'x64', productCode: '{01234567-89AB-CDEF-0123-456789ABCDEF}',
+      displayName: 'Windows Software Development Kit - Windows 10.0.26100.0',
+      displayVersion: '10.1.26100.1', publisher: 'Microsoft Corporation',
+    }] } };
+  const bytes = wire(value);
+  assert.deepEqual(validateSdkRegistrationMetadataWire(bytes, approved), value);
+  assert.deepEqual(await observeCollectionProcess(completeFake(fakeChild(), bytes)), { bytes, exitCode: 1 });
+  const old = structuredClone(value); old.schema = 1; delete old.sdkRegistration;
+  assert.deepEqual(validateMetadataWire(wire(old), approved), old);
+  const malformed = structuredClone(value); malformed.sdkRegistration.records[0].view = 'foreign';
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'metadata-v2-rejection-')));
+  try {
+    for (const rejected of [old, malformed]) {
+      await assert.rejects(observeCollectionProcess(completeFake(fakeChild(), wire(rejected))));
+      assert.deepEqual(await classifyCollectionProcess(completeFake(fakeChild(), wire(rejected))), { diagnostic: 'metadata-refused-wire' });
+      assert.throws(() => prepareCollectionArtifacts(wire(rejected), 1, root, commit));
+      assert.deepEqual(readdirSync(root), []);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

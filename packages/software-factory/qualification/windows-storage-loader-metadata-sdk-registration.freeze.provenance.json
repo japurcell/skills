@@ -1,0 +1,55 @@
+{
+  "scope": "windows-storage-loader-sdk-registration-root-freeze",
+  "schema": 1,
+  "decision": "source-context-selected-native-execution-deferred",
+  "rootDecisionUtc": "2026-11-04T18:44:39.003344+00:00",
+  "selectedBy": "root-independent-external-controller",
+  "sourceCommit": "5405a163b4e591705f9888440ec5cb8933c48d2c",
+  "selectionSha256": "10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98",
+  "selectionBytes": 1540,
+  "sourceRoleCount": 10,
+  "changedRoles": [
+    "qualification/windows-storage-loader-metadata.mjs",
+    "qualification/windows-storage-loader-metadata.ps1"
+  ],
+  "previousSelection": {
+    "sourceCommit": "4b311737aa7484619dc304b3db84cfb463792c48",
+    "path": "qualification/windows-storage-loader-metadata-controller-selection-4b311737.json",
+    "sha256": "d4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359"
+  },
+  "historical719Preserved": true,
+  "phaseASourceCommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+  "phaseAThreeSourcesUnchanged": true,
+  "externalProfilePremise": {
+    "runner": "github-hosted-windows-2025",
+    "trustedOsWinPSAndProtectedNamespaces": true,
+    "establishedBySelfHashOrJobOutput": false,
+    "nodeSha256": "d702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5",
+    "powershellSha256": "41796f1f3d81f921fdb4030c865f9dcf5032a2a1b49dde148bbc99e8d10f6e8c",
+    "powershellVersion": "5.1.26100.33648",
+    "windowsRoot": "C:\\Windows",
+    "windowsVersion": "10.0.26100.0",
+    "architecture": "x64",
+    "fixedProtectedSystemDll": "C:\\Windows\\System32\\advapi32.dll",
+    "readOnlyEntryPoints": [
+      "RegOpenKeyExW",
+      "RegEnumKeyExW",
+      "RegQueryValueExW",
+      "RegCloseKey"
+    ],
+    "allowedNativeScope": "logical local HKLM uninstall root in explicit64/32 views, fixed query/enumeration only, no write/search/compiler/provider APIs",
+    "trustBasis": "external preselected trusted-OS custody, not SDK/member/package authentication",
+    "actualWindowsABIOrProtectedDllBindingProven": false
+  },
+  "liveWireSchema": 2,
+  "historicalV1PureValidationPreserved": true,
+  "selectionAuthority": false,
+  "buildAuthority": false,
+  "nativeAuthority": false,
+  "actualRegistryQueryReleased": false,
+  "WindowsABIProven": false,
+  "SDKAuthentication": false,
+  "packageAcquisition": false,
+  "compilerOrSDKBuild": false,
+  "providerOrDesktop": false
+}
