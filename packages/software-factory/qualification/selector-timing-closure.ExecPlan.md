@@ -11,7 +11,8 @@ Repair test telemetry closure bookkeeping only. Native41769336098 atdafc1a20 pas
 - [x] (2026-11-04) [milestone-2] Add v2 bounded receipts tied only to a fresh owned child and actual spawn, matching exit and close observations; no closure is inferred from intent or labels.
 - [x] (2026-11-04) [milestone-2] Verify normal exit, explicit process.exit, default SIGTERM/SIGINT and all3ordered cancellation paths off/on; prove signal intent and exit without EOF are insufficient.
 - [x] (2026-11-04) [milestone-2] Merge latest integrationebbb82e2 without rebasing; final verification and scoped clean commit are retained at handback.
-- [ ] [milestone-3] Coordinator performs any changed native experiment after source/load freeze.
+- [x] (2026-11-04) [milestone-3] Normally integrated at437839f8 over06ceae38; coordinator19/19 synthetic/artifact and unchanged default-off ordered-runner7/7 pass, plus syntax/actionlint.
+- [ ] [milestone-3] Coordinator observes one changed remote native experiment at an immutable exact checkout with built-in pinned receipt/cache preflight; no local broad proof or private proof overlap.
 
 ## Context and Task Graph
 
@@ -37,7 +38,7 @@ Keep child self receipts distinct from parent-observed closure. Any observer mus
 
 ### Milestone3: native diagnostic acceptance
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Coordinator owns integration, native rerun and exact two-file validated upload. A new native pass is needed for complete telemetry; no old deadline cause is claimed.
