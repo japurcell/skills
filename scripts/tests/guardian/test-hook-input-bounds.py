@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import tempfile
 import time
 import unittest
@@ -24,7 +25,7 @@ def decision(provider: str, response: dict) -> str:
     return guardian_decision(provider, response)
 
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 PROVIDERS = ("copilot", "gemini", "codex")
 
 

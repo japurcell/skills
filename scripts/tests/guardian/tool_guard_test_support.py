@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import tempfile
 
 from tool_guard_corpus import script_path

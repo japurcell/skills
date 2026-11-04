@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import shlex
 import unittest
 
@@ -11,7 +13,7 @@ from fixtures.tool_guard_resource_cases import pad_json_interior, python_literal
 from tool_guard_corpus import Fixture, OPERATIONS, PROVIDERS, decision, encode, envelope, patch
 from tool_guard_test_support import invoke_guard
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 CAPACITY = 1048576
 
 

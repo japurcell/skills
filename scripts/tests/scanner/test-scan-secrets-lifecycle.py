@@ -10,7 +10,7 @@ import tempfile
 import time
 import unittest
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 ENTRIES = {"codex": ".codex/hooks/scan-status.py", "copilot": ".copilot/hooks/scripts/scan-status.py", "gemini": ".gemini/hooks/scripts/scan-status.py"}
 
 class LifecycleTests(unittest.TestCase):

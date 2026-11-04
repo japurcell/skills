@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 import shlex
 import unittest
 
 from tool_guard_corpus import PROVIDERS
 from tool_guard_test_support import invoke_guard, native_decision
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]
 SHELL_TOOLS = {'copilot': 'bash', 'gemini': 'run_shell_command', 'codex': 'Bash'}
 
 

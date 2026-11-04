@@ -14,7 +14,7 @@ import sys
 import tempfile
 import unittest
 
-SOURCE = Path(__file__).resolve().parent.parent
+SOURCE = Path(__file__).resolve().parents[3]
 PYTHON = str(Path(sys.executable).resolve())
 GIT = "/Library/Developer/CommandLineTools/usr/bin/git" if sys.platform == "darwin" else shutil.which("git")
 
@@ -299,7 +299,7 @@ class RepositoryPreviewTests(unittest.TestCase):
 
     def test_real_standard_lfs_install_blocks_transfer_then_delivers_checked_bytes(self):
         import importlib.util
-        specification = importlib.util.spec_from_file_location("lfs_fixture", SOURCE / "scripts/test-scan-secrets-lfs.py")
+        specification = importlib.util.spec_from_file_location("lfs_fixture", SOURCE / "scripts/tests/scanner/test-scan-secrets-lfs.py")
         support = importlib.util.module_from_spec(specification)
         specification.loader.exec_module(support)
         endpoint = support.RecordingEndpoint()

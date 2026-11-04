@@ -13,7 +13,7 @@ import tempfile
 import tarfile
 import unittest
 
-SOURCE = Path(__file__).resolve().parent.parent
+SOURCE = Path(__file__).resolve().parents[3]
 PYTHON = str(Path(sys.executable).resolve())
 
 class InstalledScannerTests(unittest.TestCase):
