@@ -125,3 +125,5 @@
 - [Windows handle trace feasibility](research/windows-handle-trace-contract-2026-11-04.md)
 - [C2 Actions event diagnosis](research/cleanup-c2-actions-trigger-diagnosis-2026-11-04.md)
 - [Windows private storage prerequisites](research/windows-private-storage-contract-2026-11-04.md)
+- [Historical C2 native frontier](ExecPlan.history-2026-11-04-c2-native-frontier.md)
+- [Windows fixture first-load custody](research/windows-storage-bootstrap-contract-2026-11-04.md)
