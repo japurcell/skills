@@ -3,8 +3,8 @@ import { spawn } from 'node:child_process';
 import { chmodSync, closeSync, constants, fchmodSync, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readSync, readdirSync,
   realpathSync, statSync, writeSync } from 'node:fs';
 import { dirname, isAbsolute, join, parse, resolve, sep } from 'node:path';
-import { currentOwner } from './native/process.js';
-import { validateInstallSelection, type InstallSelection, type VerifiedInstallSelection } from './installation-bindings.js';
+import { currentOwner, inspectOwner } from './native/process.js';
+import { selectUpgradeProviders, validateInstallSelection, type InstallSelection, type VerifiedInstallSelection } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
 import { beginRepositoryBootstrap, prepareForwardSchema, measureMaintenanceStage, prepareMaintenanceHandoff, type MaintenanceSelection } from './maintenance.js';
 import { openMaintenanceStore } from './store.js';
@@ -22,7 +22,7 @@ const OMIT = ['bin/corepack', 'bin/npm', 'bin/npx'];
 const MAX_REQUEST = 64 * 1024, PREPARATION_MS = 240_000;
 
 interface Request {
-  python?: { path: string; identity: string; sha256: string; version: string };
+  python?: { path: string; identity: string; sha256: string; version: string; launcherPid: number };
   schema: 1; requestId: string; repository: string; npm: { offline: boolean };
   stageRoot: string; stageIdentity: string; source: InstallSelection;
   snapshot: { bundleRoot: string; nodeArchivePath: string; extractedNodeRoot: string;
@@ -81,12 +81,13 @@ function stageChild(root: string, path: unknown, suffix: string, kind: 'file' | 
   if (path !== join(root, suffix)) fail('private snapshot path differs');
   return checkedPath(path, kind);
 }
-function validateSelectedPython(value: unknown): Request['python'] {
-  const selected = exact(value, ['path', 'identity', 'sha256', 'version']);
+export function validateSelectedPython(value: unknown): Request['python'] {
+  const selected = exact(value, ['path', 'identity', 'sha256', 'version', 'launcherPid']);
   const path = checkedPath(selected.path, 'file');
   const version = typeof selected.version === 'string' ? /^(\d+)\.(\d+)\.(\d+)$/.exec(selected.version) : null;
   if (typeof selected.identity !== 'string' || !/^\d+:\d+$/.test(selected.identity)
     || typeof selected.sha256 !== 'string' || !SHA.test(selected.sha256)
+    || !Number.isSafeInteger(selected.launcherPid) || selected.launcherPid !== process.ppid
     || !version || (Number(version[1]) < 3 || (Number(version[1]) === 3 && Number(version[2]) < 11)))
     fail('selected Python binding invalid');
   const observed = lstatSync(path);
@@ -149,7 +150,7 @@ function sameSelection(a: VerifiedInstallSelection, b: VerifiedInstallSelection)
     || JSON.stringify(a.windowsHelper?.sha256 ?? null) !== JSON.stringify(b.windowsHelper?.sha256 ?? null))
     fail('original and private selection differ');
 }
-function selectionFrom(value: VerifiedInstallSelection): MaintenanceSelection {
+export function selectionFrom(value: VerifiedInstallSelection): MaintenanceSelection {
   const artifactDigests: Record<string, string> = { bundle: value.bundle.manifestSha256, node: value.node.sha256 };
   if (value.windowsHelper) artifactDigests['windows-helper'] = value.windowsHelper.sha256;
   if (value.providers.codex) artifactDigests.codex = value.providers.codex.sha256;
@@ -257,24 +258,31 @@ function validateToolchain(toolchain: string): void {
 }
 
 /** Authenticated private request to an incomplete, candidate-bound operation. No installed-ready effect. */
+function publicationPlatformQualified(): boolean { return process.platform === 'darwin' && process.arch === 'arm64'; }
+
 async function prepareCandidate(requestPath: string, handoff: false): Promise<PreparedCandidateReceipt>;
 async function prepareCandidate(requestPath: string, handoff: true, upgrade?: boolean): Promise<PreparedInstallHandoff>;
 async function prepareCandidate(requestPath: string, handoff: boolean, upgrade = false): Promise<PreparedCandidateReceipt | PreparedInstallHandoff> {
-  if (upgrade && (process.platform !== 'darwin' || process.arch !== 'arm64'))
-    fail('upgrade publication platform is not qualified');
-  const request = readRequest(requestPath, upgrade);
+  if (handoff && !publicationPlatformQualified())
+    fail('foreground installation publication platform is not qualified');
+  const request = readRequest(requestPath, handoff);
+  const { common } = await repositoryIdentity(request.repository);
+  const launcher = handoff ? currentOwner(validateSelectedPython(request.python)!.launcherPid) : undefined;
+  if (launcher && inspectOwner(launcher).state !== 'known_live') fail('launcher identity unavailable');
+  const captured = upgrade ? await captureOriginalInstallation(common, request.repository, launcher!) : null;
+  const providers = captured ? selectUpgradeProviders(captured.original.providers, request.source.providers) : request.source.providers;
+  const targetSource = { ...request.source, ...(providers !== undefined ? { providers } : {}) };
   const privateSelection = validateInstallSelection({ bundleRoot: request.snapshot.bundleRoot,
     manifestSha256: request.source.manifestSha256, nodeArchivePath: request.snapshot.nodeArchivePath,
-    ...(request.source.providers ? { providers: request.source.providers } : {}) });
+    ...(providers !== undefined ? { providers } : {}) });
   const measuredNode = scanOwnedTree(request.snapshot.extractedNodeRoot, 'node');
   if (measuredNode.digest !== request.snapshot.nodeTree.digest || measuredNode.entries !== request.snapshot.nodeTree.entries
     || measuredNode.regularBytes !== request.snapshot.nodeTree.regularBytes
     || JSON.stringify(request.snapshot.nodeTree.omittedLinks) !== JSON.stringify(privateSelection.bundle.platform === 'win32-x64' ? [] : OMIT))
     fail('extracted Node tree differs from authenticated request');
-  const original = validateInstallSelection(request.source);
+  const original = validateInstallSelection(targetSource);
   sameSelection(privateSelection, original);
-  const { common } = await repositoryIdentity(request.repository);
-  if (upgrade) {
+  if (handoff) {
     const python = validateSelectedPython(request.python)!;
     const factory = join(common, 'factory');
     if (python.path === factory || python.path.startsWith(`${factory}${sep}`)
@@ -289,7 +297,6 @@ async function prepareCandidate(requestPath: string, handoff: boolean, upgrade =
       fail('provider source under replaceable or private stage');
   }
   const selection = selectionFrom(original);
-  const captured = upgrade ? await captureOriginalInstallation(common, request.repository) : null;
   if (captured) {
     selection.artifactDigests['original-installed'] = captured.digest;
     selection.artifactDigests['original-completion'] = captured.completionDigest;
@@ -337,8 +344,8 @@ async function prepareCandidate(requestPath: string, handoff: boolean, upgrade =
   mkdirSync(payload, { mode: 0o700 });
   fileCopy(nodeExecutable, join(payload, privateSelection.bundle.platform === 'win32-x64' ? 'node.exe' : 'node'), undefined, 0o700);
   fileCopy(join(candidate, 'install/runtime/package.json'), join(payload, 'package.json'));
-  let atomicBinding: { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string } | undefined;
-  if (upgrade) {
+  let atomicBinding: { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string; launcher: import('./store.js').Owner } | undefined;
+  if (handoff) {
     const selectedPython = validateSelectedPython(request.python)!;
     const helperRow = runtimeSource.rows.find(row => row.path === 'native/atomic-publication.py');
     if (!helperRow || helperRow.type !== 'file' || !helperRow.sha256) fail('authenticated publication helper missing');
@@ -348,16 +355,18 @@ async function prepareCandidate(requestPath: string, handoff: boolean, upgrade =
     const helperInfo = lstatSync(helperPath);
     atomicBinding = { interpreter: { path: selectedPython.path, identity: selectedPython.identity, sha256: selectedPython.sha256 },
       helper: { path: helperPath, identity: `${helperInfo.dev}:${helperInfo.ino}`, sha256: helperRow.sha256 },
-      pythonVersion: selectedPython.version };
+      pythonVersion: selectedPython.version, launcher: launcher! };
+    writePublicationRecord(join(payload, 'atomic-binding.json'), { version: 1, ...atomicBinding,
+      factoryIdentity: directoryIdentity(join(common, 'factory')) });
   }
   const distSource = scanOwnedTree(join(candidate, 'install/runtime/dist'), 'candidate');
   copyTree(join(candidate, 'install/runtime/dist'), join(payload, 'dist'), distSource);
   await runManagedInstallCommand(join(payload, privateSelection.bundle.platform === 'win32-x64' ? 'node.exe' : 'node'),
     [join(payload, 'dist/maintenance-entry.js'), '--self-check'], payload, npmEnvironment(request.stageRoot));
   const stageEvidence = measureMaintenanceStage(stagePath);
-  const originalAgain = validateInstallSelection(request.source);
+  const originalAgain = validateInstallSelection(targetSource);
   sameSelection(original, originalAgain);
-  if (upgrade) validateSelectedPython(request.python);
+  if (handoff) validateSelectedPython(request.python);
   if (directoryIdentity(request.stageRoot) !== request.stageIdentity
     || scanOwnedTree(request.snapshot.extractedNodeRoot, 'node').digest !== measuredNode.digest)
     fail('private snapshot changed before candidate binding');
@@ -378,7 +387,7 @@ async function prepareCandidate(requestPath: string, handoff: boolean, upgrade =
       assertOriginalInstallation(common, captured.original);
       if (!atomicBinding) fail('upgrade helper binding missing');
       const { sha256: intentSha256, receipt } = prepareUpgradeIntent(handle, binding, stageEvidence, atomicBinding);
-      await store.bindUpgradeCandidate({ handle, candidate: binding, intentSha256, receipt, ...stageEvidence });
+      await store.bindUpgradeCandidate({ handle, candidate: binding, intentSha256, receipt, launcher: atomicBinding.launcher, ...stageEvidence });
     } else await store.bindInstallCandidate({ handle, candidate: binding, ...stageEvidence });
   } finally { store.close(); }
   const result = { operationId: handle.operationId, repositoryId: handle.repositoryId, claimId: handle.claimId,

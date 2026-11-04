@@ -189,3 +189,23 @@ export function validateRetainedProviderSources(value: unknown): void {
     validateRetainedCopilotPackageArtifact({ packageRoot, manifestFile, manifestSha256: copilot.manifestSha256 }, copilot.version);
   }
 }
+
+/** Missing target selection inherits retained provider paths and modes; an explicit object replaces it. */
+export function selectUpgradeProviders(retained: unknown, explicit: InstallSelection['providers'] | undefined): InstallSelection['providers'] {
+  if (explicit !== undefined) return explicit;
+  const prior = object(retained);
+  keys(prior, [], ['codex', 'copilot']);
+  const selection: { codex?: { executable: string; modes: readonly Mode[] }; copilot?: { packageRoot: string; manifestFile: string; modes: ['read-only'] } } = {};
+  if (prior.codex !== undefined) {
+    const codex = object(prior.codex);
+    if (typeof codex.executable !== 'string') fail('retained Codex selection invalid');
+    selection.codex = { executable: codex.executable, modes: modes(codex.modes, ['read-only', 'workspace-write']) };
+  }
+  if (prior.copilot !== undefined) {
+    const copilot = object(prior.copilot), selectedModes = modes(copilot.modes, ['read-only']);
+    if (typeof copilot.packageRoot !== 'string' || typeof copilot.manifestFile !== 'string'
+      || JSON.stringify(selectedModes) !== JSON.stringify(['read-only'])) fail('retained Copilot selection invalid');
+    selection.copilot = { packageRoot: copilot.packageRoot, manifestFile: copilot.manifestFile, modes: ['read-only'] };
+  }
+  return selection;
+}

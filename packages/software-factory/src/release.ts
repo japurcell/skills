@@ -42,12 +42,13 @@ const TEMPLATE_FILES = [
   'workflows/evaluate.ts', 'workflows/learn.ts',
 ] as const;
 const TOOLCHAIN_FILES = ['package.json', 'package-lock.json'] as const;
+const NATIVE_ASSETS = ['native/atomic-publication.py'] as const;
 // Schema 2 names every compiled module, including maps and declarations. Changing
 // this list is a release-contract change, not an inference from a proposed bundle.
 const RUNTIME_MODULES = [
   'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
   'agents', 'atomic-publication', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control', 'installation-bindings', 'installed-bindings',
-  'owned-release', 'upgrade-installed', 'upgrade-original', 'upgrade-publication', 'upgrade-publication-state', 'install', 'install-candidate', 'install-entry', 'install-publication', 'install-publication-state', 'learning', 'lifecycle', 'maintenance', 'maintenance-entry', 'native/notification-transport', 'native/notifications',
+  'owned-release', 'upgrade-installed', 'upgrade-original', 'upgrade-publication', 'upgrade-publication-state', 'upgrade-recovery-entry', 'install', 'install-candidate', 'install-entry', 'install-publication', 'install-publication-state', 'learning', 'lifecycle', 'maintenance', 'maintenance-entry', 'native/notification-transport', 'native/notifications',
   'native/process', 'notifications', 'placement', 'profiles', 'redaction', 'release', 'schema', 'schema-forward', 'forward-backup-entry', 'store',
   'workflow', 'workspace',
 ] as const;
@@ -179,6 +180,7 @@ function sourceFiles(sourceRoot: string): Map<string, Buffer> {
   }
   for (const path of TEMPLATE_FILES) result.set(`templates/${path}`, checkedFile(join(sourceRoot, 'templates', path)));
   for (const path of TOOLCHAIN_FILES) result.set(`toolchain/${path}`, checkedFile(join(sourceRoot, 'toolchain', path)));
+  for (const path of NATIVE_ASSETS) result.set(path, checkedFile(join(sourceRoot, path)));
   validateInstallTemplates(result);
   return result;
 }
@@ -238,7 +240,7 @@ function buildInputPaths(root: string): string[] {
   const groups = ['src', 'web', 'templates', 'node_modules/typescript', platformCompiler, 'node_modules/@types/node', 'node_modules/undici-types'];
   return [
     'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
-    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`),
+    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`), ...NATIVE_ASSETS,
     ...groups.flatMap(group => tree(join(root, group)).map(path => `${group}/${path}`)),
   ];
 }
@@ -313,7 +315,7 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
     foldedPaths.add(path.toLowerCase());
     totalBytes += entry.bytes;
     if (entry.bytes > MAX_FILE_BYTES || totalBytes > 256 * 1024 * 1024) fail('release payload exceeds size limit');
-    if (path !== 'package.json' && path !== 'native/windows-notify.exe' && !path.startsWith('dist/') &&
+    if (path !== 'package.json' && path !== 'native/windows-notify.exe' && !NATIVE_ASSETS.some(file => file === path) && !path.startsWith('dist/') &&
         !TEMPLATE_FILES.some(file => path === `templates/${file}`) && !TOOLCHAIN_FILES.some(file => path === `toolchain/${file}`)) fail(`unowned release content: ${path}`);
     files.set(path, checkedRelativeFile(root, path));
     if (files.get(path)!.length !== entry.bytes || hash(files.get(path)!) !== entry.sha256) fail(`changed file hash: ${path}`);
@@ -329,7 +331,7 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
   const sortedPaths = [...listedPaths].sort();
   if (listedPaths.some((path, index) => path !== sortedPaths[index])) fail('manifest files are not sorted');
   const required = ['package.json', ...COMPILED_FILES.map(path => `dist/${path}`), ...WEB_FILES.map(path => `dist/web/${path}`), ...TEMPLATE_FILES.map(path => `templates/${path}`),
-    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`),
+    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`), ...NATIVE_ASSETS,
     ...(selection.platform === 'win32-x64' ? ['native/windows-notify.exe'] : [])];
   sameInventory([...files.keys()], required, 'incomplete release payload');
   validateInstallTemplates(files);

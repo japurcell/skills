@@ -35,6 +35,22 @@ To select the qualified external Codex or Copilot artifacts, add `--providers <a
 
 Either provider key may be omitted. Selection is available only for the qualified Darwin arm64 artifacts. The file cannot supply model, authentication, environment, account, digest, or support claims. Do not place provider sources under the repository factory directory or the install staging directory.
 
+## Upgrade and recover explicitly
+
+To upgrade an owned installation, supply the new authenticated bundle, its exact manifest digest and pinned Node archive to the same launcher:
+
+```sh
+python3 <this-skill>/scripts/install.py upgrade \
+  --repository <absolute-repository> \
+  --bundle-root <absolute-new-release-bundle> \
+  --manifest-sha256 <64-hex-manifest-digest> \
+  --node-archive <absolute-pinned-node-archive>
+```
+
+Add the offline options when needed. Without `--providers`, an upgrade retains the original provider paths and modes and requires them to meet the target release's qualification. Supply `--providers <absolute-local-json-file>` for an explicit replacement; an explicit `{}` selects no providers. The launcher verifies the original installed ownership, takes a retained operation-owned backup, stages the new controller outside the replaceable installation, and runs it in the foreground. The demonstrated installed publication path is Darwin arm64. Linux x64 helper qualification does not establish installed-path acceptance, and Windows publication remains unavailable. Publication refuses if the stage, selected bytes, owned files or process closure cannot be verified. No provider is launched for validation.
+
+For an interruption, rerun the launcher with the same authenticated target selection and `inspect-upgrade` in place of `upgrade` to obtain the operation ID and owner inspection. Inspect the owner and its child-closure uncertainty before deciding on clearance. A positively live owner cannot be cleared. For an unchanged, unconsumed preparation, use `abandon-upgrade` with `--operation <id> --operator-confirmed --note <reason>`; it retains partial candidate, stage and backup evidence and releases admission only after validating the original installation. Start a new upgrade only through a later explicit command. For a consumed or handoff-ready operation, use `resume-upgrade` with the same target selection and those three clearance arguments; it continues the recorded operation and does not replay a consumed ticket. A ready operation with a retained marker is validated before marker removal. If ownership, selected bytes or closure cannot be established, preserve the evidence and stop; do not restore or delete files manually.
+
 ## Run the installed CLI
 
 Resolve the repository's canonical Git common directory with `git -C <absolute-repository> rev-parse --path-format=absolute --git-common-dir`. The pinned CLI command is `<common>/factory/install/node/bin/node <common>/factory/install/runtime/dist/cli.js`. Run `--help` to see the current argument contract. On startup the CLI checks the recorded completion, actual published runtime, Node and toolchain, and selected external provider artifacts. A missing or changed installation refuses before workflow dispatch; startup does not acquire dependencies.
@@ -60,4 +76,4 @@ Provider use is limited to exact, previously selected external bindings: Codex 0
 
 A provider name in a workflow or profile does not select or install that provider. Without `--providers`, an install remains command-only.
 
-Inspect blocked ownership with `inspect-owner`. `clear-owner` is an explicit operator-confirmed generic claim operation requiring its exact token and a note; it cannot clear a maintenance claim. Installation interruption, upgrade, dependency repair, uninstall, and cleanup need their separate bounded maintenance paths. Do not treat a partial install as ready or retry an interrupted operation as a fresh install. Manual file deletion is not a recovery procedure.
+Inspect blocked ownership with `inspect-owner`. `clear-owner` is an explicit operator-confirmed generic claim operation requiring its exact token and a note; it cannot clear a maintenance claim. Installation interruption, dependency repair, uninstall, and cleanup need their separate bounded maintenance paths. Do not treat a partial install as ready or retry an interrupted operation as a fresh install. Manual file deletion is not a recovery procedure.

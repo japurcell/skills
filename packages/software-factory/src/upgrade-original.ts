@@ -7,6 +7,7 @@ import { validateRetainedProviderSources } from './installation-bindings.js';
 import { readInstalledReceipt } from './install-publication.js';
 import { readUpgradeInstalledReceipt } from './upgrade-installed.js';
 import { repositoryIdentity } from './workspace.js';
+import type { Owner } from './store.js';
 
 function hash(value: string | Buffer): string { return createHash('sha256').update(value).digest('hex'); }
 function tree(path: string) {
@@ -15,12 +16,12 @@ function tree(path: string) {
 }
 
 /** Captured by the selected new runtime before admission; no old executable is launched. */
-export async function captureOriginalInstallation(common: string, repository: string) {
+export async function captureOriginalInstallation(common: string, repository: string, launcher: Owner) {
   const installed = await inspectInstalledOwnership(common, repository, true);
   const location = await repositoryIdentity(repository);
   if (location.common !== common) throw new Error('original repository identity differs');
   const factory = join(common, 'factory');
-  const original = { version: 1 as const, root: location.root, common: location.common, repositoryId: installed.receipt.repositoryId,
+  const original = { version: 1 as const, launcher, root: location.root, common: location.common, repositoryId: installed.receipt.repositoryId,
     release: installed.release, factoryIdentity: directoryIdentity(factory), completion: installed.completion,
     receipt: installed.receipt, receiptSha256: installed.receiptSha256,
     install: tree(join(factory, 'install')), toolchain: tree(join(factory, 'toolchain')),

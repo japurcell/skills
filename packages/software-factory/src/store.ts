@@ -7,6 +7,7 @@ import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, un
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
+import { inspectOwner } from './native/process.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import { initializeSchema, schemaVersion } from './schema.js';
 import { validateAdmission } from './accounting.js';
@@ -33,6 +34,7 @@ export interface MaintenanceIntent {
   candidate: CandidateBinding | null;
   upgradeIntentSha256?: string;
   upgradeReceipt?: { id: string; sha256: string; identity: string };
+  activeLauncher?: Owner;
   forward?: { sourceShape: ForwardShape; currentShape: ForwardShape; sourceRelease: string; sourceIdentity: string; backup: null | {
     id: string; identity: string; sha256: string; bytes: number; countDigest: string;
     receiptId: string; receiptSha256: string;
@@ -1071,7 +1073,9 @@ export class RepositoryStore {
 
 
   async bindUpgradeCandidate(input: { handle: MaintenanceHandle; candidate: CandidateBinding;
-    stageDigest: string; stageIdentity: string; intentSha256: string; receipt: { id: string; sha256: string; identity: string } }): Promise<MaintenanceIntent> {
+    stageDigest: string; stageIdentity: string; intentSha256: string; receipt: { id: string; sha256: string; identity: string }; launcher: Owner }): Promise<MaintenanceIntent> {
+    validateOwner(input.launcher);
+    if (inspectOwner(input.launcher).state !== 'known_live') throw new Error('upgrade launcher is not live');
     const candidate = input.candidate;
     if (!input.receipt || !/^[a-f0-9-]{36}$/i.test(input.receipt.id) || !/^[a-f0-9]{64}$/.test(input.receipt.sha256)
       || !/^\d+:\d+$/.test(input.receipt.identity)) throw new Error('invalid upgrade receipt binding');
@@ -1093,6 +1097,7 @@ export class RepositoryStore {
         throw new Error('another owner blocks candidate binding');
       recorded.upgradeIntentSha256 = input.intentSha256;
       recorded.upgradeReceipt = input.receipt;
+      recorded.activeLauncher = input.launcher;
       recorded.candidate = input.candidate;
       recorded.stageDigest = input.stageDigest;
       recorded.stageIdentity = input.stageIdentity;
@@ -1164,8 +1169,9 @@ export class RepositoryStore {
 
   async reclaimMaintenance(input: { operationId: string; expectedToken: string; expectedOwner: Owner;
     expectedPhase: MaintenancePhase; owner: Owner; inspection: 'not_live' | 'unknown'; note: string;
-    replacementBackupId?: string }) {
+    replacementBackupId?: string; launcher?: Owner }) {
     validateOwner(input.owner);
+    if (input.launcher) { validateOwner(input.launcher); if (inspectOwner(input.launcher).state !== 'known_live') throw new Error('replacement launcher is not live'); }
     text(input.note, 'maintenance clearance note');
     if (!input.note.trim()) throw new Error('nonempty maintenance clearance note required');
     return this.transaction(() => {
@@ -1183,12 +1189,52 @@ export class RepositoryStore {
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)')
         .run(clearance.id, claim.id, JSON.stringify(clearance));
       claim.token = randomUUID(); claim.owner = input.owner;
+      if (input.launcher) claim.maintenance!.activeLauncher = input.launcher;
       if (input.replacementBackupId) claim.maintenance!.backupId = input.replacementBackupId;
       if (claim.maintenance?.phase === 'handoff-ready') claim.maintenance.ticketNonceHash = null;
       this.database.prepare('UPDATE owner_claims SET token=?,data=? WHERE id=? AND token=?')
         .run(claim.token, JSON.stringify(claim), claim.id, input.expectedToken);
       this.event('maintenance.reclaimed', { operationId: input.operationId, claimId: claim.id, clearanceId: clearance.id });
       return claim;
+    });
+  }
+
+  /** Explicitly abandon only an unchanged, unconsumed upgrade preparation. */
+  async abandonUpgradePreparation(input: { handle: MaintenanceHandle; expectedOwner: Owner; note: string;
+    ownerState: 'not_live' | 'unknown'; ownerLimitation: string; launcher: Owner; validateOriginal: () => void }) {
+    if (typeof input.note !== 'string' || !input.note.trim() || Buffer.byteLength(input.note) > 256
+      || !['not_live', 'unknown'].includes(input.ownerState) || typeof input.ownerLimitation !== 'string'
+      || !input.ownerLimitation || Buffer.byteLength(input.ownerLimitation) > 256)
+      throw new Error('explicit bounded operator clearance required');
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId), selected = claim.maintenance!;
+      const repository = this.database.prepare('SELECT id,release,state FROM repository').get();
+      const prior = this.database.prepare("SELECT data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed') ORDER BY cursor DESC LIMIT 1").get();
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
+        || JSON.stringify(claim.owner) !== JSON.stringify(input.expectedOwner) || selected.kind !== 'upgrade'
+        || selected.phase !== 'preparing' || selected.ticketConsumed || selected.ticketNonceHash !== null
+        || !selected.forward || selected.forward.sourceShape !== selected.forward.currentShape
+        || selected.forward.sourceIdentity !== this.forwardStorage?.identity || knownForwardShape(this.database) !== selected.forward.sourceShape
+        || repository?.['id'] !== input.handle.repositoryId || repository['state'] !== 'ready'
+        || repository['release'] !== selected.forward.sourceRelease || !selected.artifactDigests['original-installed']
+        || !selected.artifactDigests['original-completion'] || !prior
+        || createHash('sha256').update(String(prior['data'])).digest('hex') !== selected.artifactDigests['original-completion']
+        || !pathAbsent(join(input.handle.commonDir, 'factory', 'upgrade-incomplete'))
+        || this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('upgrade preparation abandonment claim or original state differs');
+      const operation = join(input.handle.commonDir, 'factory', `upgrade-${selected.operationId}`);
+      for (const step of ['01-old-install', '02-new-install', '03-old-toolchain', '04-new-toolchain'])
+        if (!pathAbsent(join(operation, `${step}.json`))) throw new Error('upgrade publication journal blocks abandonment');
+      input.validateOriginal();
+      const currentInspection = inspectOwner(claim.owner), launcherInspection = inspectOwner(input.launcher);
+      if (currentInspection.state === 'known_live' || launcherInspection.state === 'known_live')
+        throw new Error('known-live owner or launcher cannot be cleared');
+      this.event('maintenance.preparation_abandoned', { operationId: selected.operationId, claimId: claim.id,
+        priorOwner: claim.owner, ownerState: currentInspection.state, ownerLimitation: currentInspection.limitation,
+        priorLauncher: input.launcher, launcherState: launcherInspection.state, launcherLimitation: launcherInspection.limitation,
+        childClosure: 'operator-confirmed-unknown', operatorConfirmed: true, note: input.note });
+      this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=? AND kind=?')
+        .run(claim.id, claim.token, 'maintenance');
     });
   }
 
@@ -1212,7 +1258,7 @@ export class RepositoryStore {
         throw new Error('install completion repository or sole claim differs');
       const completion = { version: 1, operationId: recorded.operationId, repositoryId: recorded.repositoryId,
         claimId: claim.id, selectionDigest: recorded.selectionDigest, manifestSha256: input.manifestSha256,
-        receiptId: input.receiptId, receiptSha256: input.receiptSha256 };
+        receiptId: input.receiptId, receiptSha256: input.receiptSha256, controllerOwner: claim.owner, stageIdentity: recorded.stageIdentity };
       this.event('install.completed', completion);
       this.database.prepare("UPDATE repository SET state='ready' WHERE id=? AND state='incomplete'").run(recorded.repositoryId);
       this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=? AND kind=?')
@@ -1238,6 +1284,8 @@ export class RepositoryStore {
         || !recorded.forward?.backup || recorded.forward.currentShape !== 'v7' || knownForwardShape(this.database) !== 'v7'
         || !recorded.artifactDigests['original-installed'] || !recorded.artifactDigests['original-completion']
         || !recorded.upgradeIntentSha256 || !/^[a-f0-9]{64}$/.test(recorded.upgradeIntentSha256)
+        || !recorded.activeLauncher || inspectOwner(recorded.activeLauncher).state !== 'known_live'
+        || recorded.activeLauncher.pid !== process.ppid
         || !recorded.upgradeReceipt || recorded.upgradeReceipt.id !== input.receiptId
         || recorded.upgradeReceipt.sha256 !== input.receiptSha256
         || !prior || createHash('sha256').update(String(prior['data'])).digest('hex') !== recorded.artifactDigests['original-completion']
@@ -1248,6 +1296,7 @@ export class RepositoryStore {
       const completion = { version: 1, operationId: recorded.operationId, repositoryId: recorded.repositoryId,
         claimId: claim.id, selectionDigest: recorded.selectionDigest, manifestSha256: input.manifestSha256,
         receiptId: input.receiptId, receiptSha256: input.receiptSha256, receiptIdentity: recorded.upgradeReceipt.identity,
+        controllerOwner: claim.owner, launcherOwner: recorded.activeLauncher,
         originalCompletionSha256: recorded.artifactDigests['original-completion'],
         originalInstalledSha256: recorded.artifactDigests['original-installed'] };
       this.event('upgrade.completed', completion);
@@ -1256,6 +1305,31 @@ export class RepositoryStore {
       this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=? AND kind=?')
         .run(claim.id, claim.token, 'maintenance');
       return completion;
+    });
+  }
+
+  /** Record explicit clearance before completing an already-committed upgrade cleanup. */
+  async recordCompletedUpgradeRecovery(input: { operationId: string; receiptId: string; receiptSha256: string;
+    note: string; controllerState: 'not_live' | 'unknown'; controllerLimitation: string;
+    launcherState: 'not_live' | 'unknown'; launcherLimitation: string;
+    originalLauncherState: 'not_live' | 'unknown'; originalLauncherLimitation: string }) {
+    if (!input.note.trim() || Buffer.byteLength(input.note) > 256 || !/^[a-f0-9-]{36}$/i.test(input.operationId)
+      || !/^[a-f0-9-]{36}$/i.test(input.receiptId) || !/^[a-f0-9]{64}$/.test(input.receiptSha256)
+      || !['not_live','unknown'].includes(input.controllerState) || !['not_live','unknown'].includes(input.launcherState)
+      || !['not_live','unknown'].includes(input.originalLauncherState) || !input.originalLauncherLimitation
+      || Buffer.byteLength(input.originalLauncherLimitation) > 256
+      || !input.controllerLimitation || Buffer.byteLength(input.controllerLimitation) > 256
+      || !input.launcherLimitation || Buffer.byteLength(input.launcherLimitation) > 256)
+      throw new Error('invalid completed upgrade clearance');
+    return this.transaction(() => {
+      const repository = this.database.prepare('SELECT state FROM repository').get();
+      const last = this.database.prepare("SELECT kind,data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed') ORDER BY cursor DESC LIMIT 1").get();
+      const data = last ? JSON.parse(String(last['data'])) as Record<string, unknown> : null;
+      if (repository?.['state'] !== 'ready' || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()
+        || last?.['kind'] !== 'upgrade.completed' || data?.['operationId'] !== input.operationId
+        || data['receiptId'] !== input.receiptId || data['receiptSha256'] !== input.receiptSha256)
+        throw new Error('completed upgrade clearance evidence differs');
+      this.event('maintenance.completed_recovery_inspected', { ...input, childClosure: 'operator-confirmed-unknown', operatorConfirmed: true });
     });
   }
 

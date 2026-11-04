@@ -14,6 +14,7 @@ import { schemaVersion, initializeSchema } from './schema.js';
 import { openForwardMaintenanceStore, openMaintenanceStore, openRepositoryStore } from './store.js';
 import type { CandidateBinding, Claim, MaintenanceHandle, MaintenanceIntent, MaintenanceKind, MaintenancePhase, Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
+import { assertOriginalInstallation, type OriginalInstallation } from './upgrade-original.js';
 import { assertForwardIntegrity, forwardCounts, knownForwardShape } from './schema-forward.js';
 import type { ForwardShape } from './schema-forward.js';
 
@@ -574,6 +575,7 @@ export async function inspectMaintenance(repository: string) {
       const summary = typed?.maintenance ? redacted(typed.maintenance) : marker ? redacted(marker.claim.maintenance!) : undefined;
       return { status: marker || upgradeMarker || row['state'] !== 'ready' || typed ? 'incomplete' as const : 'ready' as const,
         commonDir: common, marker: marker ? 'complete' : upgradeMarker ? 'upgrade' : 'absent', database: observedShape === 'v7' ? 'current' : observedShape, claims: claims.length,
+        ...(typed ? { owner: { ...typed.owner, ...inspectOwner(typed.owner) } } : {}),
         ...(summary ? { intent: summary } : {}) };
     } finally { database.close(); }
   } catch {
@@ -583,7 +585,7 @@ export async function inspectMaintenance(repository: string) {
 
 /** Only a recorded complete marker can resume an absent database after inspected owner clearance. */
 export async function reclaimMaintenance(repository: string, operationId: string, owner: Owner,
-  clearance: { operatorConfirmed: boolean; note: string; replacementBackupId?: string }): Promise<MaintenanceHandle> {
+  clearance: { operatorConfirmed: boolean; note: string; replacementBackupId?: string; launcher?: Owner }): Promise<MaintenanceHandle> {
   if (clearance.operatorConfirmed !== true || !clearance.note?.trim() || Buffer.byteLength(clearance.note) > 256)
     throw new Error('explicit bounded operator clearance required');
   const { root, common } = await repositoryIdentity(repository);
@@ -614,11 +616,15 @@ export async function reclaimMaintenance(repository: string, operationId: string
         throw new Error('recorded maintenance stage changed; repair refused');
     }
     const inspection = inspectOwner(claim.owner);
+    if (claim.maintenance?.activeLauncher && inspectOwner(claim.maintenance.activeLauncher).state === 'known_live')
+      throw new Error('known-live original launcher cannot be reclaimed');
+    if (claim.maintenance?.activeLauncher && !clearance.launcher) throw new Error('replacement launcher binding required');
     if (inspection.state === 'known_live') throw new Error('known-live owner cannot be reclaimed');
     return handle(await store.reclaimMaintenance({ operationId, expectedToken: claim.token,
       expectedOwner: claim.owner, expectedPhase: claim.maintenance!.phase, owner,
       inspection: inspection.state, note: clearance.note,
-      ...(clearance.replacementBackupId ? { replacementBackupId: clearance.replacementBackupId } : {}) }), common);
+      ...(clearance.replacementBackupId ? { replacementBackupId: clearance.replacementBackupId } : {}),
+      ...(clearance.launcher ? { launcher: clearance.launcher } : {}) }), common);
   } finally { store.close(); }
 }
 
@@ -778,6 +784,11 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
     const owner = currentOwner();
     if (inspectOwner(owner).state !== 'known_live')
       throw new Error('staged process owner identity unavailable; handoff refused');
+    if (claim.maintenance?.activeLauncher) {
+      const parent = currentOwner(process.ppid), expected = claim.maintenance.activeLauncher;
+      if (parent.host !== expected.host || parent.pid !== expected.pid || parent.start !== expected.start
+        || inspectOwner(parent).state !== 'known_live') throw new Error('handoff launcher identity differs');
+    }
     return await store.consumeMaintenanceHandoff({ handle: { operationId: ticket.operationId, claimId: ticket.claimId,
       token: ticket.token, repositoryId: ticket.repositoryId, commonDir: common },
       nonceHash: hash(ticket.nonce), ...stage, owner });
@@ -846,10 +857,12 @@ export function assertForwardPublication(current: MaintenanceHandle): Claim {
       || store.forwardIdentity() !== selected.forward.sourceIdentity || store.repositoryRelease() !== selected.forward.sourceRelease
       || !selected.ticketConsumed || !['modifying', 'validating'].includes(selected.phase))
       throw new Error('upgrade publication claim/token/checkpoint differs');
-    const live = currentOwner();
+    const live = currentOwner(), parent = currentOwner(process.ppid), launcher = selected.activeLauncher;
     if (inspectOwner(live).state !== 'known_live' || live.host !== claim.owner.host
       || live.pid !== claim.owner.pid || live.start !== claim.owner.start)
       throw new Error('upgrade publication requires live staged owner');
+    if (!launcher || parent.host !== launcher.host || parent.pid !== launcher.pid || parent.start !== launcher.start
+      || inspectOwner(parent).state !== 'known_live') throw new Error('upgrade publication launcher differs');
     store.assertSoleMaintenance(current);
     verifyForwardBackup(current.commonDir, claim);
     verifyInstallCandidate(current.commonDir, claim, true);
@@ -857,6 +870,35 @@ export function assertForwardPublication(current: MaintenanceHandle): Claim {
     if (stage.stageDigest !== selected.stageDigest || stage.stageIdentity !== selected.stageIdentity)
       throw new Error('upgrade publication stage changed');
     return claim;
+  } finally { store.close(); }
+}
+
+/** Explicit operator clearance may release a still-unmodified preparation, never its evidence. */
+export async function abandonUpgradePreparation(repository: string, operationId: string,
+  clearance: { operatorConfirmed: boolean; note: string }, expectedManifestSha256?: string): Promise<void> {
+  if (clearance.operatorConfirmed !== true || typeof clearance.note !== 'string' || !clearance.note.trim()
+    || Buffer.byteLength(clearance.note) > 256) throw new Error('explicit bounded operator clearance required');
+  const { root, common } = await repositoryIdentity(repository);
+  const store = openForwardMaintenanceStore(common);
+  try {
+    const claim = store.readMaintenanceClaim(operationId), selected = assertRecordedIntent(common, claim);
+    if (selected.kind !== 'upgrade' || selected.phase !== 'preparing' || selected.ticketConsumed
+      || !selected.artifactDigests['original-installed'] || !selected.artifactDigests['original-completion']
+      || (expectedManifestSha256 !== undefined && selected.targetReleaseSha256 !== expectedManifestSha256))
+      throw new Error('unmodified installed upgrade preparation required');
+    const operation = join(common, 'factory', `upgrade-${operationId}`);
+    directoryIdentity(operation);
+    const originalPath = join(operation, 'original.json');
+    const original = JSON.parse(readRecord(originalPath).toString('utf8')) as OriginalInstallation;
+    if (original.root !== root || original.common !== common || hash(JSON.stringify(original)) !== selected.artifactDigests['original-installed'])
+      throw new Error('original installed evidence differs');
+    assertOriginalInstallation(common, original);
+    const ownerState = inspectOwner(claim.owner), launcherState = inspectOwner(original.launcher);
+    if (ownerState.state === 'known_live' || launcherState.state === 'known_live')
+      throw new Error('known-live owner or launcher cannot be cleared');
+    await store.abandonUpgradePreparation({ handle: handle(claim, common), expectedOwner: claim.owner,
+      note: clearance.note, ownerState: ownerState.state, ownerLimitation: ownerState.limitation,
+      launcher: original.launcher, validateOriginal: () => assertOriginalInstallation(common, original) });
   } finally { store.close(); }
 }
 
@@ -870,7 +912,7 @@ export async function inspectForwardSchema(repository: string, operationId: stri
 
 /** Explicit clearance retains the original operation/selection and rotates only its owner/token. */
 export async function resumeForwardSchema(repository: string, operationId: string, selection: MaintenanceSelection,
-  owner: Owner, clearance: { operatorConfirmed: boolean; note: string }): Promise<MaintenanceHandle> {
+  owner: Owner, clearance: { operatorConfirmed: boolean; note: string }, launcher?: Owner): Promise<MaintenanceHandle> {
   selected(selection);
   const { common } = await repositoryIdentity(repository);
   const store = openForwardMaintenanceStore(common);
@@ -894,7 +936,7 @@ export async function resumeForwardSchema(repository: string, operationId: strin
   } finally { store.close(); }
   const replacementBackupId = pendingBackup ? randomUUID() : undefined;
   const recovered = await reclaimMaintenance(repository, operationId, owner,
-    { ...clearance, ...(replacementBackupId ? { replacementBackupId } : {}) });
+    { ...clearance, ...(replacementBackupId ? { replacementBackupId } : {}), ...(launcher ? { launcher } : {}) });
   if (!pendingBackup) return recovered;
   const reopened = openForwardMaintenanceStore(common);
   try { return createAndBindForwardBackup(recovered, reopened.readMaintenanceClaim(operationId).maintenance!); }

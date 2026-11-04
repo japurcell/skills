@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { validateBoundProviderSources, validateRetainedProviderSources } from '../dist/installation-bindings.js';
+import { validateBoundProviderSources, validateRetainedProviderSources, selectUpgradeProviders } from '../dist/installation-bindings.js';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 test('receipt-bound prior provider closure is checked without granting target qualification', () => {
@@ -42,4 +42,14 @@ test('retained executable must still match its recorded bytes without qualifying
     writeFileSync(executable, 'modified');
     assert.throws(() => validateRetainedProviderSources(providers), /retained Codex source differs/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+
+test('upgrade inherits original provider selection unless an explicit selection is supplied', () => {
+  const retained = { codex: { executable: '/private/tmp/selected-codex', version: '0.162.0', sha256: 'a'.repeat(64), bytes: 1,
+    model: 'previous-model', reasoning: 'low', modes: ['read-only'] } };
+  assert.deepEqual(selectUpgradeProviders(retained, undefined), { codex: { executable: '/private/tmp/selected-codex', modes: ['read-only'] } });
+  assert.deepEqual(selectUpgradeProviders(retained, {}), {});
+  const explicit = { copilot: { packageRoot: '/private/tmp/package', manifestFile: '/private/tmp/manifest', modes: ['read-only'] } };
+  assert.deepEqual(selectUpgradeProviders(retained, explicit), explicit);
 });

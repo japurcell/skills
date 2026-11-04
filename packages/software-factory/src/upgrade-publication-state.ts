@@ -7,7 +7,7 @@ import { openMaintenanceStore, type CandidateBinding, type MaintenanceHandle } f
 import { assertOriginalInstallation, type OriginalInstallation } from './upgrade-original.js';
 
 interface TreeBinding { identity: string; digest: string; entries: number; bytes: number }
-interface AtomicBinding { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string }
+interface AtomicBinding { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string; launcher: import('./store.js').Owner }
 export interface UpgradeIntent {
   version: 1; operationId: string; repositoryId: string; claimId: string; selectionDigest: string;
   originalSha256: string; backupReceiptSha256: string; candidate: CandidateBinding;
@@ -36,6 +36,7 @@ export function prepareUpgradeIntent(handle: MaintenanceHandle, candidate: Candi
     if (claim.id !== handle.claimId || claim.token !== handle.token || claim.resourceKey !== handle.repositoryId
       || selected.kind !== 'upgrade' || selected.phase !== 'preparing' || !selected.forward?.backup
       || !selected.targetReleaseSha256 || selected.candidate || selected.stageDigest || selected.stageIdentity
+      || JSON.stringify(atomicBinding.launcher) !== JSON.stringify(original.launcher)
       || selected.artifactDigests['original-installed'] !== hash(JSON.stringify(original)))
       throw new Error('upgrade intent claim or original evidence differs');
     assertOriginalInstallation(common, original);
@@ -61,7 +62,7 @@ export function prepareUpgradeIntent(handle: MaintenanceHandle, candidate: Candi
       operationId: handle.operationId, repositoryId: handle.repositoryId, claimId: handle.claimId,
       release: selected.release, targetSchema: selected.targetSchema, selectionDigest: selected.selectionDigest,
       manifestSha256: selected.targetReleaseSha256, candidate, ...stage, intentSha256: sha256,
-      originalSha256: intent.originalSha256, backupReceiptSha256: intent.backupReceiptSha256,
+      originalSha256: intent.originalSha256, backupReceiptSha256: intent.backupReceiptSha256, launcher: atomicBinding.launcher,
       authoring: original.receipt.authoring });
     const receiptInfo = lstatSync(receiptPath);
     if (!receiptInfo.isFile() || receiptInfo.isSymbolicLink() || receiptInfo.nlink !== 1)
@@ -114,6 +115,7 @@ export function readUpgradeIntent(common: string, claim: import('./store.js').Cl
     || intent.atomicBinding.helper.path !== join(common, 'factory', 'controller-staging', intent.operationId, 'payload', 'native', 'atomic-publication.py')
     || !/^\d+:\d+$/.test(intent.atomicBinding.helper.identity) || !/^[a-f0-9]{64}$/.test(intent.atomicBinding.helper.sha256)
     || !/^\d+\.\d+\.\d+$/.test(intent.atomicBinding.pythonVersion)
+    || JSON.stringify(intent.atomicBinding.launcher) !== JSON.stringify(original.launcher)
     || JSON.stringify(intent.candidate) !== JSON.stringify(selected.candidate)
     || intent.operationIdentity !== directoryIdentity(directory)
     || intent.oldDirectoryIdentity !== directoryIdentity(join(directory, 'old'))

@@ -6,13 +6,13 @@ import { inspectUpgradeLayout, upgradeDirectory } from './upgrade-publication-st
 import { validateBoundProviderSources, validateRetainedProviderSources } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
 import { readOwnedReleaseManifest } from './owned-release.js';
-import type { CandidateBinding, Claim } from './store.js';
+import type { CandidateBinding, Claim, Owner } from './store.js';
 
 export interface UpgradeInstalledReceipt {
   version: 1; kind: 'upgrade'; receiptId: string; operationId: string; repositoryId: string; claimId: string;
   release: string; targetSchema: number; selectionDigest: string; manifestSha256: string; candidate: CandidateBinding;
   stageDigest: string; stageIdentity: string; intentSha256: string; originalSha256: string; backupReceiptSha256: string;
-  authoring: { path: string; sha256: string; identity: string }[];
+  launcher: Owner; authoring: { path: string; sha256: string; identity: string }[];
 }
 function hash(bytes: Buffer): string { return createHash('sha256').update(bytes).digest('hex'); }
 export function readUpgradeInstalledReceipt(common: string, operationId: string) {
@@ -22,7 +22,7 @@ export function readUpgradeInstalledReceipt(common: string, operationId: string)
     throw new Error('upgrade installed receipt identity changed');
   const receipt = JSON.parse(bytes.toString('utf8')) as UpgradeInstalledReceipt;
   const keys = ['version','kind','receiptId','operationId','repositoryId','claimId','release','targetSchema','selectionDigest',
-    'manifestSha256','candidate','stageDigest','stageIdentity','intentSha256','originalSha256','backupReceiptSha256','authoring'].sort();
+    'manifestSha256','candidate','stageDigest','stageIdentity','intentSha256','originalSha256','backupReceiptSha256','launcher','authoring'].sort();
   if (JSON.stringify(Object.keys(receipt).sort()) !== JSON.stringify(keys) || receipt.version !== 1 || receipt.kind !== 'upgrade'
     || receipt.operationId !== operationId || receipt.targetSchema !== 7 || !Array.isArray(receipt.authoring)
     || !/^[a-f0-9-]{36}$/i.test(receipt.receiptId) || !/^[a-f0-9-]{36}$/i.test(receipt.claimId)
@@ -30,6 +30,8 @@ export function readUpgradeInstalledReceipt(common: string, operationId: string)
     || !/^[a-f0-9]{64}$/.test(receipt.manifestSha256) || !/^[a-f0-9]{64}$/.test(receipt.intentSha256)
     || !/^[a-f0-9]{64}$/.test(receipt.originalSha256) || !/^[a-f0-9]{64}$/.test(receipt.backupReceiptSha256)
     || !/^[a-f0-9]{64}$/.test(receipt.stageDigest) || !/^\d+:\d+$/.test(receipt.stageIdentity)
+    || !receipt.launcher || typeof receipt.launcher.host !== 'string' || !Number.isSafeInteger(receipt.launcher.pid)
+    || receipt.launcher.pid < 1 || typeof receipt.launcher.start !== 'string' || !receipt.launcher.start
     || typeof receipt.release !== 'string' || receipt.release.length < 1 || receipt.release.length > 256)
     throw new Error('upgrade installed receipt invalid');
   return { receipt, sha256: hash(bytes), identity: `${before.dev}:${before.ino}` };
@@ -59,7 +61,9 @@ export function inspectInstalledUpgrade(common: string, active: { completion: { 
         id: '', identity: '', sha256: '', bytes: 0, countDigest: '', receiptId: '', receiptSha256: receipt.backupReceiptSha256 } },
     } };
   const layout = inspectUpgradeLayout(common, claim);
-  if (layout.recorded !== 4 || layout.position !== 4) throw new Error('upgrade installed layout incomplete');
+  if (layout.recorded !== 4 || layout.position !== 4
+    || JSON.stringify(layout.intent.atomicBinding.launcher) !== JSON.stringify(receipt.launcher))
+    throw new Error('upgrade installed layout incomplete');
   const original = JSON.parse(readPublicationRecord(join(upgradeDirectory(common, receipt.operationId), 'original.json')).toString('utf8')) as { completion?: unknown; receipt?: { authoring?: unknown } };
   if (completion.originalCompletionSha256 !== hash(Buffer.from(JSON.stringify(original.completion)))
     || JSON.stringify(original.receipt?.authoring) !== JSON.stringify(receipt.authoring))
