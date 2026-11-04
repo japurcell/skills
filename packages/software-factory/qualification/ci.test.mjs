@@ -96,3 +96,25 @@ test('dependency claim foundation qualification stays explicit and Linux CI supp
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stdout + result.stderr, /exact pinned Node archive required|requires Darwin arm64 or Linux x64/);
 });
+
+test('dependency backup qualification is explicit and Linux CI supplies its exact native prerequisites', () => {
+  const selector = readFileSync(new URL('../scripts/test.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  assert.match(selector, /dependency-backup-native\.qualification\.mjs'[\s\S]*area: 'dependency-backup'/);
+  assert.match(workflow, /- name: Run Linux verified dependency backup qualification[\s\S]*?if: matrix\.target == 'linux-x64'[\s\S]*?timeout-minutes: 15[\s\S]*?FACTORY_TEST_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_TEST_NPM_CACHE_SEED:\s*\$\{\{\s*runner\.temp\s*\}\}/);
+  assert.match(workflow, /run: node packages\/software-factory\/scripts\/test\.mjs qualification --area dependency-backup/);
+});
+
+test('Darwin timing workflow preserves one full fixtures position and uploads only validated exact exports', () => {
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../../../.github/workflows/darwin-selector-timing.yml', import.meta.url), 'utf8');
+  assert.match(foundation, /selector-timing-export/);
+  assert.match(foundation, /const fixtureArgs = timingExport \? \['qualification\/selector-timing-driver\.mjs', timingExport\] : \['scripts\/test\.mjs', 'fixtures'\]/);
+  assert.match(foundation, /const fixturesPassed = run\('fixtures', fixtureArgs\)/);
+  assert.match(workflow, /runs-on: macos-15/);
+  assert.match(workflow, /qualification-foundation\.mjs --selector-timing-export/);
+  assert.match(workflow, /selector-timing-artifacts\.mjs/);
+  assert.match(workflow, /if: always\(\) && steps\.artifacts\.outcome == 'success'/);
+  assert.match(workflow, /selector-timing-upload\/selector-timing\.json\n\s*\$\{\{ runner\.temp \}\}\/selector-timing-upload\/selector-timing\.jsonl/);
+  assert.doesNotMatch(workflow, /continue-on-error|NODE_OPTIONS|path:.*\*/);
+});

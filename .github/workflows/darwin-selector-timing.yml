@@ -1,0 +1,70 @@
+name: Darwin full-fixtures selector timing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/darwin-selector-timing.yml
+      - packages/software-factory/qualification/selector-timing*
+      - packages/software-factory/scripts/qualification-foundation.mjs
+      - packages/software-factory/scripts/test.mjs
+      - packages/software-factory/scripts/ordered-test-worker.mjs
+      - packages/software-factory/test/fixtures/learning-extraction-fixture.mjs
+      - packages/software-factory/test/fixtures/repository.mjs
+      - packages/software-factory/test/notification-repository-fixture.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  selector-timing:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      FACTORY_TARGET: darwin-arm64
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Select exact qualification Python
+        id: python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.14'
+      - name: Bootstrap exact native runtime
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/selector-timing-bootstrap
+        run: node packages/software-factory/scripts/qualification-bootstrap.mjs
+      - name: Run original foundation context with one instrumented full fixtures phase
+        id: experiment
+        timeout-minutes: 12
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/selector-timing-foundation-private
+          FACTORY_TEST_PYTHON: ${{ steps.python.outputs.python-path }}
+          FACTORY_ATOMIC_PYTHON: ${{ steps.python.outputs.python-path }}
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/selector-timing-npm-cache
+          FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/selector-timing-npm-cache
+        run: node packages/software-factory/scripts/qualification-foundation.mjs --selector-timing-export "${{ runner.temp }}/selector-timing-export"
+      - name: Validate and stage only sanitized timing exports
+        id: artifacts
+        if: always()
+        timeout-minutes: 1
+        run: node packages/software-factory/qualification/selector-timing-artifacts.mjs "${{ runner.temp }}/selector-timing-export" "${{ runner.temp }}/selector-timing-upload"
+      - name: Upload exactly two validated exports including incomplete evidence
+        if: always() && steps.artifacts.outcome == 'success'
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: darwin-selector-timing-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/selector-timing-upload/selector-timing.json
+            ${{ runner.temp }}/selector-timing-upload/selector-timing.jsonl
+          if-no-files-found: error
+          retention-days: 14

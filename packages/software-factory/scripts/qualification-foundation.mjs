@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { release } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 
 const cwd = fileURLToPath(new URL('../', import.meta.url));
 const evidence = resolve(process.env.FACTORY_EVIDENCE_DIR ?? join(cwd, 'qualification-results'));
@@ -25,6 +26,12 @@ function run(name, args, timeout = 120_000, executable = process.execPath) {
   return step.status === 'passed';
 }
 try {
+  const { values } = parseArgs({ options: { 'selector-timing-export': { type: 'string' } } });
+  const timingExport = values['selector-timing-export'];
+  if (timingExport !== undefined) {
+    assert.ok(process.platform === 'darwin' && process.arch === 'arm64', 'native Darwin timing qualification required');
+    assert.ok(isAbsolute(timingExport), 'absolute selector timing export required');
+  }
   const manifest = JSON.parse(readFileSync(join(cwd, 'qualification/runtime-manifest.json'), 'utf8'));
   assert.equal(process.version, manifest.node, 'manifest-pinned runtime required');
   assert.equal(process.versions.sqlite, manifest.sqlite, 'reviewed bundled SQLite required');
@@ -41,6 +48,7 @@ try {
   assert.ok(run('install', installArgs), 'locked dependency installation failed');
   run('typecheck', [process.env.FACTORY_NPM_CLI, 'run', 'typecheck']);
   run('build', [process.env.FACTORY_NPM_CLI, 'run', 'build']);
+  if (timingExport) assert.ok(run('selector-preflight', ['qualification/selector-timing-preflight.mjs']), 'selector timing preflight failed');
   run('install-bootstrap', ['scripts/test.mjs', 'release', '--area', 'bootstrap']);
   // This explicit suite qualifies only its declared macOS arm64 target.
   // Linux/Windows native execution and Windows lifetime remain separate gates.
@@ -54,7 +62,8 @@ try {
     || (process.platform === 'linux' && process.arch === 'x64')) {
     run('installed-cli-native-posix', ['--test', 'qualification/installed-cli-native.qualification.mjs'], 180_000);
   }
-  const fixturesPassed = run('fixtures', ['scripts/test.mjs', 'fixtures']);
+  const fixtureArgs = timingExport ? ['qualification/selector-timing-driver.mjs', timingExport] : ['scripts/test.mjs', 'fixtures'];
+  const fixturesPassed = run('fixtures', fixtureArgs);
   if (!fixturesPassed) {
     // Preserve the original failed fixture step and diagnose one public case
     // separately. Windows failed before source extraction; the hosted macOS
