@@ -4,10 +4,12 @@ import { mkdtempSync, mkdirSync, realpathSync, statSync, readFileSync } from 'no
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { atomicPublicationMove } from '../src/atomic-publication.ts';
+import { atomicPublicationMove, atomicPublicationSupportProfile } from '../src/atomic-publication.ts';
 
 const python = process.env.FACTORY_ATOMIC_PYTHON;
 if (!python) throw new Error('FACTORY_ATOMIC_PYTHON is required');
+if (!(process.platform === 'darwin' && process.arch === 'arm64') && !(process.platform === 'linux' && process.arch === 'x64'))
+  throw new Error('explicit native qualification requires Darwin arm64 or Linux x64');
 const helper = resolve('native/atomic-publication.py');
 const identity = path => { const s = statSync(path, { bigint: true }); return `${s.dev}:${s.ino}`; };
 const file = path => ({ path: realpathSync(path), identity: identity(path), sha256: createHash('sha256').update(readFileSync(path)).digest('hex') });
@@ -167,5 +169,42 @@ test('refuses interpreter changed while the helper is authenticated', async () =
     if (watcher.exitCode === null && watcher.signalCode === null) watcher.kill('SIGKILL');
     await closed;
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('exposes the supported native publication profile for this host', () => {
+  const expected = process.platform === 'darwin' && process.arch === 'arm64' ? 'darwin' : process.platform === 'linux' && process.arch === 'x64' ? 'linux-x64' : 'unsupported';
+  assert.notEqual(expected, 'unsupported', 'explicit native qualification requires Darwin arm64 or Linux x64');
+  assert.equal(atomicPublicationSupportProfile(), expected);
+});
+
+test('moves between two bound parents on one filesystem', async () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-atomic-')));
+  const sourceParent = join(root, 'source-parent'), destinationParent = join(root, 'destination-parent');
+  mkdirSync(sourceParent, { mode: 0o700 }); mkdirSync(destinationParent, { mode: 0o700 });
+  const source = join(sourceParent, 'source'), destination = join(destinationParent, 'destination');
+  mkdirSync(source, { mode: 0o700 });
+  const input = { source, destination, sourceIdentity: identity(source), sourceParentIdentity: identity(sourceParent),
+    destinationParentIdentity: identity(destinationParent), binding: { interpreter: file(python), helper: file(helper) } };
+  assert.equal(await atomicPublicationMove(input), 'moved');
+  assert.equal(identity(destination), input.sourceIdentity);
+});
+
+if (process.platform === 'linux' && process.arch === 'x64') test('refuses cross-device publication and preserves source', async () => {
+  const { rmSync, existsSync } = await import('node:fs');
+  const sourceParent = realpathSync(mkdtempSync(join(tmpdir(), 'factory-atomic-')));
+  const destinationParent = realpathSync(mkdtempSync('/dev/shm/factory-atomic-'));
+  try {
+    assert.notEqual(statSync(sourceParent, { bigint: true }).dev, statSync(destinationParent, { bigint: true }).dev,
+      'explicit Linux qualification requires distinct temporary filesystems');
+    const source = join(sourceParent, 'source'), destination = join(destinationParent, 'destination');
+    mkdirSync(source, { mode: 0o700 });
+    const input = { source, destination, sourceIdentity: identity(source), sourceParentIdentity: identity(sourceParent),
+      destinationParentIdentity: identity(destinationParent), binding: { interpreter: file(python), helper: file(helper) } };
+    assert.equal(await atomicPublicationMove(input), 'unsupported');
+    assert.equal(identity(source), input.sourceIdentity);
+    assert.equal(existsSync(destination), false);
+  } finally {
+    rmSync(sourceParent, { recursive: true, force: true }); rmSync(destinationParent, { recursive: true, force: true });
   }
 });

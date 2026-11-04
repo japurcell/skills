@@ -4,6 +4,14 @@ import { spawn } from 'node:child_process';
 import type { Stats } from 'node:fs';
 import { dirname, isAbsolute, normalize } from 'node:path';
 
+export type AtomicPublicationSupportProfile = 'darwin' | 'linux-x64' | 'unsupported';
+/** Code path availability only; native filesystem and process qualification remain caller gates. */
+export function atomicPublicationSupportProfile(): AtomicPublicationSupportProfile {
+  if (process.platform === 'darwin') return 'darwin';
+  if (process.platform === 'linux' && process.arch === 'x64') return 'linux-x64';
+  return 'unsupported';
+}
+
 export type AtomicPublicationResult = 'moved' | 'collision' | 'unsupported' | 'refused' | 'unknown';
 export type AtomicPublicationFileBinding = { path: string; identity: string; sha256: string };
 export type AtomicPublicationInput = {
@@ -40,7 +48,7 @@ function checkedFile(binding: AtomicPublicationFileBinding): number {
  * flushes both parents and issues receipts. POSIX source lookup is not identity-conditional.
  * Unknown means preserve evidence and claim, with no retry, rollback or adoption. */
 export async function atomicPublicationMove(input: AtomicPublicationInput): Promise<AtomicPublicationResult> {
-  if (process.platform !== 'darwin' && process.platform !== 'linux') return 'unsupported';
+  if (atomicPublicationSupportProfile() === 'unsupported') return 'unsupported';
   let helperFd: number | undefined, interpreterFd: number | undefined;
   try {
     if (!input || !canonical(input.source) || !canonical(input.destination) || input.source === input.destination
