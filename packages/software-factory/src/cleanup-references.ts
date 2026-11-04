@@ -7,6 +7,7 @@ import { cleanupCursor, cleanupHash, cleanupId, cleanupObject, type CleanupAttem
 import { readCleanupSnapshotAuthority, type CleanupBackupResolution } from './cleanup-backups.js';
 import { repositoryIdentity } from './workspace.js';
 import { analyzeLearningReferences, isLearningWorkflow } from './cleanup-learning.js';
+import { ordinaryDeclaration, ordinaryReferenceInterpreter } from './cleanup-recipes.js';
 
 export type CleanupNode = { kind: 'invocation'; invocationId: string }
   | { kind: 'attempt'; invocationId: string; attemptId: string }
@@ -217,6 +218,12 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
 
       }
     }
+    const ordinaryReports=new Set<string>(), ordinaryOwners=new Set<string>();
+    for(const header of headers.values()) if(header.channel==='report') {
+      const value=readPayload(header,131072); if(value?.text===null||value?.text===undefined) continue;
+      try { if(ordinaryDeclaration(json(value.text))) {budget.retain([header.id,header.invocationId]);ordinaryReports.add(header.id);ordinaryOwners.add(header.invocationId);} }
+      catch(error) {if(error instanceof AnalysisLimit)throw error;}
+    }
     for(const invocation of [...invocations.values()].sort((a,b)=>compare(a.id,b.id))) {
       budget.tick();const from=invocationNode(invocation);
       if(invocation.inputCaptureId!==null) {
@@ -225,7 +232,7 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
         const header=ownedCapture(invocation.inputCaptureId,invocation.id,null,'context'),value=header&&readPayload(header,393216);
         if(value?.text!==null&&value?.text!==undefined) {
           let parsed:unknown;try{parsed=json(value.text);}catch(error){if(error instanceof AnalysisLimit)throw error;block({code:'malformed',node:captureNode({invocationId:invocation.id,captureId:invocation.inputCaptureId})});}
-          if(!exact(parsed,['inputs','question','contexts'])||(!exact(parsed.inputs,[])&&!isLearningWorkflow(invocation.workflow))||parsed.question!==invocation.question||!isDeepStrictEqual(parsed.contexts,invocation.contexts))
+          if(!exact(parsed,['inputs','question','contexts'])||(!exact(parsed.inputs,[])&&!isLearningWorkflow(invocation.workflow)&&!ordinaryOwners.has(invocation.id))||parsed.question!==invocation.question||!isDeepStrictEqual(parsed.contexts,invocation.contexts))
             block({code:'opaque',node:captureNode({invocationId:invocation.id,captureId:invocation.inputCaptureId})});
         }
       }
@@ -276,11 +283,14 @@ function analyze(store: CleanupReadStore, budget: Budget): GraphState {
             if(exact(parsed,['inputs','purpose','context','sourceCaptureId'])&&cleanupId(parsed.sourceCaptureId)){edge(from,captureNode({invocationId:attempt.invocationId,captureId:parsed.sourceCaptureId}),'source-input');const source=ownedCapture(parsed.sourceCaptureId,attempt.invocationId,null,'context');if(source)readPayload(source,393216);}}}
         }
         // Only the closed learning contracts below may interpret an agent context.
-        if(!isLearningWorkflow(owner?.workflow??null))block({code:'opaque',node:from});
+        if(!isLearningWorkflow(owner?.workflow??null)&&!ordinaryOwners.has(attempt.invocationId))block({code:'opaque',node:from});
       } else if(owned.length) {root(from);block({code:'opaque',node:from});}
     }
-    analyzeLearningReferences({invocations,attempts,headers,report:value=>recognizedReports.push(value),read:readPayload,owned:ownedCapture,edge,block,parse:json,retain:value=>budget.retain(value),tick:()=>budget.tick(),
-      event(invocationId,cursor){budget.add('pages');budget.add('sourceRows');const event=store.readCleanupEvent({invocationId,cursor});budget.tick();factHash('event',event);return event;}});
+    const graph={invocations,attempts,headers,report:(value:ReferenceAnalysis['reports'][number])=>recognizedReports.push(value),read:readPayload,owned:ownedCapture,edge,block,parse:json,retain:(value:unknown)=>budget.retain(value),tick:()=>budget.tick(),
+      event(invocationId:string,cursor:string){budget.add('pages');budget.add('sourceRows');const event=store.readCleanupEvent({invocationId,cursor});budget.tick();factHash('event',event);return event;}};
+    const ordinary=ordinaryReferenceInterpreter(graph);
+    for(const id of ordinaryReports) ordinary.inspect(headers.get(id)!);
+    analyzeLearningReferences(graph,ordinaryReports);
     for(const attempt of attempts.values())if(attempt.priorAttemptId!==null){const prior=attempts.get(attempt.priorAttemptId);
       if(prior&&operations.get(nodeKey(operationNode(prior)))?.loopKey!==operations.get(nodeKey(operationNode(attempt)))?.loopKey)
         block({code:'invalid-lineage',node:attemptNode(attempt)});}

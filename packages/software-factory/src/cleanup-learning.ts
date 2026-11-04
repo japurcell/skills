@@ -127,7 +127,7 @@ function evaluation(value: unknown): value is Evaluation {
     &&(value.cases.length?shape(value.resolved,['baselineSha256','candidateSha256'])&&sha(value.resolved.baselineSha256)&&sha(value.resolved.candidateSha256)
       &&value.extractionReport!==null&&value.extractionResult!==null:value.resolved===undefined&&value.assessment==='inconclusive');
 }
-function profile(value: unknown): boolean {
+export function cleanupProfile(value: unknown): boolean {
   if(!shape(value,[],['harness','model','reasoning','permissions','prompt','skills','skillDelivery','requiredCapabilities']))return false;
   for(const key of ['harness','model','reasoning'])if(value[key]!==undefined&&!text(value[key],393216))return false;
   return (value.permissions===undefined||['read-only','workspace-write'].includes(String(value.permissions)))
@@ -137,9 +137,9 @@ function profile(value: unknown): boolean {
       &&(item.resources===undefined||list(item.resources,100,entry=>text(entry,393216)))))
     &&(value.requiredCapabilities===undefined||list(value.requiredCapabilities,100,item=>text(item,393216)));
 }
-function effective(value: unknown): value is ObjectValue {
+export function cleanupEffective(value: unknown): value is ObjectValue {
   return shape(value,['layers','profile','harness','permissions','prompt','skills','skillDelivery','requiredCapabilities','provenance'],['model','reasoning'])
-    &&list(value.layers,100,item=>shape(item,['source','fields'])&&text(item.source,393216)&&profile(item.fields))
+    &&list(value.layers,100,item=>shape(item,['source','fields'])&&text(item.source,393216)&&cleanupProfile(item.fields))
     &&(value.profile===null||text(value.profile,80))&&text(value.harness,393216)
     &&(value.model===undefined||text(value.model,393216))&&(value.reasoning===undefined||text(value.reasoning,393216))
     &&['read-only','workspace-write'].includes(String(value.permissions))&&text(value.prompt,393216,true)
@@ -151,7 +151,7 @@ function effective(value: unknown): value is ObjectValue {
 }
 class Refusal extends Error {}
 /** Internal closed learning interpreter. The caller supplies only the already bounded snapshot readers. */
-export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalysis['reports'] {
+export function analyzeLearningReferences(graph: LearningGraph, ordinaryReports: ReadonlySet<string> = new Set()): ReferenceAnalysis['reports'] {
   const recognizedAgents=new Set<string>();
   const reports: ReferenceAnalysis['reports'][number][]=[];
   const fail = (code: CleanupBlocker['code'],node: CleanupNode): never => { graph.block({code,node});throw new Refusal(); };
@@ -183,7 +183,7 @@ export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalys
     require(new Set([meta.inputsCaptureId,meta.resultCaptureId,meta.validatedResultCaptureId]).size===3
       &&meta.outputCaptureId!==meta.inputsCaptureId&&meta.outputCaptureId!==meta.validatedResultCaptureId,node,'ownership');
     const input=read(meta.inputsCaptureId,value.invocationId,value.id,'context',393216),wrapper=parsed(input);
-    require(shape(wrapper,['inputs','purpose','context','sourceCaptureId'])&&effective(wrapper.inputs)&&wrapper.purpose===purpose
+    require(shape(wrapper,['inputs','purpose','context','sourceCaptureId'])&&cleanupEffective(wrapper.inputs)&&wrapper.purpose===purpose
       &&typeof wrapper.context==='string'&&cleanupId(wrapper.sourceCaptureId),node);
     const source=read(wrapper.sourceCaptureId,value.invocationId,null,'context',393216);graph.edge(node,source.node,'source-input');
     const original=parsed(source);require(shape(original,['step','inputs','purpose','context','validator'])&&original.step===value.operationKey
@@ -364,6 +364,7 @@ export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalys
   const actionReport=actionReferenceInterpreter(graph,evaluationReport);
   for(const header of [...graph.headers.values()].filter(header=>header.channel==='report').sort((a,b)=>a.invocationId<b.invocationId?-1:a.invocationId>b.invocationId?1:a.id<b.id?-1:1)) {
     graph.tick();const node=capture(header.invocationId,header.id);
+    if(ordinaryReports.has(header.id)) continue;
     try { const owner=graph.invocations.get(header.invocationId);
       const action=actionReport(header);
       if(action.handled) {if(action.fact){graph.retain(action.fact);reports.push(action.fact);graph.report(action.fact);}}

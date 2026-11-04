@@ -50,7 +50,7 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
       const result = await safe(() => structured(context, key, { ...phases.review, ...lineage(key, attempts), purpose: 'review', permissions: 'read-only', context: JSON.stringify({ request, investigations, candidate, verified }), output: reviewOutput }, attempts, inputs.snapshot));
       findings.push(...result.value.findings);
     }
-    if (!findings.length) return { status: 'complete', candidateFingerprint: await candidateFingerprint(context.worktree, inputs.snapshot), investigations, candidate, checks: verified, corrections: correction, skipped, priorAttempts: attempts };
+    if (!findings.length) return { version: 1, kind: 'audit-report', status: 'complete', candidateFingerprint: await candidateFingerprint(context.worktree, inputs.snapshot), investigations: investigations.map(item => ({ name: item.name, target: item.target, result: { summary: item.result.summary } })), candidate: { summary: candidate.summary }, checks: verified, corrections: correction, skipped, priorAttempts: attempts };
     if (!synthesize) throw new Error(`audit findings with synthesis disabled: ${JSON.stringify(findings)}`);
     if (correction >= 2) throw new Error(`audit quality correction allowance exhausted: ${JSON.stringify(findings)}`);
     candidate = (await safe(() => structured(context, synthesisKey, {
