@@ -146,6 +146,8 @@ function New-FixtureRepo {
     $dirs = @(
         (Join-Path $Repo 'scripts'),
         (Join-Path $Repo 'skills/default/alpha/evals'),
+        (Join-Path $Repo 'skills/default/alpha/scripts'),
+        (Join-Path $Repo 'skills/default/alpha/tests'),
         (Join-Path $Repo 'skills/forest-service'),
         (Join-Path $Repo 'skills/default/beta-workspace'),
         (Join-Path $Repo 'skills/default/archive'),
@@ -188,6 +190,11 @@ function New-FixtureRepo {
 
     Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/SKILL.md') @('---', 'name: alpha', '---', 'Standalone.')
     Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/evals/evals.json') @('fixture eval content')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/scripts/route.py') @('runtime helper')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/scripts/runtime_test_adapter.py') @('runtime helper with test in its name')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/scripts/test_route.py') @('repository test')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/scripts/route.test.py') @('dot-suffix test')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/tests/test_install.py') @('skill test')
     Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/tool.sh') @('#!/bin/sh', 'echo tool')
     Write-FixtureFile (Join-Path $Repo 'skills/forest-service/.gitkeep') @('')
     # Non-default source mode: Test-PreservesFileModes asserts it survives install (non-Windows only).
@@ -307,6 +314,10 @@ for target in targets():
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
+    parts = target.output_path.parts
+    if parts[:1] == ("skills",):
+        skill_path = Path(*parts[:3]) / "SKILL.md"
+        shutil.copy2(source_root / skill_path, fixture_root / skill_path)
 '@
     $oldBytecode = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
     try {
@@ -1009,7 +1020,9 @@ function Test-ExcludesAndPrunesSkillEvals {
 
         New-FixtureRepo $repo
         New-Item -ItemType Directory -Path (Join-Path $homeDir '.agents/skills/alpha/evals') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $homeDir '.agents/skills/alpha/scripts') -Force | Out-Null
         Write-FixtureFile (Join-Path $homeDir '.agents/skills/alpha/evals/stale.txt') @('stale eval content')
+        Write-FixtureFile (Join-Path $homeDir '.agents/skills/alpha/scripts/test_stale.py') @('stale repository test')
         Write-FixtureFile (Join-Path $homeDir '.agents/skills/alpha/existing-note.txt') @('keep this installed note')
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
@@ -1023,6 +1036,12 @@ function Test-ExcludesAndPrunesSkillEvals {
 
         $copiedExistingNote = Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/existing-note.txt')
         Assert-Equals -Expected "keep this installed note" -Actual $copiedExistingNote -Message "Expected existing non-evals installed content to remain after eval cleanup."
+
+        Assert-Equals -Expected 'runtime helper' -Actual (Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/scripts/route.py')) -Message 'Expected runtime skill helpers to remain installed.'
+        Assert-Equals -Expected 'runtime helper with test in its name' -Actual (Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/scripts/runtime_test_adapter.py')) -Message 'Expected runtime helpers with test in their names to remain installed.'
+        foreach ($testPath in @('scripts/test_route.py', 'scripts/route.test.py', 'scripts/test_stale.py', 'tests')) {
+            Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir ".agents/skills/alpha/$testPath"))) -Message 'Expected conventional test scripts and test-only directories to stay out of published skill bundles, including stale installed copies.'
+        }
 
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/evals'))) -Message "Expected ~/.agents/skills/alpha/evals to be removed during install."
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/beta-workspace'))) -Message "Expected *-workspace skills to remain excluded from top-level selection."
@@ -2093,6 +2112,19 @@ function Test-EmptyCategoriesMarkersAndExclusions {
         foreach ($category in @('default', 'forest-service')) {
             New-Item -ItemType Directory -Path (Join-Path $repo "skills/$category") | Out-Null
         }
+        # This fixture models empty categories, so remove generated skill targets like the Bash fixture does.
+        $python = Get-PythonForFixture
+        $filterSkillTargets = @'
+from pathlib import Path
+import sys
+manifest = Path(sys.argv[1])
+manifest.write_text("".join(line for line in manifest.read_text().splitlines(keepends=True)
+                            if not ('GeneratedTarget(' in line and 'PurePosixPath("skills/' in line)))
+'@
+        & $python.Path @($python.Arguments) -c $filterSkillTargets (Join-Path $repo 'hooks/manifest.py')
+        Assert-Equals 0 $LASTEXITCODE 'Expected empty-category fixture target filtering to succeed.'
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        Assert-Equals 0 $LASTEXITCODE 'Expected generated hooks to refresh after empty-category filtering.'
         $homeDir = Join-Path $workdir 'empty-home'
         $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -InstallArguments @('--fs')
         Assert-Equals 0 $result.ExitCode 'Expected both empty categories valid.'
@@ -2135,6 +2167,97 @@ function Test-ChildProfileEnvironmentIsIsolated {
     }
 }
 
+function Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        $skill = Join-Path $repo 'skills/default/alpha'
+        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+            Write-FixtureFile (Join-Path $skill $relative) @('source artifact')
+        }
+        foreach ($relative in @('keep/__PYCACHE__/item', 'keep/.PYTEST_CACHE/item', 'keep/a.PYC', 'types/.ruff_cache', 'types/allowed.pyc/item', 'tmp/item', 'build/item', '.hidden')) {
+            Write-FixtureFile (Join-Path $skill $relative) @('runtime payload')
+        }
+        $external = Join-Path $workdir 'artifact-target'
+        Write-FixtureFile (Join-Path $external 'sentinel') @('external sentinel')
+        $linkedArtifact = $false
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $skill 'scripts/link.pyc') -Target $external | Out-Null
+            $linkedArtifact = $true
+        } catch { Write-Host "Skipping artifact symlink fixture: $($_.Exception.Message)" }
+        $externalBefore = Get-TreeFingerprint $external
+        # Fail at the copy boundary if an excluded subtree is traversed or file is copied.
+        $installer = Join-Path $repo 'scripts/install.ps1'
+        $text = Get-Content -LiteralPath $installer -Raw
+        $text = $text.Replace('        Copy-Item -LiteralPath $Source -Destination $Destination -Force', "        if (`$Source.EndsWith('.pyc', [StringComparison]::Ordinal) -or `$Source.EndsWith('.pyo', [StringComparison]::Ordinal) -or `$Source.EndsWith('.DS_Store', [StringComparison]::Ordinal)) { throw 'artifact reached file copier' }`n        Copy-Item -LiteralPath `$Source -Destination `$Destination -Force")
+        $text = $text.Replace('    Get-ChildItem -Force -Path $Source | ForEach-Object {', "    if ([IO.Path]::GetFileName(`$Source) -cin @('__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache')) { throw 'artifact directory traversed' }`n    Get-ChildItem -Force -Path `$Source | ForEach-Object {")
+        $text = $text.Replace('        foreach ($entry in (Get-ChildItem -Force -LiteralPath $Source)) {', "        if ([IO.Path]::GetFileName(`$Source) -cin @('__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache')) { throw 'artifact mode directory traversed' }`n        foreach (`$entry in (Get-ChildItem -Force -LiteralPath `$Source)) {")
+        $text = $text.Replace('                Set-FileModeFrom -Source $entry.FullName -Destination $installedPath', "                if (`$entry.Name.EndsWith('.pyc', [StringComparison]::Ordinal) -or `$entry.Name.EndsWith('.pyo', [StringComparison]::Ordinal) -or `$entry.Name -ceq '.DS_Store') { throw 'artifact reached mode copier' }`n                Set-FileModeFrom -Source `$entry.FullName -Destination `$installedPath")
+        Set-Content -LiteralPath $installer -Value $text -Encoding utf8NoBOM -NoNewline
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        $installed = Join-Path $homeDir '.agents/skills/alpha'
+        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+            Assert-True -Condition (Test-Path -LiteralPath (Join-Path $skill $relative)) -Message "Expected source artifact preserved: $relative"
+            Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $installed $relative))) -Message "Expected artifact excluded: $relative"
+            Write-FixtureFile (Join-Path $installed $relative) @('stale artifact')
+        }
+        if ($linkedArtifact) {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $installed 'scripts/link.pyc') -Target $external | Out-Null
+        }
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        foreach ($relative in @('scripts/__pycache__/route.pyc', '.pytest_cache/item', '.mypy_cache/item', '.ruff_cache/item', 'scripts/a.pyo', 'scripts/b.pyc', '.DS_Store')) {
+            Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $installed $relative))) -Message "Expected stale artifact pruned: $relative"
+        }
+        foreach ($relative in @('keep/__PYCACHE__/item', 'keep/.PYTEST_CACHE/item', 'keep/a.PYC', 'types/.ruff_cache', 'types/allowed.pyc/item', 'tmp/item', 'build/item', '.hidden', 'scripts/route.py')) {
+            Assert-True -Condition (Test-Path -LiteralPath (Join-Path $installed $relative)) -Message "Expected runtime payload preserved: $relative"
+        }
+        if ($linkedArtifact) {
+            Assert-True -Condition (-not (Get-Item -Force -LiteralPath (Join-Path $installed 'scripts/link.pyc') -ErrorAction SilentlyContinue)) -Message 'Expected artifact link excluded without following it.'
+            Assert-Equals $externalBefore (Get-TreeFingerprint $external) 'Expected artifact link target unchanged.'
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-SkillCopyPreservesExternalDestinationTargets {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $outside = Join-Path $workdir 'outside'
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $outside 'symlink-target') @('symlink sentinel')
+        Write-FixtureFile (Join-Path $outside 'hardlink-target') @('hardlink sentinel')
+        $installed = Join-Path $homeDir '.agents/skills/alpha'
+        New-Item -ItemType Directory -Path (Join-Path $installed 'scripts') -Force | Out-Null
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $installed 'SKILL.md') -Target (Join-Path $outside 'symlink-target') | Out-Null
+            New-Item -ItemType HardLink -Path (Join-Path $installed 'scripts/route.py') -Target (Join-Path $outside 'hardlink-target') | Out-Null
+        }
+        catch { Write-Host "Skipping destination link fixture: $($_.Exception.Message)"; return }
+        $before = Get-TreeFingerprint $outside
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected external file targets untouched.'
+        Assert-Equals 'Standalone.' ((Get-Content -LiteralPath (Join-Path $installed 'SKILL.md'))[-1]) 'Expected source skill installed over destination link.'
+        Assert-Equals 'runtime helper' (Read-FileContent (Join-Path $installed 'scripts/route.py')) 'Expected source file installed over destination hardlink.'
+
+        $otherHome = Join-Path $workdir 'other-home'
+        $externalDir = Join-Path $workdir 'external-dir'
+        Write-FixtureFile (Join-Path $externalDir 'sentinel') @('directory sentinel')
+        New-Item -ItemType Directory -Path (Join-Path $otherHome '.agents/skills') -Force | Out-Null
+        New-Item -ItemType SymbolicLink -Path (Join-Path $otherHome '.agents/skills/alpha') -Target $externalDir | Out-Null
+        $beforeDir = Get-TreeFingerprint $externalDir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $otherHome -Workdir $workdir
+        Assert-Equals 1 $result.ExitCode 'Expected linked skill destination directory to be refused.'
+        Assert-Equals $beforeDir (Get-TreeFingerprint $externalDir) 'Expected linked destination directory untouched.'
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade
+Test-SkillCopyPreservesExternalDestinationTargets
 Test-ChildProfileEnvironmentIsIsolated
 Test-HelperFailuresAreInstallerErrors
 Test-NativeScannerRejectsUnsafeAncestorGrants

@@ -137,6 +137,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
+        expected.add("skills/default/subagent-model-router/scripts/test_route.py")
         listed = {
             part for command in commands for part in command
             if part.startswith(("scripts/", "skills/"))

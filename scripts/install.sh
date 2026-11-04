@@ -111,7 +111,7 @@ copy_skills() {
       --references-source "$REFERENCES_SRC" \
       --references-destination "$REFERENCES_DEST" \
       --prune \
-      --copy-command cp -Rp "$entry" "$SKILLS_DEST/"
+      --copy-filtered
   done < <(find "$SKILLS_SRC/$category" -mindepth 1 -maxdepth 1 -print0)
 }
 

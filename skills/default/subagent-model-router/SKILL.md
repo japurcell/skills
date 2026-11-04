@@ -5,76 +5,32 @@ description: Route subagent work to the cheapest capable model. Use before dispa
 
 # Subagent Model Router
 
-Choose the lowest-cost dispatchable configuration at the task's capability floor. Use a higher tier when no capable configuration at the floor is available.
+Classify the task and use the bundled CLI to recommend an exact catalog model and effort. The catalog uses GitHub Copilot prices. Its capability classifications are provisional and its results do not establish live host availability.
 
-## Dispatch contract
+## Classify the task
 
-A dispatchable route specifies one tier and an exact model-and-effort pair accepted by the dispatch interface. Defaults, inheritance, placeholders, ranges, and conditional values are not exact values. If either value cannot be confirmed, return `dispatchable: false`; this includes interfaces that expose no effort value.
+Set `task.work` to `bounded`, `standard`, `coding`, `exploration`, `planning`, or `execplan`. Use `exploration` for bounded, low-risk exploration with clear requirements and straightforward verification; it is Fast. Use `standard` for exploration requiring substantive judgment or cross-file behavioral reasoning. Substantive judgment, agentic coding, deep debugging, and ordinary substantive review are at least Standard. High stakes, security sensitivity, difficult reasoning, repeated failures, or a best-quality request call for Premium. For reviews, set `task.review` to `mechanical`, `substantive`, or `security`. Read [review-routing.md](reference/review-routing.md) only when review type or risk classification is unclear.
 
-Apply both returned values explicitly when delegating. Never dispatch a `dispatchable: false` route.
+Supply supported facts in `task.risks`: `security_sensitive`, `high_stakes`, `unusually_difficult`, `repeated_reasoning_failures`, `user_requested_best_quality`, `new_evidence_raises_floor`, `stakes_or_ambiguity_increased`, or `important_review_miss`. Set `task.prior_important_miss` for a known relevant miss. Use `task.failure` for diagnosed `reasoning_gap`, `repeated_constraints_missed`, `repeated_reasoning_failures`, `new_evidence_raises_floor`, or `context_does_not_fit`; use the last only when no suitable same-tier configuration fits the required context. Set `task.selected_tier` when escalating a previous route.
 
-## Constraints and independence
+Before recording a capability gap, check instructions, inputs, context, dependencies, permissions, tools, runtime availability, and verification quality. A failing test, build, or script alone does not establish a model capability gap. Preserve the original floor when availability alone requires a higher-tier configuration.
 
-Honor explicit user model or effort constraints already in scope, then apply this skill's capability and cost rules. Missing constraints mean `none`, not ambiguity. Persistent configuration does not override routing. Use configured defaults only when explicitly requested by the user; resolve them to exact values that satisfy the floor.
+Prefer task-specific evaluation over similar-work evidence, provider guidance, and provisional catalog fit. Apply higher-priority evidence as judgment when interpreting the recommendation.
 
-Select independently without asking the user to choose, approve, confirm, or restate a model, effort, or default. Request only essential missing task facts. If constraints prevent meeting the floor, return `dispatchable: false`.
+## Route
 
-A routing attempt uses the task facts, runtime capabilities, and constraints in scope when it begins. Solicited preferences cannot retroactively justify it; changed constraints require a fresh attempt.
+The CLI reads the bundled [`catalog.json`](reference/catalog.json). Add `constraints.models` or `constraints.efforts` only for explicit user constraints. The values are arrays of exact model IDs or effort names.
 
-## Capability tiers
+Optionally provide `usage.input_tokens`, `output_tokens`, `cached_input_tokens`, and `cache_write_tokens` for a token cost estimate. Treat these input counts as disjoint. Set `usage.cache_reuse_confirmed` true only for confirmed reuse; otherwise cached input is charged as uncached. Missing input or output counts, unknown charges, or expired promotional rates leave the affected estimate unknown. With no token estimates, ranking uses the sum of one uncached input and one output unit rate at ordinary context. This is a comparison assumption, not a predicted bill. All estimates exclude retries, verification, tools, and other completion overhead; neither cost nor live availability is verified.
 
-- **Fast**: bounded, low-risk work with clear requirements and straightforward verification, including exploration and mechanical or repetitive tasks.
-- **Standard**: substantive judgment, cross-file behavioral reasoning, interactive or agentic coding, deep debugging, or ordinary substantive review.
-- **Premium**: security-sensitive or high-stakes work, difficult long-horizon reasoning, complex large-codebase work, prior important review misses, repeated reasoning failures, or user-requested best quality.
+Run `python3 <skill-root>/scripts/route.py --input request.json` to read a JSON request from a file. Use `--input -` to combine JSON from stdin with CLI flags; supplied flags override only their corresponding JSON fields, and repeated `--model` or `--effort` flags replace the JSON lists. With no flags, JSON stdin behavior is unchanged; flags alone do not read stdin. See `--help` for all supported fields and flags. The CLI prints a JSON catalog recommendation to stdout; usage or data errors go to stderr with exit 2. `recommendation_available` says whether the catalog produced a candidate that meets the floor and constraints. It does not certify dispatchability, dispatch work, or modify files.
 
-Tiers classify task requirements and model-and-effort configurations. Price, latency, provider, model family, and recency do not establish capability. File count, language mix, platform scope, and test count alone do not raise the floor. Prefer Fast for bounded low-risk work unless a concrete requirement establishes a higher floor.
+## Dispatch
 
-## Routing procedure
+If `recommendation_available` is false, return a final route with `dispatchable: false`. Otherwise, use already-available dispatch interface facts to confirm that both the selected exact model and exact effort are accepted. If both are confirmed and applicable catalog restrictions are satisfied, return a final route with `dispatchable: true` and apply both values explicitly. If either value cannot be confirmed, including when the interface exposes no effort value, return `dispatchable: false` and do not dispatch. A catalog recommendation alone never confirms acceptance or context fit. Do not ask the user to select or approve a route.
 
-Loading instructions, evaluating a route, and dispatching an agent are separate actions. Reuse instructions and references already available in the current agent context; reload them only when their content changes or is no longer available. The load steps below require fresh reads only under those conditions.
+Respect catalog restrictions returned with the selection or fallback and any already-known interface limitations. If the selected pair is known unavailable, use an eligible fallback or reassess using the known facts without collecting a complete inventory. Confirm the exact fallback pair before dispatch, preserving the floor and explicit constraints.
 
-1. Gather objective, work class, stakes, security sensitivity, ambiguity, reasoning difficulty, affected behavior, context size, review history, verification approach, existing constraints (or `none`), and exact runtime model/effort capabilities.
-2. Determine the lowest permitted tier. For code/PR review and audits, load [review-routing.md](reference/review-routing.md). Otherwise use the tier definitions above.
-3. For failures, changed risk, or context-fit problems, load [escalation-policy.md](reference/escalation-policy.md).
-4. Load [model-catalog.md](reference/model-catalog.md) for candidate configurations. Confirm runtime acceptance, context capacity, and applicable restrictions. Exclude models scheduled to retire before the subtask runs.
-5. Apply the availability rule below. Load [pricing.md](reference/pricing.md) and compare all eligible candidates at applicable context and cache rates. Task defaults are provisional starting points, not preference orders.
-6. Return one exact route and the lowest-cost eligible alternative at its selected tier, if any.
+A fallback using the same model at another effort addresses effort-specific unavailability only. If the entire model is known unavailable, rule out all its efforts and reassess from already-known facts without gathering an inventory.
 
-Before each dispatch, reassess task risk, explicit user constraints, and runtime availability, preserving security review floors. Reuse a route only when the facts gathered in step 1 and runtime availability remain materially unchanged. Record the chosen model, effort, capability floor, and assumptions in the structured decision below.
-
-### Availability
-
-Preserve the capability floor. First seek a capable configuration at that tier, including for large context. If none is available, select the lowest-cost capable higher-tier configuration permitted by user constraints. If none qualifies, return `dispatchable: false`.
-
-When a selected configuration becomes unavailable, apply the same rule starting at its selected tier. A higher-tier selection caused only by availability does not raise the task's capability floor. Report the selected tier and explain the original floor and availability-driven increase.
-
-### Evidence
-
-Use evidence in this order: task-specific local evaluation, demonstrated success on materially similar work, platform/provider guidance, then provisional catalog defaults.
-
-Prefer the latest version unless an older version has lower expected completion cost or demonstrated better task fit.
-
-## Output
-
-Return the complete structured decision; the caller controls storage and presentation. If capability is based on provisional guidance, explicitly label it provisional and state the required verification in `reason`.
-
-```yaml
-dispatchable: <true|false>
-tier: <Fast|Standard|Premium>
-model: <exact dispatch value or unresolved>
-reasoning_effort: <exact dispatch value or unresolved>
-reason: <task fit, capability floor, cost assumptions, uncertainty, and any availability-driven increase>
-escalation_trigger: <concrete trigger or none>
-fallback:
-  model: <exact same-tier dispatch value>
-  reasoning_effort: <exact dispatch value>
-```
-
-Use `fallback: none` only when no other exact same-tier configuration meets task requirements, runtime capabilities, and user constraints. Explain what excludes alternatives. For a failed selection, report the required floor and unresolved values with the reason dispatch is blocked.
-
-A dispatchable result is a decision, not a request for approval or pending confirmation.
-
-## Additional references
-
-- [patterns.md](reference/patterns.md): optional boundary cases and output examples; non-authoritative.
-- [maintenance.md](reference/maintenance.md): load only when refreshing catalog/pricing snapshots or investigating historical exclusions.
+Return the final structured route with `dispatchable`, `tier`, exact `model` and `reasoning_effort` or unresolved values, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`. The caller controls storage and presentation. The CLI's estimated cost is token-only; `cost_minimum_verified` remains false because actual completion costs are unknown. Load [maintenance.md](reference/maintenance.md) only when updating snapshots or investigating historical exclusions.

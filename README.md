@@ -75,6 +75,12 @@ The installer copies:
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
 - maintained `.codex/hooks/` scripts for startup and security into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, `PostToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
 
+Before copying skills, installers filter temporary artifacts such as Python
+bytecode (`__pycache__`, `.pyc`, `.pyo`), Python tool caches, and Finder metadata
+(`.DS_Store`). Upgrades also remove stale matching artifacts from installed skill
+trees. The shared exclusion policy is maintained in
+[`scripts/rebase-skill-references.py`](scripts/rebase-skill-references.py).
+
 Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH` before changing installed files. They set only `[hooks] suppress_hook_warning = true` in the user's RTK config (`~/Library/Application Support/rtk/config.toml` on macOS, `~/.config/rtk/config.toml` on Linux, or `%APPDATA%\rtk\config.toml` on Windows). An existing config is backed up as `config.toml.bak` before a change; a correct config stays byte-identical. An existing backup or ambiguous TOML stops the install for manual review. This account-wide setting suppresses the false missing-hook advisory for explicit commands while leaving other RTK diagnostics visible. The installers do not download RTK. They remove old prerelease files only when ownership and content or receipt hashes match, and report modified files for manual review. Copilot and Gemini still use automatic RTK forwarding.
 
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
@@ -332,7 +338,7 @@ five seconds for cleanup, then forces termination. A second Ctrl-C forces termin
 immediately. Suites have no default timeout; CI may impose an overall job timeout.
 
 The explicit suite registry includes installer, hook, helper, linter regression,
-runner, and model-router grader tests. It excludes lint-only checks, formatting,
+runner, and model-router policy CLI tests. It excludes lint-only checks, formatting,
 live model evaluations, archived tests, and generated fixtures. Native Windows is
 not supported by this aggregate command; individual PowerShell tests remain usable.
 

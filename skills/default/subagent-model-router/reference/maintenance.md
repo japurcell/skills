@@ -4,9 +4,9 @@ Load only when updating catalog/pricing snapshots or investigating historical ex
 
 ## Refresh
 
-1. Fetch the live sources linked in [model-catalog.md](model-catalog.md) and [pricing.md](pricing.md).
-2. Reconcile status, restrictions, retirement dates, and intentional exclusions against the supported-models source. Pricing and comparison pages do not establish availability.
-3. Reconcile price rows, input thresholds, cache charges, and promotion deadlines; verify the platform's applicable billing model.
+1. Fetch the live sources listed in [`catalog.json`](catalog.json) under `sources`; each entry records its snapshot date.
+2. Reconcile status, task guidance, restrictions, administrator enablement, retirement dates, exact model identifiers, and intentional exclusions against the supported-models and model-comparison sources. Pricing and comparison pages do not establish availability. Recheck retirement history on or after listed cutoffs; never restore a retired model from price rows alone.
+3. Reconcile GitHub Copilot price rows, input thresholds, cache charges, and promotion deadlines; preserve currency and token units in the source metadata. Legacy annual plans may apply request multipliers rather than the token charges used by the CLI.
 4. Verify exact runtime model IDs and effort values separately.
 5. Bypass stale caches before claiming a model or price is absent.
 6. Update each changed snapshot's date and preserve provenance for restrictions and exclusions.
@@ -24,4 +24,4 @@ These facts were reconciled for the **2026-10-28** snapshot, not a fresh availab
 
 ## Catalog ownership
 
-`model-catalog.md` owns tier membership and the task-default model table. Other routing references use the named defaults instead of copying preferred model IDs. Refresh the canonical owner when these choices change.
+`catalog.json` owns candidates, tiers, restrictions, pricing, and task defaults. Update it and its source metadata together when these facts change.

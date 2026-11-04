@@ -77,6 +77,41 @@ test_copies_referenced_skills_transitively() {
     "Expected referenced skills to be copied transitively alongside explicitly selected skills."
 }
 
+test_publishes_runtime_helpers_without_test_scripts() {
+  local workdir="$1"
+  local installed_skill="$workdir/dest/skills/addy-alpha"
+
+  create_local_source_directories "$workdir"
+  mkdir -p \
+    "$workdir/src/skills/alpha/scripts" \
+    "$workdir/src/skills/alpha/tests" \
+    "$workdir/dest/agents" \
+    "$workdir/dest/skills" \
+    "$workdir/dest/references"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' 'runtime helper' > "$workdir/src/skills/alpha/scripts/route.py"
+  printf '%s\n' 'runtime helper with test in its name' > "$workdir/src/skills/alpha/scripts/runtime_test_adapter.py"
+  printf '%s\n' 'python test' > "$workdir/src/skills/alpha/scripts/test_route.py"
+  printf '%s\n' 'shell test' > "$workdir/src/skills/alpha/scripts/test-route.sh"
+  printf '%s\n' 'test fixture' > "$workdir/src/skills/alpha/tests/test_install.py"
+
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
+    ADDY_SKILLS_DEST="$workdir/dest/skills" \
+    ADDY_REFERENCES_DEST="$workdir/dest/references" \
+    run_local_source_install "$workdir" --skills alpha >/dev/null
+
+  assert_equals "runtime helper" "$(<"$installed_skill/scripts/route.py")" \
+    "Expected runtime skill scripts to remain in published bundles."
+  assert_equals "runtime helper with test in its name" "$(<"$installed_skill/scripts/runtime_test_adapter.py")" \
+    "Expected non-test runtime helpers with test in their names to remain published."
+
+  if [[ -e "$installed_skill/scripts/test_route.py" || -e "$installed_skill/scripts/test-route.sh" || -e "$installed_skill/tests" ]]; then
+    echo "Expected conventional test scripts and test-only directories to stay out of imported skill bundles." >&2
+    exit 1
+  fi
+}
+
 test_copies_referenced_skills_without_agents() {
   local workdir="$1"
   local installed_skills
@@ -402,13 +437,32 @@ test_handles_missing_hooks_dir_gracefully() {
     "Expected destination hooks directory to be created."
 }
 
+test_artifacts_do_not_publish_or_create_dependencies() {
+  local workdir="$1"
+  create_local_source_directories "$workdir"
+  mkdir -p "$workdir/src/skills/alpha/__pycache__" "$workdir/src/skills/beta" "$workdir/src/skills/gamma" "$workdir/dest/agents" "$workdir/dest/skills/addy-alpha" "$workdir/dest/references"
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' '---' 'name: beta' '---' 'Standalone.' > "$workdir/src/skills/beta/SKILL.md"
+  printf '%s\n' '---' 'name: gamma' '---' 'Standalone.' > "$workdir/src/skills/gamma/SKILL.md"
+  printf 'beta' > "$workdir/src/skills/alpha/__pycache__/dependency.pyc"
+  printf 'gamma' > "$workdir/dependency.txt"
+  ln -s "$workdir/dependency.txt" "$workdir/src/skills/alpha/notes.md"
+  printf 'retired' > "$workdir/dest/skills/addy-alpha/retired.txt"
+  ADDY_AGENTS_DEST="$workdir/dest/agents" ADDY_SKILLS_DEST="$workdir/dest/skills" ADDY_REFERENCES_DEST="$workdir/dest/references" run_local_source_install "$workdir" --skills alpha >/dev/null
+  [[ ! -e "$workdir/dest/skills/addy-alpha/__pycache__" && ! -e "$workdir/dest/skills/addy-beta" ]] || return 1
+  [[ -f "$workdir/src/skills/alpha/__pycache__/dependency.pyc" && -f "$workdir/dest/skills/addy-gamma/SKILL.md" && ! -e "$workdir/dest/skills/addy-alpha/retired.txt" ]]
+}
+
 main() {
   local workdir
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' EXIT
 
+  test_artifacts_do_not_publish_or_create_dependencies "$workdir/artifacts"
+
   test_copies_referenced_skills_transitively "$workdir/transitive"
+  test_publishes_runtime_helpers_without_test_scripts "$workdir/test-script-exclusions"
   test_copies_referenced_skills_without_agents "$workdir/no-agents"
   test_copies_skills_selected_from_file "$workdir/skills-file"
   test_writes_skills_state_file_for_current_install "$workdir/skills-state-file"

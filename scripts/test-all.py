@@ -75,6 +75,7 @@ SUITES = (
     ("python3", "skills/default/create-skill/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"),
+    ("python3", "skills/default/subagent-model-router/scripts/test_route.py"),
     ("python3", "scripts/test_test_all.py"),
 )
 

@@ -8,7 +8,7 @@
     PowerShell 7 port of scripts/install.sh. Produces the same installed layout:
 
     - skills/default/* plus opted-in skills/forest-service/* -> ~/.agents/skills
-      (skips *-workspace and archive; prunes evals/, README.md, and LICENSE.*)
+      (skips *-workspace and archive; prunes evals/, README.md, LICENSE.*, conventional test scripts, and tests/ trees)
 
     Source Unix file modes are preserved on every copied file (like `cp -p`); on Windows the
     executable bit does not apply and mode handling is a no-op. Symlinks and junctions are
@@ -199,16 +199,66 @@ function Complete-CopyMode {
     }
 }
 
+function Assert-SkillDirectoryIsSafe {
+    param([string]$Path)
+
+    $current = [System.IO.Path]::GetFullPath($Path)
+    while ($current) {
+        $entry = Get-Item -Force -LiteralPath $current -ErrorAction SilentlyContinue
+        # macOS reserves these system aliases for the corresponding /private paths.
+        $systemAlias = $IsMacOS -and $current -cin @('/var', '/tmp', '/etc')
+        if (-not $systemAlias -and $null -ne $entry -and [string]$entry.LinkType) {
+            Fail "Refusing linked skill destination directory: $current"
+        }
+        $parent = [System.IO.Path]::GetDirectoryName($current)
+        if (-not $parent -or $parent -ceq $current) { break }
+        $current = $parent
+    }
+}
+
+function Remove-UnsafeSkillFileDestination {
+    param([string]$Path)
+
+    $entry = Get-Item -Force -LiteralPath $Path -ErrorAction SilentlyContinue
+    if ($null -eq $entry -or -not [string]$entry.LinkType) { return }
+    if ([string]$entry.LinkType -ceq 'HardLink' -and $entry.IsReadOnly) {
+        Fail "Refusing to change read-only hard-linked file: $Path"
+    }
+    Remove-Item -Force -LiteralPath $Path
+}
+
+function Test-SkillArtifact {
+    param($Entry)
+
+    $isLink = [string]$Entry.LinkType -cin @('SymbolicLink', 'Junction')
+    if ($Entry.PSIsContainer -or $isLink) {
+        foreach ($name in $skillArtifactPolicy.directory_names) {
+            if ($Entry.Name.Equals($name, [StringComparison]::Ordinal)) { return $true }
+        }
+    }
+    if (-not $Entry.PSIsContainer -or $isLink) {
+        foreach ($name in $skillArtifactPolicy.file_names) {
+            if ($Entry.Name.Equals($name, [StringComparison]::Ordinal)) { return $true }
+        }
+        foreach ($suffix in $skillArtifactPolicy.file_suffixes) {
+            if ($Entry.Name.EndsWith($suffix, [StringComparison]::Ordinal)) { return $true }
+        }
+    }
+    return $false
+}
+
 # Copies a regular file while preserving its Unix file mode.
 function Copy-FileWithMode {
     param(
         [string]$Source,
-        [string]$Destination
+        [string]$Destination,
+        [switch]$FilterSkillArtifacts
     )
 
     $originalMode = $null
     $copied = $false
     try {
+        if ($FilterSkillArtifacts) { Remove-UnsafeSkillFileDestination -Path $Destination }
         $destinationEntry = $null
         if (Test-Path -LiteralPath $Destination) {
             $destinationEntry = Get-Item -Force -LiteralPath $Destination
@@ -234,18 +284,21 @@ function Copy-FileWithMode {
 function Copy-Entry {
     param(
         $Entry,
-        [string]$DestinationDir
+        [string]$DestinationDir,
+        [switch]$FilterSkillArtifacts
     )
 
+    if ($FilterSkillArtifacts -and (Test-SkillArtifact $Entry)) { return }
     # LinkType must be checked before PSIsContainer: a symlink to a directory reports PSIsContainer = $true.
     $linkType = [string]$Entry.LinkType
     if ($linkType -ceq 'SymbolicLink' -or $linkType -ceq 'Junction') {
+        if ($FilterSkillArtifacts) { Remove-UnsafeSkillFileDestination -Path (Join-Path $DestinationDir $Entry.Name) }
         Install-PreservedLink -SourceDescription $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -LinkType $linkType -Target $Entry.Target
         return
     }
     if ($linkType -ceq 'HardLink') {
         # cp -Rp copies a hard link as a regular file.
-        Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
+        Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -FilterSkillArtifacts:$FilterSkillArtifacts
         return
     }
     if ($linkType) {
@@ -256,12 +309,13 @@ function Copy-Entry {
         $originalMode = $null
         $copied = $false
         try {
+            if ($FilterSkillArtifacts) { Assert-SkillDirectoryIsSafe -Path $destPath }
             New-Item -ItemType Directory -Path $destPath -Force | Out-Null
             if (-not $IsWindows -and -not (Get-Item -Force -LiteralPath $destPath).LinkType) {
                 $originalMode = [System.IO.File]::GetUnixFileMode($destPath)
                 [System.IO.File]::SetUnixFileMode($destPath, ($originalMode -bor [System.IO.UnixFileMode]::UserWrite))
             }
-            Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath
+            Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath -FilterSkillArtifacts:$FilterSkillArtifacts
             $copied = $true
         }
         finally {
@@ -269,18 +323,19 @@ function Copy-Entry {
         }
         return
     }
-    Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
+    Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -FilterSkillArtifacts:$FilterSkillArtifacts
 }
 
 function Copy-DirectoryContents {
     param(
         [string]$Source,
-        [string]$Destination
+        [string]$Destination,
+        [switch]$FilterSkillArtifacts
     )
 
     # -Force so hidden entries (e.g. .gemini/.hidden-note) are copied, mirroring `cp -Rp src/. dest/`.
     Get-ChildItem -Force -Path $Source | ForEach-Object {
-        Copy-Entry -Entry $_ -DestinationDir $Destination
+        Copy-Entry -Entry $_ -DestinationDir $Destination -FilterSkillArtifacts:$FilterSkillArtifacts
     }
 }
 
@@ -334,13 +389,26 @@ function Set-CopiedFileModes {
     param(
         [string]$Source,
         [string]$Destination,
-        [string[]]$ExcludedRelativePaths = @()
+        [string[]]$ExcludedRelativePaths = @(),
+        [switch]$FilterSkillArtifacts
     )
 
     if ($IsWindows -or -not (Test-Path -LiteralPath $Source) -or -not (Test-Path -LiteralPath $Destination)) {
         return
     }
 
+    if ($FilterSkillArtifacts) {
+        foreach ($entry in (Get-ChildItem -Force -LiteralPath $Source)) {
+            if ((Test-SkillArtifact $entry) -or $entry.LinkType) { continue }
+            $installedPath = Join-Path $Destination $entry.Name
+            if ($entry.PSIsContainer) {
+                Set-CopiedFileModes -Source $entry.FullName -Destination $installedPath -FilterSkillArtifacts
+            } else {
+                Set-FileModeFrom -Source $entry.FullName -Destination $installedPath
+            }
+        }
+        return
+    }
     # Link entries are skipped: chmod through a reparse point would change the target's mode.
     Get-ChildItem -Force -Path $Source -Recurse -File |
         Where-Object { -not $_.LinkType } | ForEach-Object {
@@ -365,14 +433,14 @@ function Copy-Skills {
             continue
         }
 
-        Copy-Entry -Entry $entry -DestinationDir $SkillsDest
+        Copy-Entry -Entry $entry -DestinationDir $SkillsDest -FilterSkillArtifacts
 
         # Pruning and mode sync must not resolve a preserved link's target.
         if ([string]$entry.LinkType) {
             continue
         }
         $installedSkill = Join-Path $SkillsDest $entry.Name
-        Set-CopiedFileModes -Source $entry.FullName -Destination $installedSkill
+        Set-CopiedFileModes -Source $entry.FullName -Destination $installedSkill -FilterSkillArtifacts
         & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc `
             --source-dir $entry.FullName `
             --destination-dir $installedSkill `
@@ -538,6 +606,9 @@ foreach ($relative in $CodexHookFiles) {
 }
 
 $pythonCommand = Get-PythonCommand
+$policyJson = & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc --print-artifact-policy
+if ($LASTEXITCODE -ne 0) { Fail "Could not load skill artifact policy (exit code $LASTEXITCODE)." }
+$skillArtifactPolicy = $policyJson | ConvertFrom-Json
 # Python uses the Windows ANSI codepage for redirected stderr by default.
 # Pair its stream encoding with PowerShell's native-output decoder so original
 # Unicode source paths survive the validation boundary without replacement.
@@ -588,6 +659,7 @@ if ($LASTEXITCODE -ne 0) {
     Fail "Codex agent converter exited with code $LASTEXITCODE."
 }
 
+Assert-SkillDirectoryIsSafe -Path $SkillsDest
 foreach ($dest in @($SkillsDest, $CopilotDest, $GeminiDest, $AgentsDest, $CopilotAgentsDest)) {
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
 }
