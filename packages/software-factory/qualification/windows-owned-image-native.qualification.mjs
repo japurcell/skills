@@ -13,7 +13,7 @@ const sourceNames = ['windows-owned-image-probe.cpp', 'windows-owned-image-share
 const binaryNames = ['probe.exe', 'fixture\\canary.exe', 'fixture\\canary.dll', 'alternate\\canary.exe', 'alternate\\canary.dll', 'copy\\canary.exe', 'copy\\canary.dll'];
 let interrupted = false;
 let active = null;
-let diagnostic = { phase: 'host', category: 'host' };
+let diagnostic = { phase: 'host', category: 'host', tool: 'none' };
 const signal = () => { interrupted = true; if (active) active.kill(); };
 process.on('SIGINT', signal); process.on('SIGTERM', signal);
 

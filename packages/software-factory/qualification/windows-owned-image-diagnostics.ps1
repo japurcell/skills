@@ -22,10 +22,14 @@ function Get-OwnedImageCompilerDiagnostic {
 }
 
 function Format-OwnedImageBuildDiagnostic {
-    param([string]$Category, [object]$Compiler = @{ code = 'none'; source = 'none'; line = 0 })
-    $unexpected = "OWNED_IMAGE_BUILD`t1`tunexpected`tnone`tnone`t0"
+    param([string]$Category, [object]$Compiler = @{ code = 'none'; source = 'none'; line = 0 }, [object]$Tool = 'none')
+    $unexpected = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone"
     if ($Category -cnotin @('host', 'path', 'existing-build', 'missing-msvc', 'tool-signature', 'compiler-version',
         'source', 'compile', 'build-cap', 'source-changed', 'binary', 'report', 'unexpected')) { return $unexpected }
+    if ($Tool -isnot [string]) { return $unexpected }
+    if ($Category -ceq 'tool-signature') {
+        if ($Tool -cnotin @('vswhere', 'compiler', 'linker')) { return $unexpected }
+    } elseif ($Tool -cne 'none') { return $unexpected }
     if ($Compiler -isnot [Collections.IDictionary] -or $Compiler.Count -ne 3 -or
         @($Compiler.Keys | Where-Object { $_ -cnotin @('code', 'source', 'line') }).Count -ne 0) { return $unexpected }
     $code = $Compiler['code']; $source = $Compiler['source']; $number = $Compiler['line']
@@ -39,5 +43,5 @@ function Format-OwnedImageBuildDiagnostic {
         if ($source -ceq 'none') { if ($number -ne 0) { return $unexpected } }
         elseif ($source -cnotin @('probe', 'shared', 'fixture', 'fixture-dll') -or $number -lt 1 -or $number -gt 4096) { return $unexpected }
     } else { return $unexpected }
-    return "OWNED_IMAGE_BUILD`t1`t$Category`t$code`t$source`t$number"
+    return "OWNED_IMAGE_BUILD`t2`t$Category`t$code`t$source`t$number`t$Tool"
 }
