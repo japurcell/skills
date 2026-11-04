@@ -62,7 +62,9 @@ jobs:
         run: |
           touch "$NPM_CONFIG_USERCONFIG" "$NPM_CONFIG_GLOBALCONFIG"
           node "$FACTORY_NPM_CLI" ci --ignore-scripts --no-audit --no-fund
-          node "$FACTORY_NPM_CLI" ci --ignore-scripts --no-audit --no-fund --prefix toolchain
+          mkdir -m 700 "$RUNNER_TEMP/repair-inspection-toolchain"
+          cp toolchain/package.json toolchain/package-lock.json "$RUNNER_TEMP/repair-inspection-toolchain/"
+          node "$FACTORY_NPM_CLI" ci --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/repair-inspection-toolchain"
       - name: Check types and build the frozen source
         timeout-minutes: 3
         working-directory: packages/software-factory

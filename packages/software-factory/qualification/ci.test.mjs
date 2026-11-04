@@ -223,7 +223,9 @@ test('repair inspection native jobs retain independent Linux and Darwin budgets 
   assert.match(workflow, /python-version: '3.13.14'/);
   assert.match(workflow, /qualification-bootstrap\.mjs/);
   assert.match(workflow, /ci --ignore-scripts --no-audit --no-fund/);
-  assert.match(workflow, /--prefix toolchain/);
+  assert.match(workflow, /cp toolchain\/package\.json toolchain\/package-lock\.json/);
+  assert.match(workflow, /--prefix \"\$RUNNER_TEMP\/repair-inspection-toolchain\"/);
+  assert.doesNotMatch(workflow, /--prefix toolchain/);
   assert.match(workflow, /FACTORY_ATOMIC_PYTHON:.*steps\.python\.outputs\.python-path/);
   assert.match(workflow, /FACTORY_TEST_NPM_CACHE_SEED:.*runner\.temp/);
   assert.match(workflow, /timeout-minutes: 20[\s\S]*run: node packages\/software-factory\/scripts\/test\.mjs qualification --area repair-inspection/);
