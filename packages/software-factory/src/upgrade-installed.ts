@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { readPublicationRecord } from './install-publication-state.js';
-import { inspectUpgradeLayout, upgradeDirectory } from './upgrade-publication-state.js';
+import { inspectUpgradeLayout, readUpgradePublicationAuthority, upgradeDirectory } from './upgrade-publication-state.js';
 import { validateBoundProviderSources, validateRetainedProviderSources } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
 import { readOwnedReleaseManifest } from './owned-release.js';
@@ -39,10 +39,9 @@ export function readUpgradeInstalledReceipt(common: string, operationId: string)
 }
 
 /** Verify committed upgrade bytes without executing either the old runtime or a provider. */
-export function inspectInstalledUpgrade(common: string, active: { completion: { operationId: string; repositoryId: string;
+export function readUpgradeCompletionAuthority(common: string, active: { completion: { operationId: string; repositoryId: string;
   claimId: string; selectionDigest: string; manifestSha256: string; receiptId: string; receiptSha256: string;
-  originalInstalledSha256?: string; originalCompletionSha256?: string; receiptIdentity?: string }; release: string }, retained = false,
-  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
+  originalInstalledSha256?: string; originalCompletionSha256?: string; receiptIdentity?: string }; release: string }) {
   const { receipt, sha256, identity } = readUpgradeInstalledReceipt(common, active.completion.operationId), completion = active.completion;
   if (completion.repositoryId !== receipt.repositoryId || completion.claimId !== receipt.claimId
     || completion.selectionDigest !== receipt.selectionDigest || completion.manifestSha256 !== receipt.manifestSha256
@@ -62,14 +61,23 @@ export function inspectInstalledUpgrade(common: string, active: { completion: { 
       forward: { sourceShape: 'v7', currentShape: 'v7', sourceRelease: '', sourceIdentity: '', backup: {
         id: '', identity: '', sha256: '', bytes: 0, countDigest: '', receiptId: '', receiptSha256: receipt.backupReceiptSha256 } },
     } };
-  const layout = inspectUpgradeLayout(common, claim, toolchainMode);
-  if (layout.recorded !== 4 || layout.position !== 4
+  const layout = readUpgradePublicationAuthority(common, claim);
+  if (layout.recorded !== 4
     || JSON.stringify(layout.intent.atomicBinding.launcher) !== JSON.stringify(receipt.launcher))
     throw new Error('upgrade installed layout incomplete');
   const original = JSON.parse(readPublicationRecord(join(upgradeDirectory(common, receipt.operationId), 'original.json')).toString('utf8')) as { completion?: unknown; receipt?: { authoring?: unknown } };
   if (completion.originalCompletionSha256 !== hash(Buffer.from(JSON.stringify(original.completion)))
     || JSON.stringify(original.receipt?.authoring) !== JSON.stringify(receipt.authoring))
     throw new Error('upgrade authoring ownership differs');
+  return { receipt, sha256, completion, claim, layout };
+}
+
+/** Verify committed upgrade bytes without executing either the old runtime or a provider. */
+export function inspectInstalledUpgrade(common: string, active: Parameters<typeof readUpgradeCompletionAuthority>[1], retained = false,
+  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
+  const { receipt, sha256, completion, claim } = readUpgradeCompletionAuthority(common, active);
+  const layout = inspectUpgradeLayout(common, claim, toolchainMode);
+  if (layout.position !== 4) throw new Error('upgrade installed layout incomplete');
   const factory = join(common, 'factory'), runtime = join(factory, 'install', 'runtime');
   const manifest = retained ? readOwnedReleaseManifest(runtime, receipt.manifestSha256) : validateReleaseBundle(runtime, receipt.manifestSha256);
   if (manifest.version !== receipt.release || manifest.platform !== `${process.platform}-${process.arch}`

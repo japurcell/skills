@@ -301,6 +301,7 @@ function activeInstalledEvidence(database: DatabaseSync, repositoryId: string, r
   if (!row) throw new Error('active installed completion unavailable');
   const kind = row['kind'];
   if (kind !== 'install.completed' && kind !== 'upgrade.completed') throw new Error('unsupported installed completion kind');
+  if (Buffer.byteLength(String(row['data'])) > 8192) throw new Error('installed completion exceeds bound');
   const completion = JSON.parse(String(row['data'])) as InstalledCompletion;
   if (completion.version !== 1 || completion.repositoryId !== repositoryId
     || !/^[0-9a-f-]{36}$/i.test(completion.operationId)) throw new Error('active installed completion invalid');
@@ -336,6 +337,66 @@ function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: 
 
 export function readActiveInstalledCompletion(commonDir: string) {
   return selectActiveInstalledCompletion(commonDir, false);
+}
+
+/** Controller-only read snapshot. Never opens writable storage or changes claims, schema or readiness. */
+export function readRepairStoreSnapshot(commonDir: string) {
+  const location = paths(commonDir, false);
+  if (!pathAbsent(location.marker)) throw new Error('bootstrap authority is incomplete');
+  const before = lstatSync(location.database);
+  if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1 || before.ino === 0
+    || (process.platform !== 'win32' && ((before.mode & 0o077) !== 0 || before.uid !== process.getuid!())))
+    throw new Error('invalid repair store file');
+  assertForwardSidecars(location.database);
+  const sidecarOwners = () => {
+    for (const suffix of ['-wal', '-shm', '-journal']) {
+      const path = `${location.database}${suffix}`;
+      if (!pathAbsent(path) && process.platform !== 'win32' && lstatSync(path).uid !== process.getuid!())
+        throw new Error('repair sidecar owner differs');
+    }
+  };
+  sidecarOwners();
+  const database = new DatabaseSync(location.database, { readOnly: true, timeout: 100 });
+  try {
+    database.exec('BEGIN');
+    const shape = knownForwardShape(database);
+    assertForwardIntegrity(database);
+    const repositories = database.prepare('SELECT id,release,state FROM repository LIMIT 2').all(), repository = repositories[0];
+    if (repositories.length !== 1 || !repository || !['ready', 'incomplete'].includes(String(repository['state'])))
+      throw new Error('unsupported repair repository state');
+    const repositoryId = String(repository['id']), release = String(repository['release']);
+    const active = activeInstalledEvidence(database, repositoryId, release);
+    const rows = database.prepare('SELECT id,token,kind,resource_key,data FROM owner_claims LIMIT 2').all();
+    const claims = rows.map(row => {
+      const text = String(row['data']);
+      if (Buffer.byteLength(text) > 8192) throw new Error('repair claim exceeds bound');
+      const claim = JSON.parse(text) as Claim;
+      if (!claim || claim.id !== row['id'] || claim.token !== row['token'] || claim.kind !== row['kind']
+        || claim.resourceKey !== row['resource_key']) throw new Error('repair claim columns differ');
+      return claim;
+    });
+    const marker = !pathAbsent(join(commonDir, 'factory', 'upgrade-incomplete'));
+    if (repository['state'] === 'ready' && claims.length === 0) {
+      if (shape !== 'v7' || marker) throw new Error('ready repair snapshot is not idle');
+    } else {
+      const claim = claims[0], selected = claim?.maintenance;
+      if (claims.length !== 1 || claim?.kind !== 'maintenance' || claim.resourceKey !== repositoryId
+        || !selected || selected.kind !== 'upgrade' || selected.repositoryId !== repositoryId
+        || !/^[a-f0-9-]{36}$/i.test(selected.operationId) || selected.forward?.currentShape !== shape
+        || !['handoff-ready', 'modifying', 'validating'].includes(selected.phase)
+        || repository['state'] === 'ready' && (selected.phase !== 'handoff-ready' || selected.ticketConsumed || marker)
+        || repository['state'] === 'incomplete' && !selected.ticketConsumed)
+        throw new Error('unsupported incomplete repair authority');
+    }
+    const after = lstatSync(location.database);
+    if (before.dev !== after.dev || before.ino !== after.ino || after.nlink !== 1)
+      throw new Error('repair store identity changed');
+    assertForwardSidecars(location.database);
+    sidecarOwners();
+    database.exec('COMMIT');
+    return { repositoryId, release, state: String(repository['state']) as 'ready' | 'incomplete', shape, active,
+      claim: claims[0] ?? null, databaseIdentity: `${before.dev}:${before.ino}` };
+  } finally { database.close(); }
 }
 /** Controller-only view for verifying a committed operation before removing its marker. */
 export function readCompletedUpgradeForRecovery(commonDir: string, operationId: string) {

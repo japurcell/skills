@@ -88,16 +88,7 @@ export function verifyPublicationLayout(common: string, claim: Claim,
       fail('unowned publication target collision');
     return { receipt, intent: null, install: 'candidate', toolchain: 'candidate' };
   }
-  const receipt = readBoundInstallCandidateReceipt(binding, expected);
-  const intent = exact(JSON.parse(readPublicationRecord(intentPath).toString('utf8')),
-    ['version', 'operationId', 'repositoryId', 'claimId', 'selectionDigest', 'candidateReceiptSha256',
-      'candidateIdentity', 'installIdentity', 'toolchainIdentity']) as unknown as PublicationIntent;
-  if (intent.version !== 1 || intent.operationId !== recorded.operationId || intent.repositoryId !== recorded.repositoryId
-    || intent.claimId !== claim.id || intent.selectionDigest !== recorded.selectionDigest
-    || intent.candidateReceiptSha256 !== binding.receiptSha256 || intent.candidateIdentity !== binding.identity
-    || !ID.test(intent.installIdentity) || !ID.test(intent.toolchainIdentity) || !SHA.test(binding.receiptSha256)
-    || !recorded.ticketConsumed || !['modifying', 'validating'].includes(recorded.phase))
-    fail('publication intent differs from claim');
+  const { receipt, intent } = readPublicationAuthority(common, claim);
   const positions = {} as { install: 'candidate' | 'published'; toolchain: 'candidate' | 'published' };
   let toolchainInspection: OwnedToolchainInspection | undefined;
   for (const name of ['install', 'toolchain'] as const) {
@@ -115,4 +106,26 @@ export function verifyPublicationLayout(common: string, claim: Claim,
   const expectedRoot = ['candidate-receipt.json', ...(['install', 'toolchain'] as const).filter(name => positions[name] === 'candidate')].sort();
   if (JSON.stringify(readdirSync(binding.path).sort()) !== JSON.stringify(expectedRoot)) fail('candidate remainder differs');
   return { receipt, intent, ...positions, ...(toolchainInspection ? { toolchainInspection } : {}) };
+}
+
+/** Authenticate retained publication metadata only. This does not validate or authorize live trees. */
+export function readPublicationAuthority(common: string, claim: Claim) {
+  const recorded = claim.maintenance;
+  if (!recorded || recorded.kind !== 'install' || !recorded.candidate || !recorded.targetReleaseSha256)
+    fail('bound install claim required');
+  const binding = recorded.candidate;
+  const receipt = readBoundInstallCandidateReceipt(binding, { operationId: recorded.operationId,
+    repositoryId: recorded.repositoryId, claimId: claim.id, selectionDigest: recorded.selectionDigest,
+    manifestSha256: recorded.targetReleaseSha256 });
+  const intentPath = publicationIntentPath(common, recorded.operationId);
+  const intent = exact(JSON.parse(readPublicationRecord(intentPath).toString('utf8')),
+    ['version', 'operationId', 'repositoryId', 'claimId', 'selectionDigest', 'candidateReceiptSha256',
+      'candidateIdentity', 'installIdentity', 'toolchainIdentity']) as unknown as PublicationIntent;
+  if (intent.version !== 1 || intent.operationId !== recorded.operationId || intent.repositoryId !== recorded.repositoryId
+    || intent.claimId !== claim.id || intent.selectionDigest !== recorded.selectionDigest
+    || intent.candidateReceiptSha256 !== binding.receiptSha256 || intent.candidateIdentity !== binding.identity
+    || !ID.test(intent.installIdentity) || !ID.test(intent.toolchainIdentity) || !SHA.test(binding.receiptSha256)
+    || !recorded.ticketConsumed || !['modifying', 'validating'].includes(recorded.phase))
+    fail('publication intent differs from claim');
+  return { receipt, intent };
 }
