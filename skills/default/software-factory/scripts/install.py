@@ -40,7 +40,7 @@ LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "atomic-publication", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings",
-    "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
+    "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "upgrade-recovery-entry", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "schema-forward", "forward-backup-entry", "store",
     "workflow", "workspace",
 )
@@ -300,7 +300,7 @@ def copy_checked(source, stage, destination, maximum, size=None, sha=None, execu
 
 
 def required_files(platform):
-    result = {"package.json", "toolchain/package.json", "toolchain/package-lock.json"}
+    result = {"package.json", "toolchain/package.json", "toolchain/package-lock.json", "native/atomic-publication.py"}
     result.update(f"dist/{stem}.{suffix}" for stem in MODULES for suffix in ("js", "js.map", "d.ts"))
     result.update(f"dist/web/{name}" for name in WEB)
     result.update(f"templates/{name}" for name in TEMPLATES)
@@ -948,7 +948,31 @@ def adopt_npm_outputs(stage: PrivateStage, seeded: dict):
         stage.check(name)
 
 
-def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None, handoff=False):
+def selected_python_binding():
+    """Capture the operator-selected Python without exposing its path in diagnostics."""
+    path = canonical(os.path.realpath(sys.executable), False)
+    observed = path.lstat()
+    if observed.st_nlink != 1 or observed.st_size < 1 or observed.st_size > 128 * MIB:
+        refuse("selected Python executable refused")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        before = os.fstat(descriptor)
+        if file_id(before) != file_id(observed):
+            refuse("selected Python executable changed")
+        digest = hashlib.sha256()
+        while chunk := os.read(descriptor, MIB):
+            digest.update(chunk)
+        after = os.fstat(descriptor)
+        if file_id(after) != file_id(before) or file_id(path.lstat()) != file_id(before):
+            refuse("selected Python executable changed")
+    finally:
+        os.close(descriptor)
+    return {"path": str(path), "identity": f"{before.st_dev}:{before.st_ino}", "sha256": digest.hexdigest(),
+            "version": ".".join(map(str, sys.version_info[:3])), "launcherPid": os.getpid()}
+
+
+def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None, handoff=False, upgrade=False):
     stage = prepared.stage
     stage.check("")
     canonical(repository, True)
@@ -957,9 +981,10 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     request = {"schema": 1, "requestId": str(uuid.uuid4()),
                "repository": repository, "npm": {"offline": offline}, "stageRoot": str(stage.root),
                "stageIdentity": f"{stage.root.lstat().st_dev}:{stage.root.lstat().st_ino}",
+               **({"python": selected_python_binding()} if handoff or upgrade else {}),
                "source": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
                           "nodeArchivePath": str(prepared.source_node_archive),
-                          **({"providers": prepared.providers} if prepared.providers else {})},
+                          **({"providers": prepared.providers} if prepared.provider_descriptor is not None else {})},
                "snapshot": {"bundleRoot": str(prepared.snapshot_bundle_root), "nodeArchivePath": str(prepared.snapshot_node_archive),
                             "extractedNodeRoot": str(prepared.extracted_node_root), "nodeTree": node_tree}}
     data = (json.dumps(request, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
@@ -975,12 +1000,14 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     executable = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
     try:
         command = [str(executable), str(entry), "--request", str(stage.root / "preparer-request.json")]
-        if handoff:
+        if upgrade:
+            command.append("--upgrade")
+        elif handoff:
             command.append("--handoff")
         response = bounded_child(command, stage,
                                  timeout_seconds=300)
         required = {"operationId", "repositoryId", "claimId", "stagePath", "candidateDigest"}
-        if handoff:
+        if handoff or upgrade:
             required.update({"ticketPath", "stageDigest"})
         result = fields(json_bytes(response), required)
         if any(not isinstance(result[key], str) or not result[key] for key in result):
@@ -1111,6 +1138,72 @@ def cleanup_completed_stage(stage: Path, owned):
         os.close(directory_fd)
 
 
+def administrative_upgrade(prepared: PreparedSelection, repository: str, operation_id: str | None, note: str | None):
+    """Inspect or explicitly abandon through the authenticated selected runtime."""
+    canonical(repository, True)
+    if operation_id is not None:
+        if str(uuid.UUID(operation_id)) != operation_id or not note or not note.strip() or len(note.encode("utf-8")) > 256:
+            refuse("bounded operation identity and clearance note required")
+    request = {"repository": repository, "operationId": operation_id, "note": note,
+               "manifestSha256": prepared.manifest_sha256}
+    with prepared.stage.create("admin-request.json") as output:
+        output.write((json.dumps(request, separators=(",", ":"), sort_keys=True) + "\n").encode())
+        output.flush()
+        os.fsync(output.fileno())
+    entry = prepared.snapshot_bundle_root / "dist/maintenance.js"
+    node = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
+    program = "import {readFileSync} from 'node:fs';import {inspectMaintenance,abandonUpgradePreparation} from " + json.dumps(entry.as_uri()) + ";const x=JSON.parse(readFileSync(process.argv[1],'utf8'));if(x.operationId){await abandonUpgradePreparation(x.repository,x.operationId,{operatorConfirmed:true,note:x.note},x.manifestSha256);process.stdout.write(JSON.stringify({state:'ready',operationId:x.operationId}));}else{const y=await inspectMaintenance(x.repository);process.stdout.write(JSON.stringify({status:y.status,marker:y.marker,database:y.database,claims:y.claims,...(y.intent?{intent:{operationId:y.intent.operationId,kind:y.intent.kind,phase:y.intent.phase,forward:y.intent.forward}}:{}),...(y.owner?{owner:y.owner}:{})}));}"
+    prepared.revalidate_sources()
+    result = json_bytes(bounded_child([str(node), "--input-type=module", "-e", program,
+                                      str(prepared.stage.root / "admin-request.json")], prepared.stage))
+    prepared.revalidate_sources()
+    if not isinstance(result, dict):
+        refuse("invalid maintenance inspection response")
+    return result
+
+
+def resume_upgrade(prepared: PreparedSelection, repository: str, operation_id: str, note: str):
+    """Resume the selected operation only after authenticating the explicitly selected target."""
+    canonical(repository, True)
+    if str(uuid.UUID(operation_id)) != operation_id or not note or not note.strip() or len(note.encode("utf-8")) > 256:
+        refuse("bounded operation identity and clearance note required")
+    output = bounded_child(["git", "-C", repository, "rev-parse", "--git-common-dir"], prepared.stage)
+    common_text = output.decode("utf-8").strip()
+    if not common_text or "\n" in common_text or "\r" in common_text:
+        refuse("repository common directory refused")
+    common = Path(os.path.realpath(os.path.join(repository, common_text)))
+    canonical(str(common), True)
+    stage = canonical(str(common / "factory" / "controller-staging" / operation_id), True)
+    owned = snapshot_completed_stage(stage)
+    request = {"version": 1, "repository": repository, "operationId": operation_id,
+               "operatorConfirmed": True, "note": note, "python": selected_python_binding(),
+               "target": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
+                          "nodeArchivePath": str(prepared.source_node_archive),
+                          **({"providers": prepared.providers} if prepared.provider_descriptor is not None else {})}}
+    data = (json.dumps(request, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode()
+    if len(data) > 8192:
+        refuse("private upgrade recovery request exceeds bound")
+    with prepared.stage.create("resume-request.json") as output:
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+    executable = canonical(str(stage / "payload" / ("node.exe" if os.name == "nt" else "node")), False)
+    entry = canonical(str(stage / "payload/dist/maintenance-entry.js"), False)
+    prepared.revalidate_sources()
+    result = json_bytes(bounded_child([str(executable), str(entry), "--resume-request",
+                                      str(prepared.stage.root / "resume-request.json")], prepared.stage, timeout_seconds=300))
+    prepared.revalidate_sources()
+    if not isinstance(result, dict) or result.get("operationId") != operation_id:
+        refuse("upgrade recovery response differs")
+    if result.get("state") == "handoff-ready":
+        return publish_candidate(result)
+    fields(result, {"state", "operationId", "repositoryId"})
+    if result["state"] != "ready":
+        refuse("upgrade recovery did not complete")
+    cleanup_completed_stage(stage, owned)
+    return result
+
+
 def main():
     if sys.version_info < (3, 11):
         refuse("Python 3.11 or newer required")
@@ -1137,16 +1230,43 @@ def main():
     install.add_argument("--offline", action="store_true")
     install.add_argument("--offline-cache-seed")
     install.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
+    upgrade = sub.add_parser("upgrade", help="Upgrade an owned installation in the foreground")
+    upgrade.add_argument("--repository", required=True)
+    upgrade.add_argument("--bundle-root", required=True)
+    upgrade.add_argument("--manifest-sha256", required=True)
+    upgrade.add_argument("--node-archive", required=True)
+    upgrade.add_argument("--offline", action="store_true")
+    upgrade.add_argument("--offline-cache-seed")
+    upgrade.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
+    for name, description in (("inspect-upgrade", "Inspect an installation or interrupted upgrade"),
+                              ("abandon-upgrade", "Explicitly abandon an unchanged upgrade preparation"),
+                              ("resume-upgrade", "Resume the same interrupted upgrade in the foreground")):
+        command = sub.add_parser(name, help=description)
+        command.add_argument("--repository", required=True)
+        command.add_argument("--bundle-root", required=True)
+        command.add_argument("--manifest-sha256", required=True)
+        command.add_argument("--node-archive", required=True)
+        command.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
+        if name != "inspect-upgrade":
+            command.add_argument("--operation", required=True)
+            command.add_argument("--operator-confirmed", action="store_true", required=True)
+            command.add_argument("--note", required=True)
     args = parser.parse_args()
-    if args.command in ("prepare", "install") and args.offline_cache_seed and not args.offline:
+    if args.command in ("prepare", "install", "upgrade") and args.offline_cache_seed and not args.offline:
         refuse("offline cache seed requires --offline")
     with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive, args.providers) as prepared:
         if args.command == "verify":
             result = prepared.receipt
+        elif args.command == "inspect-upgrade":
+            result = administrative_upgrade(prepared, args.repository, None, None)
+        elif args.command == "abandon-upgrade":
+            result = administrative_upgrade(prepared, args.repository, args.operation, args.note)
+        elif args.command == "resume-upgrade":
+            result = resume_upgrade(prepared, args.repository, args.operation, args.note)
         else:
             result = prepare_candidate(prepared, args.repository, args.offline, args.offline_cache_seed,
-                                       handoff=args.command == "install")
-    if args.command == "install":
+                                       handoff=args.command == "install", upgrade=args.command == "upgrade")
+    if args.command in ("install", "upgrade"):
         result = publish_candidate(result)
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))
 

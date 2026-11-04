@@ -49,6 +49,7 @@ function fixture() {
   }
   for (const file of requiredTemplates) put(source, `templates/${file}`, readFileSync(join(packageRoot, 'templates', file)));
   for (const file of ['package.json', 'package-lock.json']) put(source, `toolchain/${file}`, readFileSync(join(packageRoot, 'toolchain', file)));
+  put(source, 'native/atomic-publication.py', readFileSync(join(packageRoot, 'native/atomic-publication.py')));
   for (const file of [
     'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
     'node_modules/typescript/package.json',
@@ -229,7 +230,7 @@ test('existing changed or unowned payload refuses repeat without deleting eviden
   } finally { f.dispose(); }
 });
 
-test('exact Linux asset selection packages the same runtime surface without a native helper', () => {
+test('exact Linux asset selection packages the authenticated publication helper without a Windows helper', () => {
   const f = fixture();
   try {
     const linuxNode = {
@@ -243,7 +244,7 @@ test('exact Linux asset selection packages the same runtime surface without a na
     const manifest = JSON.parse(readFileSync(join(f.destination, 'release-manifest.json'), 'utf8'));
     assert.deepEqual(manifest.node, linuxNode);
     assert.equal(manifest.platform, 'linux-x64');
-    assert.equal(existsSync(join(f.destination, 'native')), false);
+    assert.deepEqual(readdirSync(join(f.destination, 'native')), ['atomic-publication.py']);
   } finally { f.dispose(); }
 });
 

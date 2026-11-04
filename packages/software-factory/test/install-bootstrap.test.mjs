@@ -94,6 +94,28 @@ function completeFixture() {
   return { root, bundle, archive, pythonBundle, pythonArchive, manifestSha256, verify: () => run(['verify', '--bundle-root', pythonBundle, '--manifest-sha256', manifestSha256, '--node-archive', pythonArchive]), dispose: () => rmSync(root, { recursive: true, force: true }) };
 }
 
+test('public verifier refuses changed or omitted atomic publication helper before selected code', () => {
+  for (const mode of ['changed', 'omitted']) {
+    const f = completeFixture();
+    try {
+      const helper = join(f.bundle, 'native/atomic-publication.py');
+      let selected = f.manifestSha256;
+      if (mode === 'changed') writeFileSync(helper, 'changed helper');
+      else {
+        rmSync(helper);
+        const manifestPath = join(f.bundle, 'release-manifest.json');
+        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+        manifest.files = manifest.files.filter(entry => entry.path !== 'native/atomic-publication.py');
+        const bytes = `${JSON.stringify(manifest)}\n`; writeFileSync(manifestPath, bytes); selected = sha(bytes);
+      }
+      const result = run(['verify', '--bundle-root', f.pythonBundle, '--manifest-sha256', selected, '--node-archive', f.pythonArchive]);
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /changed|size|incomplete/i);
+      assert.equal(result.stdout, '');
+    } finally { f.dispose(); }
+  }
+});
+
 test('public verifier refuses a changed imported module before any selected JavaScript runs', () => {
   const f = completeFixture();
   try {

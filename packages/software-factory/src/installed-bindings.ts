@@ -6,12 +6,14 @@ import { createCopilotAdapter } from './adapters/copilot.js';
 import type { AgentAdapter } from './adapters/types.js';
 import { directoryIdentity } from './install-candidate.js';
 import { readInstalledReceipt } from './install-publication.js';
+import { inspectInstalledUpgrade } from './upgrade-installed.js';
 import { publicationIntentPath, readPublicationRecord, verifyPublicationLayout } from './install-publication-state.js';
-import { validateBoundProviderSources, type VerifiedInstallSelection } from './installation-bindings.js';
+import { validateBoundProviderSources, validateRetainedProviderSources, type VerifiedInstallSelection } from './installation-bindings.js';
 import { sendDesktopNotification } from './native/notifications.js';
 import type { NotificationSender } from './notifications.js';
 import { validateReleaseBundle } from './release.js';
-import { readInstalledCompletion, type Claim } from './store.js';
+import { readOwnedReleaseManifest } from './owned-release.js';
+import { readActiveInstalledCompletion, readInstalledCompletion, type Claim } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 
 type Providers = VerifiedInstallSelection['providers'];
@@ -76,18 +78,22 @@ export function installedCommonForCli(modulePath: string): string | null {
 }
 
 /** Verify durable ownership after temporary stage cleanup, before CLI dispatch or provider construction. */
-export async function loadInstalledBindings(modulePath: string, repository?: string, commonArg?: string): Promise<InstalledBindings | null> {
-  const common = installedCommonForCli(modulePath);
-  if (common === null) return null;
+export async function inspectInstalledOwnership(common: string, repository?: string, retained = false) {
   try {
-    if (realpathSync(modulePath) !== modulePath || realpathSync(common) !== common) fail();
-    if (commonArg !== undefined && commonArg !== common) fail();
+    if (realpathSync(common) !== common) fail();
     if (repository !== undefined && (await repositoryIdentity(repository)).common !== common) fail();
     const factory = join(common, 'factory');
+    const active = readActiveInstalledCompletion(common);
     directoryIdentity(factory);
+    if (active.kind === 'upgrade.completed') {
+      const upgraded = inspectInstalledUpgrade(common, active, retained);
+      if (JSON.stringify(readActiveInstalledCompletion(common)) !== JSON.stringify(active)) fail();
+      return upgraded;
+    }
     const { receipt, sha256 } = readInstalledReceipt(common);
     const { completion, repositoryId, release } = readInstalledCompletion(common, receipt.operationId);
-    if (completion.version !== 1 || completion.operationId !== receipt.operationId
+    if (JSON.stringify(active.completion) !== JSON.stringify(completion) || active.release !== release
+      || completion.version !== 1 || completion.operationId !== receipt.operationId
       || completion.repositoryId !== receipt.repositoryId || repositoryId !== receipt.repositoryId
       || completion.claimId !== receipt.claimId || completion.selectionDigest !== receipt.selectionDigest
       || completion.manifestSha256 !== receipt.manifestSha256 || completion.receiptId !== receipt.receiptId
@@ -107,19 +113,33 @@ export async function loadInstalledBindings(modulePath: string, repository?: str
       || layout.intent.toolchainIdentity !== receipt.toolchainIdentity
       || hash(readPublicationRecord(publicationIntentPath(common, receipt.operationId))) !== receipt.publicationIntentSha256) fail();
     const runtime = join(factory, 'install', 'runtime');
-    const manifest = validateReleaseBundle(runtime, receipt.manifestSha256);
+    const manifest = retained ? readOwnedReleaseManifest(runtime, receipt.manifestSha256) : validateReleaseBundle(runtime, receipt.manifestSha256);
     const platform = `${process.platform}-${process.arch}`;
     if (manifest.version !== receipt.release || manifest.platform !== platform
       || manifest.node.sha256 !== layout.receipt.nodeArchiveSha256
-      || JSON.stringify(layout.receipt.omittedLinks) !== JSON.stringify(['bin/corepack', 'bin/npm', 'bin/npx'])
+      || (!retained && JSON.stringify(layout.receipt.omittedLinks) !== JSON.stringify(['bin/corepack', 'bin/npm', 'bin/npx']))
+      || hash(readFileSync(join(factory, 'toolchain', 'package-lock.json'))) !== layout.receipt.toolchainLockSha256
       || hash(readFileSync(join(factory, 'toolchain', 'package-lock.json')))
         !== hash(readFileSync(join(runtime, 'toolchain', 'package-lock.json')))
       || process.versions.node !== '24.22.1') fail();
     const nodePath = join(factory, 'install', 'node', 'bin', 'node');
     const nodeFile = lstatSync(nodePath);
-    if (!nodeFile.isFile() || nodeFile.isSymbolicLink() || realpathSync(nodePath) !== nodePath
-      || process.execPath !== nodePath) fail();
-    const adapters = createSelectedAdapters(layout.receipt.providers, factory);
+    if (!nodeFile.isFile() || nodeFile.isSymbolicLink() || realpathSync(nodePath) !== nodePath) fail();
+    if (retained) validateRetainedProviderSources(layout.receipt.providers);
+    else validateBoundProviderSources(layout.receipt.providers);
+    if (JSON.stringify(readActiveInstalledCompletion(common)) !== JSON.stringify(active)) fail();
+    return { common, receipt, receiptSha256: sha256, completion, release, layout, nodePath };
+  } catch { fail(); }
+}
+
+export async function loadInstalledBindings(modulePath: string, repository?: string, commonArg?: string): Promise<InstalledBindings | null> {
+  const common = installedCommonForCli(modulePath);
+  if (common === null) return null;
+  try {
+    if (realpathSync(modulePath) !== modulePath || (commonArg !== undefined && commonArg !== common)) fail();
+    const installed = await inspectInstalledOwnership(common, repository);
+    if (process.execPath !== installed.nodePath) fail();
+    const adapters = createSelectedAdapters(installed.layout.receipt.providers, join(common, 'factory'));
     return { common, adapters, notificationSender: sendDesktopNotification };
   } catch { fail(); }
 }
