@@ -103,7 +103,7 @@ export function scanOwnedTree(root: string, domain: 'node' | 'candidate', exclud
   return { digest: digest.digest('hex'), entries: rows.length, regularBytes, rows };
 }
 
-function readPrivate(path: string): Buffer {
+export function readInventoryReceipt(path: string): Buffer {
   const observed = lstatSync(path);
   if (!observed.isFile() || observed.isSymbolicLink() || observed.nlink !== 1 || observed.size < 1
     || observed.size > MAX_RECEIPT || (process.platform !== 'win32' && (observed.mode & 0o077) !== 0)) fail('receipt type, mode or size refused');
@@ -123,6 +123,10 @@ function readPrivate(path: string): Buffer {
   } finally { closeSync(fd); }
 }
 export function writeCandidateReceipt(path: string, receipt: CandidateReceipt): string {
+  return writeInventoryReceipt(path, receipt);
+}
+/** Bounded durable large-inventory I/O, shared without accepting another operation's receipt schema. */
+export function writeInventoryReceipt(path: string, receipt: object): string {
   const bytes = Buffer.from(`${JSON.stringify(receipt)}\n`);
   if (bytes.length > MAX_RECEIPT) fail('receipt exceeds parse bound');
   const fd = openSync(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW ?? 0), 0o600);
@@ -130,7 +134,7 @@ export function writeCandidateReceipt(path: string, receipt: CandidateReceipt): 
     for (let offset = 0; offset < bytes.length;) offset += writeSync(fd, bytes, offset, bytes.length - offset, offset);
     fsyncSync(fd);
   } finally { closeSync(fd); }
-  if (!readPrivate(path).equals(bytes)) fail('written receipt changed');
+  if (!readInventoryReceipt(path).equals(bytes)) fail('written receipt changed');
   const parentFd = openSync(dirname(path), constants.O_RDONLY);
   try { fsyncSync(parentFd); } finally { closeSync(parentFd); }
   return createHash('sha256').update(bytes).digest('hex');
@@ -142,7 +146,7 @@ export function readBoundInstallCandidateReceipt(binding: CandidateBinding, expe
     || resolve(binding.path) !== binding.path || !/^\d+:\d+$/.test(binding.identity)
     || !SHA.test(binding.treeDigest) || !UUID.test(binding.receiptId) || !SHA.test(binding.receiptSha256)) fail('invalid candidate binding');
   if (directoryIdentity(binding.path) !== binding.identity) fail('candidate root identity changed');
-  const bytes = readPrivate(join(binding.path, 'candidate-receipt.json'));
+  const bytes = readInventoryReceipt(join(binding.path, 'candidate-receipt.json'));
   if (createHash('sha256').update(bytes).digest('hex') !== binding.receiptSha256) fail('candidate receipt hash changed');
   const receipt = exact(JSON.parse(bytes.toString('utf8')), ['schema', 'receiptId', 'operationId', 'repositoryId', 'claimId',
     'selectionDigest', 'manifestSha256', 'nodeArchiveSha256', 'toolchainLockSha256', 'omittedLinks', 'providers', 'rootIdentity', 'treeDigest', 'entries']) as unknown as CandidateReceipt;

@@ -50,3 +50,5 @@ second learning selector under its unchanged 30 second bound. Those concurrent
 worker spans are not selector wall time and do not identify a cause. The
 coordinator owns any changed native comparison after this private source is
 handed back and integrated. No native or broad fixture selector was run here.
+
+Coordinator integrationd69715e1 registers only `qualification --area learning-toolchain-copy`, outside original31fixtures. CI14/14 including the independent byte/mode/inode/compiler proof passes,zero skips (`/tmp/factory-learning-copy-integrated-ci-green.log`); registration red/green and fiveJS syntax/actionlint pass. Author final original13selector10.613221s is retained in `/private/tmp/factory-learning-fixture-copy-selector.log`. Native comparison/acceptance remains unproved; no push/newnative until root coordinates candidate/Windows handbacks.
