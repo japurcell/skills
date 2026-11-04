@@ -71,6 +71,7 @@
 - [research/windows-etw-comparator-boundary-2026-10-22.md](research/windows-etw-comparator-boundary-2026-10-22.md)
 - [research/windows-etw-held-identity-repair-2026-10-22.md](research/windows-etw-held-identity-repair-2026-10-22.md)
 - [research/windows-etw-identity-boundary-2026-10-22.md](research/windows-etw-identity-boundary-2026-10-22.md)
+- [research/windows-handle-lifetime-decision-2026-11-04.md](research/windows-handle-lifetime-decision-2026-11-04.md)
 - [research/windows-hook-job-completion-2026-10-22.md](research/windows-hook-job-completion-2026-10-22.md)
 - [research/windows-node-launch-equivalence-2026-10-22.md](research/windows-node-launch-equivalence-2026-10-22.md)
 - [research/windows-route-native-diagnosis-2026-11-03.md](research/windows-route-native-diagnosis-2026-11-03.md)
