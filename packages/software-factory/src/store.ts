@@ -4,7 +4,7 @@ import { redactText } from './redaction.js';
 import type { SessionEvent } from './adapters/types.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, unlinkSync } from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
 import { inspectOwner } from './native/process.js';
@@ -27,6 +27,12 @@ export interface ActiveInstalledCompletion {
   kind: 'install.completed' | 'upgrade.completed'; completion: InstalledCompletion;
   repositoryId: string; release: string;
 }
+export interface DependencyMaintenanceBinding {
+  version: 1; bundleRoot: string; originalSha256: string; originalCompletionSha256: string;
+  expectedToolchainSha256: string; observedToolchainSha256: string;
+  sourceIdentity: string; factoryIdentity: string; toolchainIdentity: string;
+  declarationSha256: string; lockSha256: string;
+}
 export interface Claim {
   id: string; token: string; kind: 'worktree' | 'dashboard' | 'maintenance'; resourceKey: string;
   invocationId: string | null; owner: Owner; endpoint?: { url: string; instanceId: string };
@@ -45,6 +51,7 @@ export interface MaintenanceIntent {
   upgradeIntentSha256?: string;
   upgradeReceipt?: { id: string; sha256: string; identity: string };
   activeLauncher?: Owner;
+  dependencies?: DependencyMaintenanceBinding;
   forward?: { sourceShape: ForwardShape; currentShape: ForwardShape; sourceRelease: string; sourceIdentity: string; backup: null | {
     id: string; identity: string; sha256: string; bytes: number; countDigest: string;
     receiptId: string; receiptSha256: string;
@@ -171,11 +178,13 @@ export function openMaintenanceStore(commonDir: string) {
 }
 
 /** Existing-only historical opener. Never creates, configures, or migrates storage. */
-export function openForwardMaintenanceStore(commonDir: string) {
+function openExistingMaintenanceStore(commonDir: string, scope: 'forward' | 'current') {
   assertForwardRuntime();
   if (process.platform === 'win32') throw new Error('forward maintenance private ownership is unqualified on Windows');
   const location = paths(commonDir, false);
   if (!pathAbsent(location.marker)) throw new Error('bootstrap marker blocks forward maintenance');
+  if (scope === 'current' && !pathAbsent(join(commonDir, 'factory', 'upgrade-incomplete')))
+    throw new Error('upgrade marker blocks dependency maintenance');
   const before = lstatSync(location.database, { bigint: true });
   if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1n || before.ino === 0n
     || (before.mode & 0o077n) !== 0n) throw new Error('invalid forward store file');
@@ -186,7 +195,8 @@ export function openForwardMaintenanceStore(commonDir: string) {
     const after = lstatSync(location.database, { bigint: true });
     if (after.dev !== before.dev || after.ino !== before.ino || after.nlink !== 1n) throw new Error('forward store identity changed');
     assertForwardSidecars(location.database);
-    knownForwardShape(database);
+    const shape = knownForwardShape(database);
+    if (scope === 'current' && shape !== 'v7') throw new Error('dependency maintenance requires existing current schema');
     assertForwardIntegrity(database);
     database.exec('PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL');
     if (database.prepare('PRAGMA foreign_keys').get()?.['foreign_keys'] !== 1
@@ -195,6 +205,23 @@ export function openForwardMaintenanceStore(commonDir: string) {
     return new RepositoryStore(database, { path: location.database, marker: location.marker,
       identity: `${before.dev}:${before.ino}` });
   } catch (error) { database.close(); throw error; }
+}
+
+export function openForwardMaintenanceStore(commonDir: string) { return openExistingMaintenanceStore(commonDir, 'forward'); }
+/** Existing-only and current-schema-only, with the same storage identity and durability checks. */
+export function openDependencyMaintenanceStore(commonDir: string) { return openExistingMaintenanceStore(commonDir, 'current'); }
+
+export function validateDependencyMaintenanceBinding(value: unknown): asserts value is DependencyMaintenanceBinding {
+  if (!exactObject(value, ['version', 'bundleRoot', 'originalSha256', 'originalCompletionSha256',
+    'expectedToolchainSha256', 'observedToolchainSha256', 'sourceIdentity', 'factoryIdentity', 'toolchainIdentity',
+    'declarationSha256', 'lockSha256']) || value['version'] !== 1 || typeof value['bundleRoot'] !== 'string'
+    || Buffer.byteLength(value['bundleRoot']) < 1 || Buffer.byteLength(value['bundleRoot']) > 4096
+    || value['bundleRoot'].includes('\0')
+    || !isAbsolute(value['bundleRoot']) || resolve(value['bundleRoot']) !== value['bundleRoot']
+    || ['originalSha256', 'originalCompletionSha256', 'expectedToolchainSha256', 'observedToolchainSha256', 'declarationSha256', 'lockSha256']
+      .some(key => typeof value[key] !== 'string' || !/^[a-f0-9]{64}$/.test(value[key]))
+    || ['sourceIdentity', 'factoryIdentity', 'toolchainIdentity'].some(key => typeof value[key] !== 'string' || !/^\d+:\d+$/.test(value[key])))
+    throw new Error('invalid dependency maintenance binding');
 }
 
 /** Existing-only, read-only installed ownership proof. Ordinary runner/dashboard claims remain valid. */
@@ -225,6 +252,19 @@ export function readInstalledCompletion(commonDir: string, operationId: string) 
   } finally { database.close(); }
 }
 
+function activeInstalledEvidence(database: DatabaseSync, repositoryId: string, release: string): ActiveInstalledCompletion {
+  const row = database.prepare("SELECT kind,data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed','dependencies.completed','repair.completed','uninstall.completed','cleanup.completed') ORDER BY cursor DESC LIMIT 1").get();
+  if (!row) throw new Error('active installed completion unavailable');
+  const kind = row['kind'];
+  if (kind !== 'install.completed' && kind !== 'upgrade.completed') throw new Error('unsupported installed completion kind');
+  const completion = JSON.parse(String(row['data'])) as InstalledCompletion;
+  if (completion.version !== 1 || completion.repositoryId !== repositoryId
+    || !/^[0-9a-f-]{36}$/i.test(completion.operationId)) throw new Error('active installed completion invalid');
+  if (kind === 'install.completed' && database.prepare("SELECT count(*) AS count FROM observation_events WHERE kind='install.completed' AND json_extract(data,'$.operationId')=?")
+    .get(completion.operationId)?.['count'] !== 1) throw new Error('unique installed completion unavailable');
+  return { kind, completion, repositoryId, release };
+}
+
 /** One snapshot selects the latest installed completion. Invalid newest evidence never falls back. */
 function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: boolean): ActiveInstalledCompletion {
   const location = paths(commonDir, false);
@@ -244,16 +284,9 @@ function selectActiveInstalledCompletion(commonDir: string, allowUpgradeMarker: 
     if (repositories.length !== 1 || repository?.['state'] !== 'ready'
       || database.prepare("SELECT id FROM owner_claims WHERE kind='maintenance' LIMIT 1").get())
       throw new Error('installed repository is not ready');
-    const row = database.prepare("SELECT kind,data FROM observation_events WHERE kind IN ('install.completed','upgrade.completed','dependencies.completed','repair.completed','uninstall.completed','cleanup.completed') ORDER BY cursor DESC LIMIT 1").get();
-    if (!row) throw new Error('active installed completion unavailable');
-    const kind = row['kind'];
-    if (kind !== 'install.completed' && kind !== 'upgrade.completed') throw new Error('unsupported installed completion kind');
-    const completion = JSON.parse(String(row['data'])) as InstalledCompletion;
-    if (completion.version !== 1 || completion.repositoryId !== repository['id']
-      || !/^[0-9a-f-]{36}$/i.test(completion.operationId)) throw new Error('active installed completion invalid');
+    const active = activeInstalledEvidence(database, String(repository['id']), String(repository['release']));
     database.exec('COMMIT');
-    return { kind, completion,
-      repositoryId: String(repository['id']), release: String(repository['release']) };
+    return active;
   } finally { database.close(); }
 }
 
@@ -928,6 +961,7 @@ export class RepositoryStore {
   /** One write transaction owns admission and the recoverable typed intent. */
   async beginMaintenance(intent: MaintenanceIntent, owner: Owner): Promise<Claim> {
     validateOwner(owner);
+    if (intent.kind === 'dependencies') throw new Error('dependencies require exact installed selection admission');
     return this.transaction(() => {
       this.ready();
       if (this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()) throw new Error('active or uncertain owner blocks maintenance');
@@ -941,6 +975,77 @@ export class RepositoryStore {
       this.event('maintenance.started', { operationId: intent.operationId, claimId: claim.id, kind: intent.kind });
       return claim;
     });
+  }
+
+  /** Admit only the current ready idle installation and its exact authenticated prior completion. */
+  async beginDependencyMaintenance(intent: MaintenanceIntent, owner: Owner, validateOriginal: () => void): Promise<Claim> {
+    validateOwner(owner);
+    const boundOwner = { ...owner };
+    validateDependencyMaintenanceBinding(intent.dependencies);
+    if (inspectOwner(boundOwner).state !== 'known_live') throw new Error('dependency owner identity unavailable');
+    return this.transaction(() => {
+      this.ready();
+      const repository = this.database.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
+      if (!this.forwardStorage || knownForwardShape(this.database) !== 'v7' || repository.length !== 1 || intent.kind !== 'dependencies'
+        || intent.repositoryId !== repository[0]?.['id'] || intent.release !== repository[0]['release']
+        || !/^[a-f0-9]{8}-[a-f0-9-]{27}$/i.test(intent.operationId) || !/^[a-f0-9]{64}$/.test(intent.selectionDigest)
+        || intent.phase !== 'preparing' || intent.targetSchema !== 7 || !intent.targetReleaseSha256
+        || !exactObject(intent.artifactDigests, ['bundle']) || intent.artifactDigests['bundle'] !== intent.targetReleaseSha256
+        || intent.stagePath !== join(dirname(this.forwardStorage!.path), 'controller-staging', intent.operationId)
+        || intent.backupId !== null || intent.candidate !== null || intent.forward !== undefined
+        || intent.stageDigest !== null || intent.stageIdentity !== null || intent.ownedReceiptId !== null
+        || intent.ticketConsumed || intent.ticketNonceHash !== null || intent.activeLauncher !== undefined
+        || intent.upgradeIntentSha256 !== undefined || intent.upgradeReceipt !== undefined
+        || intent.dependencies!.sourceIdentity !== this.forwardStorage?.identity
+        || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()
+        || this.database.prepare('SELECT id FROM attempts WHERE occupied=1 LIMIT 1').get())
+        throw new Error('dependency admission requires exact ready idle current installation');
+      assertForwardIntegrity(this.database);
+      const active = activeInstalledEvidence(this.database, intent.repositoryId, intent.release);
+      if (createHash('sha256').update(JSON.stringify(active.completion)).digest('hex') !== intent.dependencies!.originalCompletionSha256
+        || active.completion.manifestSha256 !== intent.targetReleaseSha256)
+        throw new Error('dependency original completion changed before admission');
+      validateOriginal();
+      if (inspectOwner(boundOwner).state !== 'known_live') throw new Error('dependency owner changed before admission');
+      const claim: Claim = { id: randomUUID(), token: randomUUID(), kind: 'maintenance', resourceKey: intent.repositoryId,
+        invocationId: null, owner: boundOwner, maintenance: intent };
+      const data = JSON.stringify(claim);
+      if (Buffer.byteLength(data) > 8192) throw new Error('dependency maintenance claim exceeds limit');
+      this.database.prepare("INSERT INTO owner_claims(id,token,kind,resource_key,invocation_id,data) VALUES (?,?,'maintenance',?,NULL,?)")
+        .run(claim.id, claim.token, claim.resourceKey, data);
+      this.event('maintenance.started', { operationId: intent.operationId, claimId: claim.id, kind: 'dependencies' });
+      return claim;
+    });
+  }
+
+  /** Exact capability check for read-only revalidation; no generic admission bypass or token replacement. */
+  readDependencyMaintenance(handle: MaintenanceHandle) {
+    this.assertForwardStorage();
+    this.assertSoleMaintenance(handle);
+    const claim = this.readMaintenanceClaim(handle.operationId), selected = claim.maintenance!;
+    validateOwner(claim.owner);
+    validateDependencyMaintenanceBinding(selected.dependencies);
+    const repository = this.database.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
+    if (claim.kind !== 'maintenance' || claim.invocationId !== null || selected.kind !== 'dependencies'
+      || !/^[a-f0-9]{64}$/.test(selected.selectionDigest) || selected.phase !== 'preparing' || selected.targetSchema !== 7
+      || knownForwardShape(this.database) !== 'v7' || repository.length !== 1
+      || repository[0]?.['id'] !== handle.repositoryId || repository[0]['release'] !== selected.release
+      || repository[0]['state'] !== 'ready' || selected.dependencies.sourceIdentity !== this.forwardStorage?.identity
+      || !pathAbsent(join(handle.commonDir, 'factory', 'upgrade-incomplete'))
+      || this.forwardStorage?.path !== join(handle.commonDir, 'factory', 'history.sqlite')
+      || selected.backupId !== null || selected.candidate !== null || selected.forward !== undefined
+      || !exactObject(selected.artifactDigests, ['bundle']) || selected.artifactDigests['bundle'] !== selected.targetReleaseSha256
+      || selected.stagePath !== join(handle.commonDir, 'factory/controller-staging', handle.operationId)
+      || selected.ownedReceiptId !== null || selected.activeLauncher !== undefined || selected.upgradeIntentSha256 !== undefined
+      || selected.upgradeReceipt !== undefined || selected.stageDigest !== null || selected.stageIdentity !== null
+      || selected.ticketConsumed || selected.ticketNonceHash !== null)
+      throw new Error('dependency claim/token/preparing original differs');
+    assertForwardIntegrity(this.database);
+    const active = activeInstalledEvidence(this.database, handle.repositoryId, selected.release);
+    if (createHash('sha256').update(JSON.stringify(active.completion)).digest('hex') !== selected.dependencies.originalCompletionSha256
+      || active.completion.manifestSha256 !== selected.targetReleaseSha256)
+      throw new Error('dependency original completion changed after admission');
+    return { claim, active };
   }
 
   /** The only historical-schema admission path, with all checks inside the writer transaction. */
@@ -1125,6 +1230,7 @@ export class RepositoryStore {
     stageDigest?: string; stageIdentity?: string; ticketNonceHash?: string }) {
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.handle.operationId);
+      if (claim.maintenance?.kind === 'dependencies') throw new Error('dependency admission has no handoff or publication authority');
       if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
         || claim.maintenance!.phase !== input.expected) throw new Error('maintenance claim/token/phase no longer matches');
       if (!((input.expected === 'preparing' && input.next === 'handoff-ready')
@@ -1148,6 +1254,7 @@ export class RepositoryStore {
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.handle.operationId);
       const intent = claim.maintenance!;
+      if (intent.kind === 'dependencies') throw new Error('dependency admission has no handoff or publication authority');
       if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
         || intent.phase !== 'handoff-ready' || intent.ticketConsumed || intent.ticketNonceHash !== input.nonceHash
         || intent.stageDigest !== input.stageDigest || intent.stageIdentity !== input.stageIdentity)
@@ -1166,6 +1273,7 @@ export class RepositoryStore {
   async reissueMaintenanceHandoff(input: { handle: MaintenanceHandle; nonceHash: string; stageDigest: string; stageIdentity: string }) {
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.handle.operationId), recorded = claim.maintenance!;
+      if (recorded.kind === 'dependencies') throw new Error('dependency admission has no handoff or publication authority');
       if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
         || recorded.phase !== 'handoff-ready' || recorded.ticketConsumed || recorded.ticketNonceHash !== null
         || recorded.stageDigest !== input.stageDigest || recorded.stageIdentity !== input.stageIdentity)
@@ -1186,6 +1294,7 @@ export class RepositoryStore {
     if (!input.note.trim()) throw new Error('nonempty maintenance clearance note required');
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.operationId);
+      if (claim.maintenance?.kind === 'dependencies') throw new Error('dependency admission requires later operation-specific recovery');
       if (claim.token !== input.expectedToken) throw new Error('maintenance claim/token no longer matches');
       if (claim.owner.host !== input.expectedOwner.host || claim.owner.pid !== input.expectedOwner.pid
         || claim.owner.start !== input.expectedOwner.start || claim.maintenance?.phase !== input.expectedPhase)
