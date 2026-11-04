@@ -158,3 +158,4 @@
 - [Metadata refusal diagnostic source contract](../../../packages/software-factory/qualification/windows-storage-loader-metadata-diagnostic.md)
 - [Changed-source metadata: validated blocked full wire](research/windows-metadata-diagnostic-observation-2026-11-04.md)
 - [Historical C3d1 native handoff](handoff.history-2026-11-04-c3d1-native.md)
+- [Bounded SDK registration identity source contract, source unreleased](research/sdk-registration-identity-contract-2026-11-04.md)
