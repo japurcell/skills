@@ -1,12 +1,11 @@
+import { maintenanceBackupPath as forwardBackupPath, openImmutableMaintenanceBackup as openImmutableForwardBackup, backupFileDigest as fileDigest, runMaintenanceBackup as runForwardBackup } from './maintenance-backup.js';
 import { createHash, randomUUID } from 'node:crypto';
-import { spawn } from 'node:child_process';
 import { closeSync, constants, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readSync, readdirSync,
   realpathSync, renameSync, writeSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { currentOwner, inspectOwner } from './native/process.js';
-import { LiveProcessScope } from './native/process.js';
 import { verifyPublicationLayout } from './install-publication-state.js';
 import { directoryIdentity, verifyBoundInstallCandidate } from './install-candidate.js';
 import { assertLocalPlacement } from './placement.js';
@@ -186,7 +185,10 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
   if (recorded.kind === 'dependencies' || recorded.dependencies !== undefined) {
     validateDependencyMaintenanceBinding(recorded.dependencies);
     if (recorded.kind !== 'dependencies' || recorded.phase !== 'preparing' || recorded.forward !== undefined
-      || recorded.backupId !== null || recorded.candidate !== null || recorded.stageDigest !== null
+      || (recorded.backupId !== null && !UUID.test(recorded.backupId))
+      || (recorded.backupId === null && (recorded.dependencies?.backupAttempt || recorded.dependencies?.backup))
+      || (recorded.dependencies?.backup && (!recorded.dependencies.backupAttempt || recorded.dependencies.backup.id !== recorded.backupId))
+      || recorded.candidate !== null || recorded.stageDigest !== null
       || recorded.stageIdentity !== null || recorded.ticketConsumed || recorded.ticketNonceHash !== null)
       throw new Error('dependency admission has no backup or publication authority');
   }
@@ -270,7 +272,9 @@ function redacted(intent: MaintenanceIntent) {
     ...(intent.dependencies ? { dependencies: { originalSha256: intent.dependencies.originalSha256,
       originalCompletionSha256: intent.dependencies.originalCompletionSha256,
       expectedToolchainSha256: intent.dependencies.expectedToolchainSha256,
-      observedToolchainSha256: intent.dependencies.observedToolchainSha256, backupBound: false } } : {}) };
+      observedToolchainSha256: intent.dependencies.observedToolchainSha256,
+      backupAttempted: intent.backupId !== null, backupAttemptRecorded: Boolean(intent.dependencies.backupAttempt),
+      backupBound: Boolean(intent.dependencies.backup) } } : {}) };
 }
 function handle(claim: Claim, commonDir: string): MaintenanceHandle {
   if (!claim.maintenance) throw new Error('typed maintenance claim required');
@@ -337,18 +341,6 @@ export async function beginMaintenance(repository: string, kind: MaintenanceKind
   } finally { store.close(); }
 }
 
-function forwardBackupPath(common: string, operationId: string, backupId: string) {
-  if (!UUID.test(operationId) || !UUID.test(backupId)) throw new Error('invalid forward backup identity');
-  return join(common, 'factory', 'maintenance-backups', operationId, backupId, 'history.sqlite');
-}
-
-function openImmutableForwardBackup(path: string) {
-  const url = pathToFileURL(path);
-  url.searchParams.set('mode', 'ro');
-  url.searchParams.set('immutable', '1');
-  return new DatabaseSync(url, { readOnly: true, timeout: 100 });
-}
-
 function verifyForwardBackup(common: string, claim: Claim) {
   const intent = assertRecordedIntent(common, claim), bound = intent.forward?.backup;
   if (intent.kind !== 'upgrade' || !intent.forward || !bound || bound.id !== intent.backupId)
@@ -410,48 +402,6 @@ function openControllerStore(common: string) {
     if (!(error instanceof Error) || !error.message.includes('incompatible schema')) throw error;
     return openForwardMaintenanceStore(common);
   }
-}
-
-function fileDigest(path: string): { sha256: string; identity: string; bytes: number } {
-  const observed = lstatSync(path, { bigint: true });
-  if (!observed.isFile() || observed.isSymbolicLink() || observed.nlink !== 1n || observed.ino === 0n
-    || observed.size < 1n || observed.size > 512n * 1024n * 1024n
-    || (process.platform !== 'win32' && (observed.mode & 0o777n) !== 0o600n))
-    throw new Error('invalid private forward backup');
-  const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-  try {
-    const opened = fstatSync(fd, { bigint: true }), digest = createHash('sha256'), buffer = Buffer.allocUnsafe(1024 * 1024);
-    if (opened.dev !== observed.dev || opened.ino !== observed.ino || opened.size !== observed.size)
-      throw new Error('forward backup identity changed');
-    let offset = 0;
-    while (offset < Number(opened.size)) {
-      const count = readSync(fd, buffer, 0, Math.min(buffer.length, Number(opened.size) - offset), offset);
-      if (!count) throw new Error('forward backup truncated');
-      digest.update(buffer.subarray(0, count)); offset += count;
-    }
-    const ended = fstatSync(fd, { bigint: true }), current = lstatSync(path, { bigint: true });
-    if (ended.size !== opened.size || ended.mtimeNs !== opened.mtimeNs || current.dev !== opened.dev || current.ino !== opened.ino)
-      throw new Error('forward backup changed while hashing');
-    fsyncSync(fd);
-    return { sha256: digest.digest('hex'), identity: `${opened.dev}:${opened.ino}`, bytes: Number(opened.size) };
-  } finally { closeSync(fd); }
-}
-
-async function runForwardBackup(source: string, target: string) {
-  const requestPath = join(dirname(target), 'backup-request.json');
-  writeRecord(requestPath, { source, target });
-  const child = spawn(process.execPath, [fileURLToPath(new URL('./forward-backup-entry.js', import.meta.url)), '--request', requestPath],
-    { detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH ?? '', HOME: dirname(target) } });
-  const scope = new LiveProcessScope(child, process.platform === 'win32');
-  let stdout = '', stderr = '';
-  child.stdout?.on('data', bytes => { stdout += String(bytes); if (Buffer.byteLength(stdout) > 8192) void scope.stop(500); });
-  child.stderr?.on('data', bytes => { stderr += String(bytes); if (Buffer.byteLength(stderr) > 8192) void scope.stop(500); });
-  const timer = setTimeout(() => { void scope.stop(500); }, 30000);
-  try {
-    const result = await scope.result(500);
-    if (result.code !== 0 || result.signal || result.error || !result.quiescent || scope.interrupted || stdout !== '{"completed":true}\n')
-      throw new Error('forward backup helper failed or closure uncertain');
-  } finally { clearTimeout(timer); }
 }
 
 async function createAndBindForwardBackup(current: MaintenanceHandle, planned: MaintenanceIntent) {

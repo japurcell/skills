@@ -40,7 +40,7 @@ LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "atomic-publication", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings", "installed-state", "dependency-state", "dependency-maintenance", "owned-toolchain",
-    "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "upgrade-recovery-entry", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
+    "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "upgrade-recovery-entry", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-backup", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "schema-forward", "forward-backup-entry", "store",
     "workflow", "workspace",
 )

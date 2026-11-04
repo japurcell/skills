@@ -7,7 +7,7 @@ import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, un
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
-import { inspectOwner } from './native/process.js';
+import { currentOwner, inspectOwner } from './native/process.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import { initializeSchema, schemaVersion } from './schema.js';
 import { validateAdmission } from './accounting.js';
@@ -32,6 +32,14 @@ export interface DependencyMaintenanceBinding {
   expectedToolchainSha256: string; observedToolchainSha256: string;
   sourceIdentity: string; factoryIdentity: string; toolchainIdentity: string;
   declarationSha256: string; lockSha256: string;
+  backupAttempt?: DependencyBackupAttemptBinding | null;
+  backup?: VerifiedMaintenanceBackup | null;
+}
+export interface VerifiedMaintenanceBackup {
+  id: string; identity: string; sha256: string; bytes: number; countDigest: string; receiptId: string; receiptSha256: string;
+}
+export interface DependencyBackupAttemptBinding {
+  identity: string; sha256: string; rootIdentity: string; operationIdentity: string; directoryIdentity: string; requestSha256: string;
 }
 export interface Claim {
   id: string; token: string; kind: 'worktree' | 'dashboard' | 'maintenance'; resourceKey: string;
@@ -52,10 +60,7 @@ export interface MaintenanceIntent {
   upgradeReceipt?: { id: string; sha256: string; identity: string };
   activeLauncher?: Owner;
   dependencies?: DependencyMaintenanceBinding;
-  forward?: { sourceShape: ForwardShape; currentShape: ForwardShape; sourceRelease: string; sourceIdentity: string; backup: null | {
-    id: string; identity: string; sha256: string; bytes: number; countDigest: string;
-    receiptId: string; receiptSha256: string;
-  } };
+  forward?: { sourceShape: ForwardShape; currentShape: ForwardShape; sourceRelease: string; sourceIdentity: string; backup: VerifiedMaintenanceBackup | null };
 }
 export interface MaintenanceHandle { operationId: string; claimId: string; token: string; repositoryId: string; commonDir: string }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
@@ -212,9 +217,12 @@ export function openForwardMaintenanceStore(commonDir: string) { return openExis
 export function openDependencyMaintenanceStore(commonDir: string) { return openExistingMaintenanceStore(commonDir, 'current'); }
 
 export function validateDependencyMaintenanceBinding(value: unknown): asserts value is DependencyMaintenanceBinding {
+  const extra = value && typeof value === 'object' && !Array.isArray(value)
+    ? ['backupAttempt', 'backup'].filter(key => Object.hasOwn(value, key)) : [];
+  if (extra.length !== 0 && extra.length !== 2) throw new Error('incomplete dependency backup fields');
   if (!exactObject(value, ['version', 'bundleRoot', 'originalSha256', 'originalCompletionSha256',
     'expectedToolchainSha256', 'observedToolchainSha256', 'sourceIdentity', 'factoryIdentity', 'toolchainIdentity',
-    'declarationSha256', 'lockSha256']) || value['version'] !== 1 || typeof value['bundleRoot'] !== 'string'
+    'declarationSha256', 'lockSha256', ...extra]) || value['version'] !== 1 || typeof value['bundleRoot'] !== 'string'
     || Buffer.byteLength(value['bundleRoot']) < 1 || Buffer.byteLength(value['bundleRoot']) > 4096
     || value['bundleRoot'].includes('\0')
     || !isAbsolute(value['bundleRoot']) || resolve(value['bundleRoot']) !== value['bundleRoot']
@@ -222,6 +230,23 @@ export function validateDependencyMaintenanceBinding(value: unknown): asserts va
       .some(key => typeof value[key] !== 'string' || !/^[a-f0-9]{64}$/.test(value[key]))
     || ['sourceIdentity', 'factoryIdentity', 'toolchainIdentity'].some(key => typeof value[key] !== 'string' || !/^\d+:\d+$/.test(value[key])))
     throw new Error('invalid dependency maintenance binding');
+  if (Object.hasOwn(value, 'backupAttempt') && value['backupAttempt'] !== null) validateDependencyBackupAttempt(value['backupAttempt']);
+  if (Object.hasOwn(value, 'backup') && value['backup'] !== null) validateMaintenanceBackup(value['backup']);
+}
+
+export function validateDependencyBackupAttempt(value: unknown): asserts value is DependencyBackupAttemptBinding {
+  if (!exactObject(value, ['identity', 'sha256', 'rootIdentity', 'operationIdentity', 'directoryIdentity', 'requestSha256'])
+    || ['identity', 'rootIdentity', 'operationIdentity', 'directoryIdentity'].some(key => typeof value[key] !== 'string' || !/^\d+:\d+$/.test(value[key]))
+    || ['sha256', 'requestSha256'].some(key => typeof value[key] !== 'string' || !/^[a-f0-9]{64}$/.test(value[key])))
+    throw new Error('invalid dependency backup attempt binding');
+}
+export function validateMaintenanceBackup(value: unknown): asserts value is VerifiedMaintenanceBackup {
+  if (!exactObject(value, ['id', 'identity', 'sha256', 'bytes', 'countDigest', 'receiptId', 'receiptSha256'])
+    || ['id', 'receiptId'].some(key => typeof value[key] !== 'string' || !/^[0-9a-f-]{36}$/i.test(value[key]))
+    || ['sha256', 'countDigest', 'receiptSha256'].some(key => typeof value[key] !== 'string' || !/^[a-f0-9]{64}$/.test(value[key]))
+    || typeof value['identity'] !== 'string' || !/^\d+:\d+$/.test(value['identity'])
+    || !Number.isSafeInteger(value['bytes']) || Number(value['bytes']) < 1 || Number(value['bytes']) > 512 * 1024 * 1024)
+    throw new Error('invalid maintenance backup binding');
 }
 
 /** Existing-only, read-only installed ownership proof. Ordinary runner/dashboard claims remain valid. */
@@ -997,6 +1022,7 @@ export class RepositoryStore {
         || intent.ticketConsumed || intent.ticketNonceHash !== null || intent.activeLauncher !== undefined
         || intent.upgradeIntentSha256 !== undefined || intent.upgradeReceipt !== undefined
         || intent.dependencies!.sourceIdentity !== this.forwardStorage?.identity
+        || (intent.dependencies!.backupAttempt ?? null) !== null || (intent.dependencies!.backup ?? null) !== null
         || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()
         || this.database.prepare('SELECT id FROM attempts WHERE occupied=1 LIMIT 1').get())
         throw new Error('dependency admission requires exact ready idle current installation');
@@ -1033,7 +1059,10 @@ export class RepositoryStore {
       || repository[0]['state'] !== 'ready' || selected.dependencies.sourceIdentity !== this.forwardStorage?.identity
       || !pathAbsent(join(handle.commonDir, 'factory', 'upgrade-incomplete'))
       || this.forwardStorage?.path !== join(handle.commonDir, 'factory', 'history.sqlite')
-      || selected.backupId !== null || selected.candidate !== null || selected.forward !== undefined
+      || (selected.backupId !== null && !/^[0-9a-f-]{36}$/i.test(selected.backupId))
+      || (selected.backupId === null && ((selected.dependencies.backupAttempt ?? null) !== null || (selected.dependencies.backup ?? null) !== null))
+      || (selected.dependencies.backup && (!selected.dependencies.backupAttempt || selected.dependencies.backup.id !== selected.backupId))
+      || selected.candidate !== null || selected.forward !== undefined
       || !exactObject(selected.artifactDigests, ['bundle']) || selected.artifactDigests['bundle'] !== selected.targetReleaseSha256
       || selected.stagePath !== join(handle.commonDir, 'factory/controller-staging', handle.operationId)
       || selected.ownedReceiptId !== null || selected.activeLauncher !== undefined || selected.upgradeIntentSha256 !== undefined
@@ -1046,6 +1075,63 @@ export class RepositoryStore {
       || active.completion.manifestSha256 !== selected.targetReleaseSha256)
       throw new Error('dependency original completion changed after admission');
     return { claim, active };
+  }
+
+  private assertDependencyBackupOwner(claim: Claim): void {
+    const owner = currentOwner();
+    if (owner.host !== claim.owner.host || owner.pid !== claim.owner.pid || owner.start !== claim.owner.start
+      || inspectOwner(owner).state !== 'known_live')
+      throw new Error('dependency backup requires the exact live claim owner');
+  }
+  private saveDependencyBackupClaim(claim: Claim) {
+    const data = JSON.stringify(claim);
+    if (Buffer.byteLength(data) > 8192) throw new Error('dependency maintenance claim exceeds limit');
+    this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?').run(data, claim.id, claim.token);
+  }
+
+  /** Allocate exactly one attempt before touching a backup directory. Failure never makes it eligible again. */
+  async reserveDependencyBackupAttempt(handle: MaintenanceHandle, backupId: string, validateOriginal: () => void) {
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(backupId)) throw new Error('invalid dependency backup identity');
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!;
+      this.assertDependencyBackupOwner(claim);
+      if (selected.backupId !== null || selected.dependencies!.backupAttempt || selected.dependencies!.backup)
+        throw new Error('dependency backup attempt already allocated; evidence retained');
+      validateOriginal(); this.assertDependencyBackupOwner(claim);
+      selected.backupId = backupId;
+      selected.dependencies!.backupAttempt = null; selected.dependencies!.backup = null;
+      this.saveDependencyBackupClaim(claim);
+      this.event('maintenance.backup_attempted', { operationId: handle.operationId, claimId: claim.id, backupId });
+    });
+  }
+
+  async bindDependencyBackupAttempt(handle: MaintenanceHandle, attempt: DependencyBackupAttemptBinding, validateOriginal: () => void) {
+    validateDependencyBackupAttempt(attempt);
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!;
+      this.assertDependencyBackupOwner(claim);
+      if (!selected.backupId || selected.dependencies!.backupAttempt || selected.dependencies!.backup)
+        throw new Error('dependency backup attempt cannot be rebound');
+      validateOriginal(); this.assertDependencyBackupOwner(claim);
+      selected.dependencies!.backupAttempt = attempt;
+      this.saveDependencyBackupClaim(claim);
+      this.event('maintenance.backup_attempt_bound', { operationId: handle.operationId, claimId: claim.id, backupId: selected.backupId });
+    });
+  }
+
+  /** Receipt/bytes/counts verification is performed under the same exact final claim CAS. */
+  async bindDependencyBackup(handle: MaintenanceHandle, backup: VerifiedMaintenanceBackup, validateBackup: () => void) {
+    validateMaintenanceBackup(backup);
+    return this.transaction(() => {
+      const { claim } = this.readDependencyMaintenance(handle), selected = claim.maintenance!;
+      this.assertDependencyBackupOwner(claim);
+      if (!selected.dependencies!.backupAttempt || selected.dependencies!.backup || selected.backupId !== backup.id)
+        throw new Error('dependency backup bind requires its sole immutable attempt');
+      validateBackup(); this.assertDependencyBackupOwner(claim);
+      selected.dependencies!.backup = backup;
+      this.saveDependencyBackupClaim(claim);
+      this.event('maintenance.backup_bound', { operationId: handle.operationId, claimId: claim.id, backupId: backup.id });
+    });
   }
 
   /** The only historical-schema admission path, with all checks inside the writer transaction. */
