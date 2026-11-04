@@ -4,7 +4,7 @@ import test from 'node:test';
 
 // Only these fixed grammars may be exported. Permission bits are not ACL authority.
 const recordPattern = /^cleanup-sidecar-v1 role=(wal|shm|journal) regular=(true|false) symbolicLink=(true|false) singleLink=(true|false) groupOtherBitsClear=(true|false)$(?![\s\S])/;
-const failurePattern = /^cleanup-fixture-v1 stage=(repository|initialize|seed|action|base|placement-command|placement-flags|placement-options|admission|observation|count|restore|cleanup|other) role=(none|wal|shm|journal|other) vector=(none|regular|symbolicLink|singleLink|groupOtherBitsClear|all|other) code=(assertion|stat-canary|ENOENT|EACCES|EPERM|other)$(?![\s\S])/;
+const failurePattern = /^cleanup-fixture-v1 stage=(repository|initialize|seed|action|base|placement-(command|flags|options|keys|encoding|timeout|max-buffer|windows-hide|path|environment)|admission|observation|count|restore|cleanup|other) role=(none|wal|shm|journal|other) vector=(none|regular|symbolicLink|singleLink|groupOtherBitsClear|all|other) code=(assertion|stat-canary|ENOENT|EACCES|EPERM|other)$(?![\s\S])/;
 const fixtureProgram = String.raw`
   import assert from 'node:assert/strict';
   import childProcess from 'node:child_process';
@@ -13,6 +13,26 @@ const fixtureProgram = String.raw`
   import { syncBuiltinESMExports } from 'node:module';
   import { createRepository } from ${JSON.stringify(new URL('./fixtures/repository.mjs', import.meta.url).href)};
   import { initializeRepositoryStore, openCleanupReadStore } from ${JSON.stringify(new URL('../dist/store.js', import.meta.url).href)};
+
+  function assertPlacementOptions(options, directory) {
+    const expected = { encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
+      env: { ...process.env, FACTORY_PLACEMENT_PATH: directory } };
+    diagnosticStage = 'placement-keys';
+    assert.deepEqual(Object.keys(options).sort(), Object.keys(expected).sort());
+    for (const [field, stage] of [['encoding', 'placement-encoding'], ['timeout', 'placement-timeout'],
+      ['maxBuffer', 'placement-max-buffer'], ['windowsHide', 'placement-windows-hide']]) {
+      diagnosticStage = stage;
+      assert.equal(options[field], expected[field]);
+    }
+    diagnosticStage = 'placement-environment';
+    assert.ok(options.env !== null && typeof options.env === 'object');
+    diagnosticStage = 'placement-path';
+    assert.equal(options.env.FACTORY_PLACEMENT_PATH, expected.env.FACTORY_PLACEMENT_PATH);
+    diagnosticStage = 'placement-environment';
+    assert.deepEqual(options.env, expected.env);
+    diagnosticStage = 'placement-options';
+    assert.deepEqual(options, expected);
+  }
 
   function observe(database) {
     const original = fs.lstatSync;
@@ -72,7 +92,9 @@ const boundedFailureReporter = String.raw`
     if (failureReported) return;
     failureReported = true;
     const stage = ['repository', 'initialize', 'seed', 'action', 'base', 'placement-command', 'placement-flags',
-      'placement-options', 'admission', 'observation', 'count', 'restore', 'cleanup'].includes(diagnosticStage) ? diagnosticStage : 'other';
+      'placement-options', 'placement-keys', 'placement-encoding', 'placement-timeout', 'placement-max-buffer',
+      'placement-windows-hide', 'placement-path', 'placement-environment',
+      'admission', 'observation', 'count', 'restore', 'cleanup'].includes(diagnosticStage) ? diagnosticStage : 'other';
     const role = ['none', 'wal', 'shm', 'journal'].includes(diagnosticRole) ? diagnosticRole : 'other';
     const vector = ['none', 'regular', 'symbolicLink', 'singleLink', 'groupOtherBitsClear', 'all'].includes(diagnosticVector) ? diagnosticVector : 'other';
     const code = error?.code === 'ERR_ASSERTION' ? 'assertion'
@@ -140,6 +162,16 @@ test('cleanup synthetic fixture preserves a large assertion failure as one close
   assert.equal(result.failure, 'cleanup-fixture-v1 stage=action role=none vector=none code=assertion');
 });
 
+test('cleanup synthetic placement option mismatch exports only its closed field stage', () => {
+  const result = run(String.raw`
+    assertPlacementOptions({ encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
+      env: { ...process.env, FACTORY_PLACEMENT_PATH: 'PRIVATE_DIAGNOSTIC_CANARY /private/canary S-1-canary' } }, join(common, 'factory'));
+  `, true);
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.lines, []);
+  assert.equal(result.failure, 'cleanup-fixture-v1 stage=placement-path role=none vector=none code=assertion');
+});
+
 test('cleanup sidecar diagnostic grammar rejects extra, path-bearing and arbitrary fields', () => {
   const valid = 'cleanup-sidecar-v1 role=wal regular=true symbolicLink=false singleLink=true groupOtherBitsClear=false';
   assert.match(valid, recordPattern);
@@ -168,8 +200,7 @@ test('cleanup sidecar observation preserves each original refusal and exports on
       assert.equal(typeof args[4], 'string');
       assert.ok(args[4].length > 0);
       diagnosticStage = 'placement-options';
-      assert.deepEqual(options, { encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
-        env: { ...process.env, FACTORY_PLACEMENT_PATH: join(common, 'factory') } });
+      assertPlacementOptions(options, join(common, 'factory'));
       diagnosticStage = 'admission';
       return { status: 0, signal: null, stdout: '{"driveType":3,"filesystem":"NTFS"}' };
     };
