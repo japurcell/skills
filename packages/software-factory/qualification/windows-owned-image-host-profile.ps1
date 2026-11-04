@@ -1,21 +1,30 @@
 # Explicit candidate, private metadata checks and fixed facts only.
+$script:ownedImageSignatureBinding = $null
 function Test-OwnedImageSecurityOrigin {
-    param([string]$Inbox, [object]$Command, [Collections.IDictionary]$Facts = $null)
+    param([string]$HostHome, [object]$Snapshot, [object]$Authority, [Collections.IDictionary]$Facts = $null)
     if ($null -eq $Facts) { $Facts = @{} }
     try {
-        $Facts.field = 'path'
-        $manifest = [IO.Path]::GetFullPath([IO.Path]::Combine($Inbox, 'Microsoft.PowerShell.Security', 'Microsoft.PowerShell.Security.psd1'))
-        $base = [IO.Path]::GetDirectoryName($manifest)
+        $Facts.field = 'authority'
+        if ($null -eq $Authority -or $Authority.GetType() -ne [Collections.ObjectModel.ReadOnlyDictionary[string,object]] -or
+            -not (Test-OwnedImageInboxModuleOrigin $HostHome 'Microsoft.PowerShell.Security' $Authority)) { return $false }
+        $Facts.field = 'capture'
+        if ($Snapshot -isnot [Collections.IDictionary] -or $Snapshot.Count -ne 3 -or
+            @($Snapshot.Keys | Where-Object { $_ -cnotin @('Name', 'CommandType', 'Module') }).Count -ne 0 -or
+            $Snapshot.Module -isnot [Collections.IDictionary] -or $Snapshot.Module.Count -ne 4 -or
+            @($Snapshot.Module.Keys | Where-Object { $_ -cnotin @('Name', 'ModuleType', 'Path', 'ModuleBase') }).Count -ne 0) { return $false }
         $Facts.field = 'cmdlet-name'
-        if ($Command.Name -cne 'Get-AuthenticodeSignature') { return $false }
+        if ($Snapshot.Name -isnot [string] -or $Snapshot.Name -cne 'Get-AuthenticodeSignature') { return $false }
         $Facts.field = 'cmdlet-type'
-        if ($Command.CommandType -ne 'Cmdlet') { return $false }
+        if ($Snapshot.CommandType -isnot [Management.Automation.CommandTypes] -or $Snapshot.CommandType -ne [Management.Automation.CommandTypes]::Cmdlet) { return $false }
         $Facts.field = 'module-name'
-        if ($Command.Module.Name -cne 'Microsoft.PowerShell.Security') { return $false }
+        if ($Snapshot.Module.Name -isnot [string] -or $Snapshot.Module.Name -cne $Authority['Name']) { return $false }
+        $Facts.field = 'module-kind'
+        if ($Snapshot.Module.ModuleType -isnot [Management.Automation.ModuleType] -or $Snapshot.Module.ModuleType -ne $Authority['ModuleType']) { return $false }
         $Facts.field = 'manifest'
-        if (-not [string]::Equals([IO.Path]::GetFullPath($Command.Module.Path), $manifest, [StringComparison]::OrdinalIgnoreCase)) { return $false }
+        if ($Snapshot.Module.Path -isnot [string] -or -not [string]::Equals($Snapshot.Module.Path, $Authority['Path'], [StringComparison]::OrdinalIgnoreCase)) { return $false }
         $Facts.field = 'base'
-        return [string]::Equals([IO.Path]::GetFullPath($Command.Module.ModuleBase), $base, [StringComparison]::OrdinalIgnoreCase)
+        return $Snapshot.Module.ModuleBase -is [string] -and
+            [string]::Equals($Snapshot.Module.ModuleBase, $Authority['ModuleBase'], [StringComparison]::OrdinalIgnoreCase)
     } catch { return $false }
 }
 
@@ -24,6 +33,67 @@ function Get-OwnedImageModuleSnapshot {
     try {
         # Copy each relevant property once. Only typed immutable values can pass.
         return @{ Name = $Module.Name; ModuleType = $Module.ModuleType; Path = $Module.Path; ModuleBase = $Module.ModuleBase }
+    } catch { return $null }
+}
+
+function Get-OwnedImageCommandSnapshot {
+    param([object]$Command)
+    try {
+        $name = $Command.Name
+        $type = $Command.CommandType
+        $module = $Command.Module
+        $snapshot = Get-OwnedImageModuleSnapshot $module
+        if ($null -eq $snapshot) { return $null }
+        return @{ Name = $name; CommandType = $type; Module = $snapshot }
+    } catch { return $null }
+}
+
+function New-OwnedImageSecurityAuthority {
+    param([string]$HostHome, [object]$Snapshot)
+    try {
+        if (-not (Test-OwnedImageInboxModuleOrigin $HostHome 'Microsoft.PowerShell.Security' $Snapshot)) { return $null }
+        # The backing dictionary never escapes; admitted values are immutable.
+        $values = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::Ordinal)
+        foreach ($key in @('Name', 'ModuleType', 'Path', 'ModuleBase')) { $values.Add($key, $Snapshot[$key]) }
+        return [Collections.ObjectModel.ReadOnlyDictionary[string,object]]::new($values)
+    } catch { return $null }
+}
+
+function New-OwnedImageSignatureBinding {
+    param([string]$HostHome, [object]$Command, [object]$Authority, [Collections.IDictionary]$Facts = $null)
+    $script:ownedImageSignatureBinding = $null
+    if ($null -eq $Facts) { $Facts = @{} }
+    try {
+        $Facts.field = 'capture'
+        $snapshot = Get-OwnedImageCommandSnapshot $Command
+        if (-not (Test-OwnedImageSecurityOrigin $HostHome $snapshot $Authority $Facts)) { return $null }
+        $moduleValues = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::Ordinal)
+        foreach ($key in @('Name', 'ModuleType', 'Path', 'ModuleBase')) { $moduleValues.Add($key, $snapshot.Module[$key]) }
+        $snapshotValues = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::Ordinal)
+        $snapshotValues.Add('Name', $snapshot.Name)
+        $snapshotValues.Add('CommandType', $snapshot.CommandType)
+        $snapshotValues.Add('Module', [Collections.ObjectModel.ReadOnlyDictionary[string,object]]::new($moduleValues))
+        $values = [Collections.Generic.Dictionary[string,object]]::new([StringComparer]::Ordinal)
+        $values.Add('HostHome', [IO.Path]::GetFullPath($HostHome))
+        $values.Add('Command', $Command)
+        $values.Add('Snapshot', [Collections.ObjectModel.ReadOnlyDictionary[string,object]]::new($snapshotValues))
+        $values.Add('Authority', $Authority)
+        $script:ownedImageSignatureBinding = [Collections.ObjectModel.ReadOnlyDictionary[string,object]]::new($values)
+        return $script:ownedImageSignatureBinding
+    } catch { return $null }
+}
+
+function Get-OwnedImageBoundSignatureCommand {
+    param([object]$Binding)
+    try {
+        if ($null -eq $Binding -or -not [object]::ReferenceEquals($Binding, $script:ownedImageSignatureBinding) -or
+            $Binding.GetType() -ne [Collections.ObjectModel.ReadOnlyDictionary[string,object]] -or $Binding.Count -ne 4 -or
+            @($Binding.Keys | Where-Object { $_ -cnotin @('HostHome', 'Command', 'Snapshot', 'Authority') }).Count -ne 0 -or
+            $Binding['HostHome'] -isnot [string] -or $Binding['Command'] -isnot [Management.Automation.CmdletInfo] -or
+            $Binding['Snapshot'].GetType() -ne [Collections.ObjectModel.ReadOnlyDictionary[string,object]] -or
+            $Binding['Snapshot']['Module'].GetType() -ne [Collections.ObjectModel.ReadOnlyDictionary[string,object]] -or
+            -not (Test-OwnedImageSecurityOrigin $Binding['HostHome'] $Binding['Snapshot'] $Binding['Authority'])) { return $null }
+        return $Binding['Command']
     } catch { return $null }
 }
 
@@ -95,9 +165,16 @@ function Get-OwnedImageManagementRelation {
 }
 
 function Initialize-OwnedImageInboxProfile {
-    param([string]$HostHome, [string]$ExpectedInbox, [string]$Profile)
+    param([string]$HostHome, [string]$ExpectedInbox, [string]$Profile, [object]$SignatureBinding = $null)
+    $script:ownedImageSignatureBinding = $null
     $facts = @{ profile = 'winps-inbox-only'; origin = 'unverified'; availability = 'unavailable'; stage = 'environment'; field = 'path' }
     try {
+        if ($null -ne $SignatureBinding) {
+            $facts.field = 'profile'
+            if ($SignatureBinding -isnot [Management.Automation.PSReference]) { $facts.origin = 'refused'; return $facts }
+            $SignatureBinding.Value = $null
+        }
+        $facts.field = 'path'
         $inbox = [IO.Path]::GetFullPath([IO.Path]::Combine($HostHome, 'Modules'))
         if ($inbox -match '[;*?\[\]\x00-\x1f\x7f]') { $facts.origin = 'refused'; return $facts }
         $facts.field = 'profile'
@@ -110,6 +187,7 @@ function Initialize-OwnedImageInboxProfile {
         $script:PSModuleAutoLoadingPreference = 'None'
         $facts.field = 'reparse'
         if (([IO.File]::GetAttributes($inbox) -band [IO.FileAttributes]::ReparsePoint) -ne 0) { $facts.origin = 'refused'; return $facts }
+        $securityAuthority = $null
         foreach ($name in @('Microsoft.PowerShell.Management', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Security')) {
             $role = @{ 'Microsoft.PowerShell.Management' = 'management'; 'Microsoft.PowerShell.Utility' = 'utility'; 'Microsoft.PowerShell.Security' = 'security' }[$name]
             $facts.stage = $role + '-import'; $facts.field = 'manifest'
@@ -131,14 +209,21 @@ function Initialize-OwnedImageInboxProfile {
                 if ($role -ceq 'management' -and $facts.field -ceq 'base') { $facts.relation = Get-OwnedImageManagementRelation $HostHome $snapshot }
                 return $facts
             }
+            if ($role -ceq 'security') {
+                $facts.field = 'authority'
+                $securityAuthority = New-OwnedImageSecurityAuthority $HostHome $snapshot
+                if ($null -eq $securityAuthority) { $facts.origin = 'refused'; return $facts }
+            }
         }
         $facts.stage = 'cmdlet-resolution'; $facts.field = 'resolution'
         $commands = @(Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -All -ErrorAction Stop)
         $facts.field = 'count'
         if ($commands.Count -ne 1) { $facts.origin = 'refused'; return $facts }
         $facts.availability = 'available'
-        $facts.stage = 'cmdlet-origin'
-        if (-not (Test-OwnedImageSecurityOrigin $inbox $commands[0] $facts)) { $facts.origin = 'refused'; return $facts }
+        $facts.stage = 'cmdlet-origin'; $facts.field = 'capture'
+        $binding = New-OwnedImageSignatureBinding $HostHome $commands[0] $securityAuthority $facts
+        if ($null -eq $binding) { $facts.origin = 'refused'; return $facts }
+        if ($null -ne $SignatureBinding) { $SignatureBinding.Value = $binding }
         $facts.origin = 'inbox'
         $facts.stage = 'ready'; $facts.field = 'none'
         return $facts
@@ -150,8 +235,8 @@ function Format-OwnedImageHostProfile {
     $fallback = "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tunverified`tunavailable`tunknown`tunknown"
     $checks = @{ environment = @('path', 'profile', 'inbox', 'assignment', 'reparse')
         'management-import' = @('manifest', 'reparse', 'import'); 'utility-import' = @('manifest', 'reparse', 'import'); 'security-import' = @('manifest', 'reparse', 'import')
-        'management-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'utility-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'security-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base')
-        'cmdlet-resolution' = @('resolution', 'count'); 'cmdlet-origin' = @('path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base')
+        'management-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'utility-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'security-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base', 'authority')
+        'cmdlet-resolution' = @('resolution', 'count'); 'cmdlet-origin' = @('path', 'capture', 'authority', 'cmdlet-name', 'cmdlet-type', 'module-name', 'module-kind', 'manifest', 'base')
         ready = @('none'); unknown = @('unknown') }
     if ($Facts -isnot [Collections.IDictionary]) { return $fallback }
     $hasRelation = $Facts.Contains('relation')

@@ -59,7 +59,7 @@ function Get-OwnedImageModuleProfile {
 }
 
 function Invoke-OwnedImageSignatureCondition {
-    param([string]$Path, [hashtable]$Context = @{})
+    param([string]$Path, [hashtable]$Context = @{}, [object]$Binding = $null)
     foreach ($field in @('inbox', 'core', 'autoload', 'direct')) { $Context[$field] = 'unknown' }
     try {
         $preference = $ExecutionContext.SessionState.PSVariable.Get('PSModuleAutoLoadingPreference')
@@ -68,24 +68,14 @@ function Invoke-OwnedImageSignatureCondition {
         $profile = Get-OwnedImageModuleProfile ([Environment]::GetEnvironmentVariable('PSModulePath')) ([IO.Path]::Combine($PSHOME, 'Modules')) $core $value
         foreach ($field in @('inbox', 'core', 'autoload')) { $Context[$field] = $profile[$field] }
     } catch { }
-    $command = $null
     try {
-        # Imported-only lookup does not auto-import from ambient module paths.
-        $commands = @(Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -ErrorAction Stop)
-    } catch [System.Management.Automation.CommandNotFoundException] {
-        $commands = @()
+        $command = Get-OwnedImageBoundSignatureCommand $Binding
     } catch { return 'command-probe-failure' }
-    if ($commands.Count -gt 1) { return 'command-probe-failure' }
-    if ($commands.Count -eq 1) {
-        if ($commands[0] -isnot [System.Management.Automation.CommandInfo] -or $commands[0].Name -cne 'Get-AuthenticodeSignature') { return 'command-probe-failure' }
-        $command = $commands[0]
-        $Context.direct = 'imported'
-    } else { $Context.direct = 'not-imported' }
+    if ($command -isnot [System.Management.Automation.CmdletInfo]) { return 'command-probe-failure' }
+    $Context.direct = 'imported'
     try {
-        if ($null -eq $command) { $signature = Get-AuthenticodeSignature -LiteralPath $Path }
-        else { $signature = & $command -LiteralPath $Path }
+        $signature = & $command -LiteralPath $Path
     } catch [System.Management.Automation.CommandNotFoundException] {
-        if ($null -eq $command) { return 'unresolved-command-unavailable' }
         return 'nested-command-unavailable'
     } catch [System.Management.Automation.ParameterBindingException] {
         return 'parameter-binding'

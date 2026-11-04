@@ -20,7 +20,8 @@ try {
     . ([IO.Path]::Combine($PSScriptRoot, 'windows-owned-image-diagnostics.ps1'))
     $diagnosticHelpersLoaded = $true
     . ([IO.Path]::Combine($PSScriptRoot, 'windows-owned-image-host-profile.ps1'))
-    $profileFacts = Initialize-OwnedImageInboxProfile $PSHOME $env:FACTORY_OWNED_IMAGE_INBOX $env:FACTORY_OWNED_IMAGE_PROFILE
+    $signatureBinding = $null
+    $profileFacts = Initialize-OwnedImageInboxProfile $PSHOME $env:FACTORY_OWNED_IMAGE_INBOX $env:FACTORY_OWNED_IMAGE_PROFILE ([ref]$signatureBinding)
     $profileWire = Format-OwnedImageHostProfile $profileFacts
     [IO.File]::WriteAllText([IO.Path]::Combine($evidenceRoot, 'host-profile.private.tsv'), $profileWire + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
     if ($profileFacts.origin -cne 'inbox' -or $profileFacts.availability -cne 'available') { throw 'host-profile' }
@@ -45,7 +46,7 @@ try {
         $script:diagnosticTool = $Role
         $script:diagnosticCondition = 'api-failure'
         $script:diagnosticModule = @{ inbox = 'unknown'; core = 'unknown'; autoload = 'unknown'; direct = 'unknown' }
-        $script:diagnosticCondition = Invoke-OwnedImageSignatureCondition $Path $script:diagnosticModule
+        $script:diagnosticCondition = Invoke-OwnedImageSignatureCondition $Path $script:diagnosticModule $signatureBinding
         if ($script:diagnosticCondition -cne 'none') { throw 'tool-signature' }
         $script:diagnosticTool = 'none'
         $script:diagnosticCondition = 'none'

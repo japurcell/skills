@@ -492,3 +492,15 @@ test('fixed-origin candidate exposes capture and kind refusals only at fixed mod
   for (const stage of ['environment', 'management-import', 'cmdlet-origin', 'ready'])
     assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', stage, 'kind')), null);
 });
+
+test('Security authority and captured cmdlet failures remain finite and context coherent', () => {
+  for (const field of ['capture', 'authority', 'module-kind']) {
+    const value = { profile: 'winps-inbox-only', origin: 'refused', availability: 'available', stage: 'cmdlet-origin', field };
+    assert.deepEqual(hostProfile.parseProfile(profileStageRow('refused', 'available', 'cmdlet-origin', field)), value);
+    assert.equal(hostProfile.formatProfile(value),
+      `Owned image host profile=winps-inbox-only origin=refused availability=available stage=cmdlet-origin field=${field}\n`);
+  }
+  assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', 'security-origin', 'authority')).field, 'authority');
+  for (const stage of ['environment', 'management-origin', 'utility-origin', 'cmdlet-resolution'])
+    assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', stage, 'authority')), null);
+});
