@@ -1021,27 +1021,58 @@ test('an owned controller exiting zero with incomplete cleanup cannot inherit a 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('a late COMPLETE through an owned descendant pipe cannot clear an earlier controller timeout', { timeout: 5000 }, async () => {
+test('a real owned late producer cannot clear the controller timeout at the artifact guard input', { timeout: 5000 }, async () => {
   const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
-  // Both processes are created solely by this test. The descendant has a finite
-  // one-second lifetime and retains only the output pipes after its parent dies.
-  const descendant = 'setTimeout(()=>process.stdout.write(process.argv[1]),1000)';
-  const controller = 'const {spawn}=require("node:child_process"); process.stdout.write(process.argv[1]);' +
-    'spawn(process.execPath,["-e",process.argv[2],"COMPLETE\\n"],{windowsHide:true,shell:false,stdio:["ignore",1,2]}); setInterval(()=>{},1000)';
-  const result = await runOwnedImageTransport(process.execPath,
-    ['-e', controller, positive().replace('COMPLETE\n', ''), descendant], 4096, 700);
-  assert.equal(result.timedOut, true);
-  assert.equal(result.capped, false);
-  assert.equal(result.stdout, positive());
-  assert.equal(validateNative(result.stdout, 'positive').qualified, true);
-  const root = evidence();
+  const { spawn } = await import('node:child_process');
+  // A Windows Node parent may kill its ordinary descendants on exit. This
+  // producer belongs directly to the test and never shares the controller pipe.
+  // READY precedes controller launch; only its actual timeout/close permits the
+  // producer to supply COMPLETE. The composite is an explicit guard input.
+  const source = 'const timer=setTimeout(()=>{process.exitCode=2;process.disconnect()},1000);' +
+    'process.once("message",message=>{if(message!=="complete"){process.exitCode=2;clearTimeout(timer);process.disconnect();return;}' +
+    'process.stdout.write("COMPLETE\\n",()=>{clearTimeout(timer);process.disconnect()})});process.send("ready")';
+  let readyResolve, readyReject;
+  const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
+  const producer = spawn(process.execPath, ['-e', source], { windowsHide: true, shell: false, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+  const output = [], errors = [];
+  let producerError = null;
+  producer.stdout.on('data', chunk => output.push(chunk));
+  producer.stderr.on('data', chunk => errors.push(chunk));
+  producer.once('message', message => message === 'ready' ? readyResolve() : readyReject(new Error('unexpected producer readiness')));
+  producer.on('error', error => { producerError = error; readyReject(error); });
+  const closed = new Promise(resolve => producer.once('close', (exitCode, signal) => {
+    readyReject(new Error('producer closed before readiness'));
+    resolve({ exitCode, signal });
+  }));
   try {
-    const file = join(root, 'driver.private.json');
-    const driver = JSON.parse(readFileSync(file, 'utf8'));
-    driver.cases[0] = { name: 'positive', exitCode: result.exitCode, signal: result.signal, capped: result.capped, timedOut: result.timedOut };
-    writeFileSync(file, JSON.stringify(driver));
-    writeFileSync(join(root, 'positive.private.tsv'), result.stdout);
-    assert.throws(() => prepareUpload(root), { message: 'receipt' });
-    assert.equal(readdirSync(root).includes('upload'), false);
-  } finally { rmSync(root, { recursive: true, force: true }); }
+    await ready;
+    const partial = positive().replace('COMPLETE\n', '');
+    const result = await runOwnedImageTransport(process.execPath,
+      ['-e', 'process.stdout.write(process.argv[1]); setInterval(()=>{},1000)', partial], 4096, 700);
+    assert.equal(result.timedOut, true);
+    assert.equal(result.capped, false);
+    assert.equal(result.stdout, partial);
+    producer.send('complete');
+    assert.deepEqual(await closed, { exitCode: 0, signal: null });
+    assert.equal(producerError, null);
+    assert.equal(Buffer.concat(errors).toString('utf8'), '');
+    const completion = Buffer.concat(output).toString('utf8');
+    assert.equal(completion, 'COMPLETE\n');
+    const lateWire = result.stdout + completion;
+    assert.equal(lateWire, positive());
+    assert.equal(validateNative(lateWire, 'positive').qualified, true);
+    const root = evidence();
+    try {
+      const file = join(root, 'driver.private.json');
+      const driver = JSON.parse(readFileSync(file, 'utf8'));
+      driver.cases[0] = { name: 'positive', exitCode: result.exitCode, signal: result.signal, capped: result.capped, timedOut: result.timedOut };
+      writeFileSync(file, JSON.stringify(driver));
+      writeFileSync(join(root, 'positive.private.tsv'), lateWire);
+      assert.throws(() => prepareUpload(root), { message: 'receipt' });
+      assert.equal(readdirSync(root).includes('upload'), false);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  } finally {
+    if (producer.exitCode === null && producer.signalCode === null) producer.kill();
+    await closed;
+  }
 });
