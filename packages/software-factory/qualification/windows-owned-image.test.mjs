@@ -442,3 +442,42 @@ test('profile stage projection refuses forged context, paths, extra keys, multil
     'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\n', 'x'.repeat(513)])
     assert.equal(hostProfile.parseProfile(text), null);
 });
+
+const relationContext = { profile: 'winps-inbox-only', origin: 'refused', availability: 'unavailable', stage: 'management-origin', field: 'base' };
+const relationWire = relation => profileStageRow('refused', 'unavailable', 'management-origin', 'base') +
+  `OWNED_IMAGE_RELATION\t1\t${relation.kind}\t${relation.base}\t${relation.path}\t${relation.baseType}\n`;
+test('Management base refusal exposes only exact closed module metadata relations', () => {
+  for (const kind of ['manifest', 'binary', 'script', 'unknown'])
+    for (const base of ['selected-manifest-directory', 'selected-WinPS-host-directory', 'inbox-root', 'other'])
+      for (const path of ['exact-selected-manifest', 'known-fixed-Management-binary-under-selected-host', 'other']) {
+        const relation = { kind, base, path, baseType: 'string' };
+        assert.ok(Buffer.byteLength(relationWire(relation)) <= 512);
+        assert.deepEqual(hostProfile.parseProfile(relationWire(relation)), { ...relationContext, relation });
+        assert.equal(hostProfile.formatProfile({ ...relationContext, relation }),
+          `Owned image host profile=winps-inbox-only origin=refused availability=unavailable stage=management-origin field=base kind=${kind} base=${base} path=${path} baseType=string\n`);
+      }
+  for (const baseType of ['null', 'single-string-array', 'other']) {
+    const relation = { kind: 'unknown', base: 'other', path: 'other', baseType };
+    assert.deepEqual(hostProfile.parseProfile(relationWire(relation)), { ...relationContext, relation });
+  }
+});
+
+test('Management metadata relations reject foreign contexts, raw values and malformed framing', () => {
+  const relation = { kind: 'binary', base: 'selected-WinPS-host-directory', path: 'exact-selected-manifest', baseType: 'string' };
+  const value = { ...relationContext, relation };
+  const fallback = 'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable stage=unknown field=unknown\n';
+  for (const patch of [{ stage: 'security-origin' }, { field: 'manifest' }, { origin: 'unverified' }, { availability: 'available' },
+    { relation: { ...relation, kind: 'C:\\private' } }, { relation: { ...relation, base: 'other\nprivate' } },
+    { relation: { ...relation, path: 'x'.repeat(513) } }, { relation: { ...relation, kind: ['binary'] } },
+    { relation: { ...relation, baseType: 'null' } }, { relation: { ...relation, baseType: 'C:\\private' } },
+    { relation: { ...relation, baseType: ['string'] } },
+    { relation: { ...relation, extra: 'private' } }, { relation: ['binary', 'other', 'other'] }])
+    assert.equal(hostProfile.formatProfile({ ...value, ...patch }), fallback);
+  assert.equal(hostProfile.formatProfile(Object.assign(Object.create({ relation: { kind: 'private', base: 'private', path: 'private' } }), relationContext)), fallback);
+  const wire = relationWire(relation);
+  for (const text of [wire.replace('management-origin', 'utility-origin'), wire.replace('\tbase\n', '\tmanifest\n'),
+    wire.replace('refused', 'unverified'), wire.replace('RELATION\t1', 'RELATION\t2'),
+    wire.replace('\tbinary\t', '\tC:\\private\t'), wire + '\n', wire + 'private\n',
+    wire.replace('exact-selected-manifest', 'exact-selected-manifest\nprivate'), 'x'.repeat(513)])
+    assert.equal(hostProfile.parseProfile(text), null);
+});
