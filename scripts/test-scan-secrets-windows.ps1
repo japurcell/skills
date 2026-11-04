@@ -15,6 +15,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $python = (Get-Command python -CommandType Application | Select-Object -First 1).Source
 $realGit = (Get-Command git -CommandType Application | Select-Object -First 1).Source
 $workdir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+[long]$script:caseOrdinal = 0
 $hooks = @{
     copilot = Join-Path $repoRoot '.copilot/hooks/scripts/scan-secrets.py'
     gemini = Join-Path $repoRoot '.gemini/hooks/scripts/scan-secrets.py'
@@ -68,7 +69,8 @@ function Write-WatchdogEvidence {
 
 function Invoke-Case {
     param([string]$Provider, [string]$Mode, [string]$Scenario, [int]$Attempt = 0)
-    $caseDir = Join-Path $workdir "$Provider-$Mode-$Scenario-$Attempt"
+    $script:caseOrdinal++
+    $caseDir = Join-Path $workdir "$($script:caseOrdinal)-$Provider-$Mode-$Scenario-$Attempt"
     $repo = Join-Path $caseDir 'repo'
     $bin = Join-Path $caseDir 'bin'
     New-Item -ItemType Directory -Path $repo, $bin | Out-Null

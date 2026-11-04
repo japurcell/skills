@@ -12,6 +12,8 @@ on:
       - '.codex/hooks/**'
       - 'scripts/test-brain-hooks.py'
       - 'scripts/generate-hooks.py'
+      - 'scripts/test-extract-conversations-windows-owner.py'
+      - 'scripts/test-extract-conversations-windows-owner-portable.py'
       - 'skills/default/brain-install/**'
       - '.github/workflows/brain-hooks.yml'
   pull_request:
@@ -41,5 +43,17 @@ jobs:
         run: python scripts/generate-hooks.py --check
       - name: Exercise copied standalone scripts
         run: python scripts/test-brain-hooks.py
+      - name: Observe Windows fixture owner and exercise brain installation
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          python scripts/test-extract-conversations-windows-owner.py
+          $factsExit = $LASTEXITCODE
+          python -m unittest discover -s skills/default/brain-install/tests -p "test_*.py"
+          $testsExit = $LASTEXITCODE
+          if ($testsExit -ne 0) { exit $testsExit }
+          exit $factsExit
       - name: Exercise portable brain installation
+        if: runner.os != 'Windows'
         run: python -m unittest discover -s skills/default/brain-install/tests -p "test_*.py"
