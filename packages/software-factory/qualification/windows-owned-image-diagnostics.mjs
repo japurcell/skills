@@ -65,6 +65,53 @@ export function nativeOutcome(result) {
   } catch { return null; }
 }
 
+const refusalReasons = {
+  none: ['clear'],
+  'survival-create': ['launch-check', 'pipe-check', 'host-check'],
+  'survival-ready': ['host-check'],
+  probe: ['event-check', 'image-handle-check', 'duplicate-check', 'query-check', 'suspend-check', 'identity-check',
+    'continue-check', 'detach-check', 'debugger-check', 'resume-check', 'requested-stop', 'deadline-reached',
+    'output-cap', 'child-crash', 'launch-check', 'marker-check', 'exit-check', 'pipe-check', 'handle-check', 'host-check'],
+  'owner-interruption': ['owner-interrupted', 'host-check'],
+  'output-check': ['pipe-check'],
+};
+const refusalFields = ['phase', 'reason', 'cleanup', 'survival', 'flush', 'close'];
+function copyRefusal(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Reflect.ownKeys(value).length !== refusalFields.length) return null;
+  const copy = {};
+  for (const key of refusalFields) {
+    const field = Object.getOwnPropertyDescriptor(value, key);
+    if (!field || !Object.hasOwn(field, 'value')) return null;
+    copy[key] = field.value;
+  }
+  if (typeof copy.phase !== 'string' || !Object.hasOwn(refusalReasons, copy.phase) ||
+      !refusalReasons[copy.phase].includes(copy.reason) ||
+      ['cleanup', 'survival', 'flush', 'close'].some(key => typeof copy[key] !== 'boolean') ||
+      copy.cleanup && copy.survival && copy.flush && copy.close) return null;
+  return copy;
+}
+const validRefusalCase = (value, name) => value.phase === 'owner-interruption' ? name === 'owner-interruption'
+  : name !== 'owner-interruption' || ['survival-create', 'survival-ready'].includes(value.phase);
+
+export function parseNativeRefusal(result, name) {
+  try {
+    if (!cases.includes(name) || !result || typeof result !== 'object' || Array.isArray(result)) return null;
+    const fields = {};
+    for (const key of ['exitCode', 'signal', 'capped', 'timedOut', 'stderr']) {
+      const field = Object.getOwnPropertyDescriptor(result, key);
+      if (!field || !Object.hasOwn(field, 'value')) return null;
+      fields[key] = field.value;
+    }
+    if (fields.exitCode !== 1 || fields.signal !== null || fields.capped !== false || fields.timedOut !== false ||
+        typeof fields.stderr !== 'string' || Buffer.byteLength(fields.stderr) > 512) return null;
+    const match = /^OWNED_IMAGE_REFUSAL\t1\t([a-z0-9-]+)\t([a-z-]+)\t([a-z-]+)\t([01])\t([01])\t([01])\t([01])\r?\n$/.exec(fields.stderr);
+    if (!match || match[0] !== fields.stderr || match[1] !== name) return null;
+    const [, , phase, reason, cleanup, survival, flush, close] = match;
+    const value = copyRefusal({ phase, reason, cleanup: cleanup === '1', survival: survival === '1', flush: flush === '1', close: close === '1' });
+    return value && validRefusalCase(value, name) ? value : null;
+  } catch { return null; }
+}
+
 export function parseBuildDiagnostic(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > 512) return empty();
   const match = /^OWNED_IMAGE_BUILD\t3\t([a-z-]+)\t(none|C[1-9][0-9]{3}|LNK[1-9][0-9]{3})\t(none|probe|shared|fixture|fixture-dll)\t(0|[1-9][0-9]{0,3})\t(none|vswhere|compiler|linker)\t(none|status-not-valid|signer-absent|subject-mismatch|api-failure|command-unavailable|parameter-binding|invocation-failure|classification-failure|nested-command-unavailable|unresolved-command-unavailable|command-probe-failure)\r?\n$/.exec(text);
@@ -98,8 +145,10 @@ const phaseCategories = {
 export function formatFailure(value) {
   try {
     if (!value || typeof value !== 'object' || Array.isArray(value) ||
-      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module', 'native'].includes(key))) return unexpected;
-    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module, native } = value;
+      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module', 'native', 'refusal'].includes(key))) return unexpected;
+    const refusalField = Object.getOwnPropertyDescriptor(value, 'refusal');
+    if (refusalField ? !Object.hasOwn(refusalField, 'value') : 'refusal' in value) return unexpected;
+    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module, native, refusal } = value;
     if (typeof phase !== 'string' || typeof category !== 'string' || typeof name !== 'string' ||
       !Object.hasOwn(phaseCategories, phase) || !phaseCategories[phase].includes(category) ||
       (phase === 'case' ? !cases.includes(name) : phase === 'pin' ? name !== 'none' && !cases.includes(name) : name !== 'none') ||
@@ -110,8 +159,15 @@ export function formatFailure(value) {
       phase !== 'build' || category !== 'tool-signature' || !validModule(module, condition)) return unexpected;
     const nativeCopy = native === undefined ? undefined : copyNative(native);
     if (native !== undefined && (phase !== 'case' || category !== 'native' || nativeCopy === null)) return unexpected;
+    const refusalCopy = refusal === undefined || refusal === null ? refusal : copyRefusal(refusal);
+    if (refusal !== undefined && (phase !== 'case' || category !== 'native' || nativeCopy?.exit !== 'present' ||
+        nativeCopy.status !== 1 || refusal !== null && (refusalCopy === null || nativeCopy.stderr !== 'nonempty' ||
+        !validRefusalCase(refusalCopy, name)))) return unexpected;
     const extra = module === undefined ? '' : ` inbox=${module.inbox} core=${module.core} autoload=${module.autoload} direct=${module.direct}`;
     const outcome = nativeCopy === undefined ? '' : ` exit=${nativeCopy.exit} status=${nativeCopy.status} stderr=${nativeCopy.stderr}`;
-    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}${outcome}\n`;
+    const refusalText = refusalCopy === undefined ? '' : refusalCopy === null
+      ? ' nativePhase=unknown nativeReason=unknown cleanup=unknown survival=unknown flush=unknown close=unknown'
+      : ` nativePhase=${refusalCopy.phase} nativeReason=${refusalCopy.reason} cleanup=${refusalCopy.cleanup} survival=${refusalCopy.survival} flush=${refusalCopy.flush} close=${refusalCopy.close}`;
+    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}${outcome}${refusalText}\n`;
   } catch { return unexpected; }
 }

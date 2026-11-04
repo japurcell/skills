@@ -562,3 +562,106 @@ test('native outcome rejects raw values, forged status/context and contradictory
   assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native: changing }), unexpected);
   assert.equal(diagnosticApi.nativeOutcome({ get exitCode() { return 1; }, stderr: '' }), null);
 });
+
+test('owned exit-one child exposes a fixed caught condition separately from terminal refusal', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = 'OWNED_IMAGE_REFUSAL\t1\tpositive\tsurvival-ready\thost-check\t1\t0\t1\t1\n';
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write("synthetic-private-receipt"); process.stderr.write(process.argv[1]); process.exitCode=1', wire], 4096, 2000);
+  assert.equal(result.exitCode, 1);
+  const refusal = diagnosticApi.parseNativeRefusal(result, 'positive');
+  assert.deepEqual(refusal, { phase: 'survival-ready', reason: 'host-check', cleanup: true, survival: false, flush: true, close: true });
+  assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native: diagnosticApi.nativeOutcome(result), refusal }),
+    'Owned image native qualification failed phase=case case=positive category=native code=none source=none line=0 tool=none condition=none exit=present status=1 stderr=nonempty nativePhase=survival-ready nativeReason=host-check cleanup=true survival=false flush=true close=true\n');
+});
+
+const refusalWire = (name = 'positive', phase = 'probe', reason = 'query-check', bits = '0\t1\t1\t1') =>
+  `OWNED_IMAGE_REFUSAL\t1\t${name}\t${phase}\t${reason}\t${bits}\n`;
+const refusalResult = stderr => ({ exitCode: 1, signal: null, capped: false, timedOut: false, stderr });
+
+test('refusal wire rejects contradictory phases and forged accessor or inherited observations', () => {
+  const valid = { phase: 'probe', reason: 'query-check', cleanup: false, survival: true, flush: true, close: true };
+  const context = { phase: 'case', name: 'positive', category: 'native', native: { exit: 'present', status: 1, stderr: 'nonempty' }, refusal: valid };
+  const unexpected = formatFailure({ phase: 'unexpected' });
+  let reads = 0;
+  const accessor = { ...context };
+  Object.defineProperty(accessor, 'refusal', { enumerable: true, get() { reads++; return valid; } });
+  assert.equal(formatFailure(accessor), unexpected);
+  assert.equal(reads, 0);
+  const inherited = Object.assign(Object.create({ refusal: valid }), context);
+  delete inherited.refusal;
+  assert.equal(formatFailure(inherited), unexpected);
+  const symbol = { ...valid, [Symbol('private')]: 'private' };
+  for (const refusal of [symbol, { ...valid, phase: 'owner-interruption', reason: 'owner-interrupted' },
+    { ...valid, phase: 'survival-ready' }, { ...valid, cleanup: true }, { ...valid, reason: 'C:\\private' },
+    { ...valid, extra: 'private' }, { ...valid, get reason() { reads++; return 'query-check'; } }])
+    assert.equal(formatFailure({ ...context, refusal }), unexpected);
+  assert.equal(reads, 0);
+  assert.equal(diagnosticApi.parseNativeRefusal(refusalResult(refusalWire('positive', 'owner-interruption', 'owner-interrupted')), 'positive'), null);
+  assert.equal(diagnosticApi.parseNativeRefusal(refusalResult(refusalWire('owner-interruption')), 'owner-interruption'), null);
+});
+
+test('refusal wire accepts only one bounded exact case record in an uninterrupted exit-one context', () => {
+  const wire = refusalWire();
+  const expected = { phase: 'probe', reason: 'query-check', cleanup: false, survival: true, flush: true, close: true };
+  assert.deepEqual(diagnosticApi.parseNativeRefusal(refusalResult(wire.replaceAll('\n', '\r\n')), 'positive'), expected);
+  for (const text of ['', wire.trimEnd(), wire + wire, wire + '\n', 'private\n' + wire, wire + 'private\n',
+    wire.replace('REFUSAL\t1', 'REFUSAL\t2'), wire.replace('positive', 'positive-repeat'),
+    wire.replace('query-check', 'C:\\private'), wire.replace('query-check', 'query-check\nprivate'),
+    wire.replace('\t0\t1\t1\t1\n', '\t1\t1\t1\t1\n'), wire.replace('\t0\t1\t1\t1\n', '\tfalse\t1\t1\t1\n'),
+    wire.replace('\tprobe\t', '\tunknown\t'), wire.replace('\tprobe\t', '\tnone\t'), 'x'.repeat(513)])
+    assert.equal(diagnosticApi.parseNativeRefusal(refusalResult(text), 'positive'), null);
+  for (const patch of [{ exitCode: 0 }, { exitCode: 2 }, { exitCode: null }, { exitCode: '1' },
+    { signal: 'SIGTERM' }, { signal: undefined }, { capped: true }, { timedOut: true }, { capped: 0 }, { stderr: [wire] }])
+    assert.equal(diagnosticApi.parseNativeRefusal({ ...refusalResult(wire), ...patch }, 'positive'), null);
+  const inherited = Object.create(refusalResult(wire));
+  assert.equal(diagnosticApi.parseNativeRefusal(inherited, 'positive'), null);
+  let reads = 0;
+  for (const key of ['exitCode', 'signal', 'capped', 'timedOut', 'stderr']) {
+    const result = refusalResult(wire);
+    Object.defineProperty(result, key, { enumerable: true, get() { reads++; return refusalResult(wire)[key]; } });
+    assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+  }
+  assert.equal(reads, 0);
+});
+
+test('terminal-only refusal stays distinct from a caught probe condition and cannot imply admission', () => {
+  for (const [phase, reason, name] of [['none', 'clear', 'positive'], ['probe', 'identity-check', 'wrong-hash'],
+    ['owner-interruption', 'owner-interrupted', 'owner-interruption'], ['output-check', 'pipe-check', 'positive']]) {
+    for (let mask = 0; mask < 15; mask++) {
+      const bits = [8, 4, 2, 1].map(bit => mask & bit ? '1' : '0').join('\t');
+      const refusal = diagnosticApi.parseNativeRefusal(refusalResult(refusalWire(name, phase, reason, bits)), name);
+      assert.equal(refusal?.phase, phase); assert.equal(refusal?.reason, reason);
+      assert.equal(validateNative(refusalWire(name, phase, reason, bits), name).qualified, false);
+      assert.equal(validateNative(refusalWire(name, phase, reason, bits), name).helperAdmission, 'refused');
+    }
+  }
+  const native = { exit: 'present', status: 1, stderr: 'empty' };
+  assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native, refusal: null }),
+    'Owned image native qualification failed phase=case case=positive category=native code=none source=none line=0 tool=none condition=none exit=present status=1 stderr=empty nativePhase=unknown nativeReason=unknown cleanup=unknown survival=unknown flush=unknown close=unknown\n');
+  const refusal = diagnosticApi.parseNativeRefusal(refusalResult(refusalWire()), 'positive');
+  const unexpected = formatFailure({ phase: 'unexpected' });
+  for (const patch of [{ phase: 'build' }, { category: 'receipt' }, { name: 'owner-interruption' },
+    { native: { ...native, stderr: 'nonempty', status: 2 } }, { native: { ...native, status: 0 } },
+    { native: { ...native, exit: 'null', status: 'none' } }, { native: undefined }])
+    assert.equal(formatFailure({ phase: 'case', name: 'positive', category: 'native', native, refusal, ...patch }), unexpected);
+});
+
+test('owned child transport never promotes a success, mixed record, cap or deadline to native refusal facts', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = refusalWire();
+  for (const [status, output] of [[0, ''], [0, wire], [2, wire], [1, wire + 'synthetic-private\n'], [1, wire + wire]]) {
+    const result = await runOwnedImageTransport(process.execPath,
+      ['-e', 'process.stderr.write(process.argv[1]); process.exitCode=Number(process.argv[2])', output, String(status)], 4096, 2000);
+    assert.equal(result.exitCode, status);
+    assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+  }
+  const capped = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); process.stdout.write(Buffer.alloc(8192,65)); setInterval(()=>{},1000)', wire], 128, 2000);
+  assert.equal(capped.capped, true);
+  assert.equal(diagnosticApi.parseNativeRefusal(capped, 'positive'), null);
+  const timed = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); setInterval(()=>{},1000)', wire], 4096, 700);
+  assert.equal(timed.timedOut, true);
+  assert.equal(diagnosticApi.parseNativeRefusal(timed, 'positive'), null);
+});
