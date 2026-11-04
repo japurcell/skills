@@ -9,7 +9,7 @@
 
 ## Reproduction and acceptance
 
-- Reproduce in disposable repository/merge, home, and audit/log paths using [scanner fixture support](../../scripts/scanner_test_support.py) and [recovery fixtures](../../scripts/test-hook-diagnostic-recovery.py). Remove inherited skip/allowlist settings and measure the actual inventory rather than manufacturing a historical count.
+- Reproduce in disposable repository/merge, home, and audit/log paths using [scanner fixture support](../../scripts/tests/scanner/scanner_test_support.py) and [recovery fixtures](../../scripts/tests/hooks/test-hook-diagnostic-recovery.py). Remove inherited skip/allowlist settings and measure the actual inventory rather than manufacturing a historical count.
 - Exercise the applicable current explicit check/gate CLI and provider historical-status envelope. Historical automatic PreToolUse/Stop scanning and repeated Stop recovery loops are superseded. Status stays incomplete when inspection was incomplete and remains nonblocking; see [End Turn boundary](security-hooks.md#end-turn-boundary).
 - For a future authorized repair, preserve distinct conflict versions and pair accepted larger workloads with late fake credentials and conflict-only credential controls. Keep over-limit, capture-failure, and incomplete cases; follow [security acceptance](security-testing.md#acceptance-evidence). Regenerate from canonical sources and prove installation/trust and native delivery separately.
 - For authorized capacity repair, do not use permanent warnings, skips, allowlists, or evidence exclusions as a substitute for complete supported inspection. Preserve the current explicit-check architecture; this rule does not restore automatic global scanning.
@@ -17,6 +17,6 @@
 
 ## Legacy diagnostics compatibility only
 
-- `hooks-diagnostics-v1` belongs only to old scanner registrations. The strict native Codex request was `{"cmd":"hooks-diagnostics-v1","login":false}` with no wrappers, extra arguments, or working directory. It returned deny-only bounded diagnostics and `not_scanned`; the marker was never executed. Use [the recovery suite](../../scripts/test-hook-diagnostic-recovery.py) for exact matching rules rather than treating this as a current bypass or a live dispatch guarantee.
+- `hooks-diagnostics-v1` belongs only to old scanner registrations. The strict native Codex request was `{"cmd":"hooks-diagnostics-v1","login":false}` with no wrappers, extra arguments, or working directory. It returned deny-only bounded diagnostics and `not_scanned`; the marker was never executed. Use [the recovery suite](../../scripts/tests/hooks/test-hook-diagnostic-recovery.py) for exact matching rules rather than treating this as a current bypass or a live dispatch guarantee.
 
-Evidence: [current scan/gate architecture](../../README.md#explicit-secret-checks-and-git-gates), [merge controls](../../scripts/test-scan-secrets-merge.py), and [capture contract](../../hooks/runtime/scan_git.py), reviewed 2026-10-21. Historical incidents identify causal limits and evidence gaps, not a current defect or an approved capacity target.
+Evidence: [current scan/gate architecture](../../README.md#explicit-secret-checks-and-git-gates), [merge controls](../../scripts/tests/scanner/test-scan-secrets-merge.py), and [capture contract](../../hooks/runtime/scan_git.py), reviewed 2026-10-21. Historical incidents identify causal limits and evidence gaps, not a current defect or an approved capacity target.

@@ -262,7 +262,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 1. Edit published skill sources in `skills/<category>/`, custom agents in `agents/`, and hook/config sources in `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
-3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](brain/codebase/testing.md).
+3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](brain/codebase/testing.md). See the [scripts and maintained test map](scripts/README.md) for owners and focused commands.
 
 ### Brain hooks
 
@@ -278,7 +278,7 @@ committing:
 ```bash
 python3 scripts/generate-hooks.py --write
 python3 scripts/generate-hooks.py --check
-python3 scripts/test-generate-hooks.py
+python3 scripts/tests/hooks/test-generate-hooks.py
 ```
 
 `--write` is the only generator action that changes files. `--check` is
@@ -349,19 +349,19 @@ For hook changes, use the targeted [source checks](brain/codebase/hook-testing.m
 For the Codex required-skills hook and installer, run:
 
 ```bash
-bash scripts/test-codex-hooks-startup.sh
-bash scripts/test-install.sh
+bash scripts/tests/hooks/test-codex-hooks-startup.sh
+bash scripts/tests/installers/test-install.sh
 ```
 
-When PowerShell 7 is available, also run `pwsh -NoProfile -File scripts/test-install.ps1`.
+When PowerShell 7 is available, also run `pwsh -NoProfile -File scripts/tests/installers/test-install.ps1`.
 
 For the generated Codex custom-agent path, run:
 
 ```bash
-python3 scripts/test-codex-agents.py
+python3 scripts/tests/installers/test-codex-agents.py
 bash -n scripts/install.sh
-bash scripts/test-install.sh
-pwsh -NoProfile -File scripts/test-install.ps1
+bash scripts/tests/installers/test-install.sh
+pwsh -NoProfile -File scripts/tests/installers/test-install.ps1
 ./scripts/install.sh
 codex --version
 ```

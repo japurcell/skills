@@ -161,12 +161,12 @@ jobs:
       - name: Check generated hooks
         run: rtk proxy python3 scripts/generate-hooks.py --check
       - name: Test generator behavior and closure
-        run: rtk proxy python3 scripts/test-generate-hooks.py
+        run: rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py
       - name: Test maintained suite registry and runner
-        run: rtk proxy python3 scripts/test_test_all.py
+        run: rtk proxy python3 scripts/tests/runner/test_test_all.py
       - name: Test verification-only fixture preflight
         id: fixture-preflight
-        run: rtk proxy python3 scripts/test-verify-security-fixture-patch.py
+        run: rtk proxy python3 scripts/tests/hooks/test-verify-security-fixture-patch.py
       - name: Profile failed fixture preflight in disposable storage
         if: failure() && steps.fixture-preflight.outcome == 'failure'
         run: |
@@ -180,7 +180,7 @@ jobs:
           import time
 
           root = Path.cwd()
-          spec = importlib.util.spec_from_file_location("fixture_tests", root / "scripts/test-verify-security-fixture-patch.py")
+          spec = importlib.util.spec_from_file_location("fixture_tests", root / "scripts/tests/hooks/test-verify-security-fixture-patch.py")
           module = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(module)
           fixture = module.PreflightTests()
@@ -202,19 +202,19 @@ jobs:
               fixture.doCleanups()
           PYTHON
       - name: Test diagnostic recovery
-        run: rtk proxy python3 scripts/test-hook-diagnostic-recovery.py
+        run: rtk proxy python3 scripts/tests/hooks/test-hook-diagnostic-recovery.py
       - name: Test security reporting
-        run: rtk proxy python3 scripts/test-security-reporting.py
+        run: rtk proxy python3 scripts/tests/hooks/test-security-reporting.py
       # Each scanner shell already runs its provider's capture suite.
       - name: Test Codex scanner and capture
         run: |
-          rtk proxy bash scripts/test-codex-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/codex-scanner.log"
+          rtk proxy bash scripts/tests/scanner/test-codex-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/codex-scanner.log"
       - name: Test Copilot scanner and capture
         run: |
-          rtk proxy bash scripts/test-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/copilot-scanner.log"
+          rtk proxy bash scripts/tests/scanner/test-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/copilot-scanner.log"
       - name: Test Gemini scanner and capture
         run: |
-          rtk proxy bash scripts/test-gemini-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/gemini-scanner.log"
+          rtk proxy bash scripts/tests/scanner/test-gemini-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/gemini-scanner.log"
       - name: Require verified native Darwin capture evidence
         run: |
           rtk proxy python3 - <<'PYTHON'
@@ -263,26 +263,26 @@ jobs:
           print("Verified all 12 native Darwin capture cases with restored soft process limits.")
           PYTHON
       - name: Test checkpoint CLI
-        run: rtk proxy python3 scripts/test-scan-secrets-cli.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-secrets-cli.py
       - name: Test historical scan status
-        run: rtk proxy python3 scripts/test-scan-secrets-status.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-secrets-status.py
       - name: Test actual Git commit and push gates
-        run: rtk proxy python3 scripts/test-scan-secrets-git-gates.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-secrets-git-gates.py
       - name: Test exact Git LFS upload and rejection
-        run: rtk proxy python3 scripts/test-scan-secrets-lfs.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-secrets-lfs.py
       - name: Test repository gate installation and recovery
-        run: rtk proxy python3 scripts/test-install-repo-gates.py
+        run: rtk proxy python3 scripts/tests/scanner/test-install-repo-gates.py
       - name: Test neutral scanner installation and upgrades
-        run: rtk proxy python3 scripts/test-install-scan-secrets.py
+        run: rtk proxy python3 scripts/tests/scanner/test-install-scan-secrets.py
       - name: Test provider lifecycle migration
-        run: rtk proxy python3 scripts/test-scan-secrets-lifecycle.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-secrets-lifecycle.py
       - name: Test status cancellation and descendant cleanup
-        run: rtk proxy python3 scripts/test-scan-status-cancellation.py
+        run: rtk proxy python3 scripts/tests/scanner/test-scan-status-cancellation.py
       - name: Test Codex configuration merger
-        run: rtk proxy python3 scripts/test-install-codex-hooks.py
+        run: rtk proxy python3 scripts/tests/installers/test-install-codex-hooks.py
       - name: Test complete Bash installer
-        run: rtk proxy bash scripts/test-install.sh
+        run: rtk proxy bash scripts/tests/installers/test-install.sh
       - name: Test complete PowerShell installer on macOS
-        run: rtk proxy pwsh -NoProfile -File scripts/test-install.ps1
+        run: rtk proxy pwsh -NoProfile -File scripts/tests/installers/test-install.ps1
       - name: Recheck generated hooks after complete suites
         run: rtk proxy python3 scripts/generate-hooks.py --check

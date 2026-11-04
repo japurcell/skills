@@ -54,7 +54,7 @@ class TestTestAll(unittest.TestCase):
         pwsh.write_text(
             f"#!{sys.executable}\nimport sys\n"
             "if '-Command' in sys.argv:\n    print('7')\n"
-            "else:\n    print('scripts/test-install.ps1')\n"
+            "else:\n    print('scripts/tests/installers/test-install.ps1')\n"
             "    print('SKIP: host-specific junction test', file=sys.stderr)\n",
             encoding="utf-8",
         )
@@ -96,44 +96,16 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, "")
         commands = [shlex.split(line) for line in result.stdout.splitlines()]
+        # Discover maintained suites by their domain-owned test files, not by
+        # importing or copying the runner's explicit command registry. Capture
+        # and native RTK scripts are invoked as helpers by other suites.
         expected = {
             str(path.relative_to(REPO_ROOT))
-            for pattern in ("test-*.sh", "test-*.ps1", "test_*.py")
-            for path in (REPO_ROOT / "scripts").glob(pattern)
-            if path.name not in ("test-common.sh", "test-rtk-stable-windows.ps1")
+            for domain in ("scanner", "guardian", "hooks", "installers", "tooling", "runner")
+            for pattern in ("test-*.sh", "test-*.ps1", "test-*.py", "test_*.py")
+            for path in (REPO_ROOT / "scripts/tests" / domain).glob(pattern)
+            if path.name not in ("test-scan-secrets-capture.py", "test-rtk-stable-windows.ps1")
         }
-        expected.add("scripts/test-codex-agents.py")
-        expected.add("scripts/test-generate-hooks.py")
-        expected.add("scripts/test-brain-hooks.py")
-        expected.add("scripts/test-install-codex-hooks.py")
-        expected.add("scripts/test-probe-provider-hook-delivery.py")
-        expected.add("scripts/test-rtk-stable.py")
-        expected.add("scripts/test-security-banners.py")
-        expected.add("scripts/test-scan-secrets-merge.py")
-        expected.add("scripts/test-tool-guard-false-positives.py")
-        expected.add("scripts/test-tool-guard-file-operations.py")
-        expected.add("scripts/test-tool-guard-native-data.py")
-        expected.add("scripts/test-tool-guard-shell-data.py")
-        expected.add("scripts/test-tool-guard-limits.py")
-        expected.add("scripts/test-benchmark-high-rate-hooks.py")
-        expected.add("scripts/test-verify-hook-release.py")
-        expected.add("scripts/test-verify-security-fixture-patch.py")
-        expected.update({
-            "scripts/test-scan-secrets-cli.py",
-            "scripts/test-scan-secrets-git-gates.py",
-            "scripts/test-scan-secrets-lfs.py",
-            "scripts/test-scan-secrets-status.py",
-            "scripts/test-scan-secrets-lifecycle.py",
-            "scripts/test-scan-status-cancellation.py",
-            "scripts/test-install-scan-secrets.py",
-            "scripts/test-install-repo-gates.py",
-            "scripts/test-hook-input-bounds.py",
-            "scripts/test-hook-diagnostics.py",
-            "scripts/test-hook-diagnostic-recovery.py",
-            "scripts/test-scan-secrets-stream-component.py",
-            "scripts/test-scan-secrets-streaming.py",
-            "scripts/test-security-reporting.py",
-        })
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
@@ -144,9 +116,14 @@ class TestTestAll(unittest.TestCase):
         }
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))
-        self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
-        for suite in ("test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py", "test-scan-secrets-lfs.py", "test-scan-secrets-status.py", "test-scan-secrets-lifecycle.py", "test-install-scan-secrets.py", "test-install-repo-gates.py"):
-            self.assertIn(["python3", "scripts/" + suite], commands)
+        self.assertIn(["python3", "scripts/tests/installers/test-codex-agents.py"], commands)
+        for suite in (
+            "test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py",
+            "test-scan-secrets-lfs.py", "test-scan-secrets-status.py",
+            "test-scan-secrets-lifecycle.py", "test-install-scan-secrets.py",
+            "test-install-repo-gates.py",
+        ):
+            self.assertIn(["python3", "scripts/tests/scanner/" + suite], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
         root, env = self.fixture()
@@ -161,7 +138,7 @@ class TestTestAll(unittest.TestCase):
 
     def test_failure_continues_with_separate_streams_and_eof_stdin(self):
         root, env = self.fixture()
-        (root / "scripts/test-addy-install.sh").write_text(
+        (root / "scripts/tests/installers/test-addy-install.sh").write_text(
             "if IFS= read -r input; then exit 90; fi\n"
             "pwd\nprintf 'FIRST_STDOUT\\n'\nprintf 'FIRST_STDERR\\n' >&2\nexit 7\n",
             encoding="utf-8",
@@ -173,7 +150,7 @@ class TestTestAll(unittest.TestCase):
         self.assertNotIn("FIRST_STDERR", result.stdout)
         self.assertIn("FIRST_STDERR", result.stderr)
         self.assertNotIn("FIRST_STDOUT", result.stderr)
-        self.assertIn("scripts/test_test_all.py", result.stdout)
+        self.assertIn("scripts/tests/runner/test_test_all.py", result.stdout)
         self.assertIn("1 failed", result.stderr)
         self.assertIn("exit 7", result.stderr)
         self.assertIn("SKIP: host-specific junction test", result.stderr)
@@ -184,7 +161,7 @@ class TestTestAll(unittest.TestCase):
         result = self.run_fixture(root, env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("0 failed", result.stderr)
-        self.assertIn("scripts/test_test_all.py", result.stdout)
+        self.assertIn("scripts/tests/runner/test_test_all.py", result.stdout)
         for flag in ("--unknown", "--li"):
             with self.subTest(flag=flag):
                 result = self.run_fixture(root, env, flag)
@@ -240,7 +217,7 @@ class TestTestAll(unittest.TestCase):
         for signum in (signal.SIGINT, signal.SIGTERM):
             with self.subTest(signal=signum):
                 root, env = self.fixture()
-                (root / "scripts/test-addy-install.sh").write_text(
+                (root / "scripts/tests/installers/test-addy-install.sh").write_text(
                     "exec python3 scripts/long-running.py\n", encoding="utf-8"
                 )
                 (root / "scripts/long-running.py").write_text(
@@ -271,14 +248,14 @@ class TestTestAll(unittest.TestCase):
                 self.assertEqual(process.returncode, 128 + signum, stderr)
                 self.assertTrue((root / "descendant-stopped").exists(), stderr)
                 self.assertTrue((root / "suite-stopped").exists(), stderr)
-                self.assertNotIn("scripts/test-cleanup-skill-workspaces.sh", stdout)
+                self.assertNotIn("scripts/tests/tooling/test-cleanup-skill-workspaces.sh", stdout)
                 self.assertNotIn("Traceback", stderr)
 
     def test_cleanup_deadline_and_second_interrupt_kill_orphaned_descendant(self):
         for force in (False, True):
             with self.subTest(second_interrupt=force):
                 root, env = self.fixture()
-                (root / "scripts/test-addy-install.sh").write_text(
+                (root / "scripts/tests/installers/test-addy-install.sh").write_text(
                     "exec python3 scripts/long-running.py\n", encoding="utf-8"
                 )
                 (root / "scripts/long-running.py").write_text(
@@ -311,7 +288,7 @@ class TestTestAll(unittest.TestCase):
                 self.assertLess(elapsed, 3 if force else 7)
                 if not force:
                     self.assertGreaterEqual(elapsed, 4.5)
-                self.assertNotIn("scripts/test-cleanup-skill-workspaces.sh", stdout)
+                self.assertNotIn("scripts/tests/tooling/test-cleanup-skill-workspaces.sh", stdout)
                 self.assertIn("Ctrl-C again", stderr)
                 self.assertNotIn("Traceback", stderr)
 
@@ -349,16 +326,16 @@ class TestTestAll(unittest.TestCase):
             os.close(write_fd)
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("exit 141", result.stderr)
-        self.assertIn("RUN python3 scripts/test_test_all.py", result.stderr)
+        self.assertIn("RUN python3 scripts/tests/runner/test_test_all.py", result.stderr)
         self.assertIn("Suites:", result.stderr)
 
     def test_missing_suite_is_a_preflight_error(self):
         root, env = self.fixture()
-        (root / "scripts/test_helpers.py").unlink()
+        (root / "scripts/tests/tooling/test_helpers.py").unlink()
         result = self.run_fixture(root, env)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(result.stdout, "")
-        self.assertIn("scripts/test_helpers.py", result.stderr)
+        self.assertIn("scripts/tests/tooling/test_helpers.py", result.stderr)
 
     def test_unexecutable_dependency_is_a_runner_error(self):
         root, env = self.fixture()

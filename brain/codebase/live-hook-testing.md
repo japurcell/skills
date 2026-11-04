@@ -3,7 +3,7 @@
 - Use isolated provider profiles or temporary projects. Repository task authorization does not imply modifying global installations.
 - Record a nonce, provider version, event entry, process completion, and user-visible output/context independently.
 - Prepare and clean up probes through `scripts/probe-provider-hook-delivery.py`; preserve unrelated settings and handlers.
-- For probe CLI contract changes run [the probe regression suite](../../scripts/test-probe-provider-hook-delivery.py).
+- For probe CLI contract changes run [the probe regression suite](../../scripts/tests/hooks/test-probe-provider-hook-delivery.py).
 - Keep probe logs outside disposable Git trees; exclude logs/audits from secret-scanning candidates.
 - Verify timeouts as well as normal delivery. CLI progress output is not interchangeable with VS Code visibility.
 - Measure provider startup-to-handler-entry latency separately from handler completion time. Fast handler runtime alone cannot prove a one-second provider deadline; exercise the actual timeout before claiming compliance.

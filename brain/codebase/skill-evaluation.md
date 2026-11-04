@@ -9,4 +9,4 @@
 
 Invocation-control source: [official Claude Code skill reference](https://code.claude.com/docs/en/skills#frontmatter-reference), checked 2026-10-20. Harness support can differ; AGENTS.md also explicitly limits meditate/ruminate invocation.
 
-Evidence: current skill tooling and `scripts/test_helpers.py`, checked 2026-10-20 during migration inventory. Recheck validator allowlists, aggregate schema, and benchmark tooling before relying on metrics.
+Evidence: current skill tooling and `scripts/tests/tooling/test_helpers.py`, checked 2026-10-20 during migration inventory. Recheck validator allowlists, aggregate schema, and benchmark tooling before relying on metrics.

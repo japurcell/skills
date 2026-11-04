@@ -26,7 +26,7 @@ From the repository root:
 python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'
 python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/brain-install
 python3 scripts/generate-hooks.py --check
-python3 scripts/test-brain-hooks.py
+python3 scripts/tests/hooks/test-brain-hooks.py
 ```
 
 The focused brain-hooks workflow runs Windows/Linux/macOS on Python 3.12/3.14. Process/config tests do not prove live-provider delivery. Installer subprocesses use relocated bundles; all test targets, histories, and homes live in disposable temporary directories outside the bundle. Retain actual native results before claiming cross-platform verification.

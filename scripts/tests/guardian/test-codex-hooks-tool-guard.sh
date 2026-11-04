@@ -39,4 +39,4 @@ output="$(TOOL_GUARD_LOG_DIR="$workdir/guard.log" GUARD_MODE=warn \
   exit 1
 }
 
-python3 "$REPO_ROOT/scripts/test-security-banners.py"
+python3 "$REPO_ROOT/scripts/tests/guardian/test-security-banners.py"
