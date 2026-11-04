@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, matchesGlob } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -117,4 +117,32 @@ test('Darwin timing workflow preserves one full fixtures position and uploads on
   assert.match(workflow, /if: always\(\) && steps\.artifacts\.outcome == 'success'/);
   assert.match(workflow, /selector-timing-upload\/selector-timing\.json\n\s*\$\{\{ runner\.temp \}\}\/selector-timing-upload\/selector-timing\.jsonl/);
   assert.doesNotMatch(workflow, /continue-on-error|NODE_OPTIONS|path:.*\*/);
+});
+
+
+test('Darwin timing push selection includes executable/schema changes and excludes result notes', () => {
+  const workflow = readFileSync(new URL('../../../.github/workflows/darwin-selector-timing.yml', import.meta.url), 'utf8');
+  const section = workflow.match(/    paths:\n([\s\S]*?)\npermissions:/)?.[1];
+  assert.ok(section, 'explicit push paths required');
+  const patterns = section.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2));
+  const selected = path => patterns.some(pattern => matchesGlob(path, pattern));
+  for (const path of [
+    'packages/software-factory/qualification/selector-timing.mjs',
+    'packages/software-factory/qualification/selector-timing-preload.mjs',
+    'packages/software-factory/qualification/selector-timing-driver.mjs',
+    'packages/software-factory/qualification/selector-timing-artifacts.mjs',
+    'packages/software-factory/qualification/selector-timing-attempts.mjs',
+    'packages/software-factory/qualification/selector-timing-preflight.mjs',
+    'packages/software-factory/qualification/selector-timing-registry.json',
+    'packages/software-factory/qualification/selector-timing-experiment.json',
+    'packages/software-factory/scripts/ordered-tests.mjs',
+    'packages/software-factory/scripts/ordered-test-worker.mjs',
+  ]) assert.equal(selected(path), true, path);
+  for (const path of [
+    '.github/workflows/darwin-selector-timing.yml',
+    'packages/software-factory/qualification/selector-timing-closure.ExecPlan.md',
+    'packages/software-factory/qualification/darwin-selector-timing.ExecPlan.md',
+    'brain/plans/software-factory/research/darwin-selector-timing-baseline-2026-11-04.md',
+  ]) assert.equal(selected(path), false, path);
+  assert.ok(patterns.includes('packages/software-factory/qualification/selector-timing-experiment.json'), 'explicit deliberate experiment control required');
 });
