@@ -1,12 +1,13 @@
 // Explicit native entry point. Missing Windows/MSVC/runtime prerequisites fail.
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, existsSync, lstatSync, copyFileSync, realpathSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cases, limit, readBounded, validateNative } from './windows-owned-image.mjs';
-import { parseBuildObservation, formatFailure } from './windows-owned-image-diagnostics.mjs';
+import { parseBuildObservation, formatFailure, nativeOutcome } from './windows-owned-image-diagnostics.mjs';
 import { inboxEnvironment, parseProfile, formatProfile } from './windows-owned-image-host-profile.mjs';
+import { runOwnedImageTransport } from './windows-owned-image-transport.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const evidence = resolve(process.env.WINDOWS_OWNED_IMAGE_EVIDENCE ?? 'windows-owned-image-evidence');
@@ -17,28 +18,6 @@ let active = null;
 let diagnostic = { phase: 'host', category: 'host', tool: 'none', condition: 'none' };
 const signal = () => { interrupted = true; if (active) active.kill(); };
 process.on('SIGINT', signal); process.on('SIGTERM', signal);
-
-function run(application, args, maximum, timeout) {
-  return new Promise(resolveRun => {
-    let child;
-    const result = { exitCode: null, signal: null, capped: false, timedOut: false, stdout: '', stderr: '' };
-    let bytes = 0;
-    try { child = spawn(application, args, { windowsHide: true, shell: false, stdio: ['ignore', 'pipe', 'pipe'] }); }
-    catch { resolveRun({ ...result, capped: true }); return; }
-    active = child;
-    const timer = setTimeout(() => { result.timedOut = true; child.kill(); }, timeout);
-    const collect = stream => chunk => {
-      bytes += chunk.length;
-      if (bytes > maximum) { result.capped = true; child.kill(); return; }
-      result[stream] += chunk.toString('utf8');
-    };
-    child.stdout.on('data', collect('stdout')); child.stderr.on('data', collect('stderr'));
-    child.on('error', () => { result.capped = true; });
-    child.on('close', (code, sig) => {
-      clearTimeout(timer); active = null; result.exitCode = code; result.signal = sig; resolveRun(result);
-    });
-  });
-}
 
 try {
   if (process.platform !== 'win32' || process.arch !== 'x64' || process.version !== 'v24.22.1' || interrupted || existsSync(evidence)) throw new Error('host');
@@ -107,10 +86,11 @@ try {
       copyFileSync(join(evidence, 'native', 'fixture', 'canary.exe'), join(stage, 'fixture', name === 'alias-replacement' ? 'pin.exe' : 'canary.exe'));
       copyFileSync(join(evidence, 'native', 'fixture', 'canary.dll'), join(stage, 'fixture', 'canary.dll'));
     }
-    const result = await run(join(evidence, 'native', 'probe.exe'), [join(evidence, 'native'), name,
-      join(evidence, `${name}.details.private.tsv`)], limit, 12000);
+    const result = await runOwnedImageTransport(join(evidence, 'native', 'probe.exe'), [join(evidence, 'native'), name,
+      join(evidence, `${name}.details.private.tsv`)], limit, 12000, child => { active = child; });
     diagnostic = { phase: 'case', name, category: interrupted ? 'interrupted' : result.timedOut ? 'timeout'
       : result.capped ? 'cap' : result.signal !== null ? 'signal' : result.exitCode !== 0 || result.stderr ? 'native' : 'receipt' };
+    if (diagnostic.category === 'native') diagnostic.native = nativeOutcome(result);
     writeFileSync(join(evidence, `${name}.private.tsv`), result.stdout, { flag: 'wx' });
     writeFileSync(join(evidence, `${name}.stderr.private.txt`), result.stderr, { flag: 'wx' });
     const checked = validateNative(result.stdout, name);

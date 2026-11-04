@@ -6,11 +6,14 @@ on:
     branches:
       - codex/research-agentic-workflow-prototypes
     paths:
-      - .github/workflows/darwin-selector-timing.yml
-      - packages/software-factory/qualification/selector-timing*
+      - packages/software-factory/qualification/selector-timing*.mjs
+      - packages/software-factory/qualification/selector-timing*.json
+      # Workflow-only experiments deliberately change this control path.
+      - packages/software-factory/qualification/selector-timing-experiment.json
       - packages/software-factory/scripts/qualification-foundation.mjs
       - packages/software-factory/scripts/test.mjs
       - packages/software-factory/scripts/ordered-test-worker.mjs
+      - packages/software-factory/scripts/ordered-tests.mjs
       - packages/software-factory/test/fixtures/learning-extraction-fixture.mjs
       - packages/software-factory/test/fixtures/repository.mjs
       - packages/software-factory/test/notification-repository-fixture.mjs
