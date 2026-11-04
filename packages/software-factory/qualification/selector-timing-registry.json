@@ -1,0 +1,124 @@
+{
+  "fixtures.test.mjs": [
+    "fixture harness emits streams and a separate final result without a provider",
+    "fixture pauses after launch with a real child and releases without leaked pipes",
+    "repository fixture keeps committed, staged, unstaged, untracked and ignored content distinct",
+    "launch report becomes visible only after its complete JSON is available",
+    "fixture harness exposes needs-input, permission denial, malformed and crash outcomes",
+    "launch report collision preserves a pre-existing temporary file"
+  ],
+  "cli.test.mjs": [
+    "inspect-owner reports typed maintenance without its private claim credential",
+    "CLI help lists development invocation and history while incomplete input refuses startup",
+    "dashboard CLI offers an owner handoff and releases its own claim on termination",
+    "dashboard CLI refuses a cross-process host without closing its owner"
+  ],
+  "dispatch.test.mjs": [
+    "suite selection fails for unfinished suites, unmatched filters and unknown options",
+    "aggregate selection reports maintenance after learning registration",
+    "release bootstrap selection runs deterministic verification without a native archive",
+    "release candidate selection runs deterministic preparation checks without native acquisition",
+    "release publication selection runs deterministic ownership checks without native acquisition",
+    "release installed selection validates startup bindings without provider or desktop calls",
+    "release providers selection exercises public descriptor guards without native providers",
+    "release dependency ownership selection performs read-only inspection without native acquisition",
+    "release dependency claim foundation selection refuses unsupported admission without native acquisition",
+    "maintenance controller selection executes admission and handoff checks while incomplete operations refuse",
+    "notification group runs sender and bounded preflight checks without a desktop",
+    "learning extraction selection executes public proposal and source checks",
+    "Copilot provider selection executes deterministic adapter conformance only"
+  ],
+  "notification-selector-order.test.mjs": [
+    "registered file priority controls execution rather than alphabetic reporting",
+    "priority",
+    "tail",
+    "four worker slots start the priority files before queued files",
+    "a failed file still reports every selected case and exits nonzero",
+    "synthetic failure",
+    "synthetic success",
+    "empty, skipped and missing selected files cannot produce a passing run",
+    "hanging",
+    "tail",
+    "SIGTERM and SIGINT close a signal-resistant worker without starting the queued case",
+    "public AbortSignal closes a signal-resistant worker without starting the queued case",
+    "native kill control force-closes a signal-resistant child",
+    "Windows child.kill signals terminate without invoking the child handler"
+  ],
+  "notification-sender-uncertain.test.mjs": [
+    "a sender that never settles is bounded and remains unknown without changing exit status"
+  ],
+  "notification-success-uncertain.test.mjs": [
+    "uncertain opt-in success notice retains its original owner and saved success"
+  ],
+  "notification-reminder-uncertain.test.mjs": [
+    "a five-second nonsettling sender retains the group and ignores late acceptance"
+  ],
+  "notification-records-cli.test.mjs": [
+    "ordinary success stays quiet and an unbound development sender is explicitly unavailable",
+    "a failed result write preserves the reservation and owner for explicit recovery"
+  ],
+  "notification-records.test.mjs": [
+    "one initial combined issue is saved after finalization and submitted only once",
+    "sender rejection and bounded uncertainty keep the workflow result and saved question",
+    "a version 4 store is refused without mutation or automatic migration"
+  ],
+  "notification-records-success.test.mjs": [
+    "opted-in successful invocation saves one bounded notice without changing its outcome",
+    "question, independent failure and unknown cleanup survive unavailable delivery"
+  ],
+  "notification-reminders.test.mjs": [
+    "overlapping preference saves follow request order and leave the final timer consistent",
+    "disable and reenable during reservation cancel the old tick and wait a fresh interval",
+    "reminders stay off until enabled and wait a full host interval before one grouped send",
+    "restart waits a fresh interval and does not replay the reserved group",
+    "one group selects at most 100 unacknowledged finalized issues and reports truncation",
+    "disabling reminders cancels the scheduled tick and no host reuse adds a sender",
+    "host close waits for an in-flight submission and then releases a clean claim",
+    "rejected and malformed sender results retain the dashboard claim as unknown",
+    "failed result persistence retains the reserved identity and dashboard claim",
+    "host close waits for an unsettled reminder result write",
+    "closing while reservation is unsettled prevents submission and waits for its result write",
+    "a late result cannot mutate a replacement dashboard claim",
+    "normal opening refuses a version 6 store without changing it"
+  ],
+  "notification-senders.test.mjs": [
+    "fixed native commands pass filtered title and body as data",
+    "Windows message cannot select an executable or identity",
+    "invalid and oversized text is refused before any process starts",
+    "timeout over five seconds is rejected without touching the desktop",
+    "missing notification request fails with a fixed result",
+    "real child submission waits for clean exit and closed pipes",
+    "missing executable, unavailable service, denied setting and nonzero exit have safe reasons",
+    "lowercase environment password is filtered from public notification command",
+    "deadline kills an owned child and does not report submission"
+  ],
+  "notification-preflight.test.mjs": [
+    "an unresolved Windows preflight reaches the deadline and cannot later launch"
+  ],
+  "notification-pipe.test.mjs": [
+    "inherited pipe beyond the deadline is unknown, never submitted",
+    "Windows helper exit codes take priority over diagnostic wording after real child readiness",
+    "missing owned Windows registration has its own fixed reason"
+  ],
+  "learning.test.mjs": [
+    "explicit extraction saves examined ended sources and a justified empty result without changing active inputs",
+    "failed, needs-input and interrupted invocations are valid explicit learning sources"
+  ],
+  "learning-extraction-sources.test.mjs": [
+    "explicit workspace-write override cannot make a modifying extraction succeed",
+    "malformed, unknown, unended and foreign source references fail before agent extraction",
+    "needs-input and infrastructure errors from extraction retain ordinary runner outcomes"
+  ],
+  "learning-extraction-evidence.test.mjs": [
+    "a proposal retains exact supporting and contrary references supplied to the agent",
+    "partial and pruned capture states and bounded history pages remain explicit in saved result",
+    "a complete capture with an unreadable first text page is reported as unexamined",
+    "unsupported proposed evidence cannot be reported as examined",
+    "a partial source capture cannot serve as an exact candidate reference",
+    "a fully captured source can be cited as the proposed candidate"
+  ],
+  "learning-extraction-paths.test.mjs": [
+    "extraction rejects diff paths that disagree with the single declared target",
+    "extraction accepts a new-file diff without applying it"
+  ]
+}
