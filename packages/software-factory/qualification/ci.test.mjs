@@ -193,3 +193,40 @@ test('OpenCode source-contract qualification stays separate from canonical provi
     assert.equal(refused.stdout, '');
   }
 });
+
+
+test('repair inspection is a read-only qualification area and does not advertise maintenance apply', () => {
+  const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const selected = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'repair-inspection'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(selected.status, 1, selected.stdout + selected.stderr);
+  for (const name of ['public external inspection authenticates retained installation', 'intact recorded upgrade resume', 'live original launcher']) {
+    assert.match(selected.stdout + selected.stderr, new RegExp(name));
+  }
+  assert.doesNotMatch(selected.stderr, /no tests match supplied filters/);
+  for (const args of [['maintenance', '--operation', 'repair'], ['maintenance']]) {
+    const refused = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000, env });
+    assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+    assert.match(refused.stderr, /no tests match supplied filters|not implemented/);
+    assert.equal(refused.stdout, '');
+  }
+});
+
+
+test('repair inspection native jobs retain independent Linux and Darwin budgets and exact inputs', () => {
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-repair-inspection.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /os: ubuntu-24.04\n\s+target: linux-x64/);
+  assert.match(workflow, /os: macos-15\n\s+target: darwin-arm64/);
+  assert.doesNotMatch(workflow, /windows-|continue-on-error|--test-name-pattern/);
+  assert.match(workflow, /python-version: '3.13.14'/);
+  assert.match(workflow, /qualification-bootstrap\.mjs/);
+  assert.match(workflow, /ci --ignore-scripts --no-audit --no-fund/);
+  assert.match(workflow, /--prefix toolchain/);
+  assert.match(workflow, /FACTORY_ATOMIC_PYTHON:.*steps\.python\.outputs\.python-path/);
+  assert.match(workflow, /FACTORY_TEST_NPM_CACHE_SEED:.*runner\.temp/);
+  assert.match(workflow, /timeout-minutes: 20[\s\S]*run: node packages\/software-factory\/scripts\/test\.mjs qualification --area repair-inspection/);
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(foundation, /repair-inspection/);
+});
