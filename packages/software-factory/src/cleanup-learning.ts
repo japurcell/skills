@@ -1,4 +1,5 @@
 import { isDeepStrictEqual as equal } from 'node:util';
+import { actionReferenceInterpreter } from './cleanup-actions.js';
 import { cleanupCursor, cleanupHash, cleanupId, cleanupObject, type CleanupAttemptFact, type CleanupCaptureHeader,
   type CleanupInvocationFact, type CleanupEventRead } from './cleanup-read.js';
 import type { CleanupBlocker, CleanupEdgeKind, CleanupNode, ReferenceAnalysis } from './cleanup-references.js';
@@ -31,7 +32,7 @@ type Evaluation = { version: 1; suppliedReferences: { extraction: { invocationId
     review: { profile: string|null; purpose:'review';requestedPermissions:'read-only';reuse:false } };
   cases: CaseResult[]; limitations: EvaluationLimitation[]; contraryCases: string[]; assessment: 'supported'|'unsupported'|'inconclusive';
   resolved?: { baselineSha256: string; candidateSha256: string } };
-interface LearningGraph {
+export interface LearningGraph {
   invocations: ReadonlyMap<string,CleanupInvocationFact>; attempts: ReadonlyMap<string,CleanupAttemptFact>;
   headers: ReadonlyMap<string,CleanupCaptureHeader>;
   read(header: CleanupCaptureHeader, limit: number|null, prefix?: readonly Chunk[]): { text: string|null; sha256: string }|null;
@@ -152,7 +153,7 @@ class Refusal extends Error {}
 /** Internal closed learning interpreter. The caller supplies only the already bounded snapshot readers. */
 export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalysis['reports'] {
   const recognizedAgents=new Set<string>();
-  const reports: {key:{invocationId:string;captureId:string};format:'extraction-v1'|'evaluation-v1';sha256:string}[]=[];
+  const reports: ReferenceAnalysis['reports'][number][]=[];
   const fail = (code: CleanupBlocker['code'],node: CleanupNode): never => { graph.block({code,node});throw new Refusal(); };
   function require(value: unknown,node: CleanupNode,code: CleanupBlocker['code']='opaque'): asserts value {
     if(!value)fail(code,node);
@@ -305,7 +306,7 @@ export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalys
       // Target applicability is not reference completeness. Exact early outcomes
       // can be complete without executing a diff, Git or a proposed target action.
       require(expected.length>0&&equal(report.limitations,expected)&&report.contraryCases.length===0,node,'ownership');
-      return {raw};
+      return {raw,report};
     }
     require(!expected.length&&equal(report.resolved,{baselineSha256:cleanupHash(variants.baseline),candidateSha256:cleanupHash(variants.candidate)}),node,'digest');
     require(report.cases.length===report.settings.cases.length,node,'ownership');
@@ -358,12 +359,15 @@ export function analyzeLearningReferences(graph: LearningGraph): ReferenceAnalys
       expected.push({kind:'no_observed_improvement'});assessment='inconclusive';
     }
     require(equal(report.limitations,expected)&&equal(report.contraryCases,contrary)&&report.assessment===assessment,node,'digest');
-    return {raw};
+    return {raw,report};
   }
+  const actionReport=actionReferenceInterpreter(graph,evaluationReport);
   for(const header of [...graph.headers.values()].filter(header=>header.channel==='report').sort((a,b)=>a.invocationId<b.invocationId?-1:a.invocationId>b.invocationId?1:a.id<b.id?-1:1)) {
     graph.tick();const node=capture(header.invocationId,header.id);
     try { const owner=graph.invocations.get(header.invocationId);
-      if(owner?.workflow==='.factory/workflows/learn.ts') {const result=extractionReport(header);const fact={key:{invocationId:header.invocationId,captureId:header.id},format:'extraction-v1' as const,sha256:result.raw.sha256};graph.retain(fact);reports.push(fact);graph.report(fact);}
+      const action=actionReport(header);
+      if(action.handled) {if(action.fact){graph.retain(action.fact);reports.push(action.fact);graph.report(action.fact);}}
+      else if(owner?.workflow==='.factory/workflows/learn.ts') {const result=extractionReport(header);const fact={key:{invocationId:header.invocationId,captureId:header.id},format:'extraction-v1' as const,sha256:result.raw.sha256};graph.retain(fact);reports.push(fact);graph.report(fact);}
       else if(owner?.workflow==='.factory/workflows/evaluate.ts') {const result=evaluationReport(header);const fact={key:{invocationId:header.invocationId,captureId:header.id},format:'evaluation-v1' as const,sha256:result.raw.sha256};graph.retain(fact);reports.push(fact);graph.report(fact);}
       else graph.block({code:'opaque',node});
     } catch(error) {if(!(error instanceof Refusal))throw error;}
