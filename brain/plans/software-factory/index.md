@@ -150,3 +150,5 @@
 - [Windows Phase B metadata-only blocked observation](research/windows-metadata-phase-b-observation-2026-11-04.md)
 
 - [VS18 discovery compatibility and deferred SDK provenance](research/windows-metadata-discovery-provenance-contract-2026-11-04.md)
+
+- [Literal18 changed metadata observation: finite refusal](research/windows-metadata-vs18-observation-2026-11-04.md)
