@@ -662,7 +662,8 @@ test('metadata workflow prints only the closed refusal markers and never adverti
   assert.match(workflow, /\[string\]::Equals\(\$literal, \$Value, \[StringComparison\]::Ordinal\)/);
   assert.match(branch[1], /^\s*\[Console\]::Out\.WriteLine\(\[string\]\$ready\[0\]\)\s*$/);
   assert.doesNotMatch(branch[1], /GITHUB_OUTPUT|artifacts_ready|exit|prepare/i);
-  assert.match(workflow, /\$ready\[0\] -ceq 'metadata-artifacts-ready'[\s\S]*AppendAllText\(\$env:GITHUB_OUTPUT[\s\S]*exit \$collectionExit/);
+  assert.match(workflow, /\$ready\[0\] -is \[string\]/);
+  assert.match(workflow, /\[string\]::Equals\(\$ready\[0\], 'metadata-artifacts-ready', \[StringComparison\]::Ordinal\)[\s\S]*AppendAllText\(\$env:GITHUB_OUTPUT[\s\S]*exit \$collectionExit/);
   assert.match(workflow, /throw 'Metadata collection refused without export'/);
   assert.match(workflow, /steps\.collect\.outputs\.artifacts_ready == 'true'/);
   assert.doesNotMatch(workflow, /continue-on-error/);

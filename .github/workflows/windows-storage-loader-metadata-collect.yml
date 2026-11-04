@@ -76,7 +76,7 @@ jobs:
             }
             return $false
           }
-          if (($collectionExit -eq 0 -or $collectionExit -eq 1) -and $ready.Count -eq 1 -and $ready[0] -ceq 'metadata-artifacts-ready') {
+          if (($collectionExit -eq 0 -or $collectionExit -eq 1) -and $ready.Count -eq 1 -and ($ready[0] -is [string]) -and [string]::Equals($ready[0], 'metadata-artifacts-ready', [StringComparison]::Ordinal)) {
             [IO.File]::AppendAllText($env:GITHUB_OUTPUT, "artifacts_ready=true`n", [Text.UTF8Encoding]::new($false))
             # Exit1 remains a failed collection step and failed job after upload.
             exit $collectionExit
