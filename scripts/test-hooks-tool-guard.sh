@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/security-test-support.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/security-test-support.sh"
 
 SECURITY_PROVIDER=copilot
 SECURITY_PROVIDER_LABEL=Copilot
