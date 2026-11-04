@@ -1,0 +1,41 @@
+{
+  "provenance": {
+    "kind": "synthetic source-contract fixtures, not native transcripts",
+    "package": "@opencode/cli@2.1.3",
+    "commit": "bb25a2f4a3f3f04d7c344bec0c0574ea3510b3b1",
+    "terminalEvidence": "unknown"
+  },
+  "records": {
+    "start": { "type": "step_start", "timestamp": 1000, "sessionID": "ses_fixture", "part": { "id": "prt_start", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "step-start" } },
+    "before": { "type": "text", "timestamp": 1001, "sessionID": "ses_fixture", "part": { "id": "prt_before", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "text", "text": "PRIVATE_EARLIER_TEXT", "time": { "start": 1000, "end": 1001 } } },
+    "reasoning": { "type": "reasoning", "timestamp": 1001, "sessionID": "ses_fixture", "part": { "id": "prt_reasoning", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "reasoning", "text": "PRIVATE_REASONING", "time": { "start": 1000, "end": 1001 } } },
+    "tool": { "type": "tool_use", "timestamp": 1002, "sessionID": "ses_fixture", "part": { "partID": "prt_tool", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "tool", "id": "call_fixture", "tool": "read", "state": { "status": "completed", "input": { "path": "DO_NOT_READ" }, "output": "PRIVATE_TOOL_OUTPUT", "title": "read", "metadata": { "content": [], "metadata": {}, "providerResult": { "executed": true } }, "time": { "start": 1001, "end": 1002 } } } },
+    "deniedTool": { "type": "tool_use", "timestamp": 1002, "sessionID": "ses_fixture", "part": { "partID": "prt_denied", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "tool", "id": "call_denied", "tool": "write", "state": { "status": "error", "input": { "path": "DO_NOT_WRITE" }, "error": "PRIVATE_DENIED_ACTION", "metadata": { "providerResult": { "executed": false } }, "time": { "start": 1001, "end": 1002 } } } },
+    "finish": { "type": "step_finish", "timestamp": 1003, "sessionID": "ses_fixture", "part": { "id": "prt_finish", "sessionID": "ses_fixture", "messageID": "msg_before", "type": "step-finish", "reason": "tool-calls", "cost": 0, "tokens": { "input": 0, "output": 0, "reasoning": 0, "cache": { "read": 0, "write": 0 } } } },
+    "nextStart": { "type": "step_start", "timestamp": 1004, "sessionID": "ses_fixture", "part": { "id": "prt_next", "sessionID": "ses_fixture", "messageID": "msg_final", "type": "step-start" } },
+    "final": { "type": "text", "timestamp": 1005, "sessionID": "ses_fixture", "part": { "id": "prt_final", "sessionID": "ses_fixture", "messageID": "msg_final", "type": "text", "text": "candidate 🙂", "time": { "start": 1004, "end": 1005 } } },
+    "projectedTail": { "type": "text", "timestamp": 1006, "sessionID": "ses_fixture", "part": { "id": "prt_final_text-0", "sessionID": "ses_fixture", "messageID": "msg_final", "type": "text", "text": " plus tail", "time": { "start": 1004, "end": 1006 } } },
+    "finalFinish": { "type": "step_finish", "timestamp": 1006, "sessionID": "ses_fixture", "part": { "id": "prt_final_finish", "sessionID": "ses_fixture", "messageID": "msg_final", "type": "step-finish", "reason": "stop", "cost": 0, "tokens": { "input": 0, "output": 0, "reasoning": 0, "cache": { "read": 0, "write": 0 } } } },
+    "error": { "type": "error", "timestamp": 1006, "sessionID": "ses_fixture", "error": { "type": "aborted", "message": "PRIVATE_NATIVE_ERROR" } },
+    "factoryResult": { "type": "text", "timestamp": 1005, "sessionID": "ses_fixture", "part": { "id": "prt_factory_result", "sessionID": "ses_fixture", "messageID": "msg_final", "type": "text", "text": "{\"kind\":\"result\",\"payload\":{\"summary\":\"candidate\"}}", "time": { "start": 1004, "end": 1005 } } }
+  },
+  "scenarios": [
+    { "name": "one text without step records", "records": ["final"], "text": "candidate 🙂" },
+    { "name": "completed tool is a segmentation boundary, not assistant text", "records": ["start", "before", "reasoning", "tool", "finish", "nextStart", "final", "finalFinish"], "text": "candidate 🙂" },
+    { "name": "reconciled suffix follows a nonterminal step finish", "records": ["final", "finalFinish", "projectedTail"], "text": "candidate 🙂 plus tail" },
+    { "name": "denial followed by plausible final text and exit zero", "records": ["deniedTool", "nextStart", "final", "finalFinish"], "reason": "tool-failure" },
+    { "name": "denial followed by a factory-shaped result JSON and exit zero", "records": ["deniedTool", "nextStart", "factoryResult", "finalFinish"], "reason": "tool-failure" },
+    { "name": "factory-shaped result JSON still lacks native terminal evidence", "records": ["factoryResult", "finalFinish"], "text": "{\"kind\":\"result\",\"payload\":{\"summary\":\"candidate\"}}" },
+    { "name": "native error followed by plausible final text and exit zero", "records": ["error", "final"], "reason": "native-error" }
+  ],
+  "indistinguishableEndings": [
+    { "sourceBranch": "session.execution.succeeded", "records": ["final", "finalFinish"], "exitCode": 0 },
+    { "sourceBranch": "session.execution.interrupted reason=user with local interrupted flag false", "records": ["final", "finalFinish"], "exitCode": 0 }
+  ],
+  "literalPromptData": [
+    "/help\nKeep the leading slash literal.",
+    "@file ./DO_NOT_READ\n@agent:DO_NOT_INVOKE",
+    "@mcp:server/resource mcp://DO_NOT_CONNECT/resource file:///DO_NOT_READ https://example.invalid/DO_NOT_FETCH",
+    "`$(DO_NOT_EXECUTE)` \"quotes\"\r\nUnicode 🙂 �"
+  ]
+}
