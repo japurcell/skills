@@ -15,6 +15,12 @@ import { assertLocalPlacement } from './placement.js';
 import { applyForwardStep, assertForwardIntegrity, assertForwardRuntime, forwardCounts, knownForwardShape } from './schema-forward.js';
 import type { ForwardShape } from './schema-forward.js';
 import type { Admission } from './accounting.js';
+import { assertCleanupId, cleanupBounds, cleanupCursor, cleanupHash, cleanupId, cleanupIdentity, cleanupObject, cleanupOpaque,
+  decodeCleanupAttempt, decodeCleanupEvent, decodeCleanupHeader, decodeCleanupInvocation } from './cleanup-read.js';
+import type { CleanupAttemptFact, CleanupAttemptRead, CleanupEventRead, CleanupCaptureHeader, CleanupCaptureKey, CleanupCaptureMeasurement, CleanupCapturePage, CleanupInvocationFact, CleanupOpaque, CleanupPage,
+  CleanupPageInput, CleanupSnapshot } from './cleanup-read.js';
+export type { CleanupAttemptFact, CleanupAttemptRead, CleanupEventRead, CleanupCaptureHeader, CleanupCaptureKey, CleanupCaptureMeasurement, CleanupCapturePage, CleanupInvocationFact, CleanupOpaque, CleanupPage,
+  CleanupPageInput, CleanupSnapshot } from './cleanup-read.js';
 
 export interface Owner { host: string; pid: number; start: string | null }
 export interface InstalledCompletion {
@@ -184,6 +190,48 @@ export function openRepositoryStore(commonDir: string) {
 /** Trusted controller path. Ordinary callers still refuse a bootstrap marker. */
 export function openMaintenanceStore(commonDir: string) {
   return openStore(commonDir, true);
+}
+
+export type CleanupReadStore = Pick<RepositoryStore, 'close' | 'readCleanupSnapshot' | 'pageCleanupInvocationFacts'
+  | 'pageCleanupAttemptFacts' | 'pageCleanupCaptureHeaders' | 'measureCleanupCaptures' | 'readCleanupCapture' | 'readCleanupAttempt' | 'readCleanupEvent'>;
+
+/** Existing-only view. All pages share one read-only SQLite transaction until close(). */
+export function openCleanupReadStore(commonDir: string): CleanupReadStore {
+  const location = paths(commonDir, false), before = lstatSync(location.database, { bigint: true });
+  if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1n || before.ino === 0n
+    || process.platform !== 'win32' && ((before.mode & 0o077n) !== 0n || before.uid !== BigInt(process.getuid!())))
+    throw new Error('invalid cleanup store file');
+  const assertIdentity = () => {
+    const file = lstatSync(location.database, { bigint: true });
+    if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1n || file.dev !== before.dev || file.ino !== before.ino)
+      throw new Error('cleanup store identity changed');
+    assertForwardSidecars(location.database);
+    for (const suffix of ['-wal','-shm','-journal']) {
+      const path = `${location.database}${suffix}`;
+      if (!pathAbsent(path) && process.platform !== 'win32' && lstatSync(path).uid !== process.getuid!())
+        throw new Error('cleanup sidecar owner differs');
+    }
+  };
+  assertIdentity();
+  const database = new DatabaseSync(location.database, { readOnly: true, timeout: 100 });
+  try {
+    database.exec('BEGIN');
+    if (knownForwardShape(database) !== 'v7') throw new Error('cleanup requires current schema');
+    assertForwardIntegrity(database);
+    const store = new RepositoryStore(database);
+    const read = <T>(action: () => T) => { assertIdentity(); const result = action(); assertIdentity(); return result; };
+    read(() => store.readCleanupSnapshot()); // Establish and validate the WAL endmark before returning the view.
+    return Object.freeze({
+      close: () => database.close(), readCleanupSnapshot: () => read(() => store.readCleanupSnapshot()),
+      pageCleanupInvocationFacts: (input: CleanupPageInput = {}) => read(() => store.pageCleanupInvocationFacts(input)),
+      pageCleanupAttemptFacts: (input: CleanupPageInput = {}) => read(() => store.pageCleanupAttemptFacts(input)),
+      pageCleanupCaptureHeaders: (input: CleanupPageInput = {}) => read(() => store.pageCleanupCaptureHeaders(input)),
+      measureCleanupCaptures: (keys: CleanupCaptureKey[]) => read(() => store.measureCleanupCaptures(keys)),
+      readCleanupCapture: (input: Parameters<RepositoryStore['readCleanupCapture']>[0]) => read(() => store.readCleanupCapture(input)),
+      readCleanupAttempt: (input: Parameters<RepositoryStore['readCleanupAttempt']>[0]) => read(() => store.readCleanupAttempt(input)),
+      readCleanupEvent: (input: Parameters<RepositoryStore['readCleanupEvent']>[0]) => read(() => store.readCleanupEvent(input)),
+    });
+  } catch (error) { database.close(); throw error; }
 }
 
 /** Existing-only historical opener. Never creates, configures, or migrates storage. */
@@ -438,6 +486,254 @@ export class RepositoryStore {
   private readonly blockedInvocations = new Set<string>();
   blockAdmissions(invocationId: string) { this.blockedInvocations.add(invocationId); }
   close() { this.database.close(); }
+
+  /** A deferred read transaction, never the writer's BEGIN IMMEDIATE admission path. */
+  private cleanupRead<T>(action: () => T): T {
+    const own = !this.database.isTransaction;
+    if (own) this.database.exec('BEGIN');
+    try {
+      const value = action();
+      if (own) this.database.exec('COMMIT');
+      return value;
+    } catch (error) {
+      if (own && this.database.isTransaction) this.database.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  private cleanupHighWater(table: 'invocations' | 'attempts' | 'captures' | 'observation_events') {
+    if (this.database.prepare(`SELECT 1 FROM ${table} WHERE ${table === 'observation_events' ? 'cursor' : 'rowid'}<=0 LIMIT 1`).get())
+      throw new Error('cleanup source cursor outside supported range');
+    const statement = this.database.prepare(`SELECT coalesce(max(${table === 'observation_events' ? 'cursor' : 'rowid'}),0) AS cursor FROM ${table}`);
+    statement.setReadBigInts(true);
+    const cursor = String(statement.get()!['cursor']); cleanupCursor(cursor); return cursor;
+  }
+
+  readCleanupSnapshot(): CleanupSnapshot {
+    return this.cleanupRead(() => {
+      const repository = this.database.prepare(`SELECT
+        CASE WHEN octet_length(id)<=256 THEN id END AS id,
+        CASE WHEN octet_length(release)<=256 THEN release END AS release,
+        CASE WHEN octet_length(state)<=256 THEN state END AS state FROM repository LIMIT 2`).all();
+      const row = repository[0];
+      if (repository.length !== 1 || !row || !cleanupId(row['id']) || !cleanupId(row['release'])
+        || !['ready','incomplete','absent'].includes(String(row['state']))
+        || this.database.prepare('PRAGMA user_version').get()?.['user_version'] !== 7) throw new Error('invalid cleanup repository');
+      const path = this.database.prepare('PRAGMA database_list').get()?.['file'];
+      if (typeof path !== 'string' || !path) throw new Error('cleanup database identity unavailable');
+      const file = lstatSync(path, { bigint: true });
+      if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1n || file.ino === 0n) throw new Error('invalid cleanup database identity');
+      const count = this.database.prepare('SELECT count(*) AS count FROM owner_claims'); count.setReadBigInts(true);
+      const claimCount = String(count.get()!['count']);
+      const claims = this.database.prepare(`SELECT rowid AS cursor,
+        CASE WHEN octet_length(id)<=256 THEN id END AS id,
+        CASE WHEN octet_length(kind)<=256 THEN kind END AS kind, octet_length(data) AS bytes,
+        CASE WHEN octet_length(data)<=8192 THEN data END AS data FROM owner_claims ORDER BY rowid LIMIT 100`);
+      claims.setReadBigInts(true);
+      const claimFacts: CleanupSnapshot['recovery']['claimFacts'] = [];
+      let blocked = BigInt(claimCount) > 100n;
+      for (const claim of claims.iterate()) {
+        let valid = false;
+        if (typeof claim['data'] === 'string') {
+          try {
+            const data: unknown = JSON.parse(claim['data']);
+            valid = cleanupObject(data) && data.id === claim['id'] && data.kind === claim['kind']
+              && cleanupId(claim['id']) && ['worktree','dashboard','maintenance'].includes(String(claim['kind']));
+          } catch { /* Fixed opaque reason below; claim text never appears in diagnostics. */ }
+        }
+        if (valid) claimFacts.push({ ...cleanupIdentity(claim), status: 'known', kind: String(claim['kind']) });
+        else { claimFacts.push(cleanupOpaque(claim, BigInt(String(claim['bytes'])) > 8192n ? 'oversized' : 'malformed')); blocked = true; }
+      }
+      const repositoryState = String(row['state']);
+      return { repositoryId: row['id'], release: row['release'], schema: 7, databaseIdentity: `${file.dev}:${file.ino}`,
+        highWater: { invocations: this.cleanupHighWater('invocations'), attempts: this.cleanupHighWater('attempts'),
+          captures: this.cleanupHighWater('captures'), events: this.cleanupHighWater('observation_events') },
+        recovery: { authority: 'unassessed', repositoryState, claimCount, claimFacts, opaque: blocked,
+          sha256: blocked ? null : cleanupHash(JSON.stringify({ repositoryState, claimCount, claimFacts })) } };
+    });
+  }
+
+  private cleanupFacts(table: 'invocations' | 'attempts', input: CleanupPageInput): CleanupPage<CleanupInvocationFact | CleanupAttemptFact | CleanupOpaque> {
+    return this.cleanupRead(() => {
+      const b = cleanupBounds(input, this.cleanupHighWater(table));
+      const columns = table === 'invocations'
+        ? 'CASE WHEN octet_length(run_id)<=256 THEN run_id END AS run_id,CASE WHEN octet_length(worktree_id)<=256 THEN worktree_id END AS worktree_id'
+        : `CASE WHEN octet_length(invocation_id)<=256 THEN invocation_id END AS invocation_id,
+          CASE WHEN octet_length(operation_id)<=256 THEN operation_id END AS operation_id,
+          CASE WHEN octet_length(kind)<=256 THEN kind END AS kind,
+          CASE WHEN occupied IN (0,1) THEN occupied END AS occupied`;
+      const statement = this.database.prepare(`SELECT rowid AS cursor,CASE WHEN octet_length(id)<=256 THEN id END AS id,
+        ${columns},octet_length(data) AS bytes,CASE WHEN octet_length(data)<=? THEN data END AS data
+        FROM ${table} WHERE rowid>? AND rowid<=? ORDER BY rowid LIMIT ?`);
+      statement.setReadBigInts(true);
+      const result: CleanupPage<CleanupInvocationFact | CleanupAttemptFact | CleanupOpaque> = { records: [], nextCursor: b.after, through: b.through, hasMore: false, blocked: null };
+      let bytes = 512; // Reserve the bounded page envelope, cursor growth and refusal diagnostic.
+      for (const row of statement.iterate(Math.min(65536,b.byteBudget), b.a, b.t, b.limit + 1)) {
+        if (result.records.length === b.limit) { result.hasMore = true; break; }
+        const fact = table === 'invocations' ? decodeCleanupInvocation(row) : decodeCleanupAttempt(row);
+        const size = Buffer.byteLength(JSON.stringify(fact)) + 1;
+        if (bytes + size > b.byteBudget) { result.hasMore = true; result.blocked = 'byte-budget'; break; }
+        bytes += size; result.records.push(fact); result.nextCursor = String(row['cursor']);
+      }
+      return result;
+    });
+  }
+
+  pageCleanupInvocationFacts(input: CleanupPageInput = {}) {
+    return this.cleanupFacts('invocations', input) as CleanupPage<CleanupInvocationFact | CleanupOpaque>;
+  }
+  pageCleanupAttemptFacts(input: CleanupPageInput = {}) {
+    return this.cleanupFacts('attempts', input) as CleanupPage<CleanupAttemptFact | CleanupOpaque>;
+  }
+  pageCleanupCaptureHeaders(input: CleanupPageInput = {}): CleanupPage<CleanupCaptureHeader | CleanupOpaque> {
+    return this.cleanupRead(() => {
+      const b = cleanupBounds(input, this.cleanupHighWater('captures'));
+      const statement = this.database.prepare(`SELECT rowid AS cursor,
+        CASE WHEN octet_length(id)<=256 THEN id END AS id,
+        CASE WHEN octet_length(invocation_id)<=256 THEN invocation_id END AS invocation_id,
+        CASE WHEN octet_length(attempt_id)<=256 THEN attempt_id END AS attempt_id,
+        CASE WHEN attempt_id IS NULL OR octet_length(attempt_id)<=256 THEN 1 ELSE 0 END AS identity_valid,
+        (EXISTS(SELECT 1 FROM invocations WHERE id=captures.invocation_id) AND
+          (attempt_id IS NULL OR EXISTS(SELECT 1 FROM attempts WHERE id=captures.attempt_id AND invocation_id=captures.invocation_id))) AS owner_valid,
+        CASE WHEN octet_length(channel)<=256 THEN channel END AS channel,
+        CASE WHEN octet_length(state)<=256 THEN state END AS state,
+        CASE WHEN typeof(sequence)='integer' THEN sequence END AS sequence,
+        (SELECT coalesce(sum(octet_length(text)),0) FROM capture_chunks WHERE capture_id=captures.id) AS bytes
+        FROM captures WHERE rowid>? AND rowid<=? ORDER BY rowid LIMIT ?`);
+      statement.setReadBigInts(true);
+      const result: CleanupPage<CleanupCaptureHeader | CleanupOpaque> = { records: [], nextCursor: b.after, through: b.through, hasMore: false, blocked: null };
+      let bytes = 512;
+      for (const row of statement.iterate(b.a, b.t, b.limit + 1)) {
+        if (result.records.length === b.limit) { result.hasMore = true; break; }
+        const header = decodeCleanupHeader(row), size = Buffer.byteLength(JSON.stringify(header)) + 1;
+        if (bytes + size > b.byteBudget) { result.hasMore = true; result.blocked = 'byte-budget'; break; }
+        result.records.push(header); bytes += size; result.nextCursor = String(row['cursor']);
+      }
+      return result;
+    });
+  }
+
+  private cleanupCaptureHeader(captureId: string) {
+    const statement = this.database.prepare(`SELECT rowid AS cursor,
+      CASE WHEN octet_length(id)<=256 THEN id END AS id,
+      CASE WHEN octet_length(invocation_id)<=256 THEN invocation_id END AS invocation_id,
+      CASE WHEN octet_length(attempt_id)<=256 THEN attempt_id END AS attempt_id,
+      CASE WHEN attempt_id IS NULL OR octet_length(attempt_id)<=256 THEN 1 ELSE 0 END AS identity_valid,
+      (EXISTS(SELECT 1 FROM invocations WHERE id=captures.invocation_id) AND
+        (attempt_id IS NULL OR EXISTS(SELECT 1 FROM attempts WHERE id=captures.attempt_id AND invocation_id=captures.invocation_id))) AS owner_valid,
+      CASE WHEN octet_length(channel)<=256 THEN channel END AS channel,
+      CASE WHEN octet_length(state)<=256 THEN state END AS state,
+      CASE WHEN typeof(sequence)='integer' THEN sequence END AS sequence,
+      (SELECT coalesce(sum(octet_length(text)),0) FROM capture_chunks WHERE capture_id=captures.id) AS bytes,
+      (SELECT count(*) FROM capture_chunks WHERE capture_id=captures.id) AS chunk_count,
+      (SELECT CASE WHEN typeof(coalesce(max(sequence),0))='integer' THEN coalesce(max(sequence),0) END FROM capture_chunks WHERE capture_id=captures.id) AS chunk_last
+      FROM captures WHERE id=?`);
+    statement.setReadBigInts(true);
+    return statement.get(captureId);
+  }
+
+  measureCleanupCaptures(keys: CleanupCaptureKey[]): CleanupCaptureMeasurement[] {
+    if (!Array.isArray(keys) || keys.length > 100) throw new Error('invalid cleanup measurement keys');
+    const seen = new Set<string>();
+    for (const key of keys) {
+      assertCleanupId(key.invocationId); assertCleanupId(key.captureId);
+      const identity = JSON.stringify([key.invocationId,key.captureId]);
+      if (seen.has(identity)) throw new Error('duplicate cleanup measurement key');
+      seen.add(identity);
+    }
+    return this.cleanupRead(() => keys.map(key => {
+      const row = this.cleanupCaptureHeader(key.captureId);
+      if (!row || row['invocation_id'] !== key.invocationId) return { ...key, status: row ? 'foreign' : 'missing', logicalPayloadBytes: null, header: null };
+      const header = decodeCleanupHeader(row);
+      if (header.status === 'opaque') return { ...key, status: 'opaque', logicalPayloadBytes: null, header };
+      return { ...key, status: header.state === 'pruned' ? 'pruned' : header.logicalPayloadBytes === '0' ? 'empty' : 'present',
+        logicalPayloadBytes: header.logicalPayloadBytes, header };
+    }));
+  }
+
+  /** Exact ownership and a SQL byte preflight precede every payload string crossing into JavaScript. */
+  readCleanupCapture(input: CleanupCaptureKey & { after?: string; limit?: number; byteBudget?: number }): CleanupCapturePage {
+    assertCleanupId(input.invocationId); assertCleanupId(input.captureId);
+    const after = input.after ?? '0', a = cleanupCursor(after), limit = input.limit ?? 20, byteBudget = input.byteBudget ?? 262144;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 20 || !Number.isSafeInteger(byteBudget)
+      || byteBudget < 1 || byteBudget > 262144) throw new Error('invalid cleanup capture page');
+    return this.cleanupRead(() => {
+      const row = this.cleanupCaptureHeader(input.captureId);
+      const result: CleanupCapturePage = { status: row ? 'foreign' : 'missing', header: null, chunks: [], nextSequence: after, hasMore: false, blocked: null };
+      if (!row || row['invocation_id'] !== input.invocationId) return result;
+      const header = decodeCleanupHeader(row); result.header = header;
+      if (header.status === 'opaque') { result.status = 'opaque'; result.blocked = 'unknown-header'; return result; }
+      if (a > BigInt(header.lastSequence)) throw new Error('invalid cleanup capture continuation');
+      if (header.state === 'pruned') { result.status = 'pruned'; return result; }
+      result.status = 'present';
+      if (row['chunk_count'] !== row['sequence'] || row['chunk_last'] !== row['sequence']) {
+        result.blocked = 'sequence-gap'; result.hasMore = true; return result;
+      }
+      const statement = this.database.prepare(`SELECT CASE WHEN typeof(sequence)='integer' THEN sequence END AS sequence,octet_length(text) AS bytes,
+        CASE WHEN octet_length(text)<=? THEN text END AS text FROM capture_chunks
+        WHERE capture_id=? AND sequence>? ORDER BY sequence LIMIT ?`);
+      statement.setReadBigInts(true);
+      let bytes = Buffer.byteLength(JSON.stringify(result)) + 64;
+      for (const chunk of statement.iterate(Math.min(65536,byteBudget),input.captureId,a,limit)) {
+        if (chunk['sequence'] !== BigInt(result.nextSequence) + 1n) { result.blocked = 'sequence-gap'; break; }
+        if (typeof chunk['text'] !== 'string') { result.blocked = 'byte-budget'; break; }
+        const item = { sequence: String(chunk['sequence']), text: chunk['text'] };
+        if (Buffer.from(item.text).toString('utf8') !== item.text || BigInt(Buffer.byteLength(item.text)) !== chunk['bytes']) {
+          result.blocked = 'sequence-gap'; break;
+        }
+        const size = Buffer.byteLength(JSON.stringify(item)) + 1;
+        if (bytes + size > byteBudget) { result.blocked = 'byte-budget'; break; }
+        result.chunks.push(item); result.nextSequence = item.sequence; bytes += size;
+      }
+      result.hasMore = BigInt(result.nextSequence) < BigInt(header.lastSequence);
+      return result;
+    });
+  }
+
+  readCleanupAttempt(input: { invocationId: string; attemptId: string }): CleanupAttemptRead {
+    assertCleanupId(input.invocationId); assertCleanupId(input.attemptId);
+    return this.cleanupRead(() => {
+      const statement = this.database.prepare(`SELECT rowid AS cursor,CASE WHEN octet_length(id)<=256 THEN id END AS id,
+        CASE WHEN octet_length(invocation_id)<=256 THEN invocation_id END AS invocation_id,
+        CASE WHEN octet_length(operation_id)<=256 THEN operation_id END AS operation_id,
+        CASE WHEN octet_length(kind)<=256 THEN kind END AS kind,
+        CASE WHEN occupied IN (0,1) THEN occupied END AS occupied,
+        octet_length(data) AS bytes,CASE WHEN invocation_id=? AND octet_length(data)<=65536 THEN data END AS data
+        FROM attempts WHERE id=?`);
+      statement.setReadBigInts(true);
+      const row = statement.get(input.invocationId,input.attemptId);
+      if (!row || row['invocation_id'] !== input.invocationId) return { status: row ? 'foreign' : 'missing', fact: null };
+      const fact = decodeCleanupAttempt(row);
+      return { status: fact.status, fact };
+    });
+  }
+
+  readCleanupEvent(input: { invocationId: string; cursor: string }): CleanupEventRead {
+    assertCleanupId(input.invocationId); const cursor = cleanupCursor(input.cursor);
+    return this.cleanupRead(() => {
+      const statement = this.database.prepare(`SELECT cursor,NULL AS id,CASE WHEN octet_length(kind)<=256 THEN kind END AS kind,
+        octet_length(data) AS bytes,CASE WHEN octet_length(data)<=8192 THEN data END AS data FROM observation_events WHERE cursor=?`);
+      statement.setReadBigInts(true);
+      const row = statement.get(cursor);
+      if (!row) return { status: 'missing', cursor: input.cursor };
+      if (typeof row['data'] !== 'string') return cleanupOpaque(row,'oversized');
+      if (BigInt(Buffer.byteLength(row['data'])) !== row['bytes']) return cleanupOpaque(row,'malformed');
+      let value: unknown;
+      try { value = JSON.parse(row['data']); } catch { return cleanupOpaque(row,'malformed'); }
+      if (!cleanupObject(value)) return cleanupOpaque(row,'malformed');
+      if (Object.hasOwn(value,'invocationId')) {
+        if (!cleanupId(value.invocationId)) return cleanupOpaque(row,'malformed');
+        if (value.invocationId !== input.invocationId) return { status: 'foreign', cursor: input.cursor };
+      } else {
+        const attemptOwned = cleanupId(value.attemptId) && !!this.database.prepare('SELECT 1 FROM attempts WHERE id=? AND invocation_id=?').get(value.attemptId,input.invocationId);
+        const captureOwned = cleanupId(value.captureId) && !!this.database.prepare('SELECT 1 FROM captures WHERE id=? AND invocation_id=?').get(value.captureId,input.invocationId);
+        if (!attemptOwned && !captureOwned) return { status: 'foreign', cursor: input.cursor };
+      }
+      if (!this.database.prepare('SELECT 1 FROM invocations WHERE id=?').get(input.invocationId)) return cleanupOpaque(row,'invalid-identity');
+      const data = typeof row['kind'] === 'string' ? decodeCleanupEvent(row['kind'],value) : null;
+      return data ? { ...cleanupIdentity(row), status: 'known', kind: String(row['kind']), data } : cleanupOpaque(row,'unknown-format');
+    });
+  }
 
   private async transaction<T>(action: () => T): Promise<T> {
     const deadline = performance.now() + 5000;

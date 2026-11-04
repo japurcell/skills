@@ -50,7 +50,7 @@ const RUNTIME_MODULES = [
   'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
   'agents', 'atomic-publication', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control', 'installation-bindings', 'installed-bindings', 'installed-state', 'dependency-state', 'dependency-maintenance', 'dependency-candidate', 'dependency-candidate-entry', 'install-preparation', 'owned-toolchain',
   'owned-release', 'upgrade-installed', 'upgrade-original', 'upgrade-publication', 'upgrade-publication-state', 'upgrade-recovery-entry', 'install', 'install-candidate', 'install-entry', 'install-publication', 'install-publication-state', 'learning', 'lifecycle', 'maintenance', 'maintenance-backup', 'maintenance-entry', 'native/notification-transport', 'native/notifications',
-  'native/process', 'notifications', 'placement', 'profiles', 'redaction', 'release', 'schema', 'schema-forward', 'forward-backup-entry', 'store',
+  'native/process', 'notifications', 'placement', 'profiles', 'redaction', 'release', 'schema', 'schema-forward', 'forward-backup-entry', 'store', 'cleanup-read',
   'workflow', 'workspace',
 ] as const;
 const COMPILED_FILES = RUNTIME_MODULES.flatMap(stem => [`${stem}.js`, `${stem}.js.map`, `${stem}.d.ts`]);
