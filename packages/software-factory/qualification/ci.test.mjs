@@ -234,16 +234,43 @@ test('repair inspection native jobs retain independent Linux and Darwin budgets 
 });
 
 
-test('cleanup reads stay separately selectable without advertising cleanup mutation', () => {
+test('cleanup reads launch the exact registered suite without advertising cleanup mutation', () => {
   const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_SELECTOR_TIMING_ROOT;
   delete env.FACTORY_TEST_NODE_ARCHIVE;
-  const result = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'cleanup-reads'], { encoding: 'utf8', timeout: 5000, env });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.match(result.stdout, /cleanup read-only view holds a consistent snapshot across concurrent updates/);
-  assert.match(result.stdout, /cleanup reads empty retained history without treating absent claims as recovery clearance/);
-  assert.match(result.stdout, /tests 12/);
+  // Observe the actual dispatcher in a disposable child. The foundation phase below
+  // still executes all twelve native cases; this contract proves only their launch.
+  for (const exitCode of [0, 7]) {
+    const program = `
+      import assert from 'node:assert/strict';
+      import childProcess from 'node:child_process';
+      import { EventEmitter } from 'node:events';
+      import { syncBuiltinESMExports } from 'node:module';
+      let launches = 0;
+      childProcess.spawn = (command, args, options) => {
+        assert.equal(++launches, 1);
+        assert.equal(command, process.execPath);
+        assert.deepEqual(args, ['--test', 'test/cleanup-readers.test.mjs']);
+        assert.deepEqual(options, { cwd: new URL('../', ${JSON.stringify(new URL('../scripts/test.mjs', import.meta.url).href)}), stdio: 'inherit' });
+        assert.equal(options.shell, undefined);
+        const child = new EventEmitter();
+        setImmediate(() => child.emit('exit', ${exitCode}, null));
+        return child;
+      };
+      syncBuiltinESMExports();
+      await import(${JSON.stringify(new URL('../scripts/test.mjs', import.meta.url).href)});
+      assert.equal(launches, 1);
+      assert.equal(process.exitCode, ${exitCode});
+    `;
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, 'qualification', '--area', 'cleanup-reads'], { encoding: 'utf8', timeout: 5000, env });
+    assert.ifError(result.error);
+    assert.equal(result.status, exitCode, result.stdout + result.stderr);
+    assert.equal(result.signal, null);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, '');
+  }
   for (const args of [['maintenance', '--operation', 'cleanup'], ['maintenance']]) {
     const refused = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000, env });
     assert.equal(refused.status, 1, refused.stdout + refused.stderr);
