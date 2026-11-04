@@ -10,7 +10,8 @@ Collect bounded, sanitized test-only timing evidence for the unchanged public fi
 - [x] (2026-11-04) [milestone-1] Implement collector, driver, fixed registry/schema and narrow default-off test hooks.
 - [x] (2026-11-04) [milestone-1] Prove bounded schema, real Node case/ordered-worker receipts, preflight refusal and read-only paging with pinned Node24.22.1:9/9 synthetic cases pass,434ms.
 - [x] (2026-11-04) [milestone-1] Commit packet81d920cb, merge latest integrationce314373 without rebasing as9a407ce3, and reverify9/9synthetic checks under frozen pinned PATH,455.633792ms; clean scoped diff and syntax checks pass.
-- [ ] [milestone-2] Coordinator performs one frozen native complete fixtures experiment.
+- [x] (2026-11-04) [milestone-2] Coordinator ran exactdafc1a20 native41769336098:original31/31 fixtures pass, two validated sanitized exports retained, fixtureExitCode0/statusincomplete truthfully preserved.
+- [ ] [milestone-2] Assess41worker-open/38close and complete/partial evidence before any timeline causality or deadline qualification claim.
 
 ## Context and seams
 
@@ -29,7 +30,7 @@ Add fixed-schema JSONL with per-run opaque worker/invocation/attempt IDs, monoto
 
 ### Milestone2: one native experiment
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Coordinator owns fixed dependency/Python/Node/PATH receipt preflight, source freeze, remote launch and artifact staging. Run all existing fixtures, preserving notification10files/36cases/concurrency4 and learning4files/13cases/concurrency2, original15/30s wrappers and1000ms cancellation grace. Keep original test exit even when red. Inspect the timeline before choosing any optimization or scheduling candidate. No unchanged retry is authorized by this packet.
@@ -74,4 +75,4 @@ Pinned Node24.22.1 [event lifecycle](https://nodejs.org/download/release/v24.22.
 
 ## Outcomes & Retrospective
 
-Telemetry packet and final merged9synthetic checks are complete. Native experiment and deadline qualification remain coordinator-owned and unrun. No deadline repair, native pass or bottleneck attribution is claimed. Reflection: the temporary-path alias issue is prevented structurally by canonical ownership keys and a real subprocess check; no separate durable brain or skill change is needed. No skill improvements identified.
+Telemetry packet and final merged9synthetic checks are complete. Native experiment41769336098 ran atdafc1a20:fixtures31/31,74.635s; notification10.216s/learning25.887s pass original wrappers, but metadata fixtureExitCode0/statusincomplete remains a failed diagnostic (2121records,41opens/38closes,all49selected endings). Two-export guard/upload pass. Root still assesses closure gaps and baseline; no deadline repair or complete-timeline claim. Retained exports `/tmp/factory-darwin-selector-timing-41769336098/`, log `/tmp/factory-darwin-selector-timing-41769336098-failed.log`. No deadline repair, native pass or bottleneck attribution is claimed. Reflection: the temporary-path alias issue is prevented structurally by canonical ownership keys and a real subprocess check; no separate durable brain or skill change is needed. No skill improvements identified.
