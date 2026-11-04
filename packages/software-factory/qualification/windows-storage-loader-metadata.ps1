@@ -111,12 +111,15 @@ function Add-MetadataFile([string]$Path, [string]$Role, [string]$Target, [string
         else { Set-MetadataReason 'tool-provenance-unproven' }
     }
 }
+function Test-MetadataReleaseName([object]$Name) {
+    return $Name -is [string] -and $Name -cmatch '^(?:18|20[0-9]{2})$'
+}
 function Find-MetadataTools([string]$Drive) {
     $toolsetsSeen = 0
     foreach ($programFiles in @('Program Files', 'Program Files (x86)')) {
         $root = [IO.Path]::Combine($Drive, $programFiles, 'Microsoft Visual Studio')
         foreach ($year in (Get-MetadataDirectories $root 16)) {
-            if ([IO.Path]::GetFileName($year) -cnotmatch '^20[0-9]{2}$') { continue }
+            if (-not (Test-MetadataReleaseName ([IO.Path]::GetFileName($year)))) { continue }
             foreach ($installation in (Get-MetadataDirectories $year 8)) {
                 if ([IO.Path]::GetFileName($installation) -cnotin @('BuildTools', 'Community', 'Professional', 'Enterprise')) { continue }
                 $toolsetRoot = [IO.Path]::Combine($installation, 'VC', 'Tools', 'MSVC')

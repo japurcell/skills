@@ -39,6 +39,29 @@ const metadata = () => ({ scope: 'windows-storage-loader-metadata', schema: 1, s
 });
 const wire = value => Buffer.from(`${JSON.stringify(value)}\n`);
 
+test('closed wire accepts only the compatible release folders under fixed roots and editions', async () => {
+  const { validateMetadataWire } = await import(entry);
+  for (const root of ['Program Files', 'Program Files (x86)']) {
+    for (const edition of ['BuildTools', 'Community', 'Professional', 'Enterprise']) {
+      for (const release of ['18', '2022']) {
+        const value = metadata();
+        value.installations = [`C:\\${root}\\Microsoft Visual Studio\\${release}\\${edition}`];
+        assert.deepEqual(validateMetadataWire(wire(value), digest), value);
+      }
+    }
+  }
+  for (const release of ['17', '19', '018', '18x', '202', '20222', 'Insiders', '..\\18']) {
+    const value = metadata();
+    value.installations = [`C:\\Program Files\\Microsoft Visual Studio\\${release}\\Enterprise`];
+    assert.throws(() => validateMetadataWire(wire(value), digest), /metadata/);
+  }
+  for (const path of ['C:\\Other\\Microsoft Visual Studio\\18\\Enterprise',
+    'C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders']) {
+    const value = metadata(); value.installations = [path];
+    assert.throws(() => validateMetadataWire(wire(value), digest), /metadata/);
+  }
+});
+
 test('closed wire parser preserves blocked observations without granting authority', async () => {
   const { validateMetadataWire } = await import(entry);
   const parsed = validateMetadataWire(wire(metadata()), digest);
@@ -118,6 +141,79 @@ test('synthetic Microsoft-shaped signature is only a blocked fact and tool roles
     const bad = structuredClone(value); change(bad.files[0]);
     assert.throws(() => validateMetadataWire(wire(bad), digest), /metadata/);
   }
+});
+
+test('discovered 18 tools do not promote unknown SDK signatures or ambiguous observations', async () => {
+  const { validateMetadataWire } = await import(entry);
+  const value = metadata();
+  const installation = 'C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise';
+  const sdkVersion = '10.0.26100.0';
+  const sdkPath = `C:\\Program Files (x86)\\Windows Kits\\10\\Include\\${sdkVersion}\\ucrt\\stdio.h`;
+  value.installations = [installation]; value.sdkVersions = [sdkVersion];
+  value.files = [{ role: 'sdk-header', target: 'none', installation: '', toolset: '', sdkVersion,
+    path: sdkPath, bytes: 123, sha256: digest, fileVersion: '', regular: true, reparse: false,
+    stability: 'observed-equal', signature: { path: sdkPath, status: 'UnknownError', type: 'None',
+      condition: 'status-not-valid', subject: '', issuer: '', thumbprint: '', certificateSha256: '' } }];
+  const toolPath = `${installation}\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x86\\lib.exe`;
+  value.files.push({ role: 'library-tool', target: 'x86', installation, toolset: '14.44.35207', sdkVersion: '',
+    path: toolPath, bytes: 123, sha256: digest, fileVersion: '14.44.35207.0', regular: true, reparse: false,
+    stability: 'observed-equal', signature: { path: toolPath, status: 'Valid', type: 'Authenticode', condition: 'none',
+      subject: 'CN=Synthetic test only, O=Microsoft Corporation, C=US', issuer: 'CN=Synthetic test only',
+      thumbprint: 'd'.repeat(40), certificateSha256: 'e'.repeat(64) } });
+  const parsed = validateMetadataWire(wire(value), digest);
+  assert.equal(parsed.reason, 'sdk-provenance-unproven');
+  assert.equal(parsed.selectionAuthority, false);
+  assert.equal(parsed.buildAuthority, false);
+  assert.equal(parsed.nativeAuthority, false);
+  const forged = structuredClone(value); forged.state = 'observed'; forged.reason = 'none';
+  assert.throws(() => validateMetadataWire(wire(forged), digest), /metadata/);
+  const ambiguous = structuredClone(value);
+  ambiguous.reason = 'ambiguous-tools';
+  ambiguous.installations.push('C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools');
+  assert.equal(validateMetadataWire(wire(ambiguous), digest).reason, 'ambiguous-tools');
+  ambiguous.state = 'observed'; ambiguous.reason = 'none';
+  assert.throws(() => validateMetadataWire(wire(ambiguous), digest), /metadata/);
+});
+
+test('observed synthetic 18 record requires exactly one toolset', async () => {
+  const { validateMetadataWire } = await import(entry);
+  const value = metadata();
+  const installation = 'C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise';
+  const sdkVersion = '10.0.26100.0';
+  const toolset = '14.44.35207';
+  value.state = 'observed'; value.reason = 'none';
+  value.installations = [installation]; value.sdkVersions = [sdkVersion];
+  // Synthetic signature fields exercise wire validation only; they authenticate no file.
+  const file = (role, target, path, sourceInstallation, sourceToolset, sourceSdk) => ({
+    role, target, installation: sourceInstallation, toolset: sourceToolset, sdkVersion: sourceSdk,
+    path, bytes: 123, sha256: digest, fileVersion: '1.0', regular: true, reparse: false,
+    stability: 'observed-equal', signature: { path, status: 'Valid', type: 'Authenticode', condition: 'none',
+      subject: 'CN=Synthetic test only, O=Microsoft Corporation, C=US', issuer: 'CN=Synthetic test only',
+      thumbprint: 'd'.repeat(40), certificateSha256: 'e'.repeat(64) },
+  });
+  for (const [role, target, leaf] of [['compiler', 'x64', 'cl.exe'], ['linker', 'x64', 'link.exe'],
+    ['inspector', 'x64', 'dumpbin.exe'], ['compiler', 'x86', 'cl.exe'], ['linker', 'x86', 'link.exe'],
+    ['library-tool', 'x86', 'lib.exe'], ...['x64', 'x86'].flatMap(target =>
+      ['c1.dll', 'c1xx.dll', 'c2.dll'].map(leaf => ['compiler-companion', target, leaf]))]) {
+    const path = `${installation}\\VC\\Tools\\MSVC\\${toolset}\\bin\\Hostx64\\${target}\\${leaf}`;
+    value.files.push(file(role, target, path, installation, toolset, ''));
+  }
+  const sdkRoot = 'C:\\Program Files (x86)\\Windows Kits\\10';
+  for (const [role, target, suffix] of [['sdk-header', 'none', `Include\\${sdkVersion}\\ucrt\\stdio.h`],
+    ['sdk-header', 'none', `Include\\${sdkVersion}\\shared\\sdkddkver.h`],
+    ['sdk-header', 'none', `Include\\${sdkVersion}\\um\\Windows.h`],
+    ...['x64', 'x86'].flatMap(target => [['sdk-library', target, `Lib\\${sdkVersion}\\ucrt\\${target}\\ucrt.lib`],
+      ['sdk-library', target, `Lib\\${sdkVersion}\\um\\${target}\\kernel32.lib`]])]) {
+    value.files.push(file(role, target, `${sdkRoot}\\${suffix}`, '', '', sdkVersion));
+  }
+  assert.equal(validateMetadataWire(wire(value), digest).state, 'observed');
+  const ambiguous = structuredClone(value);
+  const changed = ambiguous.files.find(row => row.role === 'library-tool');
+  changed.toolset = '14.45.12345';
+  changed.path = changed.path.replace(toolset, changed.toolset); changed.signature.path = changed.path;
+  assert.throws(() => validateMetadataWire(wire(ambiguous), digest), /metadata/);
+  ambiguous.state = 'blocked'; ambiguous.reason = 'ambiguous-tools';
+  assert.equal(validateMetadataWire(wire(ambiguous), digest).reason, 'ambiguous-tools');
 });
 
 test('real inert process capture requires zero exit and both EOF before returning bytes', async () => {

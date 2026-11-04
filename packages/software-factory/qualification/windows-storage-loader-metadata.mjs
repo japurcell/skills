@@ -14,7 +14,7 @@ const closed = (value, keys) => value && typeof value === 'object' && !Array.isA
   Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
 const text = (value, cap, empty = false) => typeof value === 'string' && value.length <= cap &&
   (empty || value.length > 0) && !/[\x00-\x1f\x7f]/.test(value);
-const installationPattern = /^[A-Z]:\\Program Files(?: \(x86\))?\\Microsoft Visual Studio\\20[0-9]{2}\\(?:BuildTools|Community|Professional|Enterprise)$/i;
+const installationPattern = /^[A-Z]:\\Program Files(?: \(x86\))?\\Microsoft Visual Studio\\(?:18|20[0-9]{2})\\(?:BuildTools|Community|Professional|Enterprise)$/i;
 const sdkPattern = /^10\.0\.[0-9]{4,6}\.[0-9]{1,6}$/;
 const toolsetPattern = /^14\.[0-9]{2}\.[0-9]{5}$/;
 const reasons = ['none', 'host', 'host-profile', 'bounds', 'missing-tools', 'ambiguous-tools', 'missing-sdk',
