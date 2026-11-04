@@ -6,8 +6,8 @@ import { createHash } from 'node:crypto';
 import { closeSync, fstatSync, lstatSync, mkdirSync, openSync, readSync, realpathSync, writeFileSync } from 'node:fs';
 import { captureMetadataProcess, validateControllerSelection, validateMetadataWire } from './windows-storage-loader-metadata.mjs';
 
-const selectionSha256 = '719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650';
-const sourceCommit = '222924947e2a9b4c24a1d7c3eddaa426b0d15403';
+const selectionSha256 = 'd4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359';
+const sourceCommit = '4b311737aa7484619dc304b3db84cfb463792c48';
 const nodeSha256 = 'd702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5';
 const fail = () => { throw new Error('metadata-collection'); };
 

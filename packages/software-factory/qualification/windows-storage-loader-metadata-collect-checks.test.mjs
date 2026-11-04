@@ -8,7 +8,7 @@ import test from 'node:test';
 
 const entry = fileURLToPath(new URL('./windows-storage-loader-metadata-collect-result.mjs', import.meta.url));
 const cli = fileURLToPath(new URL('./windows-storage-loader-metadata.mjs', import.meta.url));
-const digest = '719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650';
+const digest = 'd4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359';
 const commit = '1234567890123456789012345678901234567890';
 const wire = value => Buffer.from(`${JSON.stringify(value)}\n`);
 const metadata = () => ({ scope: 'windows-storage-loader-metadata', schema: 1, state: 'blocked',
@@ -85,7 +85,9 @@ function observed() {
 test('root selection uses its independently frozen exact bytes and source commit', async () => {
   const { validateCollectionSelection } = await import(entry);
   const bytes = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection.json', import.meta.url));
-  assert.equal(validateCollectionSelection(bytes).sourceCommit, '222924947e2a9b4c24a1d7c3eddaa426b0d15403');
+  const historical = readFileSync(new URL('./windows-storage-loader-metadata-controller-selection-2229249.json', import.meta.url));
+  assert.throws(() => validateCollectionSelection(historical), /metadata-collection/);
+  assert.equal(validateCollectionSelection(bytes).sourceCommit, '4b311737aa7484619dc304b3db84cfb463792c48');
   for (const mutate of [v => { v.sourceCommit = commit; }, v => { v.windowsVersion = '10.0.26100.1'; },
     v => { v.sourceSha256['qualification/windows-storage-loader-metadata.mjs'] = 'd'.repeat(64); },
     v => { v.powershellSha256 = 'e'.repeat(64); }, v => { v.trusted = true; }]) {
@@ -107,7 +109,7 @@ test('fixed context checks actual selected source bytes and refuses a changed di
       copyFileSync(join(originalPackage, path), join(root, path));
     }
     const { verifyCollectionSources } = await import(pathToFileURL(join(root, resultPath)).href);
-    assert.equal(verifyCollectionSources().selected.sourceCommit, '222924947e2a9b4c24a1d7c3eddaa426b0d15403');
+    assert.equal(verifyCollectionSources().selected.sourceCommit, '4b311737aa7484619dc304b3db84cfb463792c48');
     appendFileSync(join(root, 'qualification/windows-storage-loader-fixture.py'), '\n# changed disposable control\n');
     assert.throws(() => verifyCollectionSources(), /metadata-collection/);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -157,7 +159,7 @@ test('only two fresh artifact files preserve blocked failure and observed succes
       assert.deepEqual(readFileSync(join(result.artifactDirectory, 'metadata.json')), wire(value));
       const control = JSON.parse(readFileSync(join(result.artifactDirectory, 'control.json')));
       assert.deepEqual(control, { scope: 'windows-storage-loader-metadata-execution-control', schema: 1,
-        phase: 'metadata-only', sourceCommit: '222924947e2a9b4c24a1d7c3eddaa426b0d15403', collectionSourceCommit: commit,
+        phase: 'metadata-only', sourceCommit: '4b311737aa7484619dc304b3db84cfb463792c48', collectionSourceCommit: commit,
         sourceSelectionSha256: digest, state: value.state, collectorExitCode: code,
         selectionAuthority: false, buildAuthority: false, nativeAuthority: false });
       assert.throws(() => prepareCollectionArtifacts(wire(value), code, root, commit));
