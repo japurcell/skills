@@ -665,3 +665,160 @@ test('owned child transport never promotes a success, mixed record, cap or deadl
   assert.equal(timed.timedOut, true);
   assert.equal(diagnosticApi.parseNativeRefusal(timed, 'positive'), null);
 });
+
+const stopFacts = (patch = {}) => ({ Process: true, Stop: true, InitialWait: true, Termination: 'not-reached',
+  DebugWait: 'not-reached', EventOwner: 'not-reached', EventClose: 'not-reached', Continue: 'not-reached', DebugExit: 'not-reached',
+  FinalWait: true, OutputEof: true, ErrorEof: true, OutputValid: true, ErrorValid: true, ...patch });
+const cleanupFacts = (patch = {}) => ({
+  ...Object.fromEntries(Object.entries(stopFacts()).map(([key, value]) => ['child' + key, value])),
+  ...Object.fromEntries(Object.entries(stopFacts()).map(([key, value]) => ['control' + key, value])),
+  exitQuery: true, exitInactive: true, earlyClear: true, rejectedClear: 'not-reached', ownedZero: true,
+  countQuery: true, countNonincrease: false, leakedZero: false, closeCalls: true, closeIdentity: true, closeQuery: true, closed: true,
+  ownedClose: true, mappingClose: true, debugClose: true, hashClose: true, algorithmClose: true, ownerFileClose: 'not-reached',
+  ...patch,
+});
+const cleanupWire = (facts = cleanupFacts(), name = 'positive') =>
+  `OWNED_IMAGE_CLEANUP\t1\t${name}\t${Object.values(facts).map(value => value === true ? '1' : value === false ? '0' : 'n').join('\t')}\n`;
+
+test('owned exit-one cleanup record exposes every fixed terminal contributor without raw counts', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = refusalWire('positive', 'none', 'clear') + cleanupWire();
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write("synthetic-private-counts"); process.stderr.write(process.argv[1]); process.exitCode=1', wire], 4096, 2000);
+  assert.equal(result.exitCode, 1);
+  const refusal = diagnosticApi.parseNativeRefusal(result, 'positive');
+  assert.deepEqual(refusal, { phase: 'none', reason: 'clear', cleanup: false, survival: true, flush: true, close: true });
+  const cleanupEvidence = diagnosticApi.parseNativeCleanup(result, 'positive');
+  assert.deepEqual(cleanupEvidence, cleanupFacts());
+  const formatted = formatFailure({ phase: 'case', name: 'positive', category: 'native', native: diagnosticApi.nativeOutcome(result), refusal, cleanupEvidence });
+  assert.ok(formatted.includes('nativePhase=none nativeReason=clear cleanup=false'));
+  assert.ok(formatted.includes('childStop=true'));
+  assert.ok(formatted.includes('countQuery=true countNonincrease=false leakedZero=false'));
+  assert.equal(formatted.includes('synthetic-private'), false);
+  assert.equal(validateNative(wire, 'positive').qualified, false);
+});
+
+test('cleanup evidence rejects a claimed rejected-marker check after a clear positive probe', () => {
+  const facts = cleanupFacts({ rejectedClear: false, countNonincrease: true, leakedZero: 'not-reached' });
+  const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire(facts));
+  assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+  assert.equal(diagnosticApi.parseNativeCleanup(result, 'positive'), null);
+});
+
+test('cleanup phase cannot claim a completed positive probe without an owned child', () => {
+  const absent = Object.fromEntries(Object.entries(stopFacts({ Process: false })).map(([key]) => ['child' + key,
+    key === 'Process' ? false : key === 'Stop' ? true : 'not-reached']));
+  const facts = cleanupFacts({ ...absent, exitQuery: 'not-reached', exitInactive: 'not-reached', earlyClear: 'not-reached' });
+  const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire(facts));
+  assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+  assert.equal(diagnosticApi.parseNativeCleanup(result, 'positive'), null);
+});
+
+test('cleanup protocol reports each Stop refusal category and every terminal conjunction contributor', () => {
+  const clear = cleanupFacts({ countNonincrease: true, leakedZero: true });
+  for (const prefix of ['child', 'control']) {
+    for (const key of ['InitialWait', 'Termination', 'DebugWait', 'EventOwner', 'EventClose', 'Continue', 'DebugExit',
+      'FinalWait', 'OutputEof', 'ErrorEof', 'OutputValid', 'ErrorValid']) {
+      const debug = ['DebugWait', 'EventOwner', 'EventClose', 'Continue', 'DebugExit'].includes(key);
+      const facts = { ...clear, [prefix + 'Stop']: false, [prefix + key]: false, leakedZero: 'not-reached',
+        ...(debug ? { [prefix + 'DebugExit']: key === 'DebugExit' || key === 'Continue' || key === 'EventOwner' ? false : true } : {}) };
+      const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire(facts));
+      assert.deepEqual(diagnosticApi.parseNativeCleanup(result, 'positive'), facts, prefix + key);
+      const text = formatFailure({ phase: 'case', name: 'positive', category: 'native', native: diagnosticApi.nativeOutcome(result),
+        refusal: diagnosticApi.parseNativeRefusal(result, 'positive'), cleanupEvidence: facts });
+      assert.ok(text.includes(prefix + key + '=false'), key);
+    }
+  }
+  for (const patch of [{ exitQuery: false, exitInactive: 'not-reached' }, { exitInactive: false }, { earlyClear: false },
+    { ownedZero: false, leakedZero: false }, { countNonincrease: false, leakedZero: false },
+    { countQuery: false, countNonincrease: 'not-reached', closed: false },
+    { closeCalls: false, ownedClose: false, closed: false }, { closeIdentity: false, closed: false }, { closeQuery: false, closed: false }]) {
+    const facts = { ...clear, leakedZero: 'not-reached', ...patch };
+    const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire(facts));
+    assert.deepEqual(diagnosticApi.parseNativeCleanup(result, 'positive'), facts, JSON.stringify(patch));
+  }
+  const rejected = { ...clear, rejectedClear: false, leakedZero: 'not-reached' };
+  const result = refusalResult(refusalWire('positive', 'probe', 'query-check') + cleanupWire(rejected));
+  assert.deepEqual(diagnosticApi.parseNativeCleanup(result, 'positive'), rejected);
+  const notCreated = { ...cleanupFacts(), ...Object.fromEntries(Object.keys(stopFacts()).map(key => ['child' + key,
+    key === 'Process' ? false : key === 'Stop' ? true : 'not-reached'])),
+    exitQuery: 'not-reached', exitInactive: 'not-reached', earlyClear: 'not-reached' };
+  assert.deepEqual(diagnosticApi.parseNativeCleanup(refusalResult(refusalWire('positive', 'probe', 'identity-check') + cleanupWire(notCreated)), 'positive'), notCreated);
+});
+
+test('cleanup records reject contradictory, raw, incomplete or accessor-backed evidence atomically', () => {
+  const wire = refusalWire('positive', 'none', 'clear') + cleanupWire();
+  const context = { phase: 'case', name: 'positive', category: 'native', native: { exit: 'present', status: 1, stderr: 'nonempty' },
+    refusal: { phase: 'none', reason: 'clear', cleanup: false, survival: true, flush: true, close: true }, cleanupEvidence: cleanupFacts() };
+  const unexpected = formatFailure({ phase: 'unexpected' });
+  for (const patch of [{ childStop: false }, { controlProcess: false }, { childProcess: 'not-reached' },
+    { countQuery: false }, { countNonincrease: 'not-reached' }, { ownedZero: false, leakedZero: true }, { closed: false },
+    { closeCalls: false }, { closeIdentity: false }, { closeQuery: 'not-reached' }, { exitQuery: false },
+    { childInitialWait: false }, { childDebugWait: false }, { childOutputEof: false }, { childEventClose: 'C:\\private' },
+    { childTermination: ['not-reached'] }, { extra: 'private' }]) {
+    const cleanupEvidence = { ...cleanupFacts(), ...patch };
+    assert.equal(formatFailure({ ...context, cleanupEvidence }), unexpected, JSON.stringify(patch));
+  }
+  let reads = 0;
+  const getter = { ...cleanupFacts(), get childStop() { reads++; return true; } };
+  assert.equal(formatFailure({ ...context, cleanupEvidence: getter }), unexpected);
+  const getterContext = { ...context, get cleanupEvidence() { reads++; return cleanupFacts(); } };
+  assert.equal(formatFailure(getterContext), unexpected);
+  assert.equal(reads, 0);
+  for (const cleanupEvidence of [Object.create(cleanupFacts()), { ...cleanupFacts(), [Symbol('private')]: 'private' }])
+    assert.equal(formatFailure({ ...context, cleanupEvidence }), unexpected);
+  for (const bad of [wire.trimEnd(), wire + '\n', wire + cleanupWire(), cleanupWire(), cleanupWire() + refusalWire(),
+    wire.replace('CLEANUP\t1', 'CLEANUP\t2'), wire.replace('CLEANUP\t1\tpositive', 'CLEANUP\t1\tpositive-repeat'),
+    refusalWire('positive', 'none', 'clear') + cleanupWire(cleanupFacts({ countNonincrease: true, leakedZero: true })),
+    wire.replace('CLEANUP', 'C:\\private'), wire.replace(/\tn\t/, '\tunknown\t'), wire + 'private\n', 'x'.repeat(513)]) {
+    const result = refusalResult(bad);
+    assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null, bad);
+    assert.equal(diagnosticApi.parseNativeCleanup(result, 'positive'), null, bad);
+  }
+  for (const patch of [{ phase: 'build' }, { category: 'receipt' }, { name: 'owner-interruption' },
+    { native: { ...context.native, status: 0 } }, { native: { ...context.native, stderr: 'empty' } },
+    { refusal: { ...context.refusal, cleanup: true, survival: false } }, { refusal: null }, { refusal: undefined }])
+    assert.equal(formatFailure({ ...context, ...patch }), unexpected);
+  assert.ok(formatFailure({ ...context, cleanupEvidence: null }).endsWith(' cleanupEvidence=unknown\n'));
+  assert.equal(diagnosticApi.parseNativeCleanup(refusalResult(refusalWire('positive', 'none', 'clear')), 'positive'), null);
+});
+
+test('owned cleanup transport retains exit, cap, deadline and artifact refusal despite a valid record prefix', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = refusalWire('positive', 'none', 'clear') + cleanupWire();
+  for (const [status, output] of [[0, wire], [2, wire], [1, wire + 'synthetic-private\n'], [1, wire.trimEnd()]]) {
+    const result = await runOwnedImageTransport(process.execPath,
+      ['-e', 'process.stderr.write(process.argv[1]); process.exitCode=Number(process.argv[2])', output, String(status)], 4096, 2000);
+    assert.equal(result.exitCode, status);
+    assert.equal(diagnosticApi.parseNativeCleanup(result, 'positive'), null);
+    assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+    assert.equal(validateNative(result.stderr, 'positive').qualified, false);
+  }
+  const capped = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); process.stdout.write(Buffer.alloc(8192,65)); setInterval(()=>{},1000)', wire], 512, 2000);
+  assert.equal(capped.capped, true);
+  assert.equal(diagnosticApi.parseNativeCleanup(capped, 'positive'), null);
+  const timed = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); setInterval(()=>{},1000)', wire], 4096, 700);
+  assert.equal(timed.timedOut, true);
+  assert.equal(diagnosticApi.parseNativeCleanup(timed, 'positive'), null);
+});
+
+test('cleanup evidence separates every original checked-close call category', () => {
+  for (const category of ['ownedClose', 'mappingClose', 'debugClose', 'hashClose', 'algorithmClose', 'ownerFileClose']) {
+    const owner = category === 'ownerFileClose';
+    const name = owner ? 'owner-interruption' : 'positive';
+    const facts = cleanupFacts({ [category]: false, closeCalls: false, closed: false, leakedZero: 'not-reached',
+      ...(owner ? { rejectedClear: true } : {}) });
+    const result = refusalResult(refusalWire(name, owner ? 'owner-interruption' : 'none', owner ? 'owner-interrupted' : 'clear') + cleanupWire(facts, name));
+    assert.deepEqual(diagnosticApi.parseNativeCleanup(result, name), facts, category);
+  }
+});
+
+test('cleanup close categories require the source owner and retired-handle checks to have been reached', () => {
+  for (const facts of [cleanupFacts({ ownerFileClose: false, closeCalls: false, closed: false, leakedZero: 'not-reached' }),
+    cleanupFacts({ debugClose: false, closeCalls: false, closeIdentity: 'not-reached', closeQuery: 'not-reached', closed: false, leakedZero: 'not-reached' })]) {
+    const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire(facts));
+    assert.equal(diagnosticApi.parseNativeDiagnostic(result, 'positive'), null);
+  }
+});

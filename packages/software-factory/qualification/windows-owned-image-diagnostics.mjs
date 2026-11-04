@@ -93,7 +93,58 @@ function copyRefusal(value) {
 const validRefusalCase = (value, name) => value.phase === 'owner-interruption' ? name === 'owner-interruption'
   : name !== 'owner-interruption' || ['survival-create', 'survival-ready'].includes(value.phase);
 
-export function parseNativeRefusal(result, name) {
+const stopFields = ['Process', 'Stop', 'InitialWait', 'Termination', 'DebugWait', 'EventOwner', 'EventClose', 'Continue',
+  'DebugExit', 'FinalWait', 'OutputEof', 'ErrorEof', 'OutputValid', 'ErrorValid'];
+const cleanupFields = [...['child', 'control'].flatMap(prefix => stopFields.map(key => prefix + key)),
+  'exitQuery', 'exitInactive', 'earlyClear', 'rejectedClear', 'ownedZero', 'countQuery', 'countNonincrease', 'leakedZero',
+  'closeCalls', 'closeIdentity', 'closeQuery', 'closed', 'ownedClose', 'mappingClose', 'debugClose', 'hashClose', 'algorithmClose', 'ownerFileClose'];
+const closeFields = ['ownedClose', 'mappingClose', 'debugClose', 'hashClose', 'algorithmClose', 'ownerFileClose'];
+const notReached = 'not-reached';
+function coherentStop(value, prefix) {
+  const field = key => value[prefix + key];
+  if (typeof field('Process') !== 'boolean' || typeof field('Stop') !== 'boolean') return false;
+  if (!field('Process')) return field('Stop') && stopFields.slice(2).every(key => field(key) === notReached);
+  if (['InitialWait', 'FinalWait', 'OutputEof', 'ErrorEof', 'OutputValid', 'ErrorValid'].some(key => typeof field(key) !== 'boolean') ||
+      field('InitialWait') === false && field('Termination') !== notReached ||
+      field('DebugExit') === notReached && ['DebugWait', 'EventOwner', 'EventClose', 'Continue'].some(key => field(key) !== notReached)) return false;
+  return field('Stop') === stopFields.slice(2).every(key => field(key) !== false);
+}
+function copyCleanup(value, refusal, name) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Reflect.ownKeys(value).length !== cleanupFields.length ||
+      !refusal || refusal.cleanup !== false) return null;
+  const copy = {};
+  for (const key of cleanupFields) {
+    const field = Object.getOwnPropertyDescriptor(value, key);
+    if (!field || !Object.hasOwn(field, 'value') || ![true, false, notReached].includes(field.value)) return null;
+    copy[key] = field.value;
+  }
+  if (!coherentStop(copy, 'child') || !coherentStop(copy, 'control') ||
+      ['ownedZero', 'countQuery', 'closeCalls', 'closed'].some(key => typeof copy[key] !== 'boolean') ||
+      (copy.childProcess ? typeof copy.exitQuery !== 'boolean' || (copy.exitQuery ? typeof copy.exitInactive !== 'boolean' : copy.exitInactive !== notReached)
+        : copy.exitQuery !== notReached || copy.exitInactive !== notReached) ||
+      (copy.countQuery ? typeof copy.countNonincrease !== 'boolean'
+        : copy.countNonincrease !== notReached) ||
+      copy.closeQuery === notReached && copy.closeIdentity !== notReached ||
+      copy.closeCalls !== closeFields.every(key => copy[key] !== false) ||
+      copy.closed !== (copy.closeCalls && copy.closeIdentity !== false && copy.closeQuery !== false && copy.countQuery)) return null;
+  const rejectedCheck = name !== 'stop-resume' && !['clear', 'deadline-reached', 'output-cap', 'child-crash'].includes(refusal.reason) &&
+    refusal.phase !== 'output-check' && copy.earlyClear !== notReached;
+  if (rejectedCheck ? typeof copy.rejectedClear !== 'boolean' : copy.rejectedClear !== notReached) return null;
+  if (refusal.survival && !copy.controlProcess) return null;
+  if (name !== 'owner-interruption' && copy.ownerFileClose !== notReached ||
+      copy.debugClose !== notReached && (copy.closeIdentity === notReached || copy.closeQuery === notReached)) return null;
+  if (['none', 'output-check'].includes(refusal.phase) && (!copy.childProcess || copy.earlyClear === notReached) ||
+      ['survival-create', 'survival-ready'].includes(refusal.phase) && (copy.childProcess || copy.earlyClear !== notReached) ||
+      refusal.phase !== 'survival-create' && !copy.controlProcess) return null;
+  const beforeHandles = copy.childStop && copy.exitQuery !== false && copy.exitInactive !== false && copy.controlStop &&
+    copy.earlyClear !== false && copy.rejectedClear !== false && copy.closed;
+  if (beforeHandles ? typeof copy.leakedZero !== 'boolean' || copy.leakedZero !== (copy.ownedZero && copy.countNonincrease)
+    : copy.leakedZero !== notReached) return null;
+  const cleanup = beforeHandles && copy.leakedZero;
+  return cleanup === refusal.cleanup ? copy : null;
+}
+
+export function parseNativeDiagnostic(result, name) {
   try {
     if (!cases.includes(name) || !result || typeof result !== 'object' || Array.isArray(result)) return null;
     const fields = {};
@@ -104,13 +155,24 @@ export function parseNativeRefusal(result, name) {
     }
     if (fields.exitCode !== 1 || fields.signal !== null || fields.capped !== false || fields.timedOut !== false ||
         typeof fields.stderr !== 'string' || Buffer.byteLength(fields.stderr) > 512) return null;
-    const match = /^OWNED_IMAGE_REFUSAL\t1\t([a-z0-9-]+)\t([a-z-]+)\t([a-z-]+)\t([01])\t([01])\t([01])\t([01])\r?\n$/.exec(fields.stderr);
-    if (!match || match[0] !== fields.stderr || match[1] !== name) return null;
+    const rows = fields.stderr.replaceAll('\r\n', '\n').split('\n');
+    if (![2, 3].includes(rows.length) || rows.at(-1) !== '') return null;
+    const match = /^OWNED_IMAGE_REFUSAL\t1\t([a-z0-9-]+)\t([a-z-]+)\t([a-z-]+)\t([01])\t([01])\t([01])\t([01])$/.exec(rows[0]);
+    if (!match || match[0] !== rows[0] || match[1] !== name) return null;
     const [, , phase, reason, cleanup, survival, flush, close] = match;
     const value = copyRefusal({ phase, reason, cleanup: cleanup === '1', survival: survival === '1', flush: flush === '1', close: close === '1' });
-    return value && validRefusalCase(value, name) ? value : null;
+    if (!value || !validRefusalCase(value, name)) return null;
+    if (rows.length === 2) return { refusal: value, cleanup: null };
+    const row = rows[1].split('\t');
+    if (row.length !== cleanupFields.length + 3 || row[0] !== 'OWNED_IMAGE_CLEANUP' || row[1] !== '1' || row[2] !== name ||
+        row.slice(3).some(field => !['0', '1', 'n'].includes(field))) return null;
+    const cleanupValue = Object.fromEntries(cleanupFields.map((key, i) => [key, row[i + 3] === 'n' ? notReached : row[i + 3] === '1']));
+    const cleanupValueCopy = copyCleanup(cleanupValue, value, name);
+    return cleanupValueCopy ? { refusal: value, cleanup: cleanupValueCopy } : null;
   } catch { return null; }
 }
+export const parseNativeRefusal = (result, name) => parseNativeDiagnostic(result, name)?.refusal ?? null;
+export const parseNativeCleanup = (result, name) => parseNativeDiagnostic(result, name)?.cleanup ?? null;
 
 export function parseBuildDiagnostic(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > 512) return empty();
@@ -145,10 +207,12 @@ const phaseCategories = {
 export function formatFailure(value) {
   try {
     if (!value || typeof value !== 'object' || Array.isArray(value) ||
-      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module', 'native', 'refusal'].includes(key))) return unexpected;
+      Object.keys(value).some(key => !['phase', 'name', 'category', 'code', 'source', 'line', 'tool', 'condition', 'module', 'native', 'refusal', 'cleanupEvidence'].includes(key))) return unexpected;
     const refusalField = Object.getOwnPropertyDescriptor(value, 'refusal');
     if (refusalField ? !Object.hasOwn(refusalField, 'value') : 'refusal' in value) return unexpected;
-    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module, native, refusal } = value;
+    const cleanupField = Object.getOwnPropertyDescriptor(value, 'cleanupEvidence');
+    if (cleanupField ? !Object.hasOwn(cleanupField, 'value') : 'cleanupEvidence' in value) return unexpected;
+    const { phase, category, name = 'none', code = 'none', source = 'none', line = 0, tool = 'none', condition = 'none', module, native, refusal, cleanupEvidence } = value;
     if (typeof phase !== 'string' || typeof category !== 'string' || typeof name !== 'string' ||
       !Object.hasOwn(phaseCategories, phase) || !phaseCategories[phase].includes(category) ||
       (phase === 'case' ? !cases.includes(name) : phase === 'pin' ? name !== 'none' && !cases.includes(name) : name !== 'none') ||
@@ -163,11 +227,16 @@ export function formatFailure(value) {
     if (refusal !== undefined && (phase !== 'case' || category !== 'native' || nativeCopy?.exit !== 'present' ||
         nativeCopy.status !== 1 || refusal !== null && (refusalCopy === null || nativeCopy.stderr !== 'nonempty' ||
         !validRefusalCase(refusalCopy, name)))) return unexpected;
+    const cleanupCopy = cleanupEvidence === undefined || cleanupEvidence === null ? cleanupEvidence : copyCleanup(cleanupEvidence, refusalCopy, name);
+    if (cleanupEvidence !== undefined && (phase !== 'case' || category !== 'native' || nativeCopy?.exit !== 'present' || nativeCopy.status !== 1 ||
+        cleanupEvidence !== null && (cleanupCopy === null || nativeCopy.stderr !== 'nonempty' || !refusalCopy || refusalCopy.cleanup !== false))) return unexpected;
     const extra = module === undefined ? '' : ` inbox=${module.inbox} core=${module.core} autoload=${module.autoload} direct=${module.direct}`;
     const outcome = nativeCopy === undefined ? '' : ` exit=${nativeCopy.exit} status=${nativeCopy.status} stderr=${nativeCopy.stderr}`;
     const refusalText = refusalCopy === undefined ? '' : refusalCopy === null
       ? ' nativePhase=unknown nativeReason=unknown cleanup=unknown survival=unknown flush=unknown close=unknown'
       : ` nativePhase=${refusalCopy.phase} nativeReason=${refusalCopy.reason} cleanup=${refusalCopy.cleanup} survival=${refusalCopy.survival} flush=${refusalCopy.flush} close=${refusalCopy.close}`;
-    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}${outcome}${refusalText}\n`;
+    const cleanupText = cleanupCopy === undefined ? '' : cleanupCopy === null ? ' cleanupEvidence=unknown'
+      : cleanupFields.map(key => ` ${key}=${cleanupCopy[key]}`).join('');
+    return `Owned image native qualification failed phase=${phase} case=${name} category=${category} code=${code} source=${source} line=${line} tool=${tool} condition=${condition}${extra}${outcome}${refusalText}${cleanupText}\n`;
   } catch { return unexpected; }
 }
