@@ -49,6 +49,7 @@ jobs:
         with:
           python-version: '3.13.14'
       - name: Verify and extract exact official native runtime
+        id: bootstrap
         timeout-minutes: 5
         env:
           FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-qualification-evidence
@@ -62,6 +63,10 @@ jobs:
           NPM_CONFIG_CACHE: ${{ runner.temp }}/factory-qualification-npm-cache
           FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/factory-qualification-npm-cache
         run: node packages/software-factory/scripts/qualification-foundation.mjs
+      - name: Run Windows cleanup storage diagnostic
+        if: always() && matrix.target == 'win32-x64' && steps.bootstrap.outcome == 'success'
+        timeout-minutes: 2
+        run: node --test packages/software-factory/test/cleanup-storage-diagnostics.test.mjs
       - name: Run Linux public install and upgrade qualification
         if: matrix.target == 'linux-x64'
         timeout-minutes: 15

@@ -279,4 +279,9 @@ test('cleanup reads launch the exact registered suite without advertising cleanu
   }
   const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
   assert.match(foundation, /run\('cleanup-reads', \['scripts\/test\.mjs', 'qualification', '--area', 'cleanup-reads'\]\)/);
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /name: Verify and extract exact official native runtime\n\s+id: bootstrap/);
+  assert.match(workflow, /- name: Run Windows cleanup storage diagnostic\n\s+if: always\(\) && matrix\.target == 'win32-x64' && steps\.bootstrap\.outcome == 'success'[\s\S]*?run: node --test packages\/software-factory\/test\/cleanup-storage-diagnostics\.test\.mjs/);
+  assert.ok(workflow.indexOf('- name: Run locked foundational checks') < workflow.indexOf('- name: Run Windows cleanup storage diagnostic'));
+  assert.doesNotMatch(workflow, /continue-on-error/);
 });

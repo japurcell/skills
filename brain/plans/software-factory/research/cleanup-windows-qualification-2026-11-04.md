@@ -17,3 +17,10 @@
 - Coordinator remaining proof: proper pinned build/receipts, actual Darwin diagnostic3/3 plus full CI18/18, original reader12 preservation and one deliberately selected Windows diagnostic phase. Author ran no build, dedicated native-positive diagnostic, full CI suite or Windows execution. The actual Windows outcome remains unknown.
 - Original reader file equals baseline317f16be byte-for-byte: Git blob `bf75a7edc3a7addacdd8385a8a2d860b8bc56794`.
 - Reflection: the argv parsing quirk is now structurally covered by the real dispatcher contract. No broader brain or skill change is needed.
+
+
+## Coordinator integration
+
+Windows qualification source d47a15bc is normally integrated at75476cd2. Proper pinned strict/qualificationtypes/build and actual Darwin diagnostic3/fullCI18 pass21/21, zero skips1.728955s; syntax/actionlint and728/168/runtime/cache postflight pass08:50:08UTC. Original12 reader blob bf75a7ed is unchanged. CI now proves the exact dispatcher Node argv/cwd/stdio/no-shell/singlelaunch and0/7 propagation in a disposable child; it does not pretend to execute12 cases inside5000ms. Actual original12 remain mandatory in foundation. A separate Windows direct-file diagnostic step follows foundation under always()+successful bootstrap, preserving both failure results with no continue-on-error. No test.mjs/foundation-runner or product guard change; therefore no schema3 retrigger. Windows actual diagnostic remains pending the one combined creator+diagnostic push.
+
+Workflow wiring TDD RED is `/tmp/factory-cleanup-windows-wiring-red.log`; integrated actual proof `/tmp/factory-cleanup-windows-coordinator-focused.log`, postflight `/tmp/factory-cleanup-windows-postflight.log`. Source freeze covered pinned build through fullEOF; only the intended CI/workflow patch existed before commit. There was no product/backend edit or Windows privacy inference.
