@@ -16,21 +16,34 @@ export function inboxEnvironment(inherited, canonicalHost, selectedHost) {
   return environment;
 }
 
+const checks = { environment: ['path', 'profile', 'inbox', 'assignment', 'reparse'],
+  'management-import': ['manifest', 'reparse', 'import'], 'utility-import': ['manifest', 'reparse', 'import'],
+  'security-import': ['manifest', 'reparse', 'import'], 'management-origin': ['count', 'name', 'manifest', 'base'],
+  'utility-origin': ['count', 'name', 'manifest', 'base'], 'security-origin': ['count', 'name', 'manifest', 'base'],
+  'cmdlet-resolution': ['resolution', 'count'], 'cmdlet-origin': ['path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base'],
+  ready: ['none'], unknown: ['unknown'] };
 function valid(value) {
-  return value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 3 &&
-    Object.keys(value).every(key => ['profile', 'origin', 'availability'].includes(key)) && value.profile === 'winps-inbox-only' &&
-    ['inbox', 'refused', 'unverified'].includes(value.origin) && ['available', 'unavailable'].includes(value.availability) &&
-    (value.origin !== 'inbox' || value.availability === 'available') &&
-    (value.origin !== 'unverified' || value.availability === 'unavailable');
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 5 ||
+      !Object.keys(value).every(key => ['profile', 'origin', 'availability', 'stage', 'field'].includes(key)) ||
+      value.profile !== 'winps-inbox-only' || !['inbox', 'refused', 'unverified'].includes(value.origin) ||
+      !['available', 'unavailable'].includes(value.availability) ||
+      typeof value.stage !== 'string' || typeof value.field !== 'string' ||
+      !Object.hasOwn(checks, value.stage) || !checks[value.stage].includes(value.field)) return false;
+  if (value.stage === 'ready') return value.origin === 'inbox' && value.availability === 'available';
+  if (value.stage === 'unknown') return value.origin === 'unverified' && value.availability === 'unavailable';
+  if (value.stage === 'cmdlet-origin') return value.origin === 'refused' && value.availability === 'available';
+  if (value.availability !== 'unavailable') return false;
+  if (value.origin === 'unverified') return true;
+  return value.origin === 'refused' && !['assignment', 'import', 'resolution'].includes(value.field);
 }
 export function parseProfile(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > 512) return null;
-  const match = /^OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\t(inbox|refused|unverified)\t(available|unavailable)\r?\n$/.exec(text);
+  const match = /^OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t(inbox|refused|unverified)\t(available|unavailable)\t([a-z-]+)\t([a-z-]+)\r?\n$/.exec(text);
   if (!match || match[0] !== text) return null;
-  const value = { profile: 'winps-inbox-only', origin: match[1], availability: match[2] };
+  const value = { profile: 'winps-inbox-only', origin: match[1], availability: match[2], stage: match[3], field: match[4] };
   return valid(value) ? value : null;
 }
 export function formatProfile(value) {
-  if (!valid(value)) return 'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable\n';
-  return `Owned image host profile=winps-inbox-only origin=${value.origin} availability=${value.availability}\n`;
+  if (!valid(value)) return 'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable stage=unknown field=unknown\n';
+  return `Owned image host profile=winps-inbox-only origin=${value.origin} availability=${value.availability} stage=${value.stage} field=${value.field}\n`;
 }

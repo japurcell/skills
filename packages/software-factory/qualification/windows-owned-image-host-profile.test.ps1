@@ -18,6 +18,7 @@ try {
         [IO.File]::WriteAllText([IO.Path]::Combine($directory, $name + '.psd1'), '# synthetic inert fixture')
     }
     $script:expectedInbox = $inbox; $script:origin = 'inbox'; $script:imports = @()
+    $script:failModule = ''; $script:failField = ''; $script:commandField = ''
     function Import-Module {
         [CmdletBinding()]
         param([string]$Name, [string]$Scope, [switch]$PassThru)
@@ -26,22 +27,37 @@ try {
         if ($Scope -cne 'Global' -or -not $PassThru -or
             [IO.Path]::GetDirectoryName($base) -cne $script:expectedInbox) { throw 'import-contract' }
         $script:imports += $moduleName
+        if ($moduleName -ceq $script:failModule) {
+            if ($script:failField -ceq 'import') { throw 'synthetic-private-import' }
+            if ($script:failField -ceq 'count') { return }
+            if ($script:failField -ceq 'name') { return [pscustomobject]@{ Name = 'other'; Path = $Name; ModuleBase = $base } }
+            if ($script:failField -ceq 'manifest') { return [pscustomobject]@{ Name = $moduleName; Path = $Name + '.other'; ModuleBase = $base } }
+            if ($script:failField -ceq 'base') { return [pscustomobject]@{ Name = $moduleName; Path = $Name; ModuleBase = $homeRoot } }
+        }
         return [pscustomobject]@{ Name = $moduleName; Path = $Name; ModuleBase = $base }
     }
     function Get-Command {
         [CmdletBinding()]
         param([string]$Name, [string]$CommandType, [switch]$ListImported, [switch]$All)
         if ($Name -cne 'Get-AuthenticodeSignature' -or $CommandType -cne 'Cmdlet' -or -not $ListImported -or -not $All) { throw 'command-contract' }
+        if ($script:commandField -ceq 'resolution') { throw 'synthetic-private-resolution' }
+        if ($script:commandField -ceq 'count') { return }
         $base = [IO.Path]::Combine($script:expectedInbox, 'Microsoft.PowerShell.Security')
         $path = if ($script:origin -eq 'inbox') { [IO.Path]::Combine($base, 'Microsoft.PowerShell.Security.psd1') } else { [IO.Path]::Combine($homeRoot, 'foreign.psd1') }
-        return [pscustomobject]@{ Name = 'Get-AuthenticodeSignature'; CommandType = 'Cmdlet';
+        $command = [pscustomobject]@{ Name = 'Get-AuthenticodeSignature'; CommandType = 'Cmdlet';
             Module = [pscustomobject]@{ Name = 'Microsoft.PowerShell.Security'; Path = $path; ModuleBase = $base } }
+        if ($script:commandField -ceq 'cmdlet-name') { $command.Name = 'other' }
+        if ($script:commandField -ceq 'cmdlet-type') { $command.CommandType = 'Function' }
+        if ($script:commandField -ceq 'module-name') { $command.Module.Name = 'other' }
+        if ($script:commandField -ceq 'manifest') { $command.Module.Path = $path + '.other' }
+        if ($script:commandField -ceq 'base') { $command.Module.ModuleBase = $homeRoot }
+        return $command
     }
     $stage = 'candidate'
     $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
     if ($facts.origin -cne 'inbox' -or $facts.availability -cne 'available' -or $env:PSModulePath -cne $inbox -or
         $script:PSModuleAutoLoadingPreference -cne 'None' -or $script:imports.Count -ne 3) { throw 'candidate' }
-    if ((Format-OwnedImageHostProfile $facts) -cne "OWNED_IMAGE_PROFILE`t1`twinps-inbox-only`tinbox`tavailable") { throw 'fixed-facts' }
+    if ((Format-OwnedImageHostProfile $facts) -cne "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tinbox`tavailable`tready`tnone") { throw 'fixed-facts' }
     $stage = 'strict-origin'
     $good = Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -All
     if (-not (Test-OwnedImageSecurityOrigin $inbox $good)) { throw 'good-origin' }
@@ -55,16 +71,46 @@ try {
         if ($field -eq 'sibling') { $bad.Module.Path = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Security-other', 'Microsoft.PowerShell.Security.psd1') }
         if (Test-OwnedImageSecurityOrigin $inbox $bad) { throw 'bad-origin' }
     }
+    $stage = 'fixed-stage-projection'
+    foreach ($role in @('Management', 'Utility', 'Security')) {
+        $script:failModule = 'Microsoft.PowerShell.' + $role
+        foreach ($field in @('import', 'count', 'name', 'manifest', 'base')) {
+            $script:failField = $field
+            $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
+            $suffix = if ($field -ceq 'import') { '-import' } else { '-origin' }
+            if ($facts.stage -cne ($role.ToLowerInvariant() + $suffix) -or $facts.field -cne $field -or
+                $facts.availability -cne 'unavailable' -or $facts.origin -ceq 'inbox') { throw 'module-stage' }
+            if ((Format-OwnedImageHostProfile $facts) -notmatch '^OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t(refused|unverified)\tunavailable\t[a-z-]+\t[a-z-]+$') { throw 'module-wire' }
+        }
+    }
+    $script:failModule = ''; $script:failField = ''
+    foreach ($field in @('resolution', 'count', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base')) {
+        $script:commandField = $field
+        $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
+        $expectedStage = if ($field -cin @('resolution', 'count')) { 'cmdlet-resolution' } else { 'cmdlet-origin' }
+        if ($facts.stage -cne $expectedStage -or $facts.field -cne $field -or $facts.origin -ceq 'inbox') { throw 'cmdlet-stage' }
+    }
+    $script:commandField = ''
+    $fallback = "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tunverified`tunavailable`tunknown`tunknown"
+    foreach ($patch in @(@{ stage = 'C:\private' }, @{ field = "manifest`nprivate" }, @{ field = ('x' * 513) },
+        @{ availability = 'available' }, @{ field = 'cmdlet-type' }, @{ stage = @('security-origin') }, @{ field = @('manifest') }, @{ extra = 'private' })) {
+        $forged = @{ profile = 'winps-inbox-only'; origin = 'refused'; availability = 'unavailable'; stage = 'security-origin'; field = 'manifest' }
+        foreach ($key in $patch.Keys) { $forged[$key] = $patch[$key] }
+        if ((Format-OwnedImageHostProfile $forged) -cne $fallback) { throw 'forged-wire' }
+    }
     $stage = 'origin-refusal'; $script:origin = 'foreign'
     $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
-    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'available') { throw 'foreign-origin' }
+    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'available' -or
+        $facts.stage -cne 'cmdlet-origin' -or $facts.field -cne 'manifest') { throw 'foreign-origin' }
     $stage = 'profile-refusal'
     $facts = Initialize-OwnedImageInboxProfile $homeRoot ([IO.Path]::Combine($homeRoot, 'foreign')) 'winps-inbox-only'
-    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'unavailable') { throw 'foreign-root' }
+    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'unavailable' -or
+        $facts.stage -cne 'environment' -or $facts.field -cne 'inbox') { throw 'foreign-root' }
     $stage = 'missing-manifest'
     [IO.File]::Delete([IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Security', 'Microsoft.PowerShell.Security.psd1'))
     $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
-    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'unavailable') { throw 'missing-manifest' }
+    if ($facts.origin -cne 'refused' -or $facts.availability -cne 'unavailable' -or
+        $facts.stage -cne 'security-import' -or $facts.field -cne 'manifest') { throw 'missing-manifest' }
     'PowerShell 7 candidate environment/import/origin checks passed (synthetic, not native host proof)'
     exit 0
 } catch {

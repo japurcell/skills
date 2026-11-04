@@ -395,14 +395,50 @@ test('candidate environment refuses an alternate, relative or noncanonical host'
 });
 
 test('host-profile facts expose only a coherent closed origin and availability result', () => {
-  assert.deepEqual(hostProfile.parseProfile('OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\n'),
-    { profile: 'winps-inbox-only', origin: 'inbox', availability: 'available' });
-  for (const text of ['OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tunavailable\n',
-    'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tC:\\private\tavailable\n',
-    'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\nprivate\n', 'x'.repeat(513)])
+  assert.deepEqual(hostProfile.parseProfile('OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\tinbox\tavailable\tready\tnone\n'),
+    { profile: 'winps-inbox-only', origin: 'inbox', availability: 'available', stage: 'ready', field: 'none' });
+  for (const text of ['OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\tinbox\tunavailable\tready\tnone\n',
+    'OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\tC:\\private\tavailable\tready\tnone\n',
+    'OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\tinbox\tavailable\tready\tnone\nprivate\n', 'x'.repeat(513)])
     assert.equal(hostProfile.parseProfile(text), null);
-  assert.equal(hostProfile.formatProfile({ profile: 'winps-inbox-only', origin: 'inbox', availability: 'available' }),
-    'Owned image host profile=winps-inbox-only origin=inbox availability=available\n');
+  assert.equal(hostProfile.formatProfile({ profile: 'winps-inbox-only', origin: 'inbox', availability: 'available', stage: 'ready', field: 'none' }),
+    'Owned image host profile=winps-inbox-only origin=inbox availability=available stage=ready field=none\n');
   assert.equal(hostProfile.formatProfile({ profile: 'winps-inbox-only', origin: 'C:\\private', availability: 'available' }),
-    'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable\n');
+    'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable stage=unknown field=unknown\n');
+});
+
+const profileStageRow = (origin, availability, stage, field) =>
+  `OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t${origin}\t${availability}\t${stage}\t${field}\n`;
+test('profile initialization diagnostics identify only coherent fixed stages and current checks', () => {
+  const checks = { environment: ['path', 'profile', 'inbox', 'assignment', 'reparse'],
+    'management-import': ['manifest', 'reparse', 'import'], 'utility-import': ['manifest', 'reparse', 'import'],
+    'security-import': ['manifest', 'reparse', 'import'], 'management-origin': ['count', 'name', 'manifest', 'base'],
+    'utility-origin': ['count', 'name', 'manifest', 'base'], 'security-origin': ['count', 'name', 'manifest', 'base'],
+    'cmdlet-resolution': ['resolution', 'count'], 'cmdlet-origin': ['path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base'] };
+  for (const [stage, fields] of Object.entries(checks)) for (const field of fields) {
+    const availability = stage === 'cmdlet-origin' ? 'available' : 'unavailable';
+    const origin = stage === 'cmdlet-origin' ? 'refused' : 'unverified';
+    const value = { profile: 'winps-inbox-only', origin, availability, stage, field };
+    assert.deepEqual(hostProfile.parseProfile(profileStageRow(origin, availability, stage, field)), value);
+    assert.equal(hostProfile.formatProfile(value),
+      `Owned image host profile=winps-inbox-only origin=${origin} availability=${availability} stage=${stage} field=${field}\n`);
+  }
+  assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', 'security-origin', 'manifest')).field, 'manifest');
+});
+
+test('profile stage projection refuses forged context, paths, extra keys, multiline and oversized input', () => {
+  const fallback = 'Owned image host profile=winps-inbox-only origin=unverified availability=unavailable stage=unknown field=unknown\n';
+  const good = { profile: 'winps-inbox-only', origin: 'refused', availability: 'unavailable', stage: 'security-origin', field: 'manifest' };
+  for (const patch of [{ stage: 'ready' }, { field: 'cmdlet-type' }, { availability: 'available' },
+    { origin: 'inbox' }, { stage: 'C:\\private' }, { stage: ['security-origin'] }, { field: ['manifest'] },
+    { field: 'manifest\nprivate' }, { field: 'x'.repeat(513) }, { private: 'value' }])
+    assert.equal(hostProfile.formatProfile({ ...good, ...patch }), fallback);
+  for (const text of [profileStageRow('inbox', 'available', 'security-import', 'import'),
+    profileStageRow('refused', 'unavailable', 'cmdlet-origin', 'manifest'),
+    profileStageRow('refused', 'unavailable', 'security-origin', 'cmdlet-type'),
+    profileStageRow('refused', 'unavailable', 'C:\\private', 'manifest'),
+    profileStageRow('refused', 'unavailable', 'security-origin', 'manifest\nprivate'),
+    profileStageRow('refused', 'unavailable', 'security-origin', 'manifest') + '\n',
+    'OWNED_IMAGE_PROFILE\t1\twinps-inbox-only\tinbox\tavailable\n', 'x'.repeat(513)])
+    assert.equal(hostProfile.parseProfile(text), null);
 });
