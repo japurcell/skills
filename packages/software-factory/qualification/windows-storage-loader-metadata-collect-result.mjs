@@ -35,6 +35,40 @@ export async function observeCollectionProcess(child, options = {}) {
   return { bytes: captured.bytes, exitCode: captured.exitCode };
 }
 
+const captureDiagnostics = Object.freeze({
+  deadline: 'metadata-refused-outer-deadline', exit: 'metadata-refused-outer-exit',
+  eof: 'metadata-refused-outer-eof', stderr: 'metadata-refused-outer-stderr',
+  bounds: 'metadata-refused-outer-bounds', process: 'metadata-refused-outer-process',
+});
+const innerDiagnostics = Object.freeze({
+  deadline: 'metadata-refused-inner-deadline', exit: 'metadata-refused-inner-exit',
+  eof: 'metadata-refused-inner-eof', stderr: 'metadata-refused-inner-stderr',
+  bounds: 'metadata-refused-inner-bounds', process: 'metadata-refused-inner-process',
+  protocol: 'metadata-refused-inner-protocol', changed: 'metadata-refused-inner-changed',
+});
+
+// Classifies an already-created child. It neither starts a process nor admits files.
+export async function classifyCollectionProcess(child, options = {}) {
+  if (Object.keys(options).some(key => key !== 'deadlineMs')) fail();
+  const captured = await captureMetadataProcess(child, { ...options, exitCodes: [0, 1] });
+  if (captured.state !== 'captured') return { diagnostic: captureDiagnostics[captured.reason] ?? 'metadata-refused-prerequisite' };
+  try {
+    const value = JSON.parse(captured.bytes.toString('utf8'));
+    const keys = ['scope', 'state', 'reason', 'selectionAuthority', 'buildAuthority', 'nativeAuthority'];
+    if (value && typeof value === 'object' && !Array.isArray(value) &&
+        Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key)) &&
+        captured.bytes.toString('utf8') === `${JSON.stringify({ scope: value.scope, state: value.state, reason: value.reason,
+          selectionAuthority: value.selectionAuthority, buildAuthority: value.buildAuthority, nativeAuthority: value.nativeAuthority })}\n` && captured.exitCode === 1 &&
+        value.scope === 'windows-storage-loader-metadata' && value.state === 'blocked' &&
+        value.selectionAuthority === false && value.buildAuthority === false && value.nativeAuthority === false &&
+        typeof value.reason === 'string' && Object.hasOwn(innerDiagnostics, value.reason)) return { diagnostic: innerDiagnostics[value.reason] };
+    validateResult(captured.bytes, captured.exitCode);
+    return { bytes: captured.bytes, exitCode: captured.exitCode };
+  } catch {
+    return { diagnostic: 'metadata-refused-wire' };
+  }
+}
+
 function nonReparse(path) {
   let current = resolve(path);
   for (let depth = 0; depth < 64; depth++) {
@@ -134,16 +168,20 @@ async function main() {
         FACTORY_WINDOWS_LOADER_METADATA_SELECTION: inputSelection,
         FACTORY_WINDOWS_LOADER_METADATA_SELECTION_SHA256: selectionSha256 },
     });
-    let captured;
-    let captureFailed = false;
-    try { captured = await observeCollectionProcess(child); } catch { captureFailed = true; }
+    const captured = await classifyCollectionProcess(child);
     freezeSources();
-    if (snapshot(inputSelection, 16384).sha256 !== selectionSha256 || captureFailed) fail();
+    if (snapshot(inputSelection, 16384).sha256 !== selectionSha256) fail();
+    if (captured.diagnostic) {
+      process.stdout.write(`${captured.diagnostic}\n`);
+      process.exitCode = 1;
+      return;
+    }
     const result = prepareCollectionArtifacts(captured.bytes, captured.exitCode, privateRoot, collectionSourceCommit);
     process.stdout.write('metadata-artifacts-ready\n');
     process.exitCode = result.exitCode;
   } catch {
     // No raw stdout/stderr, candidate error text, environment or partial artifacts escape.
+    process.stdout.write('metadata-refused-prerequisite\n');
     process.exitCode = 1;
   }
 }

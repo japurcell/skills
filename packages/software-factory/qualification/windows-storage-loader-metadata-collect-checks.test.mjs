@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 
 const entry = fileURLToPath(new URL('./windows-storage-loader-metadata-collect-result.mjs', import.meta.url));
 const cli = fileURLToPath(new URL('./windows-storage-loader-metadata.mjs', import.meta.url));
@@ -23,6 +25,68 @@ const inert = script => spawn(process.execPath, ['--input-type=module', '-e', sc
   stdio: ['ignore', 'pipe', 'pipe'], env: {},
 });
 
+function fakeChild() {
+  const child = new EventEmitter();
+  child.stdout = new PassThrough(); child.stderr = new PassThrough();
+  child.kill = () => queueMicrotask(() => { child.stdout.end(); child.stderr.end(); child.emit('exit', null, 'SIGKILL'); child.emit('close'); });
+  child.unref = () => {};
+  return child;
+}
+
+test('a timed out inert collection yields only the fixed outer deadline marker', async () => {
+  const { classifyCollectionProcess } = await import(entry);
+  const result = await classifyCollectionProcess(fakeChild(), { deadlineMs: 10 });
+  assert.deepEqual(result, { diagnostic: 'metadata-refused-outer-deadline' });
+});
+
+function completeFake(child, bytes, code = 1, { stderr = '', stdoutEOF = true, stderrEOF = true, signal = null } = {}) {
+  setImmediate(() => {
+    if (bytes) child.stdout.write(bytes);
+    if (stderr) child.stderr.write(stderr);
+    if (stdoutEOF) child.stdout.end();
+    if (stderrEOF) child.stderr.end();
+    child.emit('exit', code, signal);
+    setImmediate(() => child.emit('close'));
+  });
+  return child;
+}
+
+test('diagnostic classification accepts only closed inner refusals and valid full wire', async () => {
+  const { classifyCollectionProcess } = await import(entry);
+  for (const reason of ['deadline', 'exit', 'eof', 'stderr', 'bounds', 'process', 'protocol', 'changed']) {
+    const value = { ...refusal(), reason };
+    assert.deepEqual(await classifyCollectionProcess(completeFake(fakeChild(), wire(value))),
+      { diagnostic: `metadata-refused-inner-${reason}` });
+  }
+  const bytes = wire(metadata());
+  assert.deepEqual(await classifyCollectionProcess(completeFake(fakeChild(), bytes)), { bytes, exitCode: 1 });
+  const observedBytes = wire(observed());
+  assert.deepEqual(await classifyCollectionProcess(completeFake(fakeChild(), observedBytes, 0)), { bytes: observedBytes, exitCode: 0 });
+  const forged = { ...refusal(), reason: 'deadline', selectionAuthority: true };
+  for (const [input, code] of [[wire(forged), 1], [wire({ ...refusal(), reason: 'deadline', extra: 'secret' }), 1],
+    [wire({ ...refusal(), reason: ['deadline'] }), 1], [wire({ ...refusal(), reason: {} }), 1],
+    [wire({ ...refusal(), reason: 'unknown' }), 1],
+    [Buffer.from(`${JSON.stringify({ ...refusal(), reason: 'deadline' })}\n\n`), 1],
+    [Buffer.from('{"state":"blocked","scope":"windows-storage-loader-metadata","reason":"deadline","selectionAuthority":false,"buildAuthority":false,"nativeAuthority":false}\n'), 1],
+    [wire({ ...refusal(), reason: 'deadline' }), 0], [Buffer.from('C:\\private\\secret'), 1], [bytes, 0]]) {
+    assert.deepEqual(await classifyCollectionProcess(completeFake(fakeChild(), input, code)), { diagnostic: 'metadata-refused-wire' });
+  }
+});
+
+test('diagnostic classification reports fixed outer capture failures without child data', async () => {
+  const { classifyCollectionProcess } = await import(entry);
+  for (const [child, expected] of [
+    [completeFake(fakeChild(), Buffer.from('secret'), 2), 'exit'],
+    [completeFake(fakeChild(), Buffer.from('secret'), 1, { stdoutEOF: false }), 'eof'],
+    [completeFake(fakeChild(), Buffer.from('secret'), 1, { stderr: 'private-stderr' }), 'stderr'],
+    [completeFake(fakeChild(), Buffer.alloc(1048577, 65)), 'bounds'],
+    [completeFake(fakeChild(), null, 1, { stderr: 'x'.repeat(8193) }), 'bounds'],
+  ]) assert.deepEqual(await classifyCollectionProcess(child), { diagnostic: `metadata-refused-outer-${expected}` });
+  const broken = fakeChild();
+  setImmediate(() => broken.emit('error', new Error('private-error')));
+  assert.deepEqual(await classifyCollectionProcess(broken), { diagnostic: 'metadata-refused-outer-process' });
+});
+
 test('collection entry refuses arguments and unsupported host without exposing environment values', () => {
   for (const args of [['private-argument-canary'], []]) {
     const result = spawnSync(process.execPath, [entry, ...args], { encoding: 'utf8', timeout: 2000,
@@ -30,7 +94,7 @@ test('collection entry refuses arguments and unsupported host without exposing e
     assert.equal(result.error, undefined);
     assert.equal(result.status, 1);
     assert.equal(result.stderr, '');
-    assert.equal(result.stdout, '');
+    assert.equal(result.stdout, 'metadata-refused-prerequisite\n');
   }
 });
 
