@@ -93,3 +93,8 @@ Reflection: the real-child regression plus optional first-report latch structura
 ## Prior Linux watch closed
 
 Prior96d7ebc3 workflow41814777347 is now fully finite: Linuxjob126522664445 SUCCESS10:48:37UTC,14/14foundation phases, publicupgrade1/1zero237.287592s, dependencyownership12/12zero80.196933s, claim23/23zero233.647896s, backup11/11zero296.441603s. Full log/archive/validated artifacts `/tmp/factory-first-failure-linux-41814777347-{job.log,evidence.zip,artifacts/}`. OverallworkflowFAIL remains solely Windows; Darwin succeeds. No duplicate/retry or historical cause inference.
+
+
+## Per-option coordinator proof
+
+Frozen clean73f38d92ab09c4e4839176f4f4dfee97c05474bb Diagnostic6(actualDarwinpositive included)+CI19 passes25/25,zero fail/cancelled/skips/todo1.891125s. BothJSsyntax/actionlint pass. FullEOF/postflight10:53:17UTC matches729inputs171outputs/all output hashes/receiptSHA98925fd6/actualNodeSHA6f320694/headclean, no rebuild/ordinary. Logs `/tmp/factory-per-option-integrated-{focused,syntax-diagnostic,syntax-ci,actionlint,postflight}.log`. This proves closed classification on controlled child canaries; actual Windows optionfield/cause/correction remains unknown pending one changed foundation-only observation.
