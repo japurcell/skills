@@ -12,7 +12,7 @@ Repair test telemetry closure bookkeeping only. Native41769336098 atdafc1a20 pas
 - [x] (2026-11-04) [milestone-2] Verify normal exit, explicit process.exit, default SIGTERM/SIGINT and all3ordered cancellation paths off/on; prove signal intent and exit without EOF are insufficient.
 - [x] (2026-11-04) [milestone-2] Merge latest integrationebbb82e2 without rebasing; final verification and scoped clean commit are retained at handback.
 - [x] (2026-11-04) [milestone-3] Normally integrated at437839f8 over06ceae38; coordinator19/19 synthetic/artifact and unchanged default-off ordered-runner7/7 pass, plus syntax/actionlint.
-- [ ] [milestone-3] Coordinator observes one changed remote native experiment at an immutable exact checkout with built-in pinned receipt/cache preflight; no local broad proof or private proof overlap.
+- [x] (2026-11-04) [milestone-3] Exactb3d7cc77 native41773952580/job126389835263 passes original31fixtures, schema2complete/2161records,51workers/48selfcloses/10bound parent closes and all49selected endings. Preflight/guard/upload pass; baseline/timeline assessed, no oldcause/deadline repair claim.
 
 ## Context and Task Graph
 
@@ -38,10 +38,10 @@ Keep child self receipts distinct from parent-observed closure. Any observer mus
 
 ### Milestone3: native diagnostic acceptance
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
-Coordinator owns integration, native rerun and exact two-file validated upload. A new native pass is needed for complete telemetry; no old deadline cause is claimed.
+Coordinator owns integration, native rerun and exact two-file validated upload. The new native pass41773952580 atb3d7cc77 provides complete telemetry and assessed current baseline. Original31fixtures pass86.918248s; notifications14.193563s/15s and learning29.507626s/30s. No old deadline cause or repair is claimed; exact2sanitized exports and job log retained under `/tmp/factory-selector-closure-native-41773952580-artifacts/` and `-job.log`. Current3writers without selfclose each have actual parent SIGKILL closure; historical3writers remain unassigned.
 
 ## Validation and Acceptance
 
@@ -65,7 +65,7 @@ Final merged-source proof at integrationebbb82e2:19pass/0fail/0skip/0cancelled/0
 
 ## Concrete Steps / Recovery
 
-Coordinator next: integrate the scoped closure packet, retain the canonical pinned Node24.22.1/Python3.13.14/PATH/dependency/cache receipt preflight, wait for private load to be quiescent and freeze exact source before any changed diagnostic experiment. Use the existing dedicated workflow and exact two validated export paths. No workflow or production file changed here. New exports use schema2 and the updated guard; retained schema1 artifacts are unchanged and remain incomplete. Do not retry the old unchanged source or claim a causal repair for8f59d77b. Provider qualification stays blocked; independent reviews deferred; desktop notifications last.
+Coordinator integrated and ran the sole changed remote experiment at immutableb3d7cc77, retaining canonical pinned Node24.22.1/Python3.13.14/PATH/dependency/cache receipt preflight. No broad local proof overlapped private backend load. Next: retain assessed baseline and await root's next bounded decision; no repeated experiment is selected. Use the existing dedicated workflow and exact two validated export paths. No workflow or production file changed here. New exports use schema2 and the updated guard; retained schema1 artifacts are unchanged and remain incomplete. Do not retry the old unchanged source or claim a causal repair for8f59d77b. Provider qualification stays blocked; independent reviews deferred; desktop notifications last.
 
 Source recovery remains bounded: missing closure/unfinished spans/bounds/coverage keep diagnostics incomplete. Unknown, inconsistent or cyclic mappings fail the profiling/export guard. No generic process scan, signal interception or inferred closure is used.
 
@@ -75,4 +75,4 @@ Pinned Node24.22.1 [process exit](https://nodejs.org/download/release/v24.22.1/d
 
 ## Outcomes & Retrospective
 
-Controlled red reproduction and closure-only repair are complete. The three historical streams remain unattributed. Current native31/31 atdafc1a20 is retained as a successful original fixture result and a failed incomplete diagnostic; new native closure acceptance and the old deadline cause remain unproved. Reflection: real off/on signal parity, intent/EOF negative controls and one shared strict relationship validator encode the durable lesson; no separate brain or skill change is needed.
+Controlled red reproduction and closure-only repair are complete. The three historical streams remain unattributed. Current native31/31 atdafc1a20 is retained as a successful original fixture result and a failed incomplete diagnostic; new schema2 native41773952580 atb3d7cc77 supplies complete assessed closure/timeline and original31/31fixtures, while the old deadline cause/repair remain unproved. Reflection: real off/on signal parity, intent/EOF negative controls and one shared strict relationship validator encode the durable lesson; no separate brain or skill change is needed.
