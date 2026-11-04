@@ -10,6 +10,7 @@ import { assertForwardIntegrity, forwardCounts, knownForwardShape } from './sche
 import { validateReleaseBundle } from './release.js';
 import { openDependencyMaintenanceStore, type Claim, type DependencyMaintenanceBinding, type DependencyBackupAttemptBinding, type VerifiedMaintenanceBackup, type MaintenanceHandle, type MaintenanceIntent, type Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
+import { verifyDependencyCandidateArtifacts } from './dependency-candidate.js';
 
 export interface DependencySelectionSource { mode: 'repair'; bundleRoot: string; manifestSha256: string }
 function hash(bytes: string | Buffer): string { return createHash('sha256').update(bytes).digest('hex'); }
@@ -114,14 +115,27 @@ function assertOriginalSelection(location: { root: string; common: string }, han
 }
 
 export async function assertDependencyMaintenance(repository: string, handle: MaintenanceHandle) {
-  const location = await repositoryIdentity(repository), plan = assertOriginalSelection(location, handle);
+  return assertDependencyMaintenanceAtLocation(await repositoryIdentity(repository), handle);
+}
+/** Exact same-owner preparing capability, also usable inside a serialized binding callback. */
+export function assertDependencyMaintenanceAtLocation(location: { root: string; common: string }, handle: MaintenanceHandle) {
+  const plan = assertOriginalSelection(location, handle);
   const store = openDependencyMaintenanceStore(location.common);
   try {
     const { claim } = store.readDependencyMaintenance(handle);
     if (claim.maintenance!.dependencies!.backupAttempt) readDependencyBackupAttempt(handle, claim);
     if (claim.maintenance!.dependencies!.backup) verifyDependencyBackup(handle, claim, claim.maintenance!.dependencies!.backup!);
+    if (claim.maintenance!.dependencies!.candidateAttempt?.binding) verifyDependencyCandidateArtifacts(handle, claim);
     return plan;
   } finally { store.close(); }
+}
+
+function originalBackupClaim(claim: Claim): Claim {
+  const original = structuredClone(claim);
+  // These are the only later preparing transitions. Never erase owner, token, selection or backup attempt facts.
+  delete original.maintenance!.dependencies!.candidateAttempt;
+  original.maintenance!.candidate = null;
+  return original;
 }
 
 function requireBackupOwner(claim: Claim): void {
@@ -133,7 +147,7 @@ function attemptRecord(handle: MaintenanceHandle, claim: Claim, directories: { r
   const selected = claim.maintenance!, dependencies = selected.dependencies!;
   const target = maintenanceBackupPath(handle.commonDir, handle.operationId, selected.backupId!);
   const source = join(handle.commonDir, 'factory/history.sqlite');
-  const allocated = structuredClone(claim);
+  const allocated = originalBackupClaim(claim);
   allocated.maintenance!.dependencies!.backupAttempt = null; allocated.maintenance!.dependencies!.backup = null;
   return { version: 1, kind: 'dependencies', operationId: handle.operationId, repositoryId: handle.repositoryId,
     claimId: handle.claimId, backupId: selected.backupId, source, target, sourceSchema: 7, sourceRelease: selected.release,
@@ -174,7 +188,7 @@ function verifyCopiedDependencyBackup(handle: MaintenanceHandle, claim: Claim, t
   try {
     assertForwardIntegrity(copied);
     const selected = claim.maintenance!, repository = copied.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
-    const claims = copied.prepare('SELECT id,token,data FROM owner_claims LIMIT 2').all(), expectedClaim = structuredClone(claim);
+    const claims = copied.prepare('SELECT id,token,data FROM owner_claims LIMIT 2').all(), expectedClaim = originalBackupClaim(claim);
     expectedClaim.maintenance!.dependencies!.backup = null;
     if (knownForwardShape(copied) !== 'v7' || repository.length !== 1 || repository[0]?.['id'] !== handle.repositoryId
       || repository[0]['release'] !== selected.release || repository[0]['state'] !== 'ready' || claims.length !== 1
@@ -184,6 +198,8 @@ function verifyCopiedDependencyBackup(handle: MaintenanceHandle, claim: Claim, t
     if (!last || !['install.completed', 'upgrade.completed'].includes(String(last['kind']))
       || hash(JSON.stringify(JSON.parse(String(last['data'])))) !== selected.dependencies!.originalCompletionSha256)
       throw new Error('dependency backup prior completion differs');
+    const store = openDependencyMaintenanceStore(handle.commonDir);
+    try { store.verifyDependencyBackupEvents(copied, claim); } finally { store.close(); }
     return forwardCounts(copied);
   } finally { copied.close(); }
 }
@@ -209,7 +225,9 @@ function verifyDependencyBackup(handle: MaintenanceHandle, claim: Claim, bound: 
   try {
     const live = store.forwardCounts(), boundAlready = Boolean(selected.dependencies!.backup);
     for (const [table, count] of Object.entries(counts.rows)) {
-      const expectedCount = BigInt(count) + (table === 'observation_events' && boundAlready ? 1n : 0n);
+      const attempt = selected.dependencies!.candidateAttempt;
+      const suffixLength = boundAlready ? (attempt ? attempt.events.length : 1) : 0;
+      const expectedCount = BigInt(count) + (table === 'observation_events' ? BigInt(suffixLength) : 0n);
       if (BigInt(live.rows[table]!) !== expectedCount) throw new Error('dependency backup source counts changed');
     }
   } finally { store.close(); }
@@ -282,5 +300,6 @@ export async function inspectDependencyMaintenance(repository: string, operation
     selectionDigest: plan.selectionDigest, originalSha256: plan.originalSha256, originalCompletionSha256: plan.originalCompletionSha256,
     expectedToolchainSha256: plan.original.toolchain.expectedSha256, observedToolchainSha256: plan.original.toolchain.observedSha256,
     missing: plan.toolchain.missing, changed: plan.toolchain.changed, backupBound: Boolean(selected.dependencies?.backup),
+    candidateAttempted: Boolean(selected.dependencies?.candidateAttempt), candidateBound: Boolean(selected.candidate),
     backupAttempted: selected.backupId !== null, backupAttemptRecorded: Boolean(selected.dependencies?.backupAttempt) };
 }
