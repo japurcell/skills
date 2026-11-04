@@ -1,0 +1,35 @@
+# C1 bounded retained reads
+
+## Status and boundary
+
+- C1 source and focused preservation proof complete. No whole-cleanup acceptance claim. Coordinator owns registration and canonical plan/handoff updates.
+- Private branch `codex/factory-cleanup-typed-readers`, worktree `/private/tmp/factory-cleanup-readers`, proof base `255fa87a17b756f30a1c0d71d4047a32f61f9cc0`. Normal latest-integration merge is required before handback.
+- Only read methods/types, focused tests, this note and the explicit `cleanup-read` runtime inventory entry in both fixed inventories changed. SQLite schema remains 7, with no DDL, writer/controller/CLI route, claim, backup I/O, pruning, deletion, compaction, stage or owner transfer.
+
+## Public seams and contracts
+
+- `openCleanupReadStore(commonDir)` opens existing private storage read-only, validates identity/sidecars/current shape/integrity and retains one SQLite read transaction until `close()`. Its frozen view exposes only C1 reads and close; no writer capability. Individual `RepositoryStore` C1 reads also use a consistent read transaction per call. Use the dedicated view for consistency across pages and concurrent updates.
+- `readCleanupSnapshot()` returns repository/release/schema/database identity and invocation/attempt/capture/event high waters as exact decimal strings. Recovery authority is always `unassessed`, including absent claims. Its digest covers only bounded known repository/claim facts; C2 still owns marker/operation/backup authority. Never use this digest or high waters alone as cleanup permission or a complete content snapshot.
+- `pageCleanupInvocationFacts`, `pageCleanupAttemptFacts`, `pageCleanupCaptureHeaders` use SQL keyset bounds, not offsets or eager history/previews. All capture headers are enumerated, including sparse non-report history. New cursors are canonical decimal strings spanning the nonnegative signed SQLite 64-bit range; unsupported nonpositive persisted row cursors refuse rather than silently disappear.
+- Metadata pages default to at most 100 rows and 256 KiB. SQL guards JSON at 64 KiB before it crosses into JS. Strict decoders retain root/follow-up input, question/context and attempt lineage/agent capture references. Unknown fields/formats, malformed and oversized records stay opaque, never reference-free. Oversized/unavailable raw bytes have explicit `sha256:null`; no unbounded hash fetch occurs. Small page exhaustion is explicit and may be nonadvancing.
+- `measureCleanupCaptures(exactKeys)` accepts at most 100 unique exact invocation/capture pairs and distinguishes present, empty, missing, foreign, pruned and opaque. Logical bytes use SQL `octet_length`, never a physical-reclamation estimate.
+- `readCleanupCapture` retains exact ownership/header state/channel/sequence on every page, at most 20 chunks and 256 KiB serialized UTF-8. SQL text preflight precedes JS allocation. Continuation past the header refuses; gaps and nonadvancing byte budgets return fixed blockers. Closed partial/unknown states remain visible. Pruned headers remain distinct from missing data.
+- `readCleanupAttempt` is exact and ownership bounded. `readCleanupEvent` preflights at 8 KiB, gives explicit invocation ownership precedence, then resolves exact attempt/capture ownership. C1 understands only invocation started/inputs/running/shutting_down/finalized, attempt admitted/started/settled/inputs, and capture created/appended formats. Other kinds/extra fields remain opaque. C2 operation-event authority is absent.
+- Header scalar strings and SQLite integer storage classes are SQL-checked too: a non-STRICT `INTEGER` declaration alone does not exclude hostile text. No raw stored value appears in refusal diagnostics.
+
+## Verification evidence
+
+- Public initialized-repository tracer first failed with `store.readCleanupSnapshot is not a function`, then passed. Further missing-method REDs covered exact payload, read-only snapshot and keyed attempt/event seams.
+- `/private/tmp/factory-cleanup-readers-header-red.log` preserves the hostile sequence RED. SQL storage-class precheck plus typed opaque header now passes without echoing the value.
+- `/private/tmp/factory-cleanup-readers-focused-3.log` preserves 11/12: the escaped-byte fixture legitimately fit its budget. Corrected input crosses the unchanged 256 KiB bound; no assertion/bound was weakened.
+- Final freeze ended `2026-11-04 07:29:08 UTC`; no edit, merge or rebuild overlapped the pinned build through proof EOF/postflight. Strict and qualification typechecks/build pass. Focused 12/12, store/controller 62/62, learning 45/45, release 61/61, installed CLI 1/1: total 181/181, zero fail/cancelled/skipped/todo.
+- Logs: `/private/tmp/factory-cleanup-readers-final-{typecheck,qualification-typecheck,build,focused,offline,preflight,store-controller,learning,release,installed-cli,receipt}.log`. Test durations: focused 596.396 ms, store/controller 8.931 s, learning 45.824 s, release 18.225 s, installed CLI 47.151 s.
+- Receipt postflight matches all 728 inputs/168 outputs; Node v24.22.1 executable SHA256 `6f32069480ec14d52b6d7b1f3c7124cfbbc46203abf5ddf5c65b127435f3f329`. Python test/atomic interpreter is `/Users/adam/.pyenv/versions/3.13.14/bin/python3.13`. Both distinct npm config files are empty. Fresh copied offline cache `/private/tmp/factory-cleanup-readers-proof/npm-cache` installed exact locked toolchain with undici-types 7.24.6; no fallback/network.
+- Run from `packages/software-factory`: pinned Node `--test --test-concurrency=2` for the exact retained entry list `/private/tmp/factory-cleanup-readers-final-entryfiles.txt`, split serially into store/controller, learning and release groups; installed CLI uses concurrency 1. `--experimental-test-module-mocks` is present for ordinary groups. Environment/commands are retained in `/private/tmp/factory-cleanup-readers-final-command.txt`.
+- No original 33-case IR1 native rerun, held candidate qualification/probe, provider/authentication, real user repository, publication, global install or desktop execution occurred.
+
+## Next action and reflection
+
+- Coordinator integrates the clean source, registers the C1 test seam and links this note, then chooses any further proof. C2 backup/recovery joins, C3 closure/selection and all claimed/mutating stages remain separate unreleased work.
+- Reflection: storage-class guards, scalar byte preflights and the public hostile-header regression structurally encode the relevant learning. No additional brain principle or skill change is needed. The one fixture arithmetic correction supplies no durable skill improvement.
+- Sources used: [SQLite byte length](https://www.sqlite.org/lang_corefunc.html#octet_length), [SQLite WAL snapshot isolation](https://www.sqlite.org/isolation.html). Pinned `@types/node` 24.19.2 and runtime controls verified read-only `DatabaseSync`/BigInt statements; remote Node API docs were inaccessible.
