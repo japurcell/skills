@@ -5,6 +5,7 @@ param([Parameter(Mandatory = $true)][string]$Evidence)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $diagnosticCategory = 'host'
+$diagnosticTool = 'none'
 $compilerDiagnostic = @{ code = 'none'; source = 'none'; line = 0 }
 $diagnosticHelpersLoaded = $false
 try {
@@ -24,14 +25,17 @@ try {
     [void][IO.Directory]::CreateDirectory($native)
     $diagnosticCategory = 'missing-msvc'
     $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-    function Assert-MicrosoftTool([string]$Path) {
+    function Assert-MicrosoftTool([string]$Path, [string]$Role) {
+        $script:diagnosticTool = 'none'
         $script:diagnosticCategory = 'missing-msvc'
         if (-not [IO.File]::Exists($Path) -or ((Get-Item -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'tool' }
         $script:diagnosticCategory = 'tool-signature'
+        $script:diagnosticTool = $Role
         $signature = Get-AuthenticodeSignature -LiteralPath $Path
         if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch '(?:^|, )O=Microsoft Corporation(?:,|$)') { throw 'tool-signature' }
+        $script:diagnosticTool = 'none'
     }
-    Assert-MicrosoftTool $vswhere
+    Assert-MicrosoftTool $vswhere 'vswhere'
     $diagnosticCategory = 'missing-msvc'
     $installation = @(& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath)
     if ($LASTEXITCODE -ne 0 -or $installation.Count -ne 1) { throw 'toolchain' }
@@ -47,8 +51,8 @@ try {
     $tools = Join-Path $toolset.FullName 'bin\Hostx64\x64'
     $compiler = Join-Path $tools 'cl.exe'
     $linker = Join-Path $tools 'link.exe'
-    Assert-MicrosoftTool $compiler
-    Assert-MicrosoftTool $linker
+    Assert-MicrosoftTool $compiler 'compiler'
+    Assert-MicrosoftTool $linker 'linker'
     $diagnosticCategory = 'compiler-version'
     $compilerVersion = (Get-Item -LiteralPath $compiler).VersionInfo.FileVersion
     if ($compilerVersion -notmatch '^19\.[0-9]+\.[0-9]+(?:\.[0-9]+)?(?: .*)?$') { throw 'compiler-version' }
@@ -122,10 +126,10 @@ try {
     exit 0
 } catch {
     # No exception text or operational tool/path inventory in console output.
-    $safeDiagnostic = "OWNED_IMAGE_BUILD`t1`tunexpected`tnone`tnone`t0"
+    $safeDiagnostic = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone"
     if ($diagnosticHelpersLoaded) {
-        try { $safeDiagnostic = Format-OwnedImageBuildDiagnostic $diagnosticCategory $compilerDiagnostic }
-        catch { $safeDiagnostic = "OWNED_IMAGE_BUILD`t1`tunexpected`tnone`tnone`t0" }
+        try { $safeDiagnostic = Format-OwnedImageBuildDiagnostic $diagnosticCategory $compilerDiagnostic $diagnosticTool }
+        catch { $safeDiagnostic = "OWNED_IMAGE_BUILD`t2`tunexpected`tnone`tnone`t0`tnone" }
     }
     [Console]::Error.WriteLine($safeDiagnostic)
     exit 1
