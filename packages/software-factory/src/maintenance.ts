@@ -12,11 +12,13 @@ import { directoryIdentity, verifyBoundInstallCandidate } from './install-candid
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
 import { openForwardMaintenanceStore, openMaintenanceStore, openRepositoryStore } from './store.js';
+import { validateDependencyMaintenanceBinding } from './store.js';
 import type { CandidateBinding, Claim, MaintenanceHandle, MaintenanceIntent, MaintenanceKind, MaintenancePhase, Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 import { assertOriginalInstallation, type OriginalInstallation } from './upgrade-original.js';
 import { assertForwardIntegrity, forwardCounts, knownForwardShape } from './schema-forward.js';
 import type { ForwardShape } from './schema-forward.js';
+import { assertDependencyMaintenance } from './dependency-maintenance.js';
 
 const MAX_RECORD_BYTES = 8192;
 const SHA = /^[0-9a-f]{64}$/;
@@ -181,6 +183,13 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
       || !SHA.test(recorded.candidate.treeDigest) || !UUID.test(recorded.candidate.receiptId)
       || !SHA.test(recorded.candidate.receiptSha256))))
     throw new Error('recorded maintenance intent invalid');
+  if (recorded.kind === 'dependencies' || recorded.dependencies !== undefined) {
+    validateDependencyMaintenanceBinding(recorded.dependencies);
+    if (recorded.kind !== 'dependencies' || recorded.phase !== 'preparing' || recorded.forward !== undefined
+      || recorded.backupId !== null || recorded.candidate !== null || recorded.stageDigest !== null
+      || recorded.stageIdentity !== null || recorded.ticketConsumed || recorded.ticketNonceHash !== null)
+      throw new Error('dependency admission has no backup or publication authority');
+  }
   if (recorded.forward !== undefined) {
     const forward = recorded.forward, backup = forward.backup;
     if (!forward || typeof forward !== 'object' || Array.isArray(forward)
@@ -257,7 +266,11 @@ function redacted(intent: MaintenanceIntent) {
   return { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,
     targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate: candidate ?? null,
     ...(intent.forward ? { forward: { sourceShape: intent.forward.sourceShape,
-      currentShape: intent.forward.currentShape, backupBound: intent.forward.backup !== null } } : {}) };
+      currentShape: intent.forward.currentShape, backupBound: intent.forward.backup !== null } } : {}),
+    ...(intent.dependencies ? { dependencies: { originalSha256: intent.dependencies.originalSha256,
+      originalCompletionSha256: intent.dependencies.originalCompletionSha256,
+      expectedToolchainSha256: intent.dependencies.expectedToolchainSha256,
+      observedToolchainSha256: intent.dependencies.observedToolchainSha256, backupBound: false } } : {}) };
 }
 function handle(claim: Claim, commonDir: string): MaintenanceHandle {
   if (!claim.maintenance) throw new Error('typed maintenance claim required');
@@ -314,6 +327,7 @@ export async function beginRepositoryBootstrap(repository: string, selection: Ma
 export async function beginMaintenance(repository: string, kind: MaintenanceKind, selection: MaintenanceSelection, owner: Owner): Promise<MaintenanceHandle> {
   if (!KINDS.includes(kind)) throw new Error('unsupported maintenance operation');
   if (kind === 'install') throw new Error('install requires an absent bootstrap root');
+  if (kind === 'dependencies') throw new Error('dependencies require exact installed selection admission');
   const { common } = await repositoryIdentity(repository);
   selected(selection);
   const store = openRepositoryStore(common);
@@ -562,6 +576,7 @@ export async function inspectMaintenance(repository: string) {
       const claims = database.prepare('SELECT data FROM owner_claims LIMIT 2').all();
       const typed = claims.map(entry => JSON.parse(String(entry['data'])) as Claim).find(claim => claim.maintenance);
       if (typed) assertRecordedIntent(common, typed);
+      if (typed?.maintenance?.kind === 'dependencies') await assertDependencyMaintenance(root, handle(typed, common));
       if (typed?.maintenance?.forward?.backup) verifyForwardBackup(common, typed);
       if (typed) verifyInstallCandidate(common, typed, false);
       if (typed && claims.length !== 1) throw new Error('typed maintenance claim is not exclusive');
@@ -602,6 +617,7 @@ export async function reclaimMaintenance(repository: string, operationId: string
   const store = openControllerStore(common);
   try {
     const claim = store.readMaintenanceClaim(operationId);
+    if (claim.maintenance?.kind === 'dependencies') throw new Error('dependency admission requires later operation-specific recovery');
     assertRecordedIntent(common, claim);
     if (claim.maintenance?.forward?.backup) verifyForwardBackup(common, claim);
     else if (claim.maintenance?.forward && !clearance.replacementBackupId)
@@ -701,6 +717,7 @@ export async function prepareMaintenanceHandoff(repository: string, current: Mai
   const store = openControllerStore(common);
   try {
     const claim = store.readMaintenanceClaim(current.operationId), recorded = claim.maintenance!;
+    if (recorded.kind === 'dependencies') throw new Error('dependency admission has no backup, stage or handoff authority');
     assertRecordedIntent(common, claim);
     if (recorded.forward) verifyForwardBackup(common, claim);
     if (claim.id !== current.claimId || claim.token !== current.token

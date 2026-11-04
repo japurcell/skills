@@ -317,7 +317,9 @@ test('reclaimed handoff keeps its operation and phase but invalidates the old ti
   let store;
   try {
     store = await initializeRepositoryStore(join(repository.path, '.git'), { release: 'fixture' });
-    const original = await beginMaintenance(repository.path, 'dependencies', selection, owner);
+    // Dependency admission now requires genuine installed ownership and exact selection.
+    // Keep this generic handoff/recovery fixture on the still-generic cleanup kind.
+    const original = await beginMaintenance(repository.path, 'cleanup', selection, owner);
     const stage = (await inspectMaintenance(repository.path)).intent.stagePath;
     mkdirSync(join(stage, 'payload'), { recursive: true });
     writeFileSync(join(stage, 'payload', 'node'), 'controlled staged node');
