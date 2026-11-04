@@ -103,3 +103,7 @@
 - [tickets/verification-and-review-policy.md](tickets/verification-and-review-policy.md)
 - [tickets/workflow-authoring-and-task-contract.md](tickets/workflow-authoring-and-task-contract.md)
 - [tickets/workflow-versioning-and-run-changes.md](tickets/workflow-versioning-and-run-changes.md)
+- [handoff.history-2026-11-04-t16b-qualified.md](handoff.history-2026-11-04-t16b-qualified.md)
+- [research/dependencies-repair-contract-2026-11-04.md](research/dependencies-repair-contract-2026-11-04.md)
+- [research/uninstall-contract-2026-11-04.md](research/uninstall-contract-2026-11-04.md)
+- [research/installation-repair-contract-2026-11-04.md](research/installation-repair-contract-2026-11-04.md)
