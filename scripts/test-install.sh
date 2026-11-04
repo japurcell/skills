@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
 
 # Child fixtures must never inherit an account's custom install destination/selection.
 unset CODEX_HOME INSTALL_FOREST_SERVICE_SKILLS
