@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { runOrderedTests } from './ordered-tests.mjs';
+import { timingNodeArgs } from '../qualification/selector-timing.mjs';
 
 // Explicit registration excludes fixtures, historical experiments and native calls from discovery.
 const groups = {
@@ -94,16 +95,16 @@ try {
         exitCode = await runOrderedTests([...files], {
           concurrency: 4,
           cwd: fileURLToPath(new URL('../', import.meta.url)),
-          execArgv: [...nodeOptions],
+          execArgv: [...nodeOptions, ...timingNodeArgs()],
           signal: orderedController.signal,
         });
         orderedController = undefined;
       } else {
-        exitCode = await run([...nodeOptions, '--test', ...files]);
+        exitCode = await run([...nodeOptions, ...timingNodeArgs(), '--test', ...files]);
       }
     }
     if (!interruptedBy && exitCode !== 130 && exitCode !== 143 && extractionFiles.size > 0) {
-      const extractionExitCode = await run([`--test-concurrency=${extractionConcurrency}`, '--test', ...extractionFiles]);
+      const extractionExitCode = await run([...timingNodeArgs(), `--test-concurrency=${extractionConcurrency}`, '--test', ...extractionFiles]);
       if (exitCode === 0) exitCode = extractionExitCode;
     }
     if (interruptedBy) exitCode = interruptedBy === 'SIGINT' ? 130 : 143;

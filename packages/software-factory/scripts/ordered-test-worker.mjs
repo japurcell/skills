@@ -1,14 +1,19 @@
 import { once } from 'node:events';
 import { run } from 'node:test';
 import { tap } from 'node:test/reporters';
+import { labels, telemetry } from '../qualification/selector-timing.mjs';
 
 async function runFiles({ files, concurrency, cwd, execArgv }, signal) {
   const summaries = new Map();
   let finalSummary;
   let failed = false;
   const stream = run({ files, concurrency, cwd, execArgv, signal });
+  for (const event of ['dequeue', 'complete']) stream.on(`test:${event}`, data => {
+    telemetry()?.mark(event, labels(data.file ?? data.name, data.name));
+  });
   stream.on('test:fail', () => { failed = true; });
   stream.on('test:summary', (summary) => {
+    telemetry()?.mark('summary', labels(summary.file));
     if (summary.file === undefined) finalSummary = summary;
     else summaries.set(summary.file, summary);
   });
@@ -25,8 +30,8 @@ async function runFiles({ files, concurrency, cwd, execArgv }, signal) {
 }
 
 const controller = new AbortController();
-process.on('message', (message) => { if (message === 'abort') controller.abort(); });
-process.on('disconnect', () => controller.abort());
+process.on('message', (message) => { if (message === 'abort') { telemetry()?.mark('cancel'); controller.abort(); } });
+process.on('disconnect', () => { telemetry()?.mark('cancel'); controller.abort(); });
 try {
   process.exitCode = await runFiles(JSON.parse(process.argv[2]), controller.signal);
 } catch (error) {

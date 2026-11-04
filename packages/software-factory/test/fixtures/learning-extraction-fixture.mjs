@@ -6,6 +6,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { initializeRepositoryStore, openRepositoryStore } from '../../dist/store.js';
 import { createRepository } from './repository.mjs';
+import { telemetry, timingSync } from '../../qualification/selector-timing.mjs';
+import { fixtureAttemptTiming } from '../../qualification/selector-timing-attempts.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const diagnostic = stage => {
@@ -13,6 +15,7 @@ const diagnostic = stage => {
 };
 
 export async function fixture() {
+  const setupEnd = telemetry()?.begin('setup');
   const repo = createRepository();
   mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
   writeFileSync(join(repo.path, '.factory/package.json'), '{"type":"module"}');
@@ -28,13 +31,15 @@ export async function run(context: WorkflowContext, input: Record<string, unknow
 }`);
   cpSync(join(root, 'templates/workflows/learn.ts'), join(repo.path, '.factory/workflows/learn.ts'));
   cpSync(join(root, 'templates/workflows/change.ts'), join(repo.path, '.factory/workflows/change.ts'));
-  repo.git(['add', '.factory']);
-  repo.git(['commit', '-m', 'Install disposable extraction fixtures', '--only', '.factory']);
+  timingSync('commit', () => {
+    repo.git(['add', '.factory']);
+    repo.git(['commit', '-m', 'Install disposable extraction fixtures', '--only', '.factory']);
+  });
   const common = join(repo.path, '.git');
   (await initializeRepositoryStore(common, { release: 'fixture' })).close();
   const toolchain = join(common, 'factory/toolchain');
   mkdirSync(toolchain);
-  cpSync(join(root, 'node_modules'), join(toolchain, 'node_modules'), { recursive: true });
+  timingSync('copy', () => cpSync(join(root, 'node_modules'), join(toolchain, 'node_modules'), { recursive: true }));
   writeFileSync(join(toolchain, 'manifest.json'), JSON.stringify({ schema: 1, node: '24.22.1', typescript: '7.0.2', dependencies: { '@types/node': '24.19.2' } }));
   const host = join(common, 'host.mjs'), input = join(common, 'input.json'), launchLog = join(common, 'learn-launches.jsonl');
   writeFileSync(host, `import { invoke } from ${JSON.stringify(new URL('../../dist/lifecycle.js', import.meta.url).href)};
@@ -45,19 +50,25 @@ const start = adapter.start;
 adapter.start = request => start({ ...request, context: JSON.stringify({ context: request.context, scenario, launchLog: ${JSON.stringify(launchLog)} }) });
 const result = await invoke({ ...options, adapters: { fake: adapter } });
 console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
+  const exportAttempts = fixtureAttemptTiming(repo.path);
   const invoke = (workflow, payload, scenario = { kind: 'result', payload: { proposals: [], noProposalReason: 'No justified change.' } }, extra = {}) => {
     writeFileSync(input, JSON.stringify(payload));
     const started = performance.now();
     diagnostic(`invoke ${workflow} begin`);
+    const end = telemetry()?.begin(workflow === 'learn' ? 'learn' : 'source');
     const result = spawnSync(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: `.factory/workflows/${workflow}.ts`, input, newWorktree: true, shutdownGraceMs: 100, scenario, ...extra })], { encoding: 'utf8', timeout: 60000 });
     diagnostic(`invoke ${workflow} end status=${result.status ?? 'none'} signal=${result.signal ?? 'none'} elapsedMs=${Math.round(performance.now() - started)}`);
     assert.equal(result.error, undefined);
-    return { ...result, saved: result.stdout.trim() ? JSON.parse(result.stdout) : undefined };
+    const parsed = timingSync('result', () => ({ ...result, saved: result.stdout.trim() ? JSON.parse(result.stdout) : undefined }));
+    end?.(result.status === 0 ? 'ok' : 'failed', { exitCode: result.status, invocationId: exportAttempts.invocationId(parsed.saved?.invocationId), disposition: result.signal === 'SIGTERM' || result.signal === 'SIGINT' ? result.signal : result.signal ? 'other-signal' : result.status === 0 ? 'ok' : 'failed' });
+    exportAttempts();
+    return parsed;
   };
   const history = id => { const store = openRepositoryStore(common); try { return store.readHistory(id, { limit: 100 }); } finally { store.close(); } };
   const report = id => { const page = history(id), capture = page.captures.find(c => c.channel === 'report'); assert.ok(capture); return JSON.parse(capture.chunks.map(c => c.text).join('')); };
   const events = () => { const store = openRepositoryStore(common); try { return store.readEvents({ after: '0', limit: 200 }).events; } finally { store.close(); } };
   const interruptSource = async () => {
+    const end = telemetry()?.begin('interrupt');
     diagnostic('interrupt source begin');
     writeFileSync(input, JSON.stringify({ mode: 'wait' }));
     const child = spawn(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: '.factory/workflows/source.ts', input, newWorktree: true, shutdownGraceMs: 100, scenario: { kind: 'result', payload: {} } })], { stdio: ['ignore', 'pipe', 'pipe'] });
@@ -78,11 +89,15 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
     assert.ok(running, stderr);
     diagnostic('interrupt source ready');
     child.kill('SIGTERM');
+    telemetry()?.mark('interrupt', { disposition: 'SIGTERM' });
     diagnostic('interrupt source signal sent');
     const code = await new Promise(resolve => child.once('close', resolve));
     diagnostic(`interrupt source closed status=${code ?? 'none'}`);
     assert.equal(code, 143, stdout + stderr);
-    return JSON.parse(stdout.trim());
+    const saved = timingSync('result', () => JSON.parse(stdout.trim()));
+    end?.(code === 143 ? 'ok' : 'failed', { exitCode: code, invocationId: exportAttempts.invocationId(saved.invocationId) });
+    exportAttempts();
+    return saved;
   };
   const seedHistory = async ({ state = 'complete', count = 1, text = 'seeded evidence', outcome = 'succeeded', finalize = true } = {}) => {
     const store = openRepositoryStore(common);
@@ -98,5 +113,7 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       return invocation.id;
     } finally { store.close(); }
   };
-  return { ...repo, common, invoke, history, report, events, interruptSource, seedHistory, launchLog };
+  const dispose = () => { exportAttempts(); return repo.dispose(); };
+  setupEnd?.();
+  return { ...repo, dispose, common, invoke, history, report, events, interruptSource, seedHistory, launchLog };
 }
