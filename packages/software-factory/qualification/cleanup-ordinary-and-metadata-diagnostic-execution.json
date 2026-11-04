@@ -1,0 +1,485 @@
+{
+  "schema": 1,
+  "scope": "factory-c3d1-and-metadata-diagnostic-execution-control",
+  "purpose": "one-coupled-ordinary-report-source-and-closed-metadata-refusal-observation",
+  "rootExecutionDecision": "released-c3d1-and-metadata-diagnostic-only",
+  "rootExecutionDecisionUtc": "2026-11-04T16:48:13Z",
+  "approvedCodeCommit": "e8decde9818a321791e848b36208211a606f1b7e",
+  "integratedProofHead": "b96967eeb892397c122d28c24b75b0b146a68b17",
+  "source10Commit": "4b311737aa7484619dc304b3db84cfb463792c48",
+  "sources": [
+    {
+      "path": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+      "gitBlob": "9fef0b9376ba96f540b010c98c0a7302cdc6dc19",
+      "sha256": "3a85b98990b46591a76cfcf6b05580151383604b375bcbaf7587d488a8b15335"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-ordinary.yml",
+      "gitBlob": "6c52ca381b8900659ff1ed7a0a0e92d3e8461c3e",
+      "sha256": "78297e6a6ebb7e7e7f7eeed9d930d1868ba60e33b04114c06b9cdfc34ba16cd6"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+      "gitBlob": "f61b6b60b50c6f35a45e8395b52a07779db88c4f",
+      "sha256": "098c53139dfdef429a75470fb5310371a58aad7199e4525ab956d328efb06ef2"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-checks.test.mjs",
+      "gitBlob": "c95b48d617df931692045310736b438789b17b9c",
+      "sha256": "00837396a919b533ad71cfd2d46bd4b984b72bb321614214975f93ef12aa0a84"
+    },
+    {
+      "path": "packages/software-factory/qualification/ci.test.mjs",
+      "gitBlob": "e91fbdae6dfe883c3fa5aadb957adcc3d4525e1b",
+      "sha256": "d744524fa080259f0e29ccd3306c83e3851a79dd9962291bc88f0dc515244c7b"
+    },
+    {
+      "path": "packages/software-factory/scripts/test.mjs",
+      "gitBlob": "15b9c1e2ba5b35f164815acdc7433ad54fab79ac",
+      "sha256": "fe995f75456089cf2049560c92afd71e12f0d82071f0ab7da7eba93b289963cd"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-node-bootstrap.ps1",
+      "gitBlob": "00b6715b452e9dbe7ddbacb4208135f384e2b7e6",
+      "sha256": "bb1d8f6de3bbe7398dc6ce9e82feaf041088566ee36b70ebca2f7fc5be8f6d0b"
+    }
+  ],
+  "sourceProof": {
+    "authorOrdinaryPassed": 293,
+    "authorOrdinaryDurationMs": 429752.137708,
+    "authorDiagnosticPassed": 26,
+    "focusedPassed": 304,
+    "focusedFailed": 0,
+    "focusedSkipped": 0,
+    "focusedDurationMs": 54874.703334,
+    "focusedFullSeconds": 59.978137791,
+    "ordinalWorkflowSyntheticControlsPassed": 30,
+    "observedPowerShellVersion": "7.6.9",
+    "actualEscSuffixRedCase": 21,
+    "escExpectedStdoutCharacters": 0,
+    "ordinalGuardFixed": true,
+    "static": [
+      "CI25",
+      "actionlint2",
+      "strict-source-and-qualification",
+      "fresh-build",
+      "actual-PS-AST-isolated-failure-branch"
+    ],
+    "runtimeInputs": 734,
+    "runtimeOutputs": 186,
+    "receiptSha256": "cf838924054abe9809c2307886a089bb92196160e59250bc403136157000d544",
+    "postflight": "passed",
+    "ordinaryCompositionPassed": 927,
+    "ordinaryCompositionDurationMs": 234152.932666,
+    "focusedProofHead": "b96967eeb892397c122d28c24b75b0b146a68b17",
+    "ordinaryCompositionProofHead": "b96967eeb892397c122d28c24b75b0b146a68b17",
+    "workflowReadinessFollowup": {
+      "head": "e8decde9818a321791e848b36208211a606f1b7e",
+      "scope": "two-file-workflow-readiness-equality-and-existing-CI-expectation-only",
+      "actualAstRed": "/tmp/factory-metadata-readiness-branch-red.log",
+      "actualAstRedElapsedSeconds": 0.6253502499894239,
+      "actualAstRedOutcome": "ESC-suffixed readiness marker wrongly wrote21characters and exited before negative-controls completion",
+      "existingCiStrengthenedRed": true,
+      "greenPostflight": "/tmp/factory-metadata-readiness-green-postflight.json",
+      "greenFullSeconds": 3.9444160409912,
+      "ciPassed": 25,
+      "ciFailed": 0,
+      "diagnosticActualAstControlsPassed": 30,
+      "readinessActualAstControlsPassed": 10,
+      "readinessActualAstSeconds": 0.4299257499806117,
+      "readinessInertChildren": 3,
+      "harnessOnlyChildWaitMs": 5000,
+      "harnessOnlyOwnedChildCleanupWaitMs": 1000,
+      "actionlintWorkflowsPassed": 2,
+      "syntaxPassed": true,
+      "source10PhaseA3RootD4Historical719AndAllRuntimeInventoriesVerifiedBeforeAfter": true,
+      "fullEofAndSourceHeadStatusUnchanged": true,
+      "postflightErrors": [],
+      "unprofiledHarnessFailureRetained": "/tmp/factory-metadata-readiness-unprofiled-ci.log",
+      "unprofiledFailureReason": "omitted already-qualified explicit Python profile; source and runtime invariants passed; corrected harness environment only",
+      "runtimeBuildOrOrdinarySuiteRerun": false
+    }
+  },
+  "rootSelection": {
+    "path": "packages/software-factory/qualification/windows-storage-loader-metadata-controller-selection.json",
+    "bytes": 1540,
+    "sha256": "d4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359",
+    "selectedBy": "root-independent-external-controller",
+    "candidateDerivationPermitted": false,
+    "sourceCommit": "4b311737aa7484619dc304b3db84cfb463792c48",
+    "freezeProvenancePath": "packages/software-factory/qualification/windows-storage-loader-metadata-vs18.freeze.provenance.json",
+    "freezeProvenanceSha256": "41263d1d3965a42dcb704816170bc1c2983a2f032f99a3703570dea9a24784f5"
+  },
+  "phaseAProvenance": {
+    "sourceCommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+    "runId": 41838587575,
+    "jobId": 126603881179,
+    "artifactId": 13325489670,
+    "bootstrapBytes": 433,
+    "bootstrapSha256": "2ce805ac701b0d02f9955b9aa39f43319027af8dfaf30a4c83c290a254d549f9",
+    "controlBytes": 344,
+    "controlSha256": "51c8d63921b786fc1ac43ac39baa1441d6cf61dc244878343bbe8cf6ec5b7d77"
+  },
+  "externalPrerequisiteProfile": {
+    "runner": "github-hosted-windows-2025",
+    "trustedOsAndWinPSInstallation": true,
+    "protectedSourceAndControllerNamespaces": true,
+    "establishedBySelfHashOrMarker": false,
+    "windowsRoot": "C:\\Windows",
+    "windowsVersionApi": "Environment.OSVersion.Version.ToString",
+    "windowsVersion": "10.0.26100.0",
+    "powershellVersion": "5.1.26100.33648",
+    "powershellBytes": 491520,
+    "powershellSha256": "41796f1f3d81f921fdb4030c865f9dcf5032a2a1b49dde148bbc99e8d10f6e8c",
+    "mismatchPolicy": "refuse-no-reselection"
+  },
+  "execution": {
+    "workflow": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "event": "push",
+    "mode": "metadata-only",
+    "fixedNoArgumentEntry": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+    "maxRuns": 1,
+    "manualDispatch": false,
+    "retry": false,
+    "jobMinutes": 10,
+    "maximumStepMinutes": 5
+  },
+  "node": {
+    "version": "24.22.1",
+    "platform": "win-x64",
+    "archiveUrl": "https://nodejs.org/download/release/v24.22.1/node-v24.22.1-win-x64.zip",
+    "archiveSha256": "d2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5",
+    "exeSha256": "d702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5",
+    "archiveByteLimit": 150000000,
+    "archiveDeadlineMs": 120000,
+    "executableByteLimit": 134217728,
+    "extractOnlyNodeExe": true,
+    "npmOrVersionHelpInvocation": false
+  },
+  "collector": {
+    "command": "fixed-selected-Node adjacent-windows-storage-loader-metadata.mjs --metadata-only",
+    "powershellHost": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "discoveredToolExecution": false,
+    "sdkInstallation": false,
+    "maximumFileFacts": 256,
+    "maximumObservedInputBytes": 536870912,
+    "consumedDependencyClosureProven": false
+  },
+  "transport": {
+    "eachCaptureDeadlineMs": 294000,
+    "maximumTeardownMs": 1000,
+    "stdoutByteLimit": 1048576,
+    "stderrByteLimit": 8192,
+    "requiresActualExitAndBothEof": true,
+    "stderrPolicy": "refuse",
+    "unknownClosurePolicy": "refuse-no-export",
+    "allDescendantContainmentProven": false
+  },
+  "artifacts": {
+    "names": [
+      "metadata.json",
+      "control.json"
+    ],
+    "metadataByteLimit": 1048576,
+    "controlByteLimit": 4096,
+    "retentionDays": 14,
+    "observedStateExit": 0,
+    "validatedBlockedStateExit": 1,
+    "validatedBlockedWireRetained": true,
+    "blockedStepAndJobRemainFailed": true,
+    "earlyOrMalformedRefusalExports": false,
+    "authorityFlagsAlwaysFalse": [
+      "selectionAuthority",
+      "buildAuthority",
+      "nativeAuthority"
+    ]
+  },
+  "authority": {
+    "toolSelection": false,
+    "sdkSelection": false,
+    "build": false,
+    "native": false,
+    "helperCanary": false,
+    "installedStorageSupport": false,
+    "providerOrDesktop": false
+  },
+  "nextGate": "root-independent-assessment-of-actual-metadata-before-any-tool-or-sdk-tuple-selection-or-build-only-source-release",
+  "automaticReselectionOrBuild": false,
+  "discoveryFixCommit": "4b311737aa7484619dc304b3db84cfb463792c48",
+  "historicalSelection": {
+    "sourceCommit": "222924947e2a9b4c24a1d7c3eddaa426b0d15403",
+    "path": "packages/software-factory/qualification/windows-storage-loader-metadata-controller-selection-2229249.json",
+    "bytes": 1540,
+    "sha256": "719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650",
+    "acceptedAsCurrentSelection": false
+  },
+  "previousMetadataObservation": {
+    "sourceCommit": "8f424db02949c02e1609a6f154ba2e72fc4cdf6f",
+    "runId": 41848962676,
+    "jobId": 126639797374,
+    "artifactId": 13333995433,
+    "metadataBytes": 4733,
+    "metadataSha256": "ef366650e1b0f2fd73ea771f4356ae3341c426dd51c8af5d858de2aeb4b9ec27",
+    "controlBytes": 428,
+    "controlSha256": "96da88269b62cca37972abfe66e92ce976f5dc70f003a91210f564c7ed9e18a9",
+    "state": "blocked",
+    "reason": "missing-tools",
+    "collectorExitCode": 1,
+    "jobConclusion": "failure"
+  },
+  "discoveryCompatibility": {
+    "releaseNames": "literal18-or-existing20xx",
+    "allOtherRootsEditionsToolsetsCapsAmbiguityAndProvenanceChecksUnchanged": true,
+    "actualPriorFilesystemOrFailureCauseEstablished": false,
+    "tagUnderlyingCommitResolved": false,
+    "selectNewestPermitted": false,
+    "sdkAuthenticityOrConsumedClosureProven": false
+  },
+  "actualImageObservation": {
+    "recordActualImageIdentity": true,
+    "samePriorRunnerInstanceClaim": false
+  },
+  "diagnosticSourceCommit": "e6fdecec322c226576e88dbf930a3a0ba5987df1",
+  "ordinarySourceCommit": "d6584e6a7e1bba92d8aacfb432d1c57199dad43e",
+  "ordinaryComposition": {
+    "state": "accepted-by-root-full-eof-and-postflight",
+    "head": "b96967eeb892397c122d28c24b75b0b146a68b17",
+    "entryCount": 65,
+    "actualTests": 927,
+    "passed": 927,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationMs": 234152.932666,
+    "fullStartUtc": "2026-11-04T16:32:00.797718+00:00",
+    "fullEndUtc": "2026-11-04T16:35:56.065174+00:00",
+    "originalExitCode": 0,
+    "entryList": "/tmp/factory-cleanup-c3d1-ordinary-entries.txt",
+    "driver": "/tmp/factory-cleanup-c3d1-composed-driver.py",
+    "command": "/tmp/factory-cleanup-c3d1-composed-command.sh",
+    "log": "/tmp/factory-cleanup-c3d1-integrated-ordinary-composed.log",
+    "postflightPath": "/tmp/factory-cleanup-c3d1-composed-postflight.json",
+    "postflight": "passed",
+    "postflightErrors": [],
+    "fullTrackedSourceAndHeadAndCleanStatusUnchanged": true,
+    "countReconciliation": {
+      "priorC3cTests": 890,
+      "priorC3cEntries": 64,
+      "ordinaryClosureAdded": 32,
+      "ciAdded": 2,
+      "literal18MetadataAdded": 3,
+      "sum": 927,
+      "canonicalEntriesAdded": [
+        "test/cleanup-ordinary-closure.test.mjs"
+      ],
+      "canonicalEntriesRemoved": [],
+      "otherOrdinaryFilesChanged": [
+        "qualification/ci.test.mjs",
+        "test/windows-storage-loader-metadata.test.mjs"
+      ],
+      "unchangedBaselineFiles": 62,
+      "earlierPredictions940And926": "forecasting-errors-not-executed-counts"
+    },
+    "fullGateRequiredBeforePush": true
+  },
+  "nativeOrdinary": {
+    "area": "cleanup-ordinary-public",
+    "casesPerTarget": 1,
+    "targets": [
+      "linux-x64",
+      "darwin-arm64"
+    ],
+    "jobMinutes": 20,
+    "stepMinutes": 10,
+    "actualNativeAcceptance": false
+  },
+  "expectedAutomaticContexts": [
+    "metadata-only-closed-diagnostic",
+    "ordinary-public-linux-darwin",
+    "foundation",
+    "cleanup-action-public",
+    "cleanup-learning-public",
+    "cleanup-base-advisory-public",
+    "cleanup-backups-public",
+    "repair-inspection",
+    "darwin-full-fixtures-timing"
+  ],
+  "diagnosticPolicy": {
+    "markers": [
+      "metadata-refused-outer-deadline",
+      "metadata-refused-outer-exit",
+      "metadata-refused-outer-eof",
+      "metadata-refused-outer-stderr",
+      "metadata-refused-outer-bounds",
+      "metadata-refused-outer-process",
+      "metadata-refused-inner-deadline",
+      "metadata-refused-inner-exit",
+      "metadata-refused-inner-eof",
+      "metadata-refused-inner-stderr",
+      "metadata-refused-inner-bounds",
+      "metadata-refused-inner-process",
+      "metadata-refused-inner-protocol",
+      "metadata-refused-inner-changed",
+      "metadata-refused-wire",
+      "metadata-refused-prerequisite"
+    ],
+    "requiresExitOneAndOnePrimitiveString": true,
+    "comparison": "StringComparison.Ordinal",
+    "unknownMarker": "generic-refusal-without-printing-marker",
+    "rawChildStdoutStderrEnvironmentOrPathsExported": false,
+    "diagnosticArtifactPreparation": false,
+    "diagnosticReadinessOrUpload": false,
+    "diagnosticJobFailureRetained": true,
+    "outerReasonImpliesInnerOutcome": false,
+    "sourceAndSelectionRecheckedBeforeDiagnostic": true
+  },
+  "previousChangedObservation": {
+    "sourceCommit": "b4a171e2b03d3c840d19bde0bb2dff9743a220b7",
+    "runId": 41858729677,
+    "jobId": 126674338393,
+    "conclusion": "failure",
+    "boundary": "metadata-collection-refused-without-export",
+    "artifactCount": 0,
+    "cause": "unknown",
+    "image": "windows-2025-vs2026",
+    "imageVersion": "20261103.298.1",
+    "sameInstanceOrHistoricalCauseProven": false
+  },
+  "phaseASourceIdentities": [
+    {
+      "path": ".github/workflows/windows-storage-loader-metadata.yml",
+      "gitBlob": "b1449909f239730bce9e59b2ce58fddb2534edd9",
+      "sha256": "7f46a5c880b25220f0eb67782d94327496a552b373f0c744dadc34a65ef1eceb"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-bootstrap.mjs",
+      "gitBlob": "b2387a2d61bb0ea347531f2cb2e99f055d3bcd99",
+      "sha256": "850410f19101a31930741ead88eb4c87dadfcbc1aa5c150150f7e084931676a5"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-workflow.test.mjs",
+      "gitBlob": "f068bbc79823ba6c9b5cc489f3ccd5d29c805297",
+      "sha256": "e607ad7be3c54fe701fb21e4d583d464d6de7a9670ee27b0f195db53e90a9c13"
+    }
+  ],
+  "sourceIdentityVerification": {
+    "frozenSourceEntriesVerified": 7,
+    "source10CurrentAndGit4bVerified": 10,
+    "phaseASourcesCurrentAndGit172Verified": 3,
+    "rootSelectionD4Verified": true,
+    "historical719Verified": true,
+    "underlyingCollectorAndPowerShellUnchanged": true,
+    "noLocalCollectorOrToolOrProviderInvocation": true
+  },
+  "pushControl": {
+    "workingDirectory": "/Users/adam/.codex/worktrees/ea58/skills",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "maximumPushes": 1,
+    "command": "/Users/adam/homebrew/bin/rtk proxy git -c credential.helper= -c 'credential.https://github.com.helper=!/Users/adam/homebrew/bin/gh auth git-credential' push origin HEAD:refs/heads/codex/research-agentic-workflow-prototypes",
+    "requiresRootReadAndReleaseOfThisProposal": true,
+    "recordDestination": "packages/software-factory/qualification/cleanup-ordinary-and-metadata-diagnostic-execution.json",
+    "postReleaseCommitScope": "execution record plus evidence-only canonical plan/handoff and qualification notes; code e8decde is already committed, no further executable edits",
+    "noSourceOrBuildMutationBeforePush": true,
+    "nativeWatch": "bounded read-only exact-head run/job/artifact observation; no dispatch, retry, rerun or cancellation"
+  },
+  "routes": {
+    "ordinaryLocal": "pinned Node --experimental-test-module-mocks --test --test-concurrency=2 test/*.test.mjs test/browser/*.test.mjs qualification/runtime.test.mjs qualification/ci.test.mjs",
+    "ordinaryNative": "node packages/software-factory/scripts/test.mjs qualification --area cleanup-ordinary-public",
+    "ordinaryNativeChild": "qualification/cleanup-ordinary-public.qualification.mjs",
+    "metadataNative": "fixed authenticated node.exe packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+    "metadataChild": "fixed selected Node adjacent windows-storage-loader-metadata.mjs --metadata-only -> fixed WinPS5.1 metadata.ps1; metadata reads only; discovered tools never execute",
+    "heldCandidateProbeSelected": false,
+    "providerOrDesktopSelected": false
+  },
+  "expectedAutomaticWorkflows": [
+    {
+      "path": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+      "name": "Windows storage loader metadata only",
+      "jobs": 1,
+      "purpose": "one changed-source metadata-only diagnostic observation"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-ordinary.yml",
+      "name": "Software factory POSIX cleanup ordinary report closure",
+      "jobs": 2,
+      "purpose": "genuine public ordinary report1 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-qualification.yml",
+      "name": "Software factory native foundation qualification",
+      "jobs": 3,
+      "purpose": "existing foundation contexts, known Windows failures remain open"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-actions.yml",
+      "name": "Software factory POSIX cleanup action closure",
+      "jobs": 2,
+      "purpose": "existing action compatibility41 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-learning.yml",
+      "name": "Software factory POSIX cleanup learning closure",
+      "jobs": 2,
+      "purpose": "existing learning compatibility2 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-advisory.yml",
+      "name": "Software factory POSIX cleanup base advisory",
+      "jobs": 2,
+      "purpose": "existing base compatibility14 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-backups.yml",
+      "name": "Software factory POSIX cleanup backup authority",
+      "jobs": 2,
+      "purpose": "existing backup compatibility43 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-repair-inspection.yml",
+      "name": "Software factory read-only repair inspection",
+      "jobs": 2,
+      "purpose": "existing inspection compatibility33 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/darwin-selector-timing.yml",
+      "name": "Darwin full-fixtures selector timing",
+      "jobs": 1,
+      "purpose": "existing full-fixtures timing context, no historical-cause or repair claim"
+    }
+  ],
+  "notSelectedWorkflows": [
+    "Windows factory owned-image creation canary",
+    "Windows storage loader host bootstrap only",
+    "Windows factory startup",
+    "Windows factory ETW route",
+    "Windows factory ETW probe",
+    "Windows factory Node route",
+    "Windows notification build"
+  ],
+  "readinessPolicy": {
+    "acceptedExits": [
+      0,
+      1
+    ],
+    "requiresExactlyOnePrimitiveString": true,
+    "literal": "metadata-artifacts-ready",
+    "comparison": "StringComparison.Ordinal",
+    "appendOnlyExactReadinessMarker": true,
+    "preserveExactExit": true,
+    "unknownOrIgnorableSuffixedMarkerNeverReady": true,
+    "readinessBranchBodyAndUploadConditionUnchanged": true
+  },
+  "workflowGuardProofHead": "e8decde9818a321791e848b36208211a606f1b7e",
+  "workflowGuardReadOnlyDiffProof": {
+    "base": "b96967eeb892397c122d28c24b75b0b146a68b17",
+    "head": "e8decde9818a321791e848b36208211a606f1b7e",
+    "exactFiles": [
+      ".github/workflows/windows-storage-loader-metadata-collect.yml",
+      "packages/software-factory/qualification/ci.test.mjs"
+    ],
+    "runtimeAndCollectorAndUnderlyingSelectedSourcesChanged": false,
+    "diffSha256": "12473a624c58e9fa0a70222c616281645908656ce2a54f779cfb316b1657dfee"
+  }
+}
