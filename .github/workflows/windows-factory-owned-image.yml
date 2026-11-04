@@ -1,0 +1,73 @@
+name: Windows factory owned-image creation canary
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/windows-factory-owned-image.yml
+      - packages/software-factory/qualification/windows-owned-image*
+      - packages/software-factory/scripts/qualification-bootstrap.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  owned-image-canary:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      FACTORY_TARGET: win32-x64
+      CI: 'true'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Bootstrap exact Node 24.22.1
+        id: bootstrap
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-owned-image-bootstrap
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & node packages/software-factory/scripts/qualification-bootstrap.mjs *> $null
+          if ($LASTEXITCODE -ne 0) { throw 'Owned-image Node bootstrap failed' }
+      - name: Check public receipt protocol
+        timeout-minutes: 1
+        run: |
+          & node --test packages/software-factory/qualification/windows-owned-image.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Owned-image receipt protocol failed' }
+      - name: Build and run the 34-case owned-image canary
+        id: native
+        timeout-minutes: 16
+        env:
+          WINDOWS_OWNED_IMAGE_EVIDENCE: ${{ runner.temp }}/factory-owned-image-private
+        run: |
+          & node packages/software-factory/qualification/windows-owned-image-native.qualification.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Owned-image native canary did not qualify' }
+      - name: Reconstruct bounded sanitized receipts
+        id: artifact_guard
+        if: always()
+        timeout-minutes: 1
+        env:
+          WINDOWS_OWNED_IMAGE_EVIDENCE: ${{ runner.temp }}/factory-owned-image-private
+        run: |
+          & node packages/software-factory/qualification/windows-owned-image.mjs --prepare-artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'Owned-image artifact guard refused' }
+      - name: Upload only the two sanitized receipts
+        if: always() && steps.native.outcome == 'success' && steps.artifact_guard.outcome == 'success'
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: factory-windows-owned-image-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/factory-owned-image-private/upload/qualification.json
+            ${{ runner.temp }}/factory-owned-image-private/upload/native.tsv
+          if-no-files-found: error
+          retention-days: 14
