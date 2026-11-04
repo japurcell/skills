@@ -580,3 +580,87 @@ test('cleanup action closure has isolated POSIX qualification and preserves exis
   assert.match(refused.stderr, /no tests match supplied filters/);
   assert.equal(refused.stdout, '');
 });
+
+test('cleanup ordinary reports have isolated POSIX qualification and preserve action closure proof', () => {
+  const dispatch = new URL('../scripts/test.mjs', import.meta.url).href;
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_SELECTOR_TIMING_ROOT;
+  for (const [platform, arch, supported] of [['darwin', 'arm64', true], ['linux', 'x64', true], ['win32', 'x64', false]]) {
+    for (const [area, file] of [['cleanup-ordinary', 'test/cleanup-ordinary-closure.test.mjs'], ['cleanup-ordinary-public', 'qualification/cleanup-ordinary-public.qualification.mjs']]) {
+      const program = `
+        import assert from 'node:assert/strict';
+        import childProcess from 'node:child_process';
+        import { EventEmitter } from 'node:events';
+        import { syncBuiltinESMExports } from 'node:module';
+        Object.defineProperty(process, 'platform', { value: ${JSON.stringify(platform)} });
+        Object.defineProperty(process, 'arch', { value: ${JSON.stringify(arch)} });
+        let launches = 0;
+        childProcess.spawn = (command, args, options) => {
+          assert.equal(++launches, 1);
+          assert.equal(command, process.execPath);
+          assert.deepEqual(args, ['--test-concurrency=1', '--test', ${JSON.stringify(file)}]);
+          assert.deepEqual(options, { cwd: new URL('../', ${JSON.stringify(dispatch)}), stdio: 'inherit' });
+          const child = new EventEmitter();
+          setImmediate(() => child.emit('exit', 7, null));
+          return child;
+        };
+        syncBuiltinESMExports();
+        await import(${JSON.stringify(dispatch)});
+        assert.equal(launches, ${supported ? 1 : 0});
+        assert.equal(process.exitCode, ${supported ? 7 : 1});
+      `;
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', program, 'qualification', '--area', area], { encoding: 'utf8', timeout: 5000, env });
+      assert.ifError(result.error);
+      assert.equal(result.status, supported ? 7 : 1, result.stdout + result.stderr);
+      assert.equal(result.signal, null);
+      if (!supported) assert.match(result.stderr, /unsupported qualification target: win32-x64/);
+    }
+  }
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-cleanup-ordinary.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /os: ubuntu-24.04\n\s+target: linux-x64/);
+  assert.match(workflow, /os: macos-15\n\s+target: darwin-arm64/);
+  assert.doesNotMatch(workflow, /windows-|continue-on-error|--test-name-pattern|--prefix toolchain/);
+  assert.match(workflow, /python-version: '3.13.14'/);
+  assert.match(workflow, /qualification-bootstrap\.mjs/);
+  assert.match(workflow, /packages\/software-factory\/templates\/workflows\/change\.ts/);
+  assert.match(workflow, /packages\/software-factory\/templates\/workflows\/audit\.ts/);
+  assert.match(workflow, /cp toolchain\/package\.json toolchain\/package-lock\.json/);
+  assert.match(workflow, /--prefix "\$RUNNER_TEMP\/cleanup-ordinary-toolchain"/);
+  assert.match(workflow, /FACTORY_ATOMIC_PYTHON:.*steps\.python\.outputs\.python-path/);
+  assert.match(workflow, /FACTORY_TEST_NPM_CACHE_SEED:.*runner\.temp/);
+  assert.match(workflow, /timeout-minutes: 10[\s\S]*run: node packages\/software-factory\/scripts\/test\.mjs qualification --area cleanup-ordinary-public/);
+  const baseWorkflow = readFileSync(new URL('../../../.github/workflows/software-factory-cleanup-actions.yml', import.meta.url), 'utf8');
+  assert.match(baseWorkflow, /qualification --area cleanup-actions-public/);
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(foundation, /cleanup-ordinary/);
+  const refused = spawnSync(process.execPath, [fileURLToPath(new URL(dispatch)), 'maintenance', '--operation', 'cleanup'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+  assert.match(refused.stderr, /no tests match supplied filters/);
+  assert.equal(refused.stdout, '');
+});
+
+
+test('metadata workflow prints only the closed refusal markers and never advertises diagnostic artifacts', () => {
+  const workflow = readFileSync(new URL('../../../.github/workflows/windows-storage-loader-metadata-collect.yml', import.meta.url), 'utf8');
+  const expected = [
+    'metadata-refused-outer-deadline', 'metadata-refused-outer-exit', 'metadata-refused-outer-eof',
+    'metadata-refused-outer-stderr', 'metadata-refused-outer-bounds', 'metadata-refused-outer-process',
+    'metadata-refused-inner-deadline', 'metadata-refused-inner-exit', 'metadata-refused-inner-eof',
+    'metadata-refused-inner-stderr', 'metadata-refused-inner-bounds', 'metadata-refused-inner-process',
+    'metadata-refused-inner-protocol', 'metadata-refused-inner-changed', 'metadata-refused-wire', 'metadata-refused-prerequisite',
+  ];
+  const table = workflow.match(/\$diagnosticMarkers = @\(([\s\S]*?)\n\s*\)/);
+  assert.ok(table, 'fixed workflow refusal marker allowlist is absent');
+  const declared = [...table[1].matchAll(/'([^']*)'/g)].map(match => match[1]);
+  assert.equal(table[1].replace(/'[^']*'/g, '').replace(/[,\s]/g, ''), '');
+  assert.deepEqual(declared, expected);
+  const branch = workflow.match(/if \(\$collectionExit -eq 1 -and \$ready\.Count -eq 1 -and \$ready\[0\] -is \[string\] -and \$diagnosticMarkers -ccontains \$ready\[0\]\) \{([\s\S]*?)\n\s*\}/);
+  assert.ok(branch, 'diagnostics must require exit1, one primitive line and literal case-sensitive membership');
+  assert.match(branch[1], /^\s*\[Console\]::Out\.WriteLine\(\[string\]\$ready\[0\]\)\s*$/);
+  assert.doesNotMatch(branch[1], /GITHUB_OUTPUT|artifacts_ready|exit|prepare/i);
+  assert.match(workflow, /\$ready\[0\] -ceq 'metadata-artifacts-ready'[\s\S]*AppendAllText\(\$env:GITHUB_OUTPUT[\s\S]*exit \$collectionExit/);
+  assert.match(workflow, /throw 'Metadata collection refused without export'/);
+  assert.match(workflow, /steps\.collect\.outputs\.artifacts_ready == 'true'/);
+  assert.doesNotMatch(workflow, /continue-on-error/);
+});

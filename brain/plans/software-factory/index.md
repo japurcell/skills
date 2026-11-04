@@ -152,3 +152,7 @@
 - [VS18 discovery compatibility and deferred SDK provenance](research/windows-metadata-discovery-provenance-contract-2026-11-04.md)
 
 - [Literal18 changed metadata observation: finite refusal](research/windows-metadata-vs18-observation-2026-11-04.md)
+
+- [C3d2 serial implementation slices and combined gate](research/cleanup-c3d2-implementation-slices-2026-11-04.md)
+- [C3d1 ordinary report closure source and proof](../../../packages/software-factory/qualification/cleanup-ordinary.md)
+- [Metadata refusal diagnostic source contract](../../../packages/software-factory/qualification/windows-storage-loader-metadata-diagnostic.md)

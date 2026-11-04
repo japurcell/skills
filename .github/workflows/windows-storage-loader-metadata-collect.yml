@@ -62,10 +62,20 @@ jobs:
           # The helper emits only this fixed readiness marker, never child output.
           $ready = @(& $binary packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs 2>$null)
           $collectionExit = $LASTEXITCODE
+          $diagnosticMarkers = @(
+            'metadata-refused-outer-deadline', 'metadata-refused-outer-exit', 'metadata-refused-outer-eof',
+            'metadata-refused-outer-stderr', 'metadata-refused-outer-bounds', 'metadata-refused-outer-process',
+            'metadata-refused-inner-deadline', 'metadata-refused-inner-exit', 'metadata-refused-inner-eof',
+            'metadata-refused-inner-stderr', 'metadata-refused-inner-bounds', 'metadata-refused-inner-process',
+            'metadata-refused-inner-protocol', 'metadata-refused-inner-changed', 'metadata-refused-wire', 'metadata-refused-prerequisite'
+          )
           if (($collectionExit -eq 0 -or $collectionExit -eq 1) -and $ready.Count -eq 1 -and $ready[0] -ceq 'metadata-artifacts-ready') {
             [IO.File]::AppendAllText($env:GITHUB_OUTPUT, "artifacts_ready=true`n", [Text.UTF8Encoding]::new($false))
             # Exit1 remains a failed collection step and failed job after upload.
             exit $collectionExit
+          }
+          if ($collectionExit -eq 1 -and $ready.Count -eq 1 -and $ready[0] -is [string] -and $diagnosticMarkers -ccontains $ready[0]) {
+            [Console]::Out.WriteLine([string]$ready[0])
           }
           throw 'Metadata collection refused without export'
       - name: Upload only closed metadata and redacted control records
