@@ -246,7 +246,16 @@ export function openMaintenanceStore(commonDir: string) {
 }
 
 export type CleanupReadStore = Pick<RepositoryStore, 'close' | 'readCleanupSnapshot' | 'pageCleanupInvocationFacts'
-  | 'pageCleanupAttemptFacts' | 'pageCleanupCaptureHeaders' | 'measureCleanupCaptures' | 'readCleanupCapture' | 'readCleanupAttempt' | 'readCleanupEvent' | 'readCleanupOperationEvidence'>;
+  | 'pageCleanupAttemptFacts' | 'pageCleanupCaptureHeaders' | 'measureCleanupCaptures' | 'readCleanupCapture' | 'readCleanupAttempt' | 'readCleanupEvent' | 'readCleanupOperation' | 'readCleanupOperationEvidence'>;
+
+// Only the existing-only opener can establish this identity. Structural copies
+// and ordinary writer stores cannot supply authority to the snapshot adapter.
+const cleanupSnapshotViews = new WeakMap<object, { common: string; assertIdentity: () => void }>();
+export function assertCleanupSnapshotView(store: CleanupReadStore, common: string): void {
+  const binding = cleanupSnapshotViews.get(store);
+  if (!binding || binding.common !== common) throw new Error('cleanup requires its original existing-only snapshot view');
+  binding.assertIdentity();
+}
 
 /** Existing-only view. All pages share one read-only SQLite transaction until close(). */
 export function openCleanupReadStore(commonDir: string): CleanupReadStore {
@@ -274,8 +283,8 @@ export function openCleanupReadStore(commonDir: string): CleanupReadStore {
     const store = new RepositoryStore(database);
     const read = <T>(action: () => T) => { assertIdentity(); const result = action(); assertIdentity(); return result; };
     read(() => store.readCleanupSnapshot()); // Establish and validate the WAL endmark before returning the view.
-    return Object.freeze({
-      close: () => database.close(), readCleanupSnapshot: () => read(() => store.readCleanupSnapshot()),
+    const view: CleanupReadStore = Object.freeze({
+      close: () => { cleanupSnapshotViews.delete(view); database.close(); }, readCleanupSnapshot: () => read(() => store.readCleanupSnapshot()),
       pageCleanupInvocationFacts: (input: CleanupPageInput = {}) => read(() => store.pageCleanupInvocationFacts(input)),
       pageCleanupAttemptFacts: (input: CleanupPageInput = {}) => read(() => store.pageCleanupAttemptFacts(input)),
       pageCleanupCaptureHeaders: (input: CleanupPageInput = {}) => read(() => store.pageCleanupCaptureHeaders(input)),
@@ -283,8 +292,11 @@ export function openCleanupReadStore(commonDir: string): CleanupReadStore {
       readCleanupCapture: (input: Parameters<RepositoryStore['readCleanupCapture']>[0]) => read(() => store.readCleanupCapture(input)),
       readCleanupAttempt: (input: Parameters<RepositoryStore['readCleanupAttempt']>[0]) => read(() => store.readCleanupAttempt(input)),
       readCleanupEvent: (input: Parameters<RepositoryStore['readCleanupEvent']>[0]) => read(() => store.readCleanupEvent(input)),
+      readCleanupOperation: (input: Parameters<RepositoryStore['readCleanupOperation']>[0]) => read(() => store.readCleanupOperation(input)),
       readCleanupOperationEvidence: (input: Parameters<RepositoryStore['readCleanupOperationEvidence']>[0]) => read(() => store.readCleanupOperationEvidence(input)),
     });
+    cleanupSnapshotViews.set(view, { common: realpathSync(commonDir), assertIdentity });
+    return view;
   } catch (error) { database.close(); throw error; }
 }
 
@@ -644,6 +656,35 @@ export class RepositoryStore {
     const blockedInvocation = invocation.get();
     return blockedInvocation ? { status: 'blocked', source: 'invocation', id: cleanupId(blockedInvocation['id']) ? blockedInvocation['id'] : null,
       cursor: String(blockedInvocation['cursor']) } : { status: 'clear' };
+  }
+
+  /** The workflow operation is a separate owned fact, not the attempt's copied operation key. */
+  readCleanupOperation(input: { runId: string; operationId: string }): import('./cleanup-read.js').CleanupOperationRead {
+    assertCleanupId(input.runId); assertCleanupId(input.operationId);
+    return this.cleanupRead(() => {
+      const statement = this.database.prepare(`SELECT rowid AS cursor,
+        CASE WHEN typeof(id)='text' AND octet_length(id) BETWEEN 1 AND 256 THEN id END AS id,
+        CASE WHEN typeof(run_id)='text' AND octet_length(run_id) BETWEEN 1 AND 256 THEN run_id END AS run_id,
+        CASE WHEN typeof(operation_key)='text' AND octet_length(operation_key) BETWEEN 1 AND 256 THEN operation_key END AS operation_key,
+        octet_length(data) AS bytes,
+        CASE WHEN run_id=? AND typeof(data)='text' AND octet_length(data)<=8192 THEN data END AS data
+        FROM operations WHERE id=? LIMIT 2`);
+      statement.setReadBigInts(true);
+      const rows = statement.all(input.runId,input.operationId), row = rows[0];
+      if (!row) return { status: 'missing' };
+      if (rows.length !== 1 || !cleanupId(row['id']) || !cleanupId(row['run_id']) || !cleanupId(row['operation_key']))
+        return cleanupOpaque(row,'invalid-identity');
+      if (row['run_id'] !== input.runId) return { status: 'foreign' };
+      if (typeof row['data'] !== 'string') return cleanupOpaque(row,BigInt(String(row['bytes']))>8192n?'oversized':'malformed');
+      if (BigInt(Buffer.byteLength(row['data'])) !== BigInt(String(row['bytes']))) return cleanupOpaque(row,'malformed');
+      try {
+        const value: unknown = JSON.parse(row['data']);
+        if (!cleanupObject(value) || Object.keys(value).sort().join(',') !== 'kind,loopKey'
+          || !cleanupId(value.loopKey) || !['command','agent'].includes(String(value.kind))) return cleanupOpaque(row,'unknown-format');
+        return { status: 'known', id: row['id'], runId: row['run_id'], operationKey: row['operation_key'],
+          kind: value.kind as 'command'|'agent', loopKey: value.loopKey, bytes: String(row['bytes']), sha256: cleanupHash(row['data']) };
+      } catch { return cleanupOpaque(row,'malformed'); }
+    });
   }
 
   /** Exact operation equality, LIMIT 2 uniqueness and SQL body/type bounds precede JavaScript decoding. */
