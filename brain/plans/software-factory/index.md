@@ -127,3 +127,5 @@
 - [Windows private storage prerequisites](research/windows-private-storage-contract-2026-11-04.md)
 - [Historical C2 native frontier](ExecPlan.history-2026-11-04-c2-native-frontier.md)
 - [Windows fixture first-load custody](research/windows-storage-bootstrap-contract-2026-11-04.md)
+
+- [C3a base advisory source and proof](research/cleanup-c3a-base-advisory-2026-11-04.md)

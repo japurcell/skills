@@ -161,3 +161,8 @@ Final observed 10:07:33 UTC: HEAD `2762f02960301faa29e2dbef0eea5df918cae66b`. St
 ## Integration decision
 
 Root accepts only the fixture-only trusted-Python custody source design. No source/native/Windows C1/privacy/installed admission is released by this packet. Current original12 remains11/12 and direct diagnostic2/4 at2762f029. Exact toolchain/SDK/build receipt/import/export/share/actual-load and owned-exit/both-EOF/close gates remain open before any one later explicitly authorized native experiment.
+
+
+## Unknown-exit/EOF custody clarification
+
+Root clarified the fixture-only loader unknown-exit/EOF path: it cannot unwind or drop image/parent pins. Enter inert latched refusal; the existing fixed outer transport may terminate with closure UNKNOWN beyond OS teardown and no successful receipt. No extra wait budget, Job Object, late success, descendant or product claim. The source author must encode this truthfully before any future native release.

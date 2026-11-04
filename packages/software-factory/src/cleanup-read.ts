@@ -17,7 +17,7 @@ export interface CleanupInvocationFact extends CleanupIdentity {
 }
 export interface CleanupAttemptFact extends CleanupIdentity {
   status: 'known'; id: string; invocationId: string; runId: string; operationId: string; operationKey: string;
-  kind: 'agent' | 'command'; priorAttemptId: string | null; occupied: boolean;
+  kind: 'agent' | 'command'; loopKey: string | null; priorAttemptId: string | null; occupied: boolean;
   launch: 'admitted' | 'started' | 'not_started' | 'unknown'; outcome: string | null; quiescent: boolean;
   agent: { inputsCaptureId: string; resultCaptureId: string; outputCaptureId: string;
     validatedResultCaptureId: string | null; reusedAttemptId: string | null; validator: string | null } | null;
@@ -47,6 +47,9 @@ export type CleanupAttemptRead = { status: 'missing' | 'foreign'; fact: null }
   | { status: 'known' | 'opaque'; fact: CleanupAttemptFact | CleanupOpaque };
 export type CleanupEventRead = { status: 'missing' | 'foreign'; cursor: string }
   | CleanupOpaque | (CleanupIdentity & { status: 'known'; kind: string; data: Record<string, string | number | boolean | null> });
+export type CleanupOperationRead = CleanupOpaque | { status: 'missing' | 'foreign' }
+  | { status: 'known'; id: string; runId: string; operationKey: string; kind: 'agent' | 'command';
+      loopKey: string; bytes: string; sha256: string };
 
 /** Only these small persisted event contracts are understood in C1; extensions remain opaque. */
 export function decodeCleanupEvent(kind: string, value: unknown): Record<string, string | number | boolean | null> | null {
@@ -178,7 +181,7 @@ export function decodeCleanupAttempt(row: Record<string, unknown>): CleanupAttem
   }
   return { ...cleanupIdentity(row), status: 'known', id: String(row['id']), invocationId: String(value.invocationId),
     runId: String(value.runId), operationId: String(value.operationId), operationKey: String(value.operationKey), kind: value.kind,
-    priorAttemptId: value.priorAttemptId as string ?? null, occupied: row['occupied'] === 1n, launch: value.launch,
+    loopKey: value.loopKey as string ?? null, priorAttemptId: value.priorAttemptId as string ?? null, occupied: row['occupied'] === 1n, launch: value.launch,
     outcome: value.outcome as string | null, quiescent: value.quiescent, agent };
 }
 export function decodeCleanupHeader(row: Record<string, unknown>): CleanupCaptureHeader | CleanupOpaque {
