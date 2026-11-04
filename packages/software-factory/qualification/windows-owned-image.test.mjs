@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildCategories, parseBuildDiagnostic, formatFailure } from './windows-owned-image-diagnostics.mjs';
+import * as diagnosticApi from './windows-owned-image-diagnostics.mjs';
 
 // Public seam: bounded native evidence -> fixed sanitized qualification result.
 const positive = () => [
@@ -336,4 +337,34 @@ test('query branch diagnostics cannot disclose error names or escape signature-s
     assert.deepEqual(parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\t${condition}\n`),
       { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
   }
+});
+
+const moduleObservation = (condition = 'unresolved-command-unavailable', direct = 'not-imported') =>
+  `OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\t${condition}\n` +
+  `OWNED_IMAGE_MODULE\t1\tpresent\tpresent\tall\t${direct}\n`;
+
+test('bounded module canary records only closed path/autoload/direct-command observations', () => {
+  const result = diagnosticApi.parseBuildObservation(moduleObservation());
+  assert.deepEqual(result, { category: 'tool-signature', code: 'none', source: 'none', line: 0, tool: 'vswhere',
+    condition: 'unresolved-command-unavailable', module: { inbox: 'present', core: 'present', autoload: 'all', direct: 'not-imported' } });
+  assert.equal(formatFailure({ phase: 'build', ...result }),
+    'Owned image native qualification failed phase=build case=none category=tool-signature code=none source=none line=0 tool=vswhere condition=unresolved-command-unavailable inbox=present core=present autoload=all direct=not-imported\n');
+  assert.equal(diagnosticApi.parseBuildObservation(moduleObservation('nested-command-unavailable', 'imported')).condition, 'nested-command-unavailable');
+  assert.equal(diagnosticApi.parseBuildObservation(moduleObservation('command-probe-failure', 'unknown')).condition, 'command-probe-failure');
+});
+
+test('module canary rejects forged metadata, multiline/oversize data and inconsistent command attribution', () => {
+  const unexpected = { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' };
+  for (const text of [moduleObservation('nested-command-unavailable', 'not-imported'),
+    moduleObservation('unresolved-command-unavailable', 'imported'), moduleObservation('command-probe-failure', 'imported'),
+    moduleObservation().replace('present\tpresent', 'C:\\private\tpresent'), moduleObservation() + 'private\n',
+    moduleObservation() + '\n', moduleObservation().replace('all\t', 'All\t'), 'x'.repeat(513),
+    moduleObservation().replace('OWNED_IMAGE_MODULE', 'PRIVATE'), moduleObservation().replace('tool-signature', 'host')])
+    assert.deepEqual(diagnosticApi.parseBuildObservation(text), unexpected);
+  const value = diagnosticApi.parseBuildObservation(moduleObservation());
+  for (const patch of [{ phase: 'host' }, { name: 'positive' }, { category: 'compile' },
+    { module: { ...value.module, pid: 42 } }, { module: { ...value.module, inbox: 'C:\\private' } },
+    { module: { ...value.module, direct: 'imported' } }])
+    assert.equal(formatFailure({ phase: 'build', ...value, ...patch }),
+      'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n');
 });

@@ -7,6 +7,7 @@ Set-StrictMode -Version Latest
 $diagnosticCategory = 'host'
 $diagnosticTool = 'none'
 $diagnosticCondition = 'none'
+$diagnosticModule = $null
 $compilerDiagnostic = @{ code = 'none'; source = 'none'; line = 0 }
 $diagnosticHelpersLoaded = $false
 try {
@@ -29,15 +30,18 @@ try {
     function Assert-MicrosoftTool([string]$Path, [string]$Role) {
         $script:diagnosticTool = 'none'
         $script:diagnosticCondition = 'none'
+        $script:diagnosticModule = $null
         $script:diagnosticCategory = 'missing-msvc'
         if (-not [IO.File]::Exists($Path) -or ((Get-Item -LiteralPath $Path).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'tool' }
         $script:diagnosticCategory = 'tool-signature'
         $script:diagnosticTool = $Role
         $script:diagnosticCondition = 'api-failure'
-        $script:diagnosticCondition = Invoke-OwnedImageSignatureCondition $Path
+        $script:diagnosticModule = @{ inbox = 'unknown'; core = 'unknown'; autoload = 'unknown'; direct = 'unknown' }
+        $script:diagnosticCondition = Invoke-OwnedImageSignatureCondition $Path $script:diagnosticModule
         if ($script:diagnosticCondition -cne 'none') { throw 'tool-signature' }
         $script:diagnosticTool = 'none'
         $script:diagnosticCondition = 'none'
+        $script:diagnosticModule = $null
     }
     Assert-MicrosoftTool $vswhere 'vswhere'
     $diagnosticCategory = 'missing-msvc'
@@ -132,7 +136,7 @@ try {
     # No exception text or operational tool/path inventory in console output.
     $safeDiagnostic = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone"
     if ($diagnosticHelpersLoaded) {
-        try { $safeDiagnostic = Format-OwnedImageBuildDiagnostic $diagnosticCategory $compilerDiagnostic $diagnosticTool $diagnosticCondition }
+        try { $safeDiagnostic = Format-OwnedImageBuildObservation $diagnosticCategory $compilerDiagnostic $diagnosticTool $diagnosticCondition $diagnosticModule }
         catch { $safeDiagnostic = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone" }
     }
     [Console]::Error.WriteLine($safeDiagnostic)

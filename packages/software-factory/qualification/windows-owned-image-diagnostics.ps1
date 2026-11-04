@@ -31,12 +31,62 @@ function Get-OwnedImageSignatureCondition {
     } catch { return 'classification-failure' }
 }
 
+function Get-OwnedImageModuleProfile {
+    param([string]$ModulePath, [string]$InboxModules, [string]$CoreModules, [object]$AutoLoadingPreference)
+    $result = @{ inbox = 'unknown'; core = 'unknown'; autoload = 'unknown'; direct = 'unknown' }
+    if ($null -eq $AutoLoadingPreference) { $result.autoload = 'all' }
+    elseif ($AutoLoadingPreference -is [string] -or $AutoLoadingPreference -is [System.Management.Automation.PSModuleAutoLoadingPreference]) {
+        if ($AutoLoadingPreference -eq 'All') { $result.autoload = 'all' }
+        elseif ($AutoLoadingPreference -eq 'ModuleQualified') { $result.autoload = 'qualified' }
+        elseif ($AutoLoadingPreference -eq 'None') { $result.autoload = 'none' }
+    }
+    if ($ModulePath.Length -gt 32768) { return $result }
+    $entries = @($ModulePath -split ';')
+    if ($entries.Count -gt 128) { return $result }
+    foreach ($field in @('inbox', 'core')) {
+        $target = if ($field -eq 'inbox') { $InboxModules } else { $CoreModules }
+        if (-not [string]::IsNullOrEmpty($target)) {
+            $target = $target.Replace('/', '\').TrimEnd('\')
+            $result[$field] = 'absent'
+            foreach ($entry in $entries) {
+                if ([string]::Equals($entry.Replace('/', '\').TrimEnd('\'), $target, [StringComparison]::OrdinalIgnoreCase)) {
+                    $result[$field] = 'present'
+                }
+            }
+        }
+    }
+    return $result
+}
+
 function Invoke-OwnedImageSignatureCondition {
-    param([string]$Path)
+    param([string]$Path, [hashtable]$Context = @{})
+    foreach ($field in @('inbox', 'core', 'autoload', 'direct')) { $Context[$field] = 'unknown' }
     try {
-        $signature = Get-AuthenticodeSignature -LiteralPath $Path
+        $preference = $ExecutionContext.SessionState.PSVariable.Get('PSModuleAutoLoadingPreference')
+        $value = if ($null -eq $preference) { $null } else { $preference.Value }
+        $core = if ([string]::IsNullOrEmpty($env:ProgramFiles)) { '' } else { [IO.Path]::Combine($env:ProgramFiles, 'PowerShell', '7', 'Modules') }
+        $profile = Get-OwnedImageModuleProfile ([Environment]::GetEnvironmentVariable('PSModulePath')) ([IO.Path]::Combine($PSHOME, 'Modules')) $core $value
+        foreach ($field in @('inbox', 'core', 'autoload')) { $Context[$field] = $profile[$field] }
+    } catch { }
+    $command = $null
+    try {
+        # Imported-only lookup does not auto-import from ambient module paths.
+        $commands = @(Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -ErrorAction Stop)
     } catch [System.Management.Automation.CommandNotFoundException] {
-        return 'command-unavailable'
+        $commands = @()
+    } catch { return 'command-probe-failure' }
+    if ($commands.Count -gt 1) { return 'command-probe-failure' }
+    if ($commands.Count -eq 1) {
+        if ($commands[0] -isnot [System.Management.Automation.CommandInfo] -or $commands[0].Name -cne 'Get-AuthenticodeSignature') { return 'command-probe-failure' }
+        $command = $commands[0]
+        $Context.direct = 'imported'
+    } else { $Context.direct = 'not-imported' }
+    try {
+        if ($null -eq $command) { $signature = Get-AuthenticodeSignature -LiteralPath $Path }
+        else { $signature = & $command -LiteralPath $Path }
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        if ($null -eq $command) { return 'unresolved-command-unavailable' }
+        return 'nested-command-unavailable'
     } catch [System.Management.Automation.ParameterBindingException] {
         return 'parameter-binding'
     } catch {
@@ -54,7 +104,8 @@ function Format-OwnedImageBuildDiagnostic {
     if ($Category -ceq 'tool-signature') {
         if ($Tool -cnotin @('vswhere', 'compiler', 'linker')) { return $unexpected }
         if ($Condition -cnotin @('status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure', 'command-unavailable',
-            'parameter-binding', 'invocation-failure', 'classification-failure')) { return $unexpected }
+            'parameter-binding', 'invocation-failure', 'classification-failure', 'unresolved-command-unavailable',
+            'nested-command-unavailable', 'command-probe-failure')) { return $unexpected }
     } elseif ($Tool -cne 'none' -or $Condition -cne 'none') { return $unexpected }
     if ($Compiler -isnot [Collections.IDictionary] -or $Compiler.Count -ne 3 -or
         @($Compiler.Keys | Where-Object { $_ -cnotin @('code', 'source', 'line') }).Count -ne 0) { return $unexpected }
@@ -70,4 +121,32 @@ function Format-OwnedImageBuildDiagnostic {
         elseif ($source -cnotin @('probe', 'shared', 'fixture', 'fixture-dll') -or $number -lt 1 -or $number -gt 4096) { return $unexpected }
     } else { return $unexpected }
     return "OWNED_IMAGE_BUILD`t3`t$Category`t$code`t$source`t$number`t$Tool`t$Condition"
+}
+
+function Format-OwnedImageModuleDiagnostic {
+    param([object]$Context, [string]$Condition)
+    if ($Context -isnot [Collections.IDictionary] -or $Context.Count -ne 4 -or
+        @($Context.Keys | Where-Object { $_ -cnotin @('inbox', 'core', 'autoload', 'direct') }).Count -ne 0) { return $null }
+    foreach ($field in @('inbox', 'core', 'autoload', 'direct')) { if ($Context[$field] -isnot [string]) { return $null } }
+    if ($Context.inbox -cnotin @('present', 'absent', 'unknown') -or $Context.core -cnotin @('present', 'absent', 'unknown') -or
+        $Context.autoload -cnotin @('all', 'qualified', 'none', 'unknown') -or $Context.direct -cnotin @('imported', 'not-imported', 'unknown')) { return $null }
+    if (($Condition -ceq 'nested-command-unavailable' -and $Context.direct -cne 'imported') -or
+        ($Condition -ceq 'unresolved-command-unavailable' -and $Context.direct -cne 'not-imported') -or
+        ($Condition -ceq 'command-probe-failure' -and $Context.direct -cne 'unknown')) { return $null }
+    return "OWNED_IMAGE_MODULE`t1`t$($Context.inbox)`t$($Context.core)`t$($Context.autoload)`t$($Context.direct)"
+}
+
+function Format-OwnedImageBuildObservation {
+    param([string]$Category, [object]$Compiler, [object]$Tool, [object]$Condition, [object]$Context)
+    $unexpected = "OWNED_IMAGE_BUILD`t3`tunexpected`tnone`tnone`t0`tnone`tnone"
+    $first = Format-OwnedImageBuildDiagnostic $Category $Compiler $Tool $Condition
+    if ($first -ceq $unexpected) { return $unexpected }
+    if ($null -eq $Context) {
+        if ($Condition -cin @('nested-command-unavailable', 'unresolved-command-unavailable', 'command-probe-failure')) { return $unexpected }
+        return $first
+    }
+    if ($Category -cne 'tool-signature') { return $unexpected }
+    $second = Format-OwnedImageModuleDiagnostic $Context $Condition
+    if ($null -eq $second) { return $unexpected }
+    return "$first`n$second"
 }

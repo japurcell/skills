@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync, existsSync, lstatSync, copyFileSync } from 'n
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cases, limit, readBounded, validateNative } from './windows-owned-image.mjs';
-import { parseBuildDiagnostic, formatFailure } from './windows-owned-image-diagnostics.mjs';
+import { parseBuildObservation, formatFailure } from './windows-owned-image-diagnostics.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const evidence = resolve(process.env.WINDOWS_OWNED_IMAGE_EVIDENCE ?? 'windows-owned-image-evidence');
@@ -49,7 +49,7 @@ try {
   const build = spawnSync(powershell, ['-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
     '-File', join(here, 'windows-owned-image-native-build.ps1'), '-Evidence', evidence],
   { windowsHide: true, shell: false, encoding: 'utf8', timeout: 180000, maxBuffer: 1048576 });
-  diagnostic = { phase: 'build', ...parseBuildDiagnostic(build.stderr) };
+  diagnostic = { phase: 'build', ...parseBuildObservation(build.stderr) };
   if (build.error || build.signal !== null) diagnostic = { phase: 'build', category: build.error?.code === 'ETIMEDOUT'
     ? 'timeout' : build.error?.code === 'ENOBUFS' ? 'cap' : 'launch' };
   if (interrupted) diagnostic = { phase: 'build', category: 'interrupted' };
