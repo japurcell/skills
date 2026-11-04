@@ -134,3 +134,5 @@
 - [Windows loader builder and input-selection proposal](research/windows-storage-loader-builder-contract-2026-11-04.md)
 
 - [Rejected Darwin compiler launch feasibility](research/darwin-native-compiler-rejection-2026-11-04.md)
+
+- [C3b learning closure source and proof](research/cleanup-c3b-learning-closure-2026-11-04.md)
