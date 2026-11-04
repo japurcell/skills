@@ -1,0 +1,62 @@
+# Windows owned-image creation canary
+
+This is additive T17 qualification implementation, not Windows helper support or a product launcher. Native execution has not run. All independent review remains deferred to the coordinator. The implementation starts at integration checkpoint `36f8b2d0d7ac411b6fe1ad74b78bb240de907ad3` and follows the committed [mechanism decision](../../../brain/plans/software-factory/research/windows-owned-image-mechanism-2026-11-03.md).
+
+## Boundary and mechanism
+
+`windows-owned-image-probe.cpp` creates only its own new fixed native canary with `DEBUG_ONLY_THIS_PROCESS`, without `CREATE_SUSPENDED`. The creator thread requires the first event to be `CREATE_PROCESS_DEBUG_EVENT` for the held creation handles' PID and initial TID. It adds one explicit initial-thread suspension, requiring prior count zero. It duplicates the actual event `hFile`, closes that original file handle, queries `FileIdInfo`, hashes at most 16 MiB through each held file handle, and compares the actual image's volume/FileID and SHA256 with an independently held read-sharing expected image. The image and pin handles remain held through process exit and pipe closure.
+
+Only a matching image permits `ContinueDebugEvent`. The explicit suspension must survive continuation. Detach uses only the exact created PID, checked against its continuously held live process handle. `CheckRemoteDebuggerPresent` must report false before one `ResumeThread`, whose prior count must be one. No existing-process attach, process memory/context access, remote threads, injection, Job Object, ETW, global process tracker, or arbitrary resume loop is used. Event process/thread handles are retired after detach if still valid and still the exact known event objects; exit-event processing otherwise uses the documented automatic closure. Actual final handle counts and every owned handle close are checked.
+
+The DLL's `DllMain`, executable TLS callback, and earliest controlled `main` each mark an inherited shared mapping. `main` is the first controlled application entry, not a claim to precede the static CRT startup. Every marker also records whether permission was absent. The mapping and only stdin/stdout/stderr are selected in a restrictive inherited-handle list. No marker or output may appear at the created, suspended, validated, continued, or detached barriers. All three markers must arrive after release, with `IsDebuggerPresent` false. A separately created non-debug same-image canary must survive the target's cleanup and then be stopped through its own held creation handle.
+
+This sequence composes documented primitives. Microsoft does not document an atomic guarantee for the whole suspend/continue/detach/resume sequence. Only the coordinator's real Windows native canary can establish this exact source/OS/compiler/profile observation. Portable tests, source inspection, and PowerShell parsing cannot establish it.
+
+## Fixed native matrix and bounds
+
+There are 34 closed cases: nine positive launches; three wrong-hash/different-file-object/different-image refusals; three file/ancestor/hardlink-alias replacement controls; six stops from creation through the one resume; nine explicit refusal seams before event/image-handle/duplicate/query/suspend/continue/detach/postcondition/resume; deadline, output-limit and crash controls; and debugger-owner-thread interruption.
+
+Replacement controls use separate fresh qualification staging. The file pin remains open while a file, ancestor or hardlink alias rename is attempted. Only a fixed sharing/access denial, or replacement followed by actual FileID and digest mismatch refusal, is acceptable. The guard never treats path text as identity, and neither result qualifies the namespace. Moved or replaced owned staging files are retained privately, not rolled back across possibly changed names. Baseline binaries are never mutated.
+
+The `fail-*` cases are intentional fail-closed seams before their named operation. They prove refusal ordering and cleanup from those phases, not that every possible Windows API failure has been independently induced. A genuine unexpected API result still refuses. Owner interruption ends the actual creating debugger thread with its first event pending and the default debugger kill policy intact; the observer retains the newly created process handle and requires its signaled exit with no markers. It does not prove outer-controller loss after successful detach.
+
+The first event waits at most one second. Barriers observe 25 ms each. Normal target completion allows 1.5 seconds, the deadline control 500 ms, native output stops above 256 KiB, and final drained output must remain at most 1 MiB per pipe. Cleanup uses bounded owned-event draining (64 events, two seconds) and a further one-second signaled-process wait, with independent target/control attempts and no resume during cleanup. A complete case must finish within ten seconds, have EOF on both pipes, zero owned handle residue, no observed handle-count increase, and a conclusively stopped owned target/control. The Node driver caps each controller receipt at 64 KiB and twelve seconds. Missing exit, unknown stop, cap, unexpected phase/count/marker, missing compiler, or interruption produces no upload qualification. The waiting fixture has an eight-second self-deadline; that fallback does not establish observed cleanup after controller loss. Flooding writes can block if their pipe owner disappears, so detached owner-loss remains explicitly unqualified.
+
+## Driver, build and workflow contract
+
+The coordinator owns workflow creation, dispatch, native runs and canonical plan/CI registration. Use a disposable `windows-2025` x64 worker with `contents: read`, credential-free checkout, the existing authenticated exact Node 24.22.1 bootstrap, no npm installation, and no Git/TypeScript artifact preparation. Give bootstrap its own private evidence directory. The owned-image driver requires a **different, absent** directory in `WINDOWS_OWNED_IMAGE_EVIDENCE`; it creates that directory exclusively. The Node executable on PATH must then report `v24.22.1`.
+
+From the repository root after bootstrap:
+
+```powershell
+node --test packages/software-factory/qualification/windows-owned-image.test.mjs
+node packages/software-factory/qualification/windows-owned-image-native.qualification.mjs
+node packages/software-factory/qualification/windows-owned-image.mjs --prepare-artifacts
+```
+
+Check each exit code and stop on failure. A twelve-minute native step leaves room for the three-minute build ceiling and 34 bounded cases. Cancellation or driver caps kill only the Node-owned controller process and refuse qualification; they do not claim the controller's detached children were observed stopped. No provider, auth, credential, user repository, product helper or desktop-notification action is part of this job.
+
+The driver invokes the fixed inbox Windows PowerShell 5.1 executable. `windows-owned-image-native-build.ps1` requires an already installed local x64 MSVC toolchain selected through the signed installed `vswhere.exe`. It checks valid Microsoft signatures for vswhere, cl and link, a fixed Visual Studio installation-root shape, non-reparse toolset/files, a `14.xx.xxxxx` toolset and `19.x` compiler version, and requires the vcvars-selected version to match exactly. Paths must be printable ASCII without command metacharacters. Missing or mismatched tools fail; nothing is downloaded. Checked-in fixed sources are SHA256 recorded and rechecked after build. Compilation uses `/W4 /WX /std:c++17 /MT`, and the build source, compiler/linker identities, exact versions, OS/PowerShell version and all produced binary digests are recorded privately. The native executable and DLL are qualification artifacts only, never an ambient product runtime/compiler dependency. Signature/source checks assume the disposable checkout and installed build-tool namespace are already trusted; they do not authenticate the controller's own initial execution.
+
+All 34 cases must complete before `driver.private.json` declares completion. The driver validates and rehashes every baseline native binary before each case. Private build logs/reports, binaries, shared-map identifiers, PIDs/TIDs, FileIDs, digests, paths, exception/operational output and native detail logs stay inside that disposable private evidence root. No raw ETW trace is produced.
+
+Only after the guard succeeds may the workflow upload these two exact paths, with no directory or glob upload and `if-no-files-found: error`:
+
+```text
+${WINDOWS_OWNED_IMAGE_EVIDENCE}/upload/qualification.json
+${WINDOWS_OWNED_IMAGE_EVIDENCE}/upload/native.tsv
+```
+
+The artifact guard reconstructs each result from bounded private native rows. It validates raw held/event identifiers, raw actual/pin FileID and SHA256, exact phase prefixes, negative-case expected refusal, marker/output bounds, survival, exit, EOF, cleanup, handle counts, elapsed limit, and the complete ordered driver case set. A claimed public status in the private driver object is ignored. Invalid, oversized, capped, timed-out, interrupted, partial or unknown-cleanup evidence refuses artifact staging. Each staged file is at most 64 KiB. Staging requires a previously absent upload directory and creates exactly the two files above. The workflow must require guard success before its upload step, including when using `always()`.
+
+Both receipts contain only fixed scope/status/limit categories, finite case names and booleans. `productAdmission=false`, `helperAdmission=refused`, and root-of-trust, namespace, DLL identity, process closure and Node equivalence are always unverified. Do not upload private build/compiler reports, binaries, native raw rows or detail logs to diagnose a failure.
+
+## Local evidence and remaining acceptance
+
+Portable checks use `/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node --test packages/software-factory/qualification/windows-owned-image.test.mjs`. On 2026-11-03 that command passes 14/14 tests, zero skips, in 70.771 ms; retained log `/tmp/factory-windows-owned-image-portable.log`. Both JavaScript entry points pass `node --check`, and `/Users/adam/homebrew/bin/pwsh` parses the build script without errors. The public tests exercise the receipt/guard seam with synthetic observations; they never execute native Windows code or establish native API behavior. Missing native prerequisites are hard failures, not skipped tests. Reflection found no additional durable general brain update; the phase/forgery findings are enforced by the receipt guard and public tests.
+
+Native compilation, installed MSVC identities, Windows debugger handle retirement, all suspension/detach postconditions, TLS/DllMain observations, replacement attempts, crash/owner interruption, exact EOF/handle closure and the 34-case run remain unverified. A native failure is a blocker to this mechanism's qualification, not permission to relax a guard.
+
+Even a complete native pass establishes only this new canary launch profile. It does not establish the installed root of trust, stable runtime/DLL/ancestor/alias namespaces, arbitrary same-authority mutation resistance, complete descendant/console closure, or equivalence with the existing Node launch. The unchanged original 17 Git/3 TypeScript matrix, old Node comparator, extra-console and other refusal controls remain required for any later native mode proposal. No product/helper admission, release publication, provider qualification or live desktop-notification proof follows.
+
+Primary APIs: [creation-event timing](https://learn.microsoft.com/en-us/windows/win32/debug/debugging-events), [event image handle](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-create_process_debug_info), [FileIdInfo](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex), [suspend counts through continuation](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread), [detach](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-debugactiveprocessstop), [creator-thread and handle ownership](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-waitfordebugevent), [restricted inheritance](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-initializeprocthreadattributelist).
