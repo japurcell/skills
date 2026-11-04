@@ -9,11 +9,14 @@ Collect bounded, sanitized test-only timing evidence for the unchanged public fi
 - [x] [milestone-1] Read decisive diagnosis and verify integration base fc0aabce.
 - [x] (2026-11-04) [milestone-1] Implement collector, driver, fixed registry/schema and narrow default-off test hooks.
 - [x] (2026-11-04) [milestone-1] Prove bounded schema, real Node case/ordered-worker receipts, preflight refusal and read-only paging with pinned Node24.22.1:9/9 synthetic cases pass,434ms.
+- [x] (2026-11-04) [milestone-1] Commit packet81d920cb, merge latest integrationce314373 without rebasing as9a407ce3, and reverify9/9synthetic checks under frozen pinned PATH,455.633792ms; clean scoped diff and syntax checks pass.
 - [ ] [milestone-2] Coordinator performs one frozen native complete fixtures experiment.
 
 ## Context and seams
 
 The ordered worker uses node:test run() and the learning selector uses the ordinary CLI runner. Immediate dequeue/complete events or direct fixture markers establish execution timing; buffered TAP start/pass do not. The authorized synthetic seams are the qualification collector/driver artifact boundary and its read-only attempt timing adapter. No full fixtures or product workload may run locally while the other private proof is active.
+
+Task graph: telemetry-packet has no implementation prerequisite beyond the decisive diagnosis and completes milestone1. Native-experiment depends on telemetry-packet, coordinator-owned frozen canonical preflight and all other private load being quiescent; it completes milestone2 only when the retained complete fixture result and sanitized timeline have been assessed.
 
 ## Plan of Work
 
@@ -33,7 +36,7 @@ Coordinator owns fixed dependency/Python/Node/PATH receipt preflight, source fre
 
 ## Validation and Acceptance
 
-From packages/software-factory run `/private/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node --test qualification/selector-timing-checks.qualification.mjs` through `/Users/adam/homebrew/bin/rtk proxy` with loginfalse. Observed9pass/0fail/0skip/0cancelled/0todo,434.460333ms before final integration merge. The synthetic files run only tiny test callbacks, preflight rejection and a newly created minimal SQLite database. No product fixtures, builds, providers or desktop delivery ran. `git diff --check` passes. Rerun these narrow checks after integration merge; native acceptance remains open.
+From packages/software-factory run `/Users/adam/homebrew/bin/rtk proxy env PATH=/private/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin:/usr/bin:/bin:/usr/sbin:/sbin node --test qualification/selector-timing-checks.qualification.mjs` with loginfalse. After integration merge9a407ce3 observed9pass/0fail/0skip/0cancelled/0todo,455.633792ms; retained log `/tmp/factory-darwin-selector-timing-synthetic.log`. The synthetic files run only tiny test callbacks, preflight rejection and a newly created minimal SQLite database. All ten changed JavaScript modules pass pinned Node syntax checks, and `git diff --check ce314373` passes. No product fixtures, builds, providers or desktop delivery ran. Native acceptance remains open.
 
 ## Decision Log
 
@@ -47,7 +50,7 @@ From packages/software-factory run `/private/tmp/factory-qualified-node-342t16a/
 
 ## Concrete Steps / Recovery
 
-Author: create the scoped commit, merge latest integration without rebasing, rerun only the9synthetic checks and return the exact head. Coordinator: preserve the existing pinned Node24.22.1, Python3.13.14, dependency/cache/PATH and receipt preflight; wait for all private proof/load to be quiescent and freeze the exact composed source. In packages/software-factory run `rtk proxy node qualification/selector-timing-driver.mjs "$RUNNER_TEMP/selector-timing-export"` using a destination that does not exist. The driver launches the original `node scripts/test.mjs fixtures` exactly once, with the two diagnostic activation variables inherited only as inert metadata by product children and a fixed `--import` added only to test workers. No NODE_OPTIONS or product arguments are added.
+Coordinator next: integrate the clean telemetry branch, preserve the existing pinned Node24.22.1, Python3.13.14, dependency/cache/PATH and receipt preflight; wait for all private proof/load to be quiescent and freeze the exact composed source. In packages/software-factory run `rtk proxy node qualification/selector-timing-driver.mjs "$RUNNER_TEMP/selector-timing-export"` using a destination that does not exist. The driver launches the original `node scripts/test.mjs fixtures` exactly once, with the two diagnostic activation variables inherited only as inert metadata by product children and a fixed `--import` added only to test workers. No NODE_OPTIONS or product arguments are added. Author implementation, scoped commit, latest-integration merge and permitted local verification are complete.
 
 Stage only the two exact files `selector-timing-export/selector-timing.json` and `selector-timing-export/selector-timing.jsonl`. The driver creates its private evidence root exclusively with mode0700, never publishes its owner token/path, never scans processes and never removes a caller destination. Do not stage its private root or disposable stores. The driver preserves a red fixture exit; if fixtures pass but diagnostic coverage is incomplete its profiling guard exits1. On invalid evidence it emits only a fixed incomplete diagnostic. Missing worker closures/open spans, bounds, or missing any of the49selected case endings or managed git/build/fake-agent classes prevents complete status. A deadline failure can therefore produce a valid useful partial timeline labeled incomplete; this is not a missing-product-assertion waiver.
 
@@ -69,4 +72,4 @@ Pinned Node24.22.1 [event lifecycle](https://nodejs.org/download/release/v24.22.
 
 ## Outcomes & Retrospective
 
-Telemetry packet and9synthetic checks are complete before final merge verification. Native experiment and deadline qualification remain coordinator-owned and unrun. No deadline repair, native pass or bottleneck attribution is claimed. Reflection: the temporary-path alias issue is prevented structurally by canonical ownership keys and a real subprocess check; no separate durable brain or skill change is needed.
+Telemetry packet and final merged9synthetic checks are complete. Native experiment and deadline qualification remain coordinator-owned and unrun. No deadline repair, native pass or bottleneck attribution is claimed. Reflection: the temporary-path alias issue is prevented structurally by canonical ownership keys and a real subprocess check; no separate durable brain or skill change is needed. No skill improvements identified.
