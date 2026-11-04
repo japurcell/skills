@@ -1,0 +1,97 @@
+{
+  "runId": 41897732087,
+  "jobId": 126811642361,
+  "artifactId": 13356342800,
+  "archiveBytes": 22774,
+  "archiveSha256": "de29efb6805ed436919da8dd40f8b90bddbd8621e504c3275c117383d858d7ac",
+  "files": [
+    {
+      "name": "metadata.json",
+      "bytes": 259065,
+      "sha256": "7bd61cfaec1af05c0709f34c2d291cc3b1c315c225b2f50513dde2b24108cd58"
+    },
+    {
+      "name": "control.json",
+      "bytes": 428,
+      "sha256": "82a778599b2734179c0f27113ae675c36497f49451acc2e67ec86ab3debf35cc"
+    }
+  ],
+  "metadataSummary": {
+    "scope": "windows-storage-loader-metadata",
+    "schema": 2,
+    "state": "blocked",
+    "reason": "tool-provenance-unproven",
+    "sourceSelectionSha256": "10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98",
+    "host": {
+      "powershellVersion": "5.1.26100.33648",
+      "windowsVersion": "10.0.26100.0",
+      "architecture": "x64",
+      "profile": "winps-inbox-only",
+      "securityCommand": "captured-inbox-Get-AuthenticodeSignature"
+    },
+    "sdkRegistration": {
+      "version": 1,
+      "status": "blocked",
+      "reason": "malformed",
+      "records": []
+    },
+    "selectionAuthority": false,
+    "buildAuthority": false,
+    "nativeAuthority": false
+  },
+  "fileFactCount": 255,
+  "sdkVersions": [
+    "10.0.26100.0"
+  ],
+  "control": {
+    "scope": "windows-storage-loader-metadata-execution-control",
+    "schema": 1,
+    "phase": "metadata-only",
+    "sourceCommit": "5405a163b4e591705f9888440ec5cb8933c48d2c",
+    "collectionSourceCommit": "863f20bf359354bc5ae853f8dcb331c77f3bec82",
+    "sourceSelectionSha256": "10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98",
+    "state": "blocked",
+    "collectorExitCode": 1,
+    "selectionAuthority": false,
+    "buildAuthority": false,
+    "nativeAuthority": false
+  },
+  "strictValidatorNotYetRun": false,
+  "nativeFilePermissionsNotInferredFromDownload": true,
+  "strictValidation": {
+    "status": "passed",
+    "originalExitCode": 0,
+    "fullEof": true,
+    "seconds": 1.2063901250076015,
+    "log": "/tmp/factory-sdk-metadata-artifact-validation.log",
+    "postflight": "/tmp/factory-sdk-metadata-artifact-validation-postflight.json",
+    "postflightErrors": []
+  },
+  "pushedHead": "863f20bf359354bc5ae853f8dcb331c77f3bec82",
+  "codeCommit": "bbffcac432ef3c8248eb162aca7f3c128fd79938",
+  "integratedProofHead": "f252621d7b72e439d837c0203dc5558c1626748f",
+  "integratedProofWorkingTree": true,
+  "observedJobExitCode": 1,
+  "rootExecutionDecision": "released-one-sdk-registration-metadata-only-native-observation",
+  "rootDecisionUtc": "2026-11-04T19:29:56Z",
+  "rootReadResultAcceptance": "bounded-observation-only",
+  "toolFacts": {
+    "signaturesValid": 247,
+    "emptyCompanionVersions": 14,
+    "sdkSamplesUnproven": 7
+  },
+  "runnerImage": {
+    "name": "windows-2025-vs2026",
+    "version": "20261030.294.1"
+  },
+  "sdkCandidateIdentityEstablished": false,
+  "WindowsAbiProven": false,
+  "SDKAuthentication": false,
+  "buildAuthority": false,
+  "nativeAuthority": false,
+  "selectionAuthority": false,
+  "actualFailureStageOrCause": "unknown",
+  "retryDispatchCancelPerformed": false,
+  "firstContextSnapshot": "/tmp/factory-sdk-watch-193201.json",
+  "latestContextSnapshot": "/tmp/factory-sdk-watch-193611.json"
+}

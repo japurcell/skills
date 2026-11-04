@@ -166,3 +166,8 @@
 - [Darwin parent launch brackets source contract](research/darwin-parent-launch-brackets-2026-11-04.md)
 
 - [Exact a66 finite native context evidence](research/h1-native-context-observation-2026-11-04.md)
+
+- [First SDK registration observation: validated blocked wire](research/windows-sdk-registration-observation-2026-11-04.md)
+- [Pre-observation handoff history](handoff.history-2026-11-04-sdk-observation.md)
+
+- [IR1 qualification stage observation source contract](research/repair-inspection-stage-observation-contract-2026-11-04.md)
