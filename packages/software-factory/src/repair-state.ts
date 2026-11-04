@@ -19,7 +19,8 @@ export interface RepairAuthority {
   source: RepairSourceV1; snapshot: ReturnType<typeof readRepairStoreSnapshot>; factoryIdentity: string;
   candidate: CandidateReceipt; release: string; manifestSha256: string; active: ActiveInstalledCompletion;
   roots: { name: 'install' | 'toolchain'; identity: string; rows: TreeEntry[] }[];
-  resume: null | { operationId: string; position: number; recorded: number; owner: ReturnType<typeof inspectOwner> };
+  resume: null | { operationId: string; position: number; recorded: number; owner: ReturnType<typeof inspectOwner>;
+    originalLauncher: ReturnType<typeof inspectOwner>; activeLauncher: ReturnType<typeof inspectOwner> | null };
 }
 export function repairDigest(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -96,7 +97,9 @@ export async function readRepairAuthority(common: string, repository: string): P
     priorCompletionSha256: repairDigest(snapshot.active) }, snapshot, factoryIdentity: retained.factoryIdentity,
     candidate, release: selected.release, manifestSha256: selected.targetReleaseSha256,
     active: retained.active, roots: currentRoots, resume: { operationId: selected.operationId,
-      position: layout.position, recorded: layout.recorded, owner: inspectOwner(claim.owner) } };
+      position: layout.position, recorded: layout.recorded, owner: inspectOwner(claim.owner),
+      originalLauncher: inspectOwner(original.launcher),
+      activeLauncher: selected.activeLauncher ? inspectOwner(selected.activeLauncher) : null } };
 }
 
 /** Missing known descendants are damage, while unknown paths, changed kinds and replaced roots refuse. */

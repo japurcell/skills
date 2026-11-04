@@ -66,17 +66,22 @@ export async function inspectRepairSelection(repository: string, external: Insta
       expectedInventorySha256: observed.expectedInventorySha256, observedInventorySha256: observed.observedInventorySha256,
       roots: observed.roots, controllerManifestSha256: selected.bundle.manifestSha256, retainPolicy: 'repair-preserve-v1' };
     const needed = Object.values(observed.damage).some(value => value !== 0);
-    const action = authority.resume ? authority.resume.owner.state === 'known_live' ? 'refused' : 'resume-upgrade' : needed ? 'repair' : 'healthy';
+    const blocked = authority.resume?.owner.state === 'known_live' ? 'known-live-controller'
+      : authority.resume?.originalLauncher.state === 'known_live' ? 'known-live-original-launcher'
+        : authority.resume?.activeLauncher?.state === 'known_live' ? 'known-live-active-launcher' : null;
+    const action = authority.resume ? blocked ? 'refused' : 'resume-upgrade' : needed ? 'repair' : 'healthy';
     return { version: 1, action, source: { kind: authority.source.kind, state: authority.snapshot.state,
       operationId: authority.source.kind === 'upgrade' ? authority.source.operationId : authority.active.completion.operationId },
       selectionSha256: repairDigest(selection), selection, damage: observed.damage,
       impact: { replace: needed || authority.resume ? ['install', 'toolchain'] : [], retain: RETAIN },
       nativeSupport: { platform: `${process.platform}-${process.arch}`, inspection: true, repairImplemented: false },
+      ...(blocked ? { reason: blocked } : {}),
       ...(authority.resume ? { resume: { operationId: authority.resume.operationId, recorded: authority.resume.recorded,
         position: authority.resume.position, owner: authority.resume.owner.state, clearanceRequired: true,
-        command: ['resume-upgrade', '--repository', root, '--bundle-root', external.bundleRoot,
+        originalLauncher: authority.resume.originalLauncher.state, activeLauncher: authority.resume.activeLauncher?.state ?? null,
+        ...(action === 'resume-upgrade' ? { command: ['resume-upgrade', '--repository', root, '--bundle-root', external.bundleRoot,
           '--manifest-sha256', external.manifestSha256, '--node-archive', external.nodeArchivePath,
-          '--operation', authority.resume.operationId, '--operator-confirmed', '--note', '<required clearance note>'] } } : {}) };
+          '--operation', authority.resume.operationId, '--operator-confirmed', '--note', '<required clearance note>'] } : {}) } } : {}) };
   } catch {
     return { version: 1, action: 'refused' as const, reason: 'unprovable-repair-authority',
       nativeSupport: { platform: `${process.platform}-${process.arch}`, inspection: process.platform !== 'win32', repairImplemented: false } };
