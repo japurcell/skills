@@ -32,16 +32,20 @@ def run(request):
         return "refused"
     if os.path.realpath(sp) != sp or os.path.realpath(dp) != dp:
         return "refused"
-    if sys.platform not in ("darwin", "linux"):
+    if sys.platform not in ("darwin", "linux") or (sys.platform == "linux" and os.uname().machine != "x86_64"):
         return "unsupported"
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     sf = df = None
     try:
         sf, df = os.open(sp, flags), os.open(dp, flags)
-        if not directory(os.fstat(sf), request["sourceParentIdentity"]) or not directory(os.fstat(df), request["destinationParentIdentity"]):
+        source_parent, destination_parent = os.fstat(sf), os.fstat(df)
+        if not directory(source_parent, request["sourceParentIdentity"]) or not directory(destination_parent, request["destinationParentIdentity"]):
             return "refused"
-        if not directory(os.stat(sn, dir_fd=sf, follow_symlinks=False), request["sourceIdentity"]):
+        source_info = os.stat(sn, dir_fd=sf, follow_symlinks=False)
+        if not directory(source_info, request["sourceIdentity"]):
             return "refused"
+        if source_parent.st_dev != destination_parent.st_dev or source_info.st_dev != source_parent.st_dev:
+            return "unsupported"
         if not directory(os.stat(sp, follow_symlinks=False), request["sourceParentIdentity"]) or not directory(os.stat(dp, follow_symlinks=False), request["destinationParentIdentity"]):
             return "refused"
         try:
