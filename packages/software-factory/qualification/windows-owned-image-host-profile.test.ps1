@@ -18,7 +18,8 @@ try {
         [IO.File]::WriteAllText([IO.Path]::Combine($directory, $name + '.psd1'), '# synthetic inert fixture')
     }
     $script:expectedInbox = $inbox; $script:origin = 'inbox'; $script:imports = @()
-    $script:failModule = ''; $script:failField = ''; $script:commandField = ''
+    $script:failModule = ''; $script:failField = ''; $script:commandField = ''; $script:hostBase = $false
+    $script:countSnapshots = $false; $script:captureCounts = @{}
     function Import-Module {
         [CmdletBinding()]
         param([string]$Name, [string]$Scope, [switch]$PassThru)
@@ -30,11 +31,23 @@ try {
         if ($moduleName -ceq $script:failModule) {
             if ($script:failField -ceq 'import') { throw 'synthetic-private-import' }
             if ($script:failField -ceq 'count') { return }
-            if ($script:failField -ceq 'name') { return [pscustomobject]@{ Name = 'other'; Path = $Name; ModuleBase = $base } }
-            if ($script:failField -ceq 'manifest') { return [pscustomobject]@{ Name = $moduleName; Path = $Name + '.other'; ModuleBase = $base } }
-            if ($script:failField -ceq 'base') { return [pscustomobject]@{ Name = $moduleName; Path = $Name; ModuleBase = $homeRoot } }
+            if ($script:failField -ceq 'name') { return [pscustomobject]@{ Name = 'other'; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $Name; ModuleBase = $base } }
+            if ($script:failField -ceq 'manifest') { return [pscustomobject]@{ Name = $moduleName; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $Name + '.other'; ModuleBase = $base } }
+            if ($script:failField -ceq 'base') { return [pscustomobject]@{ Name = $moduleName; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $Name; ModuleBase = [IO.Path]::Combine($homeRoot, 'foreign-child') } }
         }
-        return [pscustomobject]@{ Name = $moduleName; Path = $Name; ModuleBase = $base }
+        $selectedBase = if ($script:hostBase) { $homeRoot } else { $base }
+        if ($script:countSnapshots) {
+            $counter = @{ Name = 0; ModuleType = 0; Path = 0; ModuleBase = 0 }
+            $metadata = @{ Name = $moduleName; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $Name; ModuleBase = $selectedBase }
+            $script:captureCounts[$moduleName] = $counter
+            $object = [pscustomobject]@{}
+            foreach ($property in @('Name', 'ModuleType', 'Path', 'ModuleBase')) {
+                $getter = { $counter[$property]++; if ($counter[$property] -gt 1) { throw 'metadata-read-twice' }; return $metadata[$property] }.GetNewClosure()
+                $object.PSObject.Properties.Add([Management.Automation.PSScriptProperty]::new($property, $getter))
+            }
+            return $object
+        }
+        return [pscustomobject]@{ Name = $moduleName; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $Name; ModuleBase = $selectedBase }
     }
     function Get-Command {
         [CmdletBinding()]
@@ -58,6 +71,66 @@ try {
     if ($facts.origin -cne 'inbox' -or $facts.availability -cne 'available' -or $env:PSModulePath -cne $inbox -or
         $script:PSModuleAutoLoadingPreference -cne 'None' -or $script:imports.Count -ne 3) { throw 'candidate' }
     if ((Format-OwnedImageHostProfile $facts) -cne "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tinbox`tavailable`tready`tnone") { throw 'fixed-facts' }
+    $stage = 'observed-complete-tuple'; $script:hostBase = $true; $script:imports = @(); $script:countSnapshots = $true
+    $facts = Initialize-OwnedImageInboxProfile $homeRoot $inbox 'winps-inbox-only'
+    if ($facts.origin -cne 'inbox' -or $facts.stage -cne 'ready' -or $script:imports.Count -ne 3) { throw 'observed-tuple' }
+    if ($script:captureCounts.Count -ne 3) { throw 'import-capture-count' }
+    foreach ($counts in $script:captureCounts.Values) {
+        foreach ($property in @('Name', 'ModuleType', 'Path', 'ModuleBase')) { if ($counts[$property] -ne 1) { throw 'import-property-count' } }
+    }
+    $script:hostBase = $false; $script:countSnapshots = $false
+    $stage = 'fixed-origin-tuples'
+    foreach ($role in @('Management', 'Utility', 'Security')) {
+        $name = 'Microsoft.PowerShell.' + $role
+        $directory = [IO.Path]::Combine($inbox, $name)
+        $manifest = [IO.Path]::Combine($directory, $name + '.psd1')
+        foreach ($base in @($directory, $homeRoot)) {
+            $snapshot = @{ Name = $name; ModuleType = [Management.Automation.ModuleType]::Manifest; Path = $manifest; ModuleBase = $base }
+            if (-not (Test-OwnedImageInboxModuleOrigin $homeRoot $name $snapshot)) { throw 'safe-tuple' }
+            foreach ($badCase in @('name', 'binary', 'script', 'unknown', 'kind-string', 'kind-array', 'path', 'path-child', 'path-type',
+                'base', 'base-child', 'base-prefix', 'base-traversal', 'base-type', 'base-null', 'name-type', 'missing-kind', 'extra')) {
+                $bad = $snapshot.Clone()
+                if ($badCase -ceq 'name') { $bad.Name = $name + '-other' }
+                if ($badCase -ceq 'binary') { $bad.ModuleType = [Management.Automation.ModuleType]::Binary }
+                if ($badCase -ceq 'script') { $bad.ModuleType = [Management.Automation.ModuleType]::Script }
+                if ($badCase -ceq 'unknown') { $bad.ModuleType = $null }
+                if ($badCase -ceq 'kind-string') { $bad.ModuleType = 'Manifest' }
+                if ($badCase -ceq 'kind-array') { $bad.ModuleType = @([Management.Automation.ModuleType]::Manifest) }
+                if ($badCase -ceq 'path') { $bad.Path = $manifest + '.other' }
+                if ($badCase -ceq 'path-child') { $bad.Path = [IO.Path]::Combine($directory, 'child', $name + '.psd1') }
+                if ($badCase -ceq 'path-type') { $bad.Path = @($manifest) }
+                if ($badCase -ceq 'base') { $bad.ModuleBase = $inbox }
+                if ($badCase -ceq 'base-child') { $bad.ModuleBase = [IO.Path]::Combine($base, 'child') }
+                if ($badCase -ceq 'base-prefix') { $bad.ModuleBase = $base + '-other' }
+                if ($badCase -ceq 'base-traversal') { $bad.ModuleBase = [IO.Path]::Combine($base, 'child', '..') }
+                if ($badCase -ceq 'base-type') { $bad.ModuleBase = @($base) }
+                if ($badCase -ceq 'base-null') { $bad.ModuleBase = $null }
+                if ($badCase -ceq 'name-type') { $bad.Name = @($name) }
+                if ($badCase -ceq 'missing-kind') { $bad.Remove('ModuleType') }
+                if ($badCase -ceq 'extra') { $bad.extra = 'private' }
+                if (Test-OwnedImageInboxModuleOrigin $homeRoot $name $bad) { throw 'unsafe-tuple' }
+            }
+        }
+    }
+    $stage = 'single-snapshot'
+    $missingKind = Get-OwnedImageModuleSnapshot ([pscustomobject]@{ Name = 'Microsoft.PowerShell.Management'
+        Path = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Management', 'Microsoft.PowerShell.Management.psd1'); ModuleBase = $homeRoot })
+    if (Test-OwnedImageInboxModuleOrigin $homeRoot 'Microsoft.PowerShell.Management' $missingKind) { throw 'missing-kind-host-base' }
+    $script:reads = @{ Name = 0; ModuleType = 0; Path = 0; ModuleBase = 0 }
+    $script:capturedValues = @{ Name = 'Microsoft.PowerShell.Management'; ModuleType = [Management.Automation.ModuleType]::Manifest
+        Path = [IO.Path]::Combine($inbox, 'Microsoft.PowerShell.Management', 'Microsoft.PowerShell.Management.psd1'); ModuleBase = $homeRoot }
+    $changing = [pscustomobject]@{}
+    $reads = $script:reads; $values = $script:capturedValues
+    foreach ($property in @('Name', 'ModuleType', 'Path', 'ModuleBase')) {
+        $getter = { $reads[$property]++; if ($reads[$property] -gt 1) { throw 'read-twice' }; return $values[$property] }.GetNewClosure()
+        $changing.PSObject.Properties.Add([Management.Automation.PSScriptProperty]::new($property, $getter))
+    }
+    $captured = Get-OwnedImageModuleSnapshot $changing
+    $script:capturedValues.ModuleBase = [IO.Path]::Combine($homeRoot, 'foreign-child')
+    if (-not (Test-OwnedImageInboxModuleOrigin $homeRoot 'Microsoft.PowerShell.Management' $captured)) { throw 'captured-admission' }
+    $observed = Get-OwnedImageManagementRelation $homeRoot $captured
+    if ($observed.base -cne 'selected-WinPS-host-directory') { throw 'captured-projection' }
+    foreach ($property in @('Name', 'ModuleType', 'Path', 'ModuleBase')) { if ($script:reads[$property] -ne 1) { throw 'capture-count' } }
     $stage = 'strict-origin'
     $good = Get-Command -Name 'Get-AuthenticodeSignature' -CommandType Cmdlet -ListImported -All
     if (-not (Test-OwnedImageSecurityOrigin $inbox $good)) { throw 'good-origin' }
@@ -128,7 +201,7 @@ try {
             if ($facts.stage -cne ($role.ToLowerInvariant() + $suffix) -or $facts.field -cne $field -or
                 $facts.availability -cne 'unavailable' -or $facts.origin -ceq 'inbox') { throw 'module-stage' }
             if ($role -ceq 'Management' -and $field -ceq 'base') {
-                if ($facts.relation.base -cne 'selected-WinPS-host-directory' -or $facts.relation.path -cne 'exact-selected-manifest') { throw 'refusal-relation' }
+                if ($facts.relation.base -cne 'other' -or $facts.relation.path -cne 'exact-selected-manifest') { throw 'refusal-relation' }
             } elseif ((Format-OwnedImageHostProfile $facts) -notmatch '^OWNED_IMAGE_PROFILE\t2\twinps-inbox-only\t(refused|unverified)\tunavailable\t[a-z-]+\t[a-z-]+$') { throw 'module-wire' }
         }
     }
