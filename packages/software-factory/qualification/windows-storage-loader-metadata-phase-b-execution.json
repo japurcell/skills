@@ -1,0 +1,150 @@
+{
+  "schema": 1,
+  "scope": "windows-storage-loader-phase-b-execution-control",
+  "purpose": "one-initial-fixed-metadata-only-observation",
+  "rootExecutionDecision": "released-phase-b-metadata-only",
+  "rootExecutionDecisionUtc": "2026-11-04T14:33:22.930885Z",
+  "approvedCodeCommit": "5f64bee49cd96be60fbb374db43ac2a82b38c778",
+  "integratedProofHead": "02ad6cf13464ace23013e34a14a99af59714a8c6",
+  "source10Commit": "222924947e2a9b4c24a1d7c3eddaa426b0d15403",
+  "sources": [
+    {
+      "path": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+      "gitBlob": "ad494671a78cd5763f86ff1927bd08bb7819c3b1",
+      "sha256": "6ff77a15af255fb8deb8f3dbe4f1f66c51821583d41990c52df98a20067e0025"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-node-bootstrap.ps1",
+      "gitBlob": "00b6715b452e9dbe7ddbacb4208135f384e2b7e6",
+      "sha256": "bb1d8f6de3bbe7398dc6ce9e82feaf041088566ee36b70ebca2f7fc5be8f6d0b"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+      "gitBlob": "211bec269b6c17ab9649285ae38db1a30f263f2b",
+      "sha256": "b10e76d2908c389488bbe6f174a9c24aaa0df87a9af409769647581694d369eb"
+    },
+    {
+      "path": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-checks.test.mjs",
+      "gitBlob": "522217e8cf6dd472bbf8c2f9c625e945550c54ae",
+      "sha256": "c0bf6dfb6db588368c81a8a548c5c0c1535328df2ffe5d6154271b10da41b45f"
+    }
+  ],
+  "sourceProof": {
+    "portablePassed": 20,
+    "portableFailed": 0,
+    "portableSkipped": 0,
+    "portableDurationMs": 964.147208,
+    "static": [
+      "Node2syntax",
+      "selected-pwsh-ParseFile-bootstrap1-and-ParseInput-workflow2-only",
+      "actionlint1"
+    ],
+    "knownSourceHashes": 18,
+    "runtimeInputs": 733,
+    "runtimeOutputs": 183,
+    "receiptSha256": "818f651a74e0a7fc42d07018a15d0f3973cd643ac708009c450ca6cf49f756f7"
+  },
+  "rootSelection": {
+    "path": "packages/software-factory/qualification/windows-storage-loader-metadata-controller-selection.json",
+    "bytes": 1540,
+    "sha256": "719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650",
+    "selectedBy": "root-independent-external-controller",
+    "candidateDerivationPermitted": false
+  },
+  "phaseAProvenance": {
+    "sourceCommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+    "runId": 41838587575,
+    "jobId": 126603881179,
+    "artifactId": 13325489670,
+    "bootstrapBytes": 433,
+    "bootstrapSha256": "2ce805ac701b0d02f9955b9aa39f43319027af8dfaf30a4c83c290a254d549f9",
+    "controlBytes": 344,
+    "controlSha256": "51c8d63921b786fc1ac43ac39baa1441d6cf61dc244878343bbe8cf6ec5b7d77"
+  },
+  "externalPrerequisiteProfile": {
+    "runner": "github-hosted-windows-2025",
+    "trustedOsAndWinPSInstallation": true,
+    "protectedSourceAndControllerNamespaces": true,
+    "establishedBySelfHashOrMarker": false,
+    "windowsRoot": "C:\\Windows",
+    "windowsVersionApi": "Environment.OSVersion.Version.ToString",
+    "windowsVersion": "10.0.26100.0",
+    "powershellVersion": "5.1.26100.33648",
+    "powershellBytes": 491520,
+    "powershellSha256": "41796f1f3d81f921fdb4030c865f9dcf5032a2a1b49dde148bbc99e8d10f6e8c",
+    "mismatchPolicy": "refuse-no-reselection"
+  },
+  "execution": {
+    "workflow": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "event": "push",
+    "mode": "metadata-only",
+    "fixedNoArgumentEntry": "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs",
+    "maxRuns": 1,
+    "manualDispatch": false,
+    "retry": false,
+    "jobMinutes": 10,
+    "maximumStepMinutes": 5
+  },
+  "node": {
+    "version": "24.22.1",
+    "platform": "win-x64",
+    "archiveUrl": "https://nodejs.org/download/release/v24.22.1/node-v24.22.1-win-x64.zip",
+    "archiveSha256": "d2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5",
+    "exeSha256": "d702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5",
+    "archiveByteLimit": 150000000,
+    "archiveDeadlineMs": 120000,
+    "executableByteLimit": 134217728,
+    "extractOnlyNodeExe": true,
+    "npmOrVersionHelpInvocation": false
+  },
+  "collector": {
+    "command": "fixed-selected-Node adjacent-windows-storage-loader-metadata.mjs --metadata-only",
+    "powershellHost": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "discoveredToolExecution": false,
+    "sdkInstallation": false,
+    "maximumFileFacts": 256,
+    "maximumObservedInputBytes": 536870912,
+    "consumedDependencyClosureProven": false
+  },
+  "transport": {
+    "eachCaptureDeadlineMs": 294000,
+    "maximumTeardownMs": 1000,
+    "stdoutByteLimit": 1048576,
+    "stderrByteLimit": 8192,
+    "requiresActualExitAndBothEof": true,
+    "stderrPolicy": "refuse",
+    "unknownClosurePolicy": "refuse-no-export",
+    "allDescendantContainmentProven": false
+  },
+  "artifacts": {
+    "names": [
+      "metadata.json",
+      "control.json"
+    ],
+    "metadataByteLimit": 1048576,
+    "controlByteLimit": 4096,
+    "retentionDays": 14,
+    "observedStateExit": 0,
+    "validatedBlockedStateExit": 1,
+    "validatedBlockedWireRetained": true,
+    "blockedStepAndJobRemainFailed": true,
+    "earlyOrMalformedRefusalExports": false,
+    "authorityFlagsAlwaysFalse": [
+      "selectionAuthority",
+      "buildAuthority",
+      "nativeAuthority"
+    ]
+  },
+  "authority": {
+    "toolSelection": false,
+    "sdkSelection": false,
+    "build": false,
+    "native": false,
+    "helperCanary": false,
+    "installedStorageSupport": false,
+    "providerOrDesktop": false
+  },
+  "nextGate": "root-independent-assessment-of-actual-metadata-before-any-tool-or-sdk-tuple-selection-or-build-only-source-release",
+  "automaticReselectionOrBuild": false
+}

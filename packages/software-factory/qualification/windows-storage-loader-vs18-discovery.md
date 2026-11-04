@@ -1,0 +1,9 @@
+# Visual Studio 18 metadata discovery compatibility
+
+The bounded metadata scan recognizes the literal release directory `18` in addition to the existing four-digit `20xx` release names. The closed wire validator accepts the same release names beneath the existing two fixed Program Files roots and four editions. This is a source compatibility change only: it does not select a toolset, authenticate files, or grant selection, build, or native authority.
+
+The version-specific [runner image manifest](https://github.com/actions/runner-images/blob/win25-vs2026/20261030.294/images/windows/Windows2025-VS2026-Readme.md) lists Visual Studio Enterprise under `Microsoft Visual Studio\18\Enterprise`; Microsoft documents the [Visual Studio 2026 typical installation path](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170). The manifest tag's underlying commit was not resolved. This documentation supports compatibility with that layout, but is not direct evidence of the actual job filesystem or the cause of the empty discovery result.
+
+In run 41848962676, job 126639797374, the validated metadata was blocked with `missing-tools` and an empty installation list. The seven sampled SDK inputs reported UnknownError/None and status-not-valid. Those samples do not authenticate Microsoft origin or a consumed input closure; SDK provenance remains unproven. The observation covers only the bounded scan, not global installation absence. No actual Windows collector, SDK, tool, or native operation was run for this source change.
+
+The changed source requires a separately selected and frozen controller source commit, source hashes, selection digest, and fixed wrappers before a separately authorized Windows metadata observation. Previous selections do not authorize these bytes. Local synthetic signatures are parser fixtures only, not authenticity evidence.

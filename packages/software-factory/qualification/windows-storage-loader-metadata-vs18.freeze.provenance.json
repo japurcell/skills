@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "scope": "root-frozen-vs18-metadata-controller-provenance",
+  "decision": "source-selection-only-not-remote-execution",
+  "recordedUtc": "2026-11-04T15:14:59.914037Z",
+  "selectedSourceCommit": "4b311737aa7484619dc304b3db84cfb463792c48",
+  "selectionPath": "packages/software-factory/qualification/windows-storage-loader-metadata-controller-selection.json",
+  "selectionBytes": 1540,
+  "selectionSha256": "d4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359",
+  "sourceRoles": 10,
+  "changedSourceRoles": [
+    "qualification/windows-storage-loader-metadata.mjs",
+    "qualification/windows-storage-loader-metadata.ps1"
+  ],
+  "unchangedRolesVerifiedAgainstCommit": "222924947e2a9b4c24a1d7c3eddaa426b0d15403",
+  "historicalSelectionSha256": "719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650",
+  "historicalSelectionPath": "packages/software-factory/qualification/windows-storage-loader-metadata-controller-selection-2229249.json",
+  "historicalObservation": {
+    "sourceCommit": "8f424db02949c02e1609a6f154ba2e72fc4cdf6f",
+    "runId": 41848962676,
+    "jobId": 126639797374,
+    "artifactId": 13333995433,
+    "metadataSha256": "ef366650e1b0f2fd73ea771f4356ae3341c426dd51c8af5d858de2aeb4b9ec27",
+    "controlSha256": "96da88269b62cca37972abfe66e92ce976f5dc70f003a91210f564c7ed9e18a9"
+  },
+  "historicalPhaseACommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+  "externalProfile": {
+    "runner": "github-hosted-windows-2025",
+    "trustedOsWinPSAndProtectedNamespaces": true,
+    "establishedBySelfHashOrJobOutput": false,
+    "nodeSha256": "d702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5",
+    "powershellSha256": "41796f1f3d81f921fdb4030c865f9dcf5032a2a1b49dde148bbc99e8d10f6e8c",
+    "windowsRoot": "C:\\Windows",
+    "windowsVersion": "10.0.26100.0"
+  },
+  "authority": {
+    "actualRemoteExecution": false,
+    "sdkTrust": false,
+    "toolSelection": false,
+    "build": false,
+    "native": false,
+    "installedStorageSupport": false
+  }
+}
