@@ -11,12 +11,20 @@ $diagnosticModule = $null
 $compilerDiagnostic = @{ code = 'none'; source = 'none'; line = 0 }
 $diagnosticHelpersLoaded = $false
 try {
-    . (Join-Path $PSScriptRoot 'windows-owned-image-diagnostics.ps1')
-    $diagnosticHelpersLoaded = $true
     if ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64BitProcess -or $PSVersionTable.PSVersion.Major -ne 5) { throw 'host' }
-    $diagnosticCategory = 'path'
     $evidenceRoot = [IO.Path]::GetFullPath($Evidence)
     $sourceRoot = $PSScriptRoot
+    # No module-dependent command runs before this candidate boundary.
+    $env:PSModulePath = [IO.Path]::Combine($PSHOME, 'Modules')
+    $script:PSModuleAutoLoadingPreference = 'None'
+    . ([IO.Path]::Combine($PSScriptRoot, 'windows-owned-image-diagnostics.ps1'))
+    $diagnosticHelpersLoaded = $true
+    . ([IO.Path]::Combine($PSScriptRoot, 'windows-owned-image-host-profile.ps1'))
+    $profileFacts = Initialize-OwnedImageInboxProfile $PSHOME $env:FACTORY_OWNED_IMAGE_INBOX $env:FACTORY_OWNED_IMAGE_PROFILE
+    $profileWire = Format-OwnedImageHostProfile $profileFacts
+    [IO.File]::WriteAllText([IO.Path]::Combine($evidenceRoot, 'host-profile.private.tsv'), $profileWire + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+    if ($profileFacts.origin -cne 'inbox' -or $profileFacts.availability -cne 'available') { throw 'host-profile' }
+    $diagnosticCategory = 'path'
     foreach ($value in @($evidenceRoot, $sourceRoot)) {
         if ($value -match '[&|<>\r\n"%!]' -or $value -match '[^\x20-\x7e]') { throw 'path' }
     }
