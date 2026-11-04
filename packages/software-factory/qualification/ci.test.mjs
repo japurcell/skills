@@ -48,3 +48,11 @@ test('foundation validates the selected interpreter before dependency installati
     assert.deepEqual(readdirSync(directory).sort(), ['foundation.json', 'python.log']);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
+
+test('foundation explicitly selects native atomic qualification on declared Darwin and Linux targets', () => {
+  const foundation = readFileSync(new URL('../scripts/qualification-foundation.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  assert.match(foundation, /process\.platform === 'darwin' && process\.arch === 'arm64'[\s\S]*atomic-publication-native-darwin-arm64/);
+  assert.match(foundation, /process\.platform === 'linux' && process\.arch === 'x64'[\s\S]*atomic-publication-native-linux-x64/);
+  assert.match(workflow, /FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}/);
+});

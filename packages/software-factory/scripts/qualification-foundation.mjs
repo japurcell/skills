@@ -73,6 +73,9 @@ try {
   if (process.platform === 'darwin' && process.arch === 'arm64') {
     run('atomic-publication-native-darwin-arm64', ['scripts/test.mjs', 'qualification', '--area', 'atomic-publication']);
   }
+  if (process.platform === 'linux' && process.arch === 'x64') {
+    run('atomic-publication-native-linux-x64', ['scripts/test.mjs', 'qualification', '--area', 'atomic-publication']);
+  }
   run('store', ['scripts/test.mjs', 'store']);
   const placementPassed = run('placement', ['--test', 'test/placement.test.mjs']);
   if (process.platform === 'darwin' && !placementPassed) {
