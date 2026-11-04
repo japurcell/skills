@@ -95,8 +95,11 @@ try {
       if (diagnostic.native?.exit === 'present' && diagnostic.native.status === 1) {
         const observation = parseNativeDiagnostic(result, name);
         diagnostic.refusal = observation?.refusal ?? null;
-        if (diagnostic.refusal?.cleanup === false || diagnostic.refusal === null)
+        if (diagnostic.refusal?.cleanup === false || diagnostic.refusal === null) {
           diagnostic.cleanupEvidence = observation?.cleanup ?? null;
+          if (diagnostic.cleanupEvidence === null || diagnostic.cleanupEvidence.countQuery && !diagnostic.cleanupEvidence.countNonincrease)
+            diagnostic.handlePhases = observation?.handlePhases ?? null;
+        }
       }
     }
     writeFileSync(join(evidence, `${name}.private.tsv`), result.stdout, { flag: 'wx' });

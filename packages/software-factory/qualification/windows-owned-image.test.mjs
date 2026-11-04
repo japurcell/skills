@@ -822,3 +822,162 @@ test('cleanup close categories require the source owner and retired-handle check
     assert.equal(diagnosticApi.parseNativeDiagnostic(result, 'positive'), null);
   }
 });
+
+const handlePhaseFacts = (patch = {}) => ({ entryOutput: 'equal', controlReady: 'above', pinHashEnter: 'above', pinHashLeave: 'above',
+  debugCreateEnter: 'above', debugCreateLeave: 'above', firstEvent: 'above', imageHashEnter: 'above', imageHashLeave: 'above',
+  continued: 'above', detached: 'above', probeReturn: 'above', childStopped: 'above', controlStopped: 'above', childReleased: 'above',
+  final: 'above', pinHash: 'equal', imageHash: 'equal', targetScope: 'above', profileRest: 'above', ...patch });
+const handlePhaseWire = (facts = handlePhaseFacts(), name = 'positive') => {
+  const tokens = { below: 'b', equal: 'e', above: 'a', 'query-failed': 'f', 'not-reached': 'n', unavailable: 'u' };
+  return `OWNED_IMAGE_HANDLE_PHASES\t1\t${name}\t${Object.values(facts).map(value => tokens[value]).join('\t')}\n`;
+};
+
+test('owned count-increase child exposes only the accepted finite checkpoint and paired relations', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = refusalWire('positive', 'none', 'clear') + cleanupWire() + handlePhaseWire();
+  assert.ok(Buffer.byteLength(wire) <= 512);
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stdout.write("synthetic-private-count-values"); process.stderr.write(process.argv[1]); process.exitCode=1', wire], 4096, 2000);
+  assert.equal(result.exitCode, 1);
+  const observation = diagnosticApi.parseNativeDiagnostic(result, 'positive');
+  assert.deepEqual(observation?.handlePhases, handlePhaseFacts());
+  assert.deepEqual(observation?.cleanup, cleanupFacts());
+  const text = formatFailure({ phase: 'case', name: 'positive', category: 'native', native: diagnosticApi.nativeOutcome(result),
+    refusal: observation.refusal, cleanupEvidence: observation.cleanup, handlePhases: observation.handlePhases });
+  assert.ok(text.includes('entryOutput=equal controlReady=above'));
+  assert.ok(text.includes('final=above pinHash=equal imageHash=equal targetScope=above profileRest=above'));
+  assert.equal(text.includes('synthetic-private'), false);
+  assert.equal(validateNative(wire, 'positive').qualified, false);
+});
+
+test('handle-phase owner-loss evidence cannot omit the reached creation scope', () => {
+  const phases = handlePhaseFacts({ pinHashEnter: 'not-reached', pinHashLeave: 'not-reached', debugCreateEnter: 'not-reached',
+    debugCreateLeave: 'not-reached', firstEvent: 'not-reached', imageHashEnter: 'not-reached', imageHashLeave: 'not-reached',
+    continued: 'not-reached', detached: 'not-reached', probeReturn: 'not-reached', pinHash: 'unavailable', imageHash: 'unavailable' });
+  const wire = refusalWire('owner-interruption', 'owner-interruption', 'owner-interrupted') +
+    cleanupWire(cleanupFacts({ rejectedClear: true }), 'owner-interruption') + handlePhaseWire(phases, 'owner-interruption');
+  assert.equal(diagnosticApi.parseNativeDiagnostic(refusalResult(wire), 'owner-interruption'), null);
+});
+
+test('handle-phase pairs accept coherent less, equal, greater and failed-query observations', () => {
+  for (const patch of [{ pinHashEnter: 'equal', pinHashLeave: 'below', pinHash: 'below' },
+    { pinHashEnter: 'below', pinHashLeave: 'equal', pinHash: 'above' },
+    { imageHashEnter: 'equal', imageHashLeave: 'equal', imageHash: 'equal' },
+    { imageHashEnter: 'above', imageHashLeave: 'equal', imageHash: 'below' },
+    { controlReady: 'above', childReleased: 'equal', targetScope: 'below' },
+    { entryOutput: 'above', profileRest: 'below' }, { entryOutput: 'above', profileRest: 'equal' }]) {
+    const phases = handlePhaseFacts(patch);
+    const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire() + handlePhaseWire(phases));
+    assert.deepEqual(diagnosticApi.parseNativeDiagnostic(result, 'positive')?.handlePhases, phases, JSON.stringify(patch));
+  }
+  const pairEndpoints = { entryOutput: 'profileRest', controlReady: 'targetScope', pinHashEnter: 'pinHash', pinHashLeave: 'pinHash',
+    imageHashEnter: 'imageHash', imageHashLeave: 'imageHash', childReleased: 'targetScope' };
+  for (const key of Object.keys(handlePhaseFacts()).slice(0, 15)) {
+    const phases = handlePhaseFacts({ [key]: 'query-failed', ...(pairEndpoints[key] ? { [pairEndpoints[key]]: 'unavailable' } : {}) });
+    const result = refusalResult(refusalWire('positive', 'none', 'clear') + cleanupWire() + handlePhaseWire(phases));
+    assert.deepEqual(diagnosticApi.parseNativeDiagnostic(result, 'positive')?.handlePhases, phases, key);
+  }
+});
+
+test('handle-phase not-reached slots retain failed-hash and owner-interruption reach semantics', () => {
+  const suffix = { pinHashLeave: 'not-reached', debugCreateEnter: 'not-reached', debugCreateLeave: 'not-reached', firstEvent: 'not-reached',
+    imageHashEnter: 'not-reached', imageHashLeave: 'not-reached', continued: 'not-reached', detached: 'not-reached', probeReturn: 'not-reached',
+    pinHash: 'unavailable', imageHash: 'unavailable' };
+  const noChild = Object.fromEntries(Object.keys(stopFacts()).map(key => ['child' + key,
+    key === 'Process' ? false : key === 'Stop' ? true : 'not-reached']));
+  const failedHash = handlePhaseFacts(suffix);
+  const facts = cleanupFacts({ ...noChild, exitQuery: 'not-reached', exitInactive: 'not-reached', earlyClear: 'not-reached',
+    closeIdentity: 'not-reached', closeQuery: 'not-reached', debugClose: 'not-reached' });
+  const failed = refusalResult(refusalWire('positive', 'probe', 'query-check') + cleanupWire(facts) + handlePhaseWire(failedHash));
+  assert.deepEqual(diagnosticApi.parseNativeDiagnostic(failed, 'positive')?.handlePhases, failedHash);
+  const owner = handlePhaseFacts({ ...suffix, pinHashLeave: 'above', debugCreateEnter: 'above', debugCreateLeave: 'above', pinHash: 'equal' });
+  const ownerResult = refusalResult(refusalWire('owner-interruption', 'owner-interruption', 'owner-interrupted') +
+    cleanupWire(cleanupFacts({ rejectedClear: true }), 'owner-interruption') + handlePhaseWire(owner, 'owner-interruption'));
+  assert.deepEqual(diagnosticApi.parseNativeDiagnostic(ownerResult, 'owner-interruption')?.handlePhases, owner);
+});
+
+test('handle-phase projection rejects impossible inequalities, unknown fields and accessor-backed contexts', () => {
+  const native = { exit: 'present', status: 1, stderr: 'nonempty' };
+  const context = { phase: 'case', name: 'positive', category: 'native', native,
+    refusal: { phase: 'none', reason: 'clear', cleanup: false, survival: true, flush: true, close: true },
+    cleanupEvidence: cleanupFacts(), handlePhases: handlePhaseFacts() };
+  const unexpected = formatFailure({ phase: 'unexpected' });
+  for (const patch of [{ final: 'equal' }, { controlReady: 'not-reached', targetScope: 'unavailable' },
+    { pinHashLeave: 'not-reached', pinHash: 'unavailable' }, { pinHashEnter: 'equal', pinHashLeave: 'equal', pinHash: 'above' },
+    { pinHashEnter: 'below', pinHashLeave: 'above', pinHash: 'below' },
+    { imageHashEnter: 'above', imageHashLeave: 'below', imageHash: 'above' },
+    { controlReady: 'below', childReleased: 'above', targetScope: 'below' }, { profileRest: 'below' },
+    { imageHash: 'unavailable' }, { pinHashEnter: 'query-failed' }, { entryOutput: ['equal'] },
+    { entryOutput: 'C:\\private' }, { entryOutput: 1 }, { extra: 'private' }])
+    assert.equal(formatFailure({ ...context, handlePhases: handlePhaseFacts(patch) }), unexpected, JSON.stringify(patch));
+  for (const patch of [{ phase: 'build' }, { category: 'receipt' }, { native: { ...native, status: 2 } },
+    { cleanupEvidence: null }, { refusal: null }, { native: { ...native, stderr: 'empty' } },
+    { cleanupEvidence: cleanupFacts({ countQuery: false, countNonincrease: 'not-reached', closed: false, leakedZero: 'not-reached' }) },
+    { cleanupEvidence: cleanupFacts({ countNonincrease: true, ownedZero: false }) }])
+    assert.equal(formatFailure({ ...context, ...patch }), unexpected);
+  let reads = 0;
+  const phases = { ...handlePhaseFacts(), get entryOutput() { reads++; return 'equal'; } };
+  assert.equal(formatFailure({ ...context, handlePhases: phases }), unexpected);
+  const top = { ...context, get handlePhases() { reads++; return handlePhaseFacts(); } };
+  assert.equal(formatFailure(top), unexpected);
+  assert.equal(reads, 0);
+  for (const handlePhases of [Object.create(handlePhaseFacts()), { ...handlePhaseFacts(), [Symbol('private')]: 'private' }])
+    assert.equal(formatFailure({ ...context, handlePhases }), unexpected);
+  const inherited = Object.assign(Object.create({ handlePhases: handlePhaseFacts() }), context);
+  delete inherited.handlePhases;
+  assert.equal(formatFailure(inherited), unexpected);
+  assert.ok(formatFailure({ ...context, handlePhases: null }).endsWith(' handlePhases=unknown\n'));
+});
+
+test('handle-phase framing is atomic, bounded and cannot reinterpret an older or malformed observation', () => {
+  const core = refusalWire('positive', 'none', 'clear') + cleanupWire();
+  const row = handlePhaseWire();
+  assert.equal(diagnosticApi.parseNativeDiagnostic(refusalResult(core), 'positive').handlePhases, null);
+  const changedRows = [row.replace('HANDLE_PHASES\t1', 'HANDLE_PHASES\t2'), row.replace('\tpositive\t', '\tpositive-repeat\t'),
+    row.replace('\te\t', '\t17\t'), row.replace('\te\t', '\tC:\\private\t'), row.replace('\te\t', '\tu\t'),
+    row.replace('\te\t', '\t\t'), row.trimEnd(), row + '\n', row + row, row + 'private\n', row + 'x'.repeat(513)];
+  for (const bad of changedRows) {
+    assert.notEqual(bad, row);
+    const result = refusalResult(core + bad);
+    assert.equal(diagnosticApi.parseNativeDiagnostic(result, 'positive'), null);
+    assert.equal(diagnosticApi.parseNativeRefusal(result, 'positive'), null);
+    assert.equal(diagnosticApi.parseNativeCleanup(result, 'positive'), null);
+  }
+  for (const text of [row + core, core + cleanupWire() + row, core + row + cleanupWire(), 'x'.repeat(513)])
+    assert.equal(diagnosticApi.parseNativeDiagnostic(refusalResult(text), 'positive'), null);
+  assert.deepEqual(diagnosticApi.parseNativeDiagnostic(refusalResult((core + row).replaceAll('\n', '\r\n')), 'positive')?.handlePhases, handlePhaseFacts());
+});
+
+test('owned phase-wire transport and artifact guard preserve the actual failed exit, cap and deadline', async () => {
+  const { runOwnedImageTransport } = await import('./windows-owned-image-transport.mjs');
+  const wire = refusalWire('positive', 'none', 'clear') + cleanupWire() + handlePhaseWire();
+  const result = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); process.stdout.write(process.argv[2]); process.exitCode=1', wire, positive()], 4096, 2000);
+  assert.ok(diagnosticApi.parseNativeDiagnostic(result, 'positive')?.handlePhases);
+  assert.equal(validateNative(result.stdout, 'positive').qualified, true);
+  const root = evidence();
+  try {
+    const file = join(root, 'driver.private.json');
+    const driver = JSON.parse(readFileSync(file, 'utf8'));
+    driver.cases[0] = { ...driver.cases[0], exitCode: result.exitCode, handlePhases: handlePhaseFacts() };
+    writeFileSync(file, JSON.stringify(driver));
+    writeFileSync(join(root, 'positive.private.tsv'), result.stdout);
+    writeFileSync(join(root, 'positive.stderr.private.txt'), result.stderr);
+    assert.throws(() => prepareUpload(root), { message: 'receipt' });
+    assert.equal(readdirSync(root).includes('upload'), false);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+  for (const status of [0, 2]) {
+    const other = await runOwnedImageTransport(process.execPath,
+      ['-e', 'process.stderr.write(process.argv[1]); process.exitCode=Number(process.argv[2])', wire, String(status)], 4096, 2000);
+    assert.equal(other.exitCode, status);
+    assert.equal(diagnosticApi.parseNativeDiagnostic(other, 'positive'), null);
+  }
+  const capped = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); process.stdout.write(Buffer.alloc(8192,65)); setInterval(()=>{},1000)', wire], 512, 2000);
+  assert.equal(capped.capped, true);
+  assert.equal(diagnosticApi.parseNativeDiagnostic(capped, 'positive'), null);
+  const timed = await runOwnedImageTransport(process.execPath,
+    ['-e', 'process.stderr.write(process.argv[1]); setInterval(()=>{},1000)', wire], 4096, 700);
+  assert.equal(timed.timedOut, true);
+  assert.equal(diagnosticApi.parseNativeDiagnostic(timed, 'positive'), null);
+});
