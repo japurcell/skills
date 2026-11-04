@@ -33,7 +33,9 @@ const controller = new AbortController();
 process.on('message', (message) => { if (message === 'abort') { telemetry()?.mark('cancel'); controller.abort(); } });
 process.on('disconnect', () => { telemetry()?.mark('cancel'); controller.abort(); });
 try {
-  process.exitCode = await runFiles(JSON.parse(process.argv[2]), controller.signal);
+  const config = JSON.parse(process.argv[2]);
+  telemetry(config.timingWorkerId);
+  process.exitCode = await runFiles(config, controller.signal);
 } catch (error) {
   process.stderr.write(`factory tests: ${error.message}\n`);
   process.exitCode = 1;

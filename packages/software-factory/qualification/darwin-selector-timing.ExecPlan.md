@@ -1,5 +1,7 @@
 # Darwin selector timing qualification
 
+Current closure-only follow-up: [receipt repair and controlled proof](selector-timing-closure.ExecPlan.md). The retained schema1 native experiment stays incomplete; schema2 requires fresh bound parent observations when a process cannot emit its self receipt.
+
 ## Purpose / Big Picture
 
 Collect bounded, sanitized test-only timing evidence for the unchanged public fixtures command. This does not repair or qualify either deadline. The retained Darwin run41761716711 failed the complete notification15s and learning30s selectors; the isolated3833ms replay was one learning case only. Production changes, workflow changes, native execution and source acceptance belong to the integration coordinator.
@@ -63,7 +65,7 @@ Provider qualification remains blocked; general reviews deferred; desktop notifi
 
 ## Fixed schema and interpretation
 
-Every JSONL record has exactly schema,workerId,sequence,monoMs,epochMs,stage,phase,fileId,caseId,spanId,invocationId,attemptId,operationClass,at,wallMs,cpuUserUs,cpuSystemUs,disposition,exitCode. IDs are fresh opaque UUIDs; fileId is a fixed registered basename and caseId is a1based index into selector-timing-registry.json. Unknown names/paths are omitted. Stages and dispositions are enumerated in selector-timing.mjs. Span begin/end pairs share spanId. Result spans link to the same opaque invocationId as persisted attempt records. No raw errors, argv, captures, environment, database IDs, raw paths or PIDs are exported.
+Schema2 JSONL records have exactly schema,workerId,subjectWorkerId,sequence,monoMs,epochMs,stage,phase,fileId,caseId,spanId,invocationId,attemptId,operationClass,at,wallMs,cpuUserUs,cpuSystemUs,disposition,exitCode. subjectWorkerId is populated only for a fresh worker-bind and its matching worker-close-observed. The latter requires actual owned child spawn, exit and close; a cancellation, summary or signal intent never suffices. Child self receipts remain worker-close. IDs are fresh opaque UUIDs; fileId is a fixed registered basename and caseId is a1based index into selector-timing-registry.json. Unknown names/paths are omitted. Stages and dispositions are enumerated in selector-timing.mjs. Span begin/end pairs share spanId. Result spans link to the same opaque invocationId as persisted attempt records. No raw errors, argv, captures, environment, database IDs, raw paths or PIDs are exported. Metadata uses schema2; historical schema1 exports are unchanged.
 
 monoMs is host monotonic time; epochMs is the emission wall-clock anchor. Persisted attempt at is the original UTC event time, not its later export emission time. Started-to-settled duration is managed-attempt wall time, not compiler CPU. cpuUserUs/cpuSystemUs are the emitting process's own CPU only; spawned Git/compiler/agent CPU is not measured. Spans nest, so their durations and worker sums must not be added into selector wall time. worker-open means collector initialization, not an OS process-birth receipt. Ordered dequeue/complete and direct tracing-channel case begin/end establish actual execution boundaries; buffered TAP reporting does not.
 

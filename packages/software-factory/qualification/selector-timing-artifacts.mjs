@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { closeSync, constants, fstatSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { hasSelectorCoverage, limits, validateRecord } from './selector-timing.mjs';
+import { hasSelectorCoverage, limits, validateRecord, validateWorkerClosure } from './selector-timing.mjs';
 
 const names = ['selector-timing.json', 'selector-timing.jsonl'];
 const metadataKeys = ['schema','status','sourceSha','runtimeSha256','node','platform','arch','availableParallelism','runtimeOsRelease','runnerImage','runnerImageVersion','fixtureExitCode','clock','attemptClock','cpu','records'];
@@ -20,7 +20,7 @@ function readBounded(root, name, limit) {
 function validateMetadata(value, context) {
   if (!value || typeof value !== 'object' || Object.keys(value).sort().join() !== [...metadataKeys].sort().join()) refuse();
   if (!context || !/^[a-f0-9]{40}$/.test(context.sourceSha) || !/^[a-f0-9]{64}$/.test(context.runtimeSha256)) refuse();
-  if (value.schema !== 1 || !['complete','incomplete'].includes(value.status) || value.sourceSha !== context.sourceSha || value.runtimeSha256 !== context.runtimeSha256 || value.node !== 'v24.22.1' || value.platform !== 'darwin' || value.arch !== 'arm64') refuse();
+  if (value.schema !== 2 || !['complete','incomplete'].includes(value.status) || value.sourceSha !== context.sourceSha || value.runtimeSha256 !== context.runtimeSha256 || value.node !== 'v24.22.1' || value.platform !== 'darwin' || value.arch !== 'arm64') refuse();
   if (!Number.isSafeInteger(value.availableParallelism) || value.availableParallelism < 1 || value.availableParallelism > 1024 || !Number.isSafeInteger(value.records) || value.records < 0 || value.records > limits.records * limits.files) refuse();
   for (const key of ['runtimeOsRelease','runnerImage','runnerImageVersion']) if (typeof value[key] !== 'string' || !/^[a-zA-Z0-9._-]{1,64}$/.test(value[key])) refuse();
   if (!Number.isInteger(value.fixtureExitCode) || value.fixtureExitCode < 0 || value.fixtureExitCode > 255 || value.clock !== 'host-monotonic-ms' || value.attemptClock !== 'persisted-utc-wall' || value.cpu !== 'emitting-process-only') refuse();
@@ -36,8 +36,8 @@ function validateTimeline(records, status) {
     if (record.phase === 'end' && !worker.spans.delete(record.spanId)) refuse();
     worker.last = record.stage;
   }
-  if (status === 'complete' && (!hasSelectorCoverage(records) || records.some(record => record.disposition === 'incomplete') ||
-      [...workers.values()].some(worker => worker.first !== 'worker-open' || worker.last !== 'worker-close' || worker.spans.size))) refuse();
+  const closed = validateWorkerClosure(records);
+  if (status === 'complete' && (!hasSelectorCoverage(records) || !closed || records.some(record => record.disposition === 'incomplete'))) refuse();
 }
 export function stageSelectorTimingExports(source, destination, context) {
   const root = resolve(source), output = resolve(destination);

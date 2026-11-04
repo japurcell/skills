@@ -8,11 +8,11 @@ import registry from './selector-timing-registry.json' with { type: 'json' };
 
 export const limits = Object.freeze({ records: 4096, processBytes: 2097152, files: 128, totalBytes: 16777216, databaseRows: 4096 });
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
-const stages = new Set(['worker-open', 'worker-close', 'case', 'repository', 'setup', 'commit', 'copy', 'source', 'learn', 'notice', 'interrupt', 'result', 'dispose', 'attempt', 'export', 'dequeue', 'complete', 'summary', 'cancel', 'selector']);
+const stages = new Set(['worker-open', 'worker-close', 'worker-bind', 'worker-close-observed', 'case', 'repository', 'setup', 'commit', 'copy', 'source', 'learn', 'notice', 'interrupt', 'result', 'dispose', 'attempt', 'export', 'dequeue', 'complete', 'summary', 'cancel', 'selector']);
 const classes = new Set(['none', 'startup/git', 'startup/build', 'fixture-command', 'fake-agent']);
 const phases = new Set(['mark', 'begin', 'end', 'attempt.started', 'attempt.settled']);
-const dispositions = new Set(['none', 'ok', 'failed', 'incomplete', 'SIGINT', 'SIGTERM', 'other-signal']);
-const keys = ['schema','workerId','sequence','monoMs','epochMs','stage','phase','fileId','caseId','spanId','invocationId','attemptId','operationClass','at','wallMs','cpuUserUs','cpuSystemUs','disposition','exitCode'];
+const dispositions = new Set(['none', 'ok', 'failed', 'incomplete', 'SIGINT', 'SIGTERM', 'SIGKILL', 'other-signal']);
+const keys = ['schema','workerId','subjectWorkerId','sequence','monoMs','epochMs','stage','phase','fileId','caseId','spanId','invocationId','attemptId','operationClass','at','wallMs','cpuUserUs','cpuSystemUs','disposition','exitCode'];
 const now = () => Number(process.hrtime.bigint()) / 1e6;
 const fail = () => { throw new Error('invalid qualification timing evidence'); };
 
@@ -25,7 +25,14 @@ export function labels(file, name) {
 function currentLabels() { const context = getTestContext(); return labels(context?.filePath, context?.name); }
 export function validateRecord(record) {
   if (!record || typeof record !== 'object' || Object.keys(record).sort().join() !== [...keys].sort().join()) fail();
-  if (record.schema !== 1 || !uuid.test(record.workerId) || !Number.isSafeInteger(record.sequence) || record.sequence < 1 || !stages.has(record.stage) || !phases.has(record.phase) || !classes.has(record.operationClass) || !dispositions.has(record.disposition)) fail();
+  if (record.schema !== 2 || !uuid.test(record.workerId) || !Number.isSafeInteger(record.sequence) || record.sequence < 1 || !stages.has(record.stage) || !phases.has(record.phase) || !classes.has(record.operationClass) || !dispositions.has(record.disposition)) fail();
+  const observation = record.stage === 'worker-bind' || record.stage === 'worker-close-observed';
+  if (observation ? (!uuid.test(record.subjectWorkerId) || record.subjectWorkerId === record.workerId || record.phase !== 'mark') : record.subjectWorkerId !== '') fail();
+  if (record.stage === 'worker-bind' && (record.exitCode !== null || record.disposition !== 'none')) fail();
+  if (record.stage === 'worker-close-observed') {
+    const signaled = ['SIGINT','SIGTERM','SIGKILL','other-signal'].includes(record.disposition);
+    if (record.exitCode === null ? !signaled : (record.exitCode < 0 || record.disposition !== (record.exitCode === 0 ? 'ok' : 'failed'))) fail();
+  }
   for (const key of ['monoMs','epochMs','wallMs','cpuUserUs','cpuSystemUs']) if (!Number.isFinite(record[key]) || record[key] < 0) fail();
   for (const key of ['spanId','invocationId','attemptId']) if (record[key] !== '' && !uuid.test(record[key])) fail();
   if (record.fileId !== '' && !Object.hasOwn(registry, record.fileId)) fail();
@@ -50,9 +57,9 @@ function owned(root) {
   const data = JSON.parse(readFileSync(join(root.path, 'owner.json'), 'utf8'));
   if (Object.keys(data).sort().join() !== 'schema,token' || data.schema !== 1 || data.token !== root.token) fail();
 }
-export function createCollector(root) {
+export function createCollector(root, workerId = randomUUID()) {
   owned(root);
-  const workerId = randomUUID();
+  if (!uuid.test(workerId)) fail();
   let fd;
   for (let slot = 0; slot < limits.files; slot++) {
     try { fd = openSync(join(root.path, `${String(slot).padStart(3, '0')}.jsonl`), constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600); break; }
@@ -68,7 +75,7 @@ export function createCollector(root) {
   const emit = (stage, data = {}) => {
     if (!stages.has(stage) || Object.keys(data).some(key => !keys.includes(key) || ['schema','workerId','sequence','monoMs','stage'].includes(key))) fail();
     if (closed || incomplete) return;
-    const record = validateRecord({ schema: 1, workerId, sequence: ++sequence, monoMs: now(), epochMs: Date.now(), stage, phase: 'mark', ...currentLabels(), spanId: '', invocationId: '', attemptId: '', operationClass: 'none', at: '', wallMs: 0, cpuUserUs: 0, cpuSystemUs: 0, disposition: 'none', exitCode: null, ...data });
+    const record = validateRecord({ schema: 2, workerId, subjectWorkerId: '', sequence: ++sequence, monoMs: now(), epochMs: Date.now(), stage, phase: 'mark', ...currentLabels(), spanId: '', invocationId: '', attemptId: '', operationClass: 'none', at: '', wallMs: 0, cpuUserUs: 0, cpuSystemUs: 0, disposition: 'none', exitCode: null, ...data });
     const line = JSON.stringify(record) + '\n';
     if (sequence >= limits.records || bytes + Buffer.byteLength(line) > limits.processBytes - 1024) {
       incomplete = true;
@@ -123,10 +130,71 @@ export function collectEvidence(root) {
     }
     if (workers.has(workerId)) fail();
     workers.add(workerId);
-    if (spans.size > 0 || firstStage !== 'worker-open' || records.at(-1)?.stage !== 'worker-close') incomplete = true;
+    if (spans.size > 0 || firstStage !== 'worker-open') incomplete = true;
   }
   records.sort((a, b) => a.monoMs - b.monoMs || a.workerId.localeCompare(b.workerId) || a.sequence - b.sequence);
+  if (!validateWorkerClosure(records)) incomplete = true;
   return { status: incomplete ? 'incomplete' : 'complete', records };
+}
+
+// Parent receipts are valid only for one fresh spawn, with its real exit followed
+// by close. They prove this child process closed, not that a descendant tree did.
+export function ownedWorkerTiming() {
+  const collector = telemetry();
+  if (!collector) return undefined;
+  const workerId = randomUUID();
+  collector.mark('worker-bind', { subjectWorkerId: workerId });
+  return {
+    workerId,
+    observe(child) {
+      let spawned = false, exited;
+      child.once('spawn', () => { spawned = true; });
+      child.once('exit', (code, signal) => { exited = { code, signal }; });
+      child.once('close', (code, signal) => {
+        const outcomeValid = code === null ? typeof signal === 'string' && signal.length > 0 : Number.isInteger(code) && code >= 0 && code <= 255 && signal === null;
+        if (!spawned || !exited || exited.code !== code || exited.signal !== signal || !outcomeValid) {
+          collector.mark('export', { disposition: 'incomplete' }); return;
+        }
+        const disposition = signal === 'SIGINT' || signal === 'SIGTERM' || signal === 'SIGKILL' ? signal : signal ? 'other-signal' : code === 0 ? 'ok' : 'failed';
+        collector.mark('worker-close-observed', { subjectWorkerId: workerId, exitCode: code, disposition });
+      });
+    },
+  };
+}
+
+export function validateWorkerClosure(records) {
+  const workers = new Map(), bindings = new Map();
+  for (const record of records) {
+    const prior = workers.get(record.workerId);
+    if (!prior && record.sequence !== 1) fail();
+    if (prior && (record.sequence !== prior.last.sequence + 1 || record.monoMs < prior.last.monoMs)) fail();
+    const worker = prior ?? { first: record, last: record, spans: new Set() };
+    worker.last = record;
+    if (record.phase === 'begin') worker.spans.add(record.spanId);
+    if (record.phase === 'end') worker.spans.delete(record.spanId);
+    workers.set(record.workerId, worker);
+    if (record.stage === 'worker-bind') {
+      if (bindings.has(record.subjectWorkerId)) fail();
+      bindings.set(record.subjectWorkerId, { bind: record });
+    }
+    if (record.stage === 'worker-close-observed') {
+      const binding = bindings.get(record.subjectWorkerId);
+      if (!binding || binding.close || binding.bind.workerId !== record.workerId || binding.bind.sequence >= record.sequence) fail();
+      binding.close = record;
+    }
+  }
+  for (const [subject, binding] of bindings) {
+    const worker = workers.get(subject);
+    if (binding.close && (!worker || binding.bind.monoMs > worker.first.monoMs || binding.close.monoMs < worker.last.monoMs)) fail();
+    const ancestors = new Set([subject]);
+    let parent = binding.bind.workerId;
+    while (bindings.has(parent)) {
+      if (ancestors.has(parent)) fail();
+      ancestors.add(parent); parent = bindings.get(parent).bind.workerId;
+    }
+  }
+  return workers.size > 0 && [...bindings.values()].every(binding => binding.close) && [...workers].every(([id, worker]) => worker.first.stage === 'worker-open' && !worker.spans.size &&
+    (worker.last.stage === 'worker-close' || bindings.get(id)?.close !== undefined));
 }
 let singleton;
 const fixturePaths = new Map();
@@ -138,10 +206,10 @@ export function fixtureIdentity(path) {
   if (!identity) fail();
   return identity;
 }
-export function telemetry() {
+export function telemetry(workerId) {
   if (!process.env.FACTORY_SELECTOR_TIMING_ROOT) return undefined;
   if (!singleton) {
-    singleton = createCollector({ path: process.env.FACTORY_SELECTOR_TIMING_ROOT, token: process.env.FACTORY_SELECTOR_TIMING_TOKEN });
+    singleton = createCollector({ path: process.env.FACTORY_SELECTOR_TIMING_ROOT, token: process.env.FACTORY_SELECTOR_TIMING_TOKEN }, workerId);
     singleton.mark('worker-open', labels(process.argv[1]));
     process.once('exit', () => singleton.close());
   }
