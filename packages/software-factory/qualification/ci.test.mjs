@@ -56,3 +56,11 @@ test('foundation explicitly selects native atomic qualification on declared Darw
   assert.match(foundation, /process\.platform === 'linux' && process\.arch === 'x64'[\s\S]*atomic-publication-native-linux-x64/);
   assert.match(workflow, /FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}/);
 });
+
+test('Linux public install and upgrade qualification is registered and invoked only on its declared native target', () => {
+  const selector = readFileSync(new URL('../scripts/test.mjs', import.meta.url), 'utf8');
+  const workflow = readFileSync(new URL('../../../.github/workflows/software-factory-qualification.yml', import.meta.url), 'utf8');
+  assert.match(selector, /upgrade-publication-linux-native\.qualification\.mjs'[\s\S]*area: 'upgrade-publication-linux'/);
+  assert.match(workflow, /- name: Run Linux public install and upgrade qualification[\s\S]*?if: matrix\.target == 'linux-x64'[\s\S]*?timeout-minutes: 15[\s\S]*?FACTORY_TEST_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_ATOMIC_PYTHON:\s*\$\{\{\s*steps\.python\.outputs\.python-path\s*\}\}[\s\S]*?FACTORY_TEST_NPM_CACHE_SEED:\s*\$\{\{\s*runner\.temp\s*\}\}/);
+  assert.match(workflow, /run: node packages\/software-factory\/scripts\/test\.mjs qualification --area upgrade-publication-linux/);
+});

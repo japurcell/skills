@@ -22,7 +22,7 @@ jobs:
   native-foundation:
     name: Foundation ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -62,6 +62,14 @@ jobs:
           NPM_CONFIG_CACHE: ${{ runner.temp }}/factory-qualification-npm-cache
           FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/factory-qualification-npm-cache
         run: node packages/software-factory/scripts/qualification-foundation.mjs
+      - name: Run Linux public install and upgrade qualification
+        if: matrix.target == 'linux-x64'
+        timeout-minutes: 15
+        env:
+          FACTORY_TEST_PYTHON: ${{ steps.python.outputs.python-path }}
+          FACTORY_ATOMIC_PYTHON: ${{ steps.python.outputs.python-path }}
+          FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/factory-qualification-npm-cache
+        run: node packages/software-factory/scripts/test.mjs qualification --area upgrade-publication-linux
       - name: Upload native evidence including failures
         if: always()
         timeout-minutes: 3
