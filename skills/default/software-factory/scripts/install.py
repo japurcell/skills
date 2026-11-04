@@ -38,6 +38,7 @@ NODE = {
 WINDOWS_HELPER_SHA = "f46ba4a408f8618d5e186ce29cf47bdac3411b67356136d79da4a0ed0c35ec44"
 LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
+    "repair-state", "repair",
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "atomic-publication", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings", "installed-state", "dependency-state", "dependency-maintenance", "dependency-candidate", "dependency-candidate-entry", "install-preparation", "owned-toolchain",
     "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "upgrade-recovery-entry", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-backup", "maintenance-entry", "native/notification-transport", "native/notifications",
@@ -568,7 +569,7 @@ def extract_file(data, stage, name, size, executable):
             refuse("archive member exceeds declared size")
 
 
-def bounded_child(command, stage=None, timeout_seconds=30):
+def bounded_child(command, stage=None, timeout_seconds=30, maximum_output=2048):
     """Require direct exit, both pipe EOFs and original POSIX group absence."""
     deadline = time.monotonic() + timeout_seconds
     cleanup_window = min(2, max(0.1, timeout_seconds / 4))
@@ -632,7 +633,7 @@ def bounded_child(command, stage=None, timeout_seconds=30):
             expected_refusal = True
             refuse("validator descendant closure unsupported")
         closure_confirmed = True
-        if process.returncode or outputs[1] or len(outputs[0]) > 2048:
+        if process.returncode or outputs[1] or len(outputs[0]) > maximum_output:
             refuse("semantic selection validation refused")
         return bytes(outputs[0])
     except BaseException as error:
@@ -1249,6 +1250,35 @@ def resume_upgrade(prepared: PreparedSelection, repository: str, operation_id: s
     return result
 
 
+def inspect_repair(prepared: PreparedSelection, repository: str, operation_id: str | None):
+    """Inspect with authenticated external Node/runtime; never launch installed or damaged code."""
+    canonical(repository, True)
+    if operation_id is not None and str(uuid.UUID(operation_id)) != operation_id:
+        refuse("bounded source operation identity required")
+    request = {"repository": repository, "operationId": operation_id,
+               "target": {"bundleRoot": str(prepared.source_bundle_root),
+                          "manifestSha256": prepared.manifest_sha256,
+                          "nodeArchivePath": str(prepared.source_node_archive)}}
+    data = (json.dumps(request, separators=(",", ":"), sort_keys=True) + "\n").encode()
+    if len(data) > 8192:
+        refuse("repair inspection request exceeds bound")
+    with prepared.stage.create("repair-inspection.json") as output:
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+    entry = prepared.snapshot_bundle_root / "dist/repair.js"
+    node = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
+    program = "import {readFileSync} from 'node:fs';import {inspectRepairSelection} from " + json.dumps(entry.as_uri()) + ";const x=JSON.parse(readFileSync(process.argv[1],'utf8'));process.stdout.write(JSON.stringify(await inspectRepairSelection(x.repository,x.target,x.operationId??undefined)));"
+    prepared.revalidate_sources()
+    result = json_bytes(bounded_child([str(node), "--input-type=module", "-e", program,
+                                      str(prepared.stage.root / "repair-inspection.json")], prepared.stage,
+                                     timeout_seconds=120, maximum_output=8192))
+    prepared.revalidate_sources()
+    if not isinstance(result, dict) or result.get("version") != 1 or result.get("action") not in ("healthy", "repair", "resume-upgrade", "refused"):
+        refuse("invalid repair inspection response")
+    return result
+
+
 def main():
     if sys.version_info < (3, 11):
         refuse("Python 3.11 or newer required")
@@ -1296,10 +1326,16 @@ def main():
             command.add_argument("--operation", required=True)
             command.add_argument("--operator-confirmed", action="store_true", required=True)
             command.add_argument("--note", required=True)
+    inspection = sub.add_parser("inspect-repair", help="Inspect retained repair authority without changing installation state")
+    inspection.add_argument("--repository", required=True)
+    inspection.add_argument("--bundle-root", required=True)
+    inspection.add_argument("--manifest-sha256", required=True)
+    inspection.add_argument("--node-archive", required=True)
+    inspection.add_argument("--operation")
     args = parser.parse_args()
     if args.command in ("prepare", "install", "upgrade") and args.offline_cache_seed and not args.offline:
         refuse("offline cache seed requires --offline")
-    with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive, args.providers) as prepared:
+    with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive, getattr(args, "providers", None)) as prepared:
         if args.command == "verify":
             result = prepared.receipt
         elif args.command == "inspect-upgrade":
@@ -1308,6 +1344,8 @@ def main():
             result = administrative_upgrade(prepared, args.repository, args.operation, args.note)
         elif args.command == "resume-upgrade":
             result = resume_upgrade(prepared, args.repository, args.operation, args.note)
+        elif args.command == "inspect-repair":
+            result = inspect_repair(prepared, args.repository, args.operation)
         else:
             result = prepare_candidate(prepared, args.repository, args.offline, args.offline_cache_seed,
                                        handoff=args.command == "install", upgrade=args.command == "upgrade")

@@ -1,14 +1,15 @@
 import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { directoryIdentity } from './install-candidate.js';
+import { directoryIdentity, scanOwnedTree } from './install-candidate.js';
 import { readInstalledReceipt } from './install-publication.js';
-import { inspectInstalledUpgrade } from './upgrade-installed.js';
-import { publicationIntentPath, readPublicationRecord, verifyPublicationLayout } from './install-publication-state.js';
+import { inspectInstalledUpgrade, readUpgradeCompletionAuthority } from './upgrade-installed.js';
+import { publicationIntentPath, readPublicationAuthority, readPublicationRecord, verifyPublicationLayout } from './install-publication-state.js';
+import { upgradeDirectory } from './upgrade-publication-state.js';
 import { validateBoundProviderSources, validateRetainedProviderSources } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
 import { readOwnedReleaseManifest } from './owned-release.js';
-import { readActiveInstalledCompletion, readInstalledCompletion, openDependencyMaintenanceStore, type ActiveInstalledCompletion, type MaintenanceHandle, type Claim } from './store.js';
+import { readActiveInstalledCompletion, readInstalledCompletion, readRepairStoreSnapshot, openDependencyMaintenanceStore, type ActiveInstalledCompletion, type MaintenanceHandle, type Claim } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 
 export type InstalledStateInspection = { readonly purpose: 'strict'; readonly retained: boolean }
@@ -16,18 +17,9 @@ export type InstalledStateInspection = { readonly purpose: 'strict'; readonly re
 function fail(): never { throw new Error('installed binding refused'); }
 function hash(bytes: Buffer): string { return createHash('sha256').update(bytes).digest('hex'); }
 
-/** Single ownership interpretation for startup, upgrade capture and read-only selected repair inspection. */
-function inspectOwnershipAtCompletion(common: string, active: ActiveInstalledCompletion, mode: InstalledStateInspection) {
-  try {
-    if (realpathSync(common) !== common) fail();
+/** One metadata join shared with ordinary ownership. No live-byte validation is implied. */
+function readInstallCompletionAuthority(common: string, active: ActiveInstalledCompletion) {
     const factory = join(common, 'factory');
-    const retained = mode.purpose === 'dependency-repair' || mode.retained;
-    const toolchainMode = mode.purpose === 'dependency-repair' ? { purpose: 'dependency-repair' as const } : { purpose: 'strict' as const };
-    directoryIdentity(factory);
-    if (active.kind === 'upgrade.completed') {
-      const upgraded = inspectInstalledUpgrade(common, active, retained, toolchainMode);
-      return { ...upgraded, active };
-    }
     if (active.kind !== 'install.completed') fail();
     const { receipt, sha256 } = readInstalledReceipt(common);
     const { completion, repositoryId, release } = active;
@@ -46,11 +38,59 @@ function inspectOwnershipAtCompletion(common: string, active: ActiveInstalledCom
         phase: 'validating', ownedReceiptId: receipt.receiptId, backupId: null, ticketNonceHash: null,
         ticketConsumed: true, candidate: receipt.candidate,
       } };
-    const layout = verifyPublicationLayout(common, synthetic, toolchainMode);
-    if (!layout.intent || layout.install !== 'published' || layout.toolchain !== 'published' || !layout.toolchainInspection
+    const layout = readPublicationAuthority(common, synthetic);
+    if (!layout.intent
       || layout.intent.installIdentity !== receipt.installIdentity
       || layout.intent.toolchainIdentity !== receipt.toolchainIdentity
       || hash(readPublicationRecord(publicationIntentPath(common, receipt.operationId))) !== receipt.publicationIntentSha256) fail();
+    return { receipt, sha256, completion, release, claim: synthetic, layout };
+}
+
+/** Retained ownership is authenticated independently of damaged selected runtime and Node files. */
+export function readRetainedInstalledAuthority(common: string) {
+  try {
+    const snapshot = readRepairStoreSnapshot(common);
+    const active = snapshot.active;
+    if (realpathSync(common) !== common) fail();
+    const factory = join(common, 'factory'), factoryIdentity = directoryIdentity(factory);
+    if (active.kind === 'upgrade.completed') {
+      const authority = readUpgradeCompletionAuthority(common, active), { intent, originalCandidate } = authority.layout;
+      if (intent.candidate.path !== join(factory, `install-candidate-${active.completion.operationId}`)) fail();
+      if (JSON.stringify(readdirSync(intent.candidate.path).sort()) !== JSON.stringify(['candidate-receipt.json'])) fail();
+      const old = join(upgradeDirectory(common, intent.operationId), 'old');
+      if (JSON.stringify(readdirSync(old).sort()) !== JSON.stringify(['install', 'toolchain'])) fail();
+      for (const [name, expected] of [['install', intent.oldInstall], ['toolchain', intent.oldToolchain]] as const) {
+        const path = join(old, name), observed = scanOwnedTree(path, 'candidate');
+        if (directoryIdentity(path) !== expected.identity || observed.digest !== expected.digest
+          || observed.entries !== expected.entries || observed.regularBytes !== expected.bytes) fail();
+      }
+      validateRetainedProviderSources(originalCandidate.providers);
+      return { ...authority, active, snapshot, candidate: originalCandidate, factoryIdentity,
+        installIdentity: intent.newInstall.identity, toolchainIdentity: intent.newToolchain.identity };
+    }
+    const authority = readInstallCompletionAuthority(common, active);
+    if (JSON.stringify(readdirSync(authority.receipt.candidate.path).sort()) !== JSON.stringify(['candidate-receipt.json'])) fail();
+    validateRetainedProviderSources(authority.layout.receipt.providers);
+    return { ...authority, active, snapshot, candidate: authority.layout.receipt, factoryIdentity,
+      installIdentity: authority.receipt.installIdentity, toolchainIdentity: authority.receipt.toolchainIdentity };
+  } catch { fail(); }
+}
+
+/** Single ownership interpretation for startup, upgrade capture and read-only selected repair inspection. */
+function inspectOwnershipAtCompletion(common: string, active: ActiveInstalledCompletion, mode: InstalledStateInspection) {
+  try {
+    if (realpathSync(common) !== common) fail();
+    const factory = join(common, 'factory');
+    const retained = mode.purpose === 'dependency-repair' || mode.retained;
+    const toolchainMode = mode.purpose === 'dependency-repair' ? { purpose: 'dependency-repair' as const } : { purpose: 'strict' as const };
+    directoryIdentity(factory);
+    if (active.kind === 'upgrade.completed') {
+      const upgraded = inspectInstalledUpgrade(common, active, retained, toolchainMode);
+      return { ...upgraded, active };
+    }
+    const { receipt, sha256, completion, release, claim } = readInstallCompletionAuthority(common, active);
+    const layout = verifyPublicationLayout(common, claim, toolchainMode);
+    if (layout.install !== 'published' || layout.toolchain !== 'published' || !layout.toolchainInspection) fail();
     const runtime = join(factory, 'install', 'runtime');
     const manifest = retained ? readOwnedReleaseManifest(runtime, receipt.manifestSha256) : validateReleaseBundle(runtime, receipt.manifestSha256);
     const expectedLock = layout.toolchainInspection.expected.rows.find(row => row.path === 'package-lock.json');

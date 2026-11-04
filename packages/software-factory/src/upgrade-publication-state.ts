@@ -73,7 +73,8 @@ export function prepareUpgradeIntent(handle: MaintenanceHandle, candidate: Candi
 }
 
 const STEP_NAMES = ['01-old-install', '02-new-install', '03-old-toolchain', '04-new-toolchain'] as const;
-export function verifyUpgradeMarkerTemplate(common: string, intent: UpgradeIntent): void {
+/** The retained template authenticates its own marker link, independently of another operation's marker. */
+function readUpgradeMarkerTemplate(common: string, intent: UpgradeIntent): number {
   const path = join(upgradeDirectory(common, intent.operationId), 'marker-template.json');
   const before = lstatSync(path);
   if (!before.isFile() || before.isSymbolicLink() || ![1, 2].includes(before.nlink)
@@ -85,7 +86,7 @@ export function verifyUpgradeMarkerTemplate(common: string, intent: UpgradeInten
     const linked = lstatSync(marker);
     if (!linked.isFile() || linked.isSymbolicLink() || linked.dev !== before.dev || linked.ino !== before.ino || linked.nlink !== 2)
       throw new Error('upgrade marker link differs');
-  } else if (!absent(marker)) throw new Error('foreign upgrade marker exists');
+  }
   const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
   try {
     const opened = fstatSync(fd), bytes = readFileSync(fd), after = fstatSync(fd), current = lstatSync(path);
@@ -94,9 +95,16 @@ export function verifyUpgradeMarkerTemplate(common: string, intent: UpgradeInten
       || current.nlink !== before.nlink || hash(bytes) !== intent.markerTemplateSha256)
       throw new Error('upgrade marker template changed while reading');
   } finally { closeSync(fd); }
+  return before.nlink;
 }
-/** Verify the immutable intent against its claimed digest before inspecting any step. */
-export function readUpgradeIntent(common: string, claim: import('./store.js').Claim): UpgradeIntent {
+
+export function verifyUpgradeMarkerTemplate(common: string, intent: UpgradeIntent): void {
+  if (readUpgradeMarkerTemplate(common, intent) === 1 && !absent(join(common, 'factory', 'upgrade-incomplete')))
+    throw new Error('foreign upgrade marker exists');
+}
+
+/** Retained metadata cannot validate the global layout of a different, current operation. */
+function readUpgradeIntentAuthority(common: string, claim: import('./store.js').Claim): UpgradeIntent {
   const selected = claim.maintenance;
   if (!selected || selected.kind !== 'upgrade' || !selected.candidate || !selected.upgradeIntentSha256 || !selected.upgradeReceipt
     || !selected.forward?.backup || !selected.targetReleaseSha256) throw new Error('upgrade publication intent unbound');
@@ -130,6 +138,13 @@ export function readUpgradeIntent(common: string, claim: import('./store.js').Cl
     || receiptAfter.dev !== receiptInfo.dev || receiptAfter.ino !== receiptInfo.ino || receiptAfter.nlink !== 1
     || hash(receiptBytes) !== selected.upgradeReceipt.sha256 || receipt['receiptId'] !== selected.upgradeReceipt.id
     || receipt['intentSha256'] !== selected.upgradeIntentSha256) throw new Error('upgrade receipt binding differs');
+  readUpgradeMarkerTemplate(common, intent);
+  return intent;
+}
+
+/** Verify the immutable intent and current operation marker before publication. */
+export function readUpgradeIntent(common: string, claim: import('./store.js').Claim): UpgradeIntent {
+  const intent = readUpgradeIntentAuthority(common, claim);
   verifyUpgradeMarkerTemplate(common, intent);
   return intent;
 }
@@ -145,10 +160,9 @@ function expectedReceipt(intent: UpgradeIntent, index: number) {
   const trees = [intent.oldInstall, intent.newInstall, intent.oldToolchain, intent.newToolchain];
   return { version: 1, operationId: intent.operationId, step: STEP_NAMES[index], tree: trees[index] };
 }
-/** Exact ordered state includes a single rename that may have completed before its receipt. */
-export function inspectUpgradeLayout(common: string, claim: import('./store.js').Claim,
-  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
-  const intent = readUpgradeIntent(common, claim), directory = upgradeDirectory(common, intent.operationId);
+/** Authenticate only the retained intent, template, ordered receipts and candidate receipt. */
+export function readUpgradePublicationAuthority(common: string, claim: import('./store.js').Claim) {
+  const intent = readUpgradeIntentAuthority(common, claim), directory = upgradeDirectory(common, intent.operationId);
   const names = readdirSync(directory).sort(), allowed = ['intent.json', 'old', 'original.json', 'marker-template.json', 'new-receipt.json',
     ...STEP_NAMES.map(name => `${name}.json`)];
   if (names.some(name => !allowed.includes(name))) throw new Error('unowned upgrade operation entry');
@@ -163,6 +177,15 @@ export function inspectUpgradeLayout(common: string, claim: import('./store.js')
   const originalCandidate = readBoundInstallCandidateReceipt(intent.candidate, { operationId: intent.operationId,
     repositoryId: intent.repositoryId, claimId: intent.claimId, selectionDigest: intent.selectionDigest,
     manifestSha256: claim.maintenance!.targetReleaseSha256! });
+  return { intent, originalCandidate, recorded };
+}
+
+/** Exact ordered state includes a single rename that may have completed before its receipt. */
+export function inspectUpgradeLayout(common: string, claim: import('./store.js').Claim,
+  toolchainMode: ToolchainInspectionMode = { purpose: 'strict' }) {
+  const { intent, originalCandidate, recorded } = readUpgradePublicationAuthority(common, claim);
+  verifyUpgradeMarkerTemplate(common, intent);
+  const directory = upgradeDirectory(common, intent.operationId);
   if (toolchainMode.purpose === 'dependency-repair' && recorded !== 4)
     throw new Error('repair inspection requires fully receipted published upgrade');
   const factory = join(common, 'factory'), candidate = intent.candidate.path, old = join(directory, 'old');
