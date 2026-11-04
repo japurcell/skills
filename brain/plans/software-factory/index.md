@@ -132,3 +132,5 @@
 
 - [Darwin learning bounded native-compiler feasibility](research/darwin-learning-repair-contract-2026-11-04.md)
 - [Windows loader builder and input-selection proposal](research/windows-storage-loader-builder-contract-2026-11-04.md)
+
+- [Rejected Darwin compiler launch feasibility](research/darwin-native-compiler-rejection-2026-11-04.md)
