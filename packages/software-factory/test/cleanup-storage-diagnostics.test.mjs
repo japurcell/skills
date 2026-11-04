@@ -59,15 +59,24 @@ const fixtureProgram = String.raw`
   } finally { store?.close(); repository.dispose(); }
 `;
 
-function run(action) {
+function runProgram(program) {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
   delete env.FACTORY_SELECTOR_TIMING_ROOT;
-  const child = spawnSync(process.execPath, ['--input-type=module', '-e', fixtureProgram.replace('FIXTURE_ACTION', action)], {
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', program], {
     encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, env,
   });
-  assert.ok(!child.error, 'diagnostic child did not complete within its bound');
-  assert.equal(child.signal, null, 'diagnostic child was interrupted');
+  if (child.error || child.signal !== null) {
+    // Child output and Error text can contain private paths or environment values.
+    const code = child.error?.code;
+    const error = !child.error ? 'none'
+      : ['ETIMEDOUT', 'ENOBUFS', 'E2BIG', 'ENOENT', 'EACCES', 'EPERM', 'EAGAIN', 'ENOMEM', 'EMFILE', 'ENFILE'].includes(code) ? code : 'other';
+    const status = child.status === null ? 'none' : child.status === 0 ? 'zero'
+      : Number.isInteger(child.status) ? 'nonzero' : 'other';
+    const signal = child.signal === null ? 'none'
+      : ['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGBREAK', 'SIGABRT'].includes(child.signal) ? child.signal : 'other';
+    assert.fail('diagnostic child failed (error=' + error + '; status=' + status + '; signal=' + signal + ')');
+  }
   // Retain no child error text: even an unexpected fixture failure may name paths.
   const failure = child.stderr.includes('ERR_MODULE_NOT_FOUND') ? 'module-unavailable'
     : child.stderr.includes('PRIVATE_DIAGNOSTIC_CANARY') ? 'forbidden-stat-field'
@@ -78,6 +87,16 @@ function run(action) {
   assert.ok(lines.length <= 1 && lines.every(line => recordPattern.test(line)), 'diagnostic export violated the closed grammar');
   return { status: child.status, lines, failure };
 }
+
+function run(action) {
+  return runProgram(fixtureProgram.replace('FIXTURE_ACTION', action));
+}
+
+test('cleanup diagnostic child buffer refusal exports only closed process facts', () => {
+  assert.throws(() => runProgram(String.raw`
+    process.stderr.write('PRIVATE_DIAGNOSTIC_CANARY /private/canary S-1-canary '.repeat(8192));
+  `), { message: /^diagnostic child failed \(error=ENOBUFS; status=(none|zero|nonzero|other); signal=(none|SIGTERM|SIGKILL|SIGINT|SIGBREAK|SIGABRT|other)\)$/ });
+});
 
 test('cleanup sidecar diagnostic grammar rejects extra, path-bearing and arbitrary fields', () => {
   const valid = 'cleanup-sidecar-v1 role=wal regular=true symbolicLink=false singleLink=true groupOtherBitsClear=false';
