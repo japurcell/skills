@@ -14,6 +14,10 @@ const fixtureProgram = String.raw`
   import { createRepository } from ${JSON.stringify(new URL('./fixtures/repository.mjs', import.meta.url).href)};
   import { initializeRepositoryStore, openCleanupReadStore } from ${JSON.stringify(new URL('../dist/store.js', import.meta.url).href)};
 
+  function expectedPlacementDirectory(directory) {
+    return fs.realpathSync.native(directory);
+  }
+
   function assertPlacementOptions(options, directory) {
     const expected = { encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
       env: { ...process.env, FACTORY_PLACEMENT_PATH: directory } };
@@ -172,6 +176,20 @@ test('cleanup synthetic placement option mismatch exports only its closed field 
   assert.equal(result.failure, 'cleanup-fixture-v1 stage=placement-path role=none vector=none code=assertion');
 });
 
+test('cleanup fixture expected placement resolves an owned alias before boundary interposition', () => {
+  const result = run(String.raw`
+    const { assertLocalPlacement } = await import(${JSON.stringify(new URL('../dist/placement.js', import.meta.url).href)});
+    const alias = join(repository.path, 'factory-alias');
+    fs.symlinkSync(join(common, 'factory'), alias, process.platform === 'win32' ? 'junction' : 'dir');
+    const expected = expectedPlacementDirectory(alias);
+    const placement = assertLocalPlacement(alias);
+    assert.notEqual(placement.directory, alias);
+    assert.equal(expected, placement.directory);
+  `, true);
+  assert.equal(result.status, 0, 'fixture expected directory did not match public placement: ' + result.failure);
+  assert.deepEqual(result.lines, []);
+});
+
 test('cleanup sidecar diagnostic grammar rejects extra, path-bearing and arbitrary fields', () => {
   const valid = 'cleanup-sidecar-v1 role=wal regular=true symbolicLink=false singleLink=true groupOtherBitsClear=false';
   assert.match(valid, recordPattern);
@@ -184,6 +202,7 @@ test('cleanup sidecar observation preserves each original refusal and exports on
   const result = run(String.raw`
     const realLstat = fs.lstatSync;
     const realSpawn = childProcess.spawnSync;
+    const placementDirectory = expectedPlacementDirectory(join(common, 'factory'));
     diagnosticStage = 'base';
     const base = realLstat(database + '-wal', { bigint: true });
     const canary = 'PRIVATE_DIAGNOSTIC_CANARY';
@@ -200,7 +219,7 @@ test('cleanup sidecar observation preserves each original refusal and exports on
       assert.equal(typeof args[4], 'string');
       assert.ok(args[4].length > 0);
       diagnosticStage = 'placement-options';
-      assertPlacementOptions(options, join(common, 'factory'));
+      assertPlacementOptions(options, placementDirectory);
       diagnosticStage = 'admission';
       return { status: 0, signal: null, stdout: '{"driveType":3,"filesystem":"NTFS"}' };
     };
