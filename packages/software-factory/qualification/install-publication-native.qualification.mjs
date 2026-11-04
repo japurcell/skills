@@ -10,8 +10,10 @@ import { createRepository } from '../test/fixtures/repository.mjs';
 
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const script = resolve(packageRoot, '../../skills/default/software-factory/scripts/install.py');
-const archive = '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz';
-const cache = '/tmp/software-factory-npm-cache';
+const archiveInput = process.env.FACTORY_TEST_NODE_ARCHIVE ?? '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz';
+const cacheInput = process.env.FACTORY_TEST_NPM_CACHE_SEED ?? '/tmp/software-factory-npm-cache';
+const archive = existsSync(archiveInput) ? realpathSync(archiveInput) : archiveInput;
+const cache = existsSync(cacheInput) ? realpathSync(cacheInput) : cacheInput;
 const python = process.env.FACTORY_TEST_PYTHON ?? '/Users/adam/.pyenv/versions/3.13.14/bin/python3.13';
 const node = { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz',
   sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628' };

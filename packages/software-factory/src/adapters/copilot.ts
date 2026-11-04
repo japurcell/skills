@@ -59,8 +59,7 @@ function validPath(path: unknown): path is string {
   return typeof path === 'string' && path.length > 0 && !path.includes('\\') && !path.includes('\0') &&
     !path.startsWith('/') && posix.normalize(path) === path && path.split('/').every(part => part !== '.' && part !== '..' && part !== '');
 }
-/** Validate the complete pinned package closure without launching the provider. */
-export function validateCopilotPackageArtifact(options: Pick<CopilotAdapterOptions, 'packageRoot' | 'manifestFile' | 'manifestSha256'>): void {
+function validateCopilotClosure(options: Pick<CopilotAdapterOptions, 'packageRoot' | 'manifestFile' | 'manifestSha256'>, expectedVersion: string): void {
   const { packageRoot, manifestFile, manifestSha256 } = options;
   if (!isAbsolute(packageRoot) || !isAbsolute(manifestFile) || resolve(packageRoot) !== packageRoot ||
     resolve(manifestFile) !== manifestFile || !/^[a-f0-9]{64}$/.test(manifestSha256))
@@ -107,8 +106,20 @@ export function validateCopilotPackageArtifact(options: Pick<CopilotAdapterOptio
   if (found.length !== expected.size || found.some((path, index) => path !== (parsed[index] as ManifestEntry).path))
     throw new Error('Copilot package manifest order or closure mismatch');
   const packageJson = object(json(regularFile(join(packageRoot, 'package.json')).toString('utf8'), 'invalid Copilot package metadata'), 'invalid Copilot package metadata');
-  if (packageJson['name'] !== '@github/copilot' || packageJson['version'] !== version)
+  if (packageJson['name'] !== '@github/copilot' || packageJson['version'] !== expectedVersion)
     throw new Error('unsupported Copilot package version');
+}
+
+/** Validate the complete target-pinned package closure without launching the provider. */
+export function validateCopilotPackageArtifact(options: Pick<CopilotAdapterOptions, 'packageRoot' | 'manifestFile' | 'manifestSha256'>): void {
+  validateCopilotClosure(options, version);
+}
+
+/** Verify a previously receipt-bound package closure; this grants no launch capability. */
+export function validateRetainedCopilotPackageArtifact(options: Pick<CopilotAdapterOptions, 'packageRoot' | 'manifestFile' | 'manifestSha256'>,
+  retainedVersion: string): void {
+  if (!/^[0-9A-Za-z][0-9A-Za-z.+-]{0,127}$/.test(retainedVersion)) throw new Error('invalid retained Copilot version');
+  validateCopilotClosure(options, retainedVersion);
 }
 
 function parse(line: string): RecordValue {

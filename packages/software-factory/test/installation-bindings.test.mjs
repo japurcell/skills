@@ -48,6 +48,7 @@ function fixture(platform = 'darwin-arm64') {
   }
   for (const file of templates) put(source, `templates/${file}`, readFileSync(join(packageRoot, 'templates', file)));
   for (const file of ['package.json', 'package-lock.json']) put(source, `toolchain/${file}`, readFileSync(join(packageRoot, 'toolchain', file)));
+  put(source, 'native/atomic-publication.py', readFileSync(join(packageRoot, 'native/atomic-publication.py')));
   for (const file of [
     'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
     'node_modules/typescript/package.json', `node_modules/@typescript/typescript-${process.platform}-${process.arch}/lib/tsc`,

@@ -4,10 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { scanOwnedTree } from './install-candidate.js';
 import { consumeMaintenanceHandoff, inspectMaintenance } from './maintenance.js';
 import { publishFirstInstall } from './install-publication.js';
+import { publishUpgrade } from './upgrade-publication.js';
+import { resumeUpgradeRequest } from './upgrade-recovery-entry.js';
 
 async function main(): Promise<void> {
   if ((process.argv.length !== 3 || process.argv[2] !== '--self-check')
-    && (process.argv.length !== 4 || process.argv[2] !== '--ticket')) throw new Error('private staged controller request required');
+    && (process.argv.length !== 4 || !['--ticket', '--resume-request'].includes(process.argv[2]!))) throw new Error('private staged controller request required');
   const dist = dirname(fileURLToPath(import.meta.url)), payload = dirname(dist);
   const executable = join(payload, process.platform === 'win32' ? 'node.exe' : 'node');
   if (realpathSync(process.execPath) !== executable || !lstatSync(executable).isFile()
@@ -16,9 +18,14 @@ async function main(): Promise<void> {
   scanOwnedTree(dist, 'candidate');
   if (typeof inspectMaintenance !== 'function') throw new Error('staged controller import closure unavailable');
   if (process.argv[2] === '--self-check') process.stdout.write('{"selfCheck":"ok"}\n');
-  else {
-    await consumeMaintenanceHandoff(process.argv[3]!);
-    process.stdout.write(`${JSON.stringify(await publishFirstInstall(process.argv[3]!))}\n`);
+  else if (process.argv[2] === '--resume-request') {
+    process.stdout.write(`${JSON.stringify(await resumeUpgradeRequest(process.argv[3]!, dirname(payload)))}\n`);
+  } else {
+    const intent = await consumeMaintenanceHandoff(process.argv[3]!);
+    const result = intent.kind === 'install' ? await publishFirstInstall(process.argv[3]!)
+      : intent.kind === 'upgrade' && intent.artifactDigests['original-installed'] ? await publishUpgrade(process.argv[3]!)
+        : (() => { throw new Error('unsupported staged maintenance operation'); })();
+    process.stdout.write(`${JSON.stringify(result)}\n`);
   }
 }
 main().catch(error => {
