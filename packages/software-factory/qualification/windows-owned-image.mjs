@@ -77,6 +77,10 @@ export function validateNative(text, name) {
   const failure = one('RESULT')[1];
   result.failure = failure ?? 'receipt';
   if (failure !== expectedFailure(name, mutation[2])) return result;
+  const exit = one('EXIT')[1];
+  if (failure === 'none' ? exit !== '0' : failure === 'crash' ? exit !== '3762438722'
+    : failure === 'owner-loss' ? exit === '0' || exit === '259' : exit !== '125') return result;
+  if (failure === 'deadline' && Number(one('ELAPSED')[1]) < 500) return result;
   if (one('SUSPEND').length && one('SUSPEND')[1] !== '0' || one('RESUME').length && one('RESUME')[1] !== '1' ||
       one('DEBUGGER').length && one('DEBUGGER')[1] !== '0') return result;
   if (one('RESUME').length && (!one('DETACH').length || !one('DEBUGGER').length || !barriers.some(r => r[1] === 'detached'))) return result;

@@ -78,7 +78,8 @@ function fixture(name) {
     return positive().replace('OWNED\t1\tpositive\n', `OWNED\t1\t${name}\nMUTATION\t${kind}\tblocked\n`);
   }
   if (['deadline', 'output-limit', 'crash'].includes(name)) return positive().replace('OWNED\t1\tpositive\n', `OWNED\t1\t${name}\n`)
-    .replace('EXIT\t0', 'EXIT\t125').replace('RESULT\tnone', `RESULT\t${name}`)
+    .replace('EXIT\t0', name === 'crash' ? 'EXIT\t3762438722' : 'EXIT\t125').replace('RESULT\tnone', `RESULT\t${name}`)
+    .replace('ELAPSED\t250', name === 'deadline' ? 'ELAPSED\t700' : 'ELAPSED\t250')
     .replace('OUTPUT\t3\t0', name === 'output-limit' ? 'OUTPUT\t266240\t0' : name === 'crash' || name === 'deadline' ? 'OUTPUT\t0\t0' : 'OUTPUT\t3\t0');
   const [anchor, failure] = refusalSpec[name];
   const last = positive().trimEnd().split('\n').find(row => row === anchor || row.startsWith(anchor + '\t'));
@@ -176,4 +177,10 @@ test('artifact guard refuses caps, timeouts, signals, missing cases and oversize
 test('unknown native row names cannot invoke object prototype members', () => {
   for (const row of ['__proto__', 'constructor', 'toString', 'hasOwnProperty'])
     assert.equal(validateNative(positive().replace('COMPLETE\n', `${row}\nCOMPLETE\n`), 'positive').qualified, false);
+});
+
+test('native stop and crash controls require their actual intended exit outcome', () => {
+  for (const name of ['wrong-hash', 'different-file-id', 'stop-created', 'stop-resume', 'deadline', 'output-limit', 'crash'])
+    assert.equal(validateNative(fixture(name).replace(/^EXIT.*$/m, 'EXIT\t94'), name).qualified, false, name);
+  assert.equal(validateNative(fixture('deadline').replace(/^ELAPSED.*$/m, 'ELAPSED\t250'), 'deadline').qualified, false);
 });
