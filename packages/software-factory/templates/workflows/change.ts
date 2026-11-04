@@ -207,7 +207,7 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
       const result = await safe(() => structured(context, key, { ...phases.review, ...lineage(key, attempts), purpose: 'review', permissions: 'read-only', context: JSON.stringify({ request, candidate, verified }), output: reviewOutput }, attempts, inputs.snapshot));
       findings.push(...result.value.findings);
     }
-    if (!findings.length) return { status: 'complete', candidateFingerprint: await candidateFingerprint(context.worktree, inputs.snapshot), candidate, checks: verified, corrections: correction, skipped, priorAttempts: attempts };
+    if (!findings.length) return { version: 1, kind: 'change-report', status: 'complete', candidateFingerprint: await candidateFingerprint(context.worktree, inputs.snapshot), candidate: { summary: candidate.summary }, checks: verified, corrections: correction, skipped, priorAttempts: attempts };
     if (inputs.implement === false) throw new Error(`selected checks/review failed with implementation disabled: ${JSON.stringify(findings)}`);
     if (correction >= 2) throw new Error(`quality correction allowance exhausted: ${JSON.stringify(findings)}`);
     const result = await structured(context, implementationKey, {
