@@ -34,3 +34,8 @@ These are one current-run observations. Nested/concurrent span and attempt sums 
 
 - Exact3ff05c14 automatic41777010728/job126399607417 succeeded05:08:45UTC after isolated Gemini qualification registration. Original31fixtures pass50.874152s; notifications8.465621s/15s and learning16.329949s/30s,zero skips. Preflight/guard/exact2export upload pass. Schema2complete/fixtureExitCode0/2161records,51writers/48selfclose/10bound parent closes,0missingclosure/markers,all49selected endings. Shared source/runtime/closure/coverage reassessment passes.
 - Exports `/tmp/factory-gemini-context-darwin-41777010728-artifacts/`, joblog `/tmp/factory-gemini-context-darwin-41777010728-job.log`. This source differs from the earlier baseline; it is compatibility evidence, not controlled timing repair/comparison or old8f59cause proof. Later learning-copy changes were not present in this run.
+
+## Current source compatibility, no timing comparison
+
+- Exact9fdc2307 automatic41779606691/job126407912565 succeeded05:34:45UTC. Original31fixtures pass71.389760s,notifications9.255914s/15s,learning27.708858s/30s,zero skips; complete schema2/2161records/51writers/48selfclose/10bound parent closes,0missingclosures/markers,all49selected endings. Pinned preflight/guard/exact2upload and sharedsource/runtime/closure/coverage reassessment pass.
+- Exports `/tmp/factory-current-context-darwin-41779606691-artifacts/`; joblog `/tmp/factory-current-context-darwin-41779606691-job.log`. This source includes learning-copy, internal candidate and OpenCode registry changes; it is compatibility evidence only, not a controlled timing comparison, candidate native acceptance or cause/repair proof for8f59deadlines. Ordinary636baseline remains exactc381291a; future705cases are expected but unrun.
