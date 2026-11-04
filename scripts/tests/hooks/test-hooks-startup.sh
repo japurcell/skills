@@ -1,0 +1,361 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
+clear_observability_test_overrides
+
+assert_caveman_context_shape() {
+  local context="$1"
+
+  assert_file_contains <(printf '%s' "$context") "Required skill context loaded." \
+    "Expected required skill context marker in additionalContext."
+  assert_file_contains <(printf '%s' "$context") "Respond terse like smart caveman." \
+    "Expected required context to include caveman content."
+
+  if [[ "$context" == *"# Universal Guidelines"* || "$context" == *"# CLI Compression"* || "$context" == *"# Context Engineering"* ]]; then
+    echo "Expected startup hooks to load only caveman skill context." >&2
+    printf '%s\n' "$context" >&2
+    exit 1
+  fi
+}
+
+hook_final_json() {
+  python3 -c 'import json, sys
+preserved = []
+for line in sys.stdin.read().splitlines():
+    stripped = line.strip()
+    if stripped:
+        try:
+            payload = json.loads(stripped)
+            if isinstance(payload, dict) and payload.get("type") == "progress":
+                continue
+        except json.JSONDecodeError:
+            pass
+    preserved.append(line)
+print("\n".join(preserved).strip(), end="")' <<<"$1"
+}
+
+assert_progress_message() {
+  local output="$1"
+  local expected="$2"
+
+  HOOK_OUTPUT="$output" python3 -c 'import json, os, sys
+expected = sys.argv[1]
+for line in os.environ["HOOK_OUTPUT"].splitlines():
+    try:
+        payload = json.loads(line.strip())
+    except json.JSONDecodeError:
+        continue
+    if isinstance(payload, dict) and payload.get("type") == "progress" and payload.get("message") == expected:
+        raise SystemExit(0)
+print(f"Expected progress message: {expected}", file=sys.stderr)
+raise SystemExit(1)' "$expected"
+}
+
+assert_no_progress_messages() {
+  local output="$1"
+
+  HOOK_OUTPUT="$output" python3 -c 'import json, os, sys
+for line in os.environ["HOOK_OUTPUT"].splitlines():
+    try:
+        payload = json.loads(line.strip())
+    except json.JSONDecodeError:
+        continue
+    if isinstance(payload, dict) and payload.get("type") == "progress":
+        print("Unexpected progress message: " + str(payload.get("message")), file=sys.stderr)
+        raise SystemExit(1)'
+}
+
+run_session_start_hook() {
+  local audit_log="$1"
+  local payload="$2"
+
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+}
+
+run_subagent_start_hook() {
+  local audit_log="$1"
+  local payload="$2"
+
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+}
+
+test_session_start_outputs_cli_schema_with_caveman_only_context() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"sessionId":"cli-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
+  output="$(hook_final_json "$output")"
+
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected Copilot CLI payloads to return top-level additionalContext."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Did not expect hookSpecificOutput for Copilot CLI payloads."
+  assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$output")"
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected session-start hook to log loaded required skill context."
+}
+
+test_session_start_emits_copilot_progress_announcement() {
+  local workdir
+  local audit_log
+  local output
+  local final_json
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
+  final_json="$(hook_final_json "$output")"
+
+  assert_progress_message "$output" "load-required-skills: pass; 1 skill file"
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
+    "Expected final hook JSON to survive progress-line stripping."
+  assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$final_json")"
+}
+
+test_session_start_emits_progress_for_camel_case_event_name() {
+  local workdir
+  local audit_log
+  local output
+  local final_json
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"hookEventName":"sessionStart","sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"startup","initialPrompt":"hello"}')"
+  final_json="$(hook_final_json "$output")"
+
+  assert_progress_message "$output" "load-required-skills: pass; 1 skill file"
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$final_json")" \
+    "Expected final hook JSON to survive progress-line stripping for camelCase events."
+}
+
+test_session_start_outputs_vscode_schema_with_caveman_only_context() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_session_start_hook "$audit_log" '{"hook_event_name":"SessionStart","session_id":"vscode-session","timestamp":"2026-05-21T09:00:01Z","source":"vscode","initial_prompt":"hello"}')"
+  assert_no_progress_messages "$output"
+  output="$(hook_final_json "$output")"
+
+  assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected VS Code payloads to return hookSpecificOutput."
+  assert_equals "SessionStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
+    "Expected VS Code SessionStart hooks to include hookEventName."
+  assert_caveman_context_shape "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
+}
+
+test_subagent_start_outputs_cli_schema_with_caveman_only_context() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_subagent_start_hook "$audit_log" '{"sessionId":"cli-subagent-session","timestamp":"2026-05-21T09:00:02Z","transcriptPath":"workspace/transcript.jsonl","agentName":"code-review","agentId":"agent-42"}')"
+  output="$(hook_final_json "$output")"
+
+  assert_equals "true" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected Copilot CLI subagent payloads to return top-level additionalContext."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Did not expect hookSpecificOutput for Copilot CLI subagent payloads."
+  assert_caveman_context_shape "$(jq -r '.additionalContext' <<<"$output")"
+
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected subagent-start hook to log loaded required skill context."
+}
+
+test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(run_subagent_start_hook "$audit_log" '{"hookEventName":"SubagentStart","sessionId":"vscode-subagent-session","timestamp":"2026-05-21T09:00:03Z","agent_id":"vscode-agent-42","agent_type":"Plan"}')"
+  assert_no_progress_messages "$output"
+  output="$(hook_final_json "$output")"
+
+  assert_equals "true" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected VS Code SubagentStart payloads to return hookSpecificOutput."
+  assert_equals "SubagentStart" "$(jq -r '.hookSpecificOutput.hookEventName' <<<"$output")" \
+    "Expected VS Code SubagentStart hooks to include hookEventName."
+  assert_caveman_context_shape "$(jq -r '.hookSpecificOutput.additionalContext' <<<"$output")"
+
+  assert_file_contains "$audit_log" "Message: Loaded skill" \
+    "Expected subagent-start hook to log loaded required skill context."
+}
+
+test_hooks_json_registers_cli_and_vscode_start_events() {
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for sessionStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for sessionStart."
+
+  assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
+    "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
+    "$(jq -r '.hooks.sessionStart[1].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py PowerShell command for sessionStart."
+
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for subagentStart."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.subagentStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for subagentStart."
+
+  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
+    "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py first for userPromptTransformed."
+  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
+    "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register send-event.py PowerShell command for userPromptTransformed."
+
+}
+
+test_compact_mode_override_is_ignored() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.py" \
+      "$audit_log" \
+      '{"sessionId":"compact-mode-session","timestamp":"2026-05-21T09:00:04Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact" \
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+  )"
+  output="$(hook_final_json "$output")"
+
+  local context
+  context="$(jq -r '.additionalContext' <<<"$output")"
+
+  assert_caveman_context_shape "$context"
+}
+
+test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
+  local workdir
+  local audit_log
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.py" \
+      "$audit_log" \
+      '{"sessionId":"empty-skills-session","timestamp":"2026-05-21T09:00:06Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "AGENTS_REQUIRED_SKILL_FILES="
+  )"
+
+  assert_equals "load-required-skills: pass; 0 skill files" "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected empty skills output to report a safe count."
+  assert_equals "false" "$(jq -r 'has("hookSpecificOutput")' <<<"$output")" \
+    "Expected no hookSpecificOutput for empty skills payload."
+  assert_equals "false" "$(jq -r 'has("additionalContext")' <<<"$output")" \
+    "Expected no additionalContext for empty skills payload."
+
+  assert_file_contains "$audit_log" "Message: No skills loaded" \
+    "Expected audit log to contain No skills loaded message."
+}
+
+test_multiple_skills_loading_works_correctly() {
+  local workdir
+  local audit_log
+  local output
+  local context
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  audit_log="$workdir/audit.log"
+  write_required_skill_fixtures "$workdir/skills"
+
+  output="$(
+    run_copilot_hook \
+      "load-required-skills.py" \
+      "$audit_log" \
+      '{"sessionId":"multiple-skills-session","timestamp":"2026-05-21T09:00:05Z","source":"copilot-cli","initialPrompt":"hello"}' \
+      "" \
+      "COPILOT_SKILLS_DIR=$workdir/skills" \
+      "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md,universal-guidelines/SKILL.md"
+  )"
+  output="$(hook_final_json "$output")"
+
+  context="$(jq -r '.additionalContext' <<<"$output")"
+
+  assert_file_contains <(printf '%s' "$context") "Required skill context loaded." \
+    "Expected required skill context marker in additionalContext."
+
+  assert_file_contains <(printf '%s' "$context") "<!-- BEGIN REQUIRED SKILL:" \
+    "Expected BEGIN REQUIRED SKILL tag in context."
+
+  assert_file_contains <(printf '%s' "$context") "# Caveman" \
+    "Expected required context to include the caveman fixture's content."
+
+  assert_file_contains <(printf '%s' "$context") "# Universal Guidelines" \
+    "Expected required context to include the second skill fixture's content."
+}
+
+main() {
+  test_session_start_outputs_cli_schema_with_caveman_only_context
+  test_session_start_emits_copilot_progress_announcement
+  test_session_start_emits_progress_for_camel_case_event_name
+  test_session_start_outputs_vscode_schema_with_caveman_only_context
+  test_subagent_start_outputs_cli_schema_with_caveman_only_context
+  test_subagent_start_outputs_vscode_schema_with_caveman_only_context
+  test_compact_mode_override_is_ignored
+  test_hooks_json_registers_cli_and_vscode_start_events
+  test_multiple_skills_loading_works_correctly
+  test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output
+}
+
+STARTUP_SUITE_WORKDIR="$(setup_test_workdir)"
+STARTUP_SUITE_HOME="$(test_home_for_workdir "$STARTUP_SUITE_WORKDIR")"
+mkdir -p "$STARTUP_SUITE_HOME/.agents/skills/caveman"
+cat > "$STARTUP_SUITE_HOME/.agents/skills/caveman/SKILL.md" <<'EOF'
+---
+name: caveman
+description: Fixture for startup hook tests.
+---
+Respond terse like smart caveman.
+EOF
+
+cleanup_startup_suite_home() {
+  local workdir="${STARTUP_SUITE_WORKDIR:-}"
+  cleanup_test_workdir
+}
+
+trap cleanup_startup_suite_home EXIT
+export USERPROFILE="$STARTUP_SUITE_HOME"
+with_hook_test_environment "$STARTUP_SUITE_HOME" -- main "$@"
