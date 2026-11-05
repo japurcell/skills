@@ -1,0 +1,42 @@
+{
+  "skill_name": "saga",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Use the saga skill at the exact local source path supplied by the evaluator; ignore any installed copy. Begin planning a saga for the cache refresh feature described in the attached repository fixture. Treat the brief as complete and authorize creating planning artifacts in the normal saga location you determine. Create only the Phase 1 spec tree, then stop and present it for approval. Do not write or change application source, dispatch workers, begin implementation, or write outside the disposable repository fixture. Record each created file's resolved path in your completion message.",
+      "expected_output": "A Phase 1 saga spec tree for the cache refresh feature in the skill's designated storage location, with no application changes or worker dispatch.",
+      "files": ["evals/files/cache-refresh-repo/README.md", "evals/files/cache-refresh-repo/AGENTS.md", "evals/files/cache-refresh-repo/brain/index.md", "evals/files/cache-refresh-repo/brain/plans/index.md"],
+      "expectations": [
+        "The saga directory and all generated spec files are contained within the disposable repository fixture.",
+        "The generated saga includes SAGA.md and PROGRESS.md.",
+        "The saga records the cache refresh request and includes at least one checkable exit criterion.",
+        "No worker was dispatched and no application source file was created or changed.",
+        "The response identifies the resolved saga directory path."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Continue the cache refresh saga supplied in the attached fixture. Reconcile its recorded state with the branch/worktree metadata included in the fixture, update only the planning progress record if the evidence requires it, and report the next safe action. Do not start workers or implement tasks. Use the exact local Saga skill source supplied by the evaluator and ignore installed copies. Work only in the disposable fixture and do not write outside it.",
+      "expected_output": "A truthful resume assessment grounded in SAGA.md, PROGRESS.md, and the supplied repository state, with no duplicate saga or implementation work.",
+      "files": ["evals/files/resume-saga/brain/sagas/cache-refresh-20261105/SAGA.md", "evals/files/resume-saga/brain/sagas/cache-refresh-20261105/PROGRESS.md", "evals/files/resume-saga/git-state.txt"],
+      "expectations": [
+        "The response names the existing cache-refresh-20261105 saga rather than creating a second saga directory.",
+        "The next action is based on the supplied progress and branch/worktree evidence.",
+        "No worker was dispatched and no application source file was changed.",
+        "If progress is changed, the change is confined to the existing saga directory."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "In the attached fixture, the existing planning record already covers the requested one-line label correction. Help me make this correction. Decide whether to use the existing plan or create a separate saga; do not duplicate the plan. Work only within the disposable fixture and do not implement the code change, dispatch workers, or write outside the fixture. Use the exact local Saga skill source supplied by the evaluator and ignore installed copies.",
+      "expected_output": "A concise decision that recognizes the existing plan covers the small change and avoids creating another saga or duplicate plan.",
+      "files": ["evals/files/duplicate-avoidance/README.md", "evals/files/duplicate-avoidance/brain/sagas/label-copy/SAGA.md", "evals/files/duplicate-avoidance/brain/sagas/label-copy/PROGRESS.md"],
+      "expectations": [
+        "The response points to the existing label-copy plan as the place to record the correction.",
+        "No second saga directory or duplicate spec tree is created.",
+        "No application source file is modified and no worker is dispatched.",
+        "The response identifies the small scope as insufficient reason to create a new saga."
+      ]
+    }
+  ]
+}

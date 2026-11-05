@@ -77,6 +77,10 @@ run_step "humanlayer/skills" "$SCRIPT_DIR/copy-from-git.sh" \
   --repo "https://github.com/humanlayer/skills.git" --clone-dir "humanlayer-skills" \
   "plugins/show-me/skills/show-me" "skills/default"
 
+run_step "warp/common-skills" "$SCRIPT_DIR/copy-from-git.sh" \
+  --repo "https://github.com/warpdotdev/common-skills.git" --clone-dir "warp-common-skills" \
+  ".agents/skills/saga" "skills/default"
+
 # "$SCRIPT_DIR/copy-from-git.sh" \
 #   "https://github.com/kunchenguid/lavish-axi.git" \
 #   "skills/lavish" "skills/default"

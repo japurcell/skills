@@ -1,0 +1,9 @@
+Current branch: main
+Branches:
+- main
+- saga/cache-refresh-20261105/m1t1-contract
+- saga/cache-refresh-20261105/m1t2-endpoint
+Worktrees:
+- /disposable/repo (main)
+- /disposable/saga-cache-refresh-m1t2 (saga/cache-refresh-20261105/m1t2-endpoint)
+Worker reachability: worker-17 is reachable and has not reported completion.
