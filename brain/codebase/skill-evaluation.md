@@ -1,6 +1,7 @@
 # Skill evaluation caveats
 
 - Inspect `summary.failed`; a grader may exit 0 while reporting failed cases.
+- Define each scored field's type and value in the prompt or scenario. If a rubric checks an unspecified identifier format, report that schema ambiguity separately from behavioral failures and preserve the raw score; do not count it as a policy failure or silently normalize it.
 - Keep baseline/input fixtures immutable. Separate actual measurements from proxy values and absent data.
 - `quick_validate.py` accepts the documented `disable-model-invocation` field. Preserve explicit-only invocation controls; do not remove them to silence tooling.
 - Current `aggregate_benchmark.py` substitutes output character count when token count is absent, and zero when duration is absent. These are not measured tokens or time.
