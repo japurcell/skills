@@ -10,3 +10,4 @@
 - [AGENTS.md installer skill](01-agents-md-install/ExecPlan.md)
 
 - [Scripts test organization](2026-11-04-scripts-test-organization/ExecPlan.md)
+- [Router effort policy](25-router-effort-policy/exec-plan.md)
