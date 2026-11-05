@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 3,
-      "prompt": "Describe orchestration only; do not edit files, run Git, dispatch agents, or commit. The current branch is main. The ExecPlan has two independent ready source tasks with disjoint ownership. Explain branch setup, implementer isolation, the required worker instructions, and how completed work reaches the integration branch.",
+      "prompt": "Describe orchestration only; do not edit files, run Git, dispatch agents, or commit. The current branch is main. The ExecPlan has two independent ready source tasks with disjoint ownership. Explain branch setup, implementer isolation, the required worker instructions, and how completed work reaches the integration branch. Include a draft coordinator assignment and draft dispatch records with selected model, effort, deadline and enforcement state; mark unavailable values unresolved and do not claim dispatch or arming occurred.",
       "expected_output": "Create an integration branch from main, start one persistent integration coordinator subagent before implementers, assign each task to a background implementer in its own worktree and branch, confirm each is based on integration, activate tdd, merge the integration tip into each worker branch before completion, then reuse the same coordinator subagent across merge waves. The parent handles dispatch and user dialogue, not integration coordination.",
       "files": [],
       "eval_name": "private-worktrees-and-merger-handoff",
@@ -17,7 +17,7 @@
     {
       "id": 0,
       "eval_name": "bound-direct-plan-assignments",
-      "prompt": "Use the supplied execplan-implement skill to describe the next dispatch and acceptance actions only. Do not create branches, edit code, dispatch agents, or commit. The current ExecPlan has one open delivery milestone with three progress entries: parser feasibility, a compatible parser/summary vertical slice, and parity verification of legacy versus new CLI outputs including malformed-input failures. The milestone owns a shared default-output invariant. Feasibility is unfinished and must resolve before implementation. Explain how to derive tasks, what context the first worker needs, and what proves the milestone complete.",
+      "prompt": "Use the supplied execplan-implement skill to describe the next dispatch and acceptance actions only. Do not create branches, edit code, dispatch agents, or commit. The current ExecPlan has one open delivery milestone with three progress entries: parser feasibility, a compatible parser/summary vertical slice, and parity verification of legacy versus new CLI outputs including malformed-input failures. The milestone owns a shared default-output invariant. Feasibility is unfinished and must resolve before implementation. Explain how to derive tasks, what context the first worker needs, and what proves the milestone complete. Include a draft first-worker brief showing available context pointers, acceptance and known negative cases; mark missing specifics unresolved.",
       "expected_output": "A bounded feasibility task with inputs, outcome, checks and stop condition; explicit prerequisites recorded in the plan; no duplicate whole-milestone dispatch; integrated parity proof remains required.",
       "files": [],
       "assertions": [
@@ -29,7 +29,7 @@
     {
       "id": 1,
       "eval_name": "integrated-tree-acceptance",
-      "prompt": "Use the supplied execplan-implement skill for a read-only orchestration review. Do not run Git or product commands, edit files, or dispatch agents. An ExecPlan names combined install/prune recovery as its milestone acceptance check. Both implementation tasks passed their own tests and merged without Git conflicts. Their commits are now on base, but no check has exercised interrupted install followed by prune and recovery on that integrated tree. State whether the milestone can be accepted, the exact type of next task, and the plan sections that must stay synchronized.",
+      "prompt": "Use the supplied execplan-implement skill for a read-only orchestration review. Do not run Git or product commands, edit files, or dispatch agents. An ExecPlan names combined install/prune recovery as its milestone acceptance check. Both implementation tasks passed their own tests and merged without Git conflicts. Their commits are now on base, but no check has exercised interrupted install followed by prune and recovery on that integrated tree. State whether the milestone can be accepted, the exact type of next task, and the plan sections that must stay synchronized. Provide proposed updates to the relevant plan sections as a draft, without claiming any plan edits or verification occurred.",
       "expected_output": "Milestone remains unaccepted until the named composed recovery check runs against the integrated tree, including interrupted and refusal paths; clean Git integration does not waive it.",
       "files": [],
       "assertions": [
@@ -65,7 +65,7 @@
     {
       "id": 5,
       "eval_name": "small-task-uses-implementer",
-      "prompt": "Give an execution decision only; do not execute tools or delegate. An ExecPlan has one ready documentation task with a small edit and a known check. The coordinator already holds the context and delegation costs more than local execution. No user restriction prevents delegation. Choose the executor and branch arrangement under execplan-implement.",
+      "prompt": "Give an execution decision only; do not execute tools or delegate. An ExecPlan has one ready documentation task with a small edit and a known check. The coordinator already holds the context and delegation costs more than local execution. No user restriction prevents delegation. Choose the executor and branch arrangement under execplan-implement. Include a draft dispatch record and integration handoff, including model, effort, deadline and enforcement state; mark unavailable values unresolved and do not claim dispatch or arming occurred.",
       "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort before dispatch, give a runtime limit, and use the same persistent integration coordinator subagent for integration. The parent cannot fill that role.",
       "files": [],
       "assertions": [
@@ -78,7 +78,7 @@
     {
       "id": 6,
       "eval_name": "isolated-large-exploration",
-      "prompt": "Give an execution decision only; do not run tools or dispatch. Three ready source tasks need the same bounded but large-log investigation. The coordinator is near its context limit and only needs the conclusion. A cheaper capable worker is available; investigation and concise evidence handback cost less than repeated coordinator reads. Choose execution, shared context handling, and the handback. Preserve current authorization and negative cases.",
+      "prompt": "Give an execution decision only; do not run tools or dispatch. Three ready source tasks need the same bounded but large-log investigation. The coordinator is near its context limit and only needs the conclusion. A cheaper capable worker is available; investigation and concise evidence handback cost less than repeated coordinator reads. Choose execution, shared context handling, and the handback. Preserve current authorization and negative cases. Include a draft exploration brief and intended handback location with available context pointers, acceptance criteria, authorization and known negative cases; mark unspecified details unresolved and do not claim notes were saved.",
       "expected_output": "Use one optional exploration subagent for the shared investigation. Save its Markdown notes beside the plan so implementers can read them; communicate through concise context pointers while preserving the current plan contract.",
       "files": [],
       "assertions": [
@@ -90,7 +90,7 @@
     {
       "id": 7,
       "eval_name": "review-repair-cycle-limit",
-      "prompt": "Describe orchestration only; do not run tools, dispatch agents, edit files, or commit. All ExecPlan implementation tasks have been integrated. The first code-review-biaxis review reports three issues. Explain how findings become work, who fixes them, and what happens if issues still remain after the third review-and-fix iteration.",
+      "prompt": "Describe orchestration only; do not run tools, dispatch agents, edit files, or commit. All ExecPlan implementation tasks have been integrated. The first code-review-biaxis review reports three issues. Explain how findings become work, who fixes them, and what happens if issues still remain after the third review-and-fix iteration. Give a simulated action log from the initial review through the iteration limit without claiming actions were performed.",
       "expected_output": "Track all review findings as new tasks in the ExecPlan frontier, fix them with one implementer subagent, integrate the repair, and repeat review and fixes for at most three iterations. Report unresolved issues when the limit is reached.",
       "files": [],
       "assertions": [
@@ -110,6 +110,45 @@
         "Does not create commits, force a merge, or remove unintegrated worktrees.",
         "Separates task verification from pending branch integration and milestone proof.",
         "Retains changes and evidence and reports the actual state."
+      ]
+    },
+    {
+      "id": 10,
+      "eval_name": "coordinator-deadline-and-ownership",
+      "prompt": "Give a read-only orchestration decision, using the supplied skill. Do not dispatch, edit, run commands, or claim that enforcement occurred. The integration coordinator is working on a merge and its deadline has elapsed. Another implementer has an outstanding assignment blocked on a dependency; a third agent has no assignment. The coordinator does not answer a bounded checkpoint. Its worker stops, but a spawned write operation is still active. Independent authorized exploration is ready. Explain which assignments are subject to limits, what happens at the checkpoint and ownership after the stop. Then say what changes if the write operation is confirmed stopped, and how a healthy coordinator is handled across ordinary merge waves. Give a simulated action log including the conditions and routing needed for a replacement; do not claim any action occurred.",
+      "expected_output": "Treat the active coordinator and dependency-blocked implementer as active and the unassigned agent as idle. Use a bounded checkpoint, stop the unresponsive coordinator, and withhold replacement or ownership transfer while its write operation is active. Report the blocker and continue independent work. After all associated writes stop, route a fresh replacement to resume integration; normally reuse the healthy coordinator across merge waves. Do not claim integration or acceptance has been completed.",
+      "files": [],
+      "assertions": [
+        "Applies runtime enforcement to the active coordinator and dependency-blocked assignment, while distinguishing the unassigned idle agent.",
+        "Requests a bounded checkpoint and stops the coordinator when it does not respond in time.",
+        "Withholds ownership transfer and a replacement while the associated write operation remains active, reports the blocker, and continues independent authorized work.",
+        "Routes a fresh replacement only after all associated writes are confirmed stopped, reuses a healthy coordinator across ordinary merge waves, and does not claim integration or acceptance is complete."
+      ]
+    },
+    {
+      "id": 11,
+      "eval_name": "checkpoint-extension-followup",
+      "prompt": "Describe decisions only, without running tools or dispatching. Worker A has reached its first deadline with no extensions. Its bounded checkpoint arrives on time with progress and an ETA. The parent chooses to extend. A later follow-up reports more progress, but the extended deadline then expires. Worker B reaches its first deadline and its checkpoint never arrives. Explain the sequence for both workers, including recorded state, enforcement and any replacement. Provide simulated fieldwise records and an action log for both workers, including conditions and routing for replacement; mark unknown values unresolved and do not claim execution.",
+      "expected_output": "At first expiry request status, completed work, blockers and ETA with a bounded deadline. For A record one ETA-based extension and re-arm; follow-up does not reset the count, and stop at extended expiry. For B stop on a late or absent checkpoint. Confirm each worker and associated write operations stopped before a fresh routed replacement; otherwise report the blocker without overlapping ownership.",
+      "files": [],
+      "assertions": [
+        "Requests status, completed work, blockers and ETA with a bounded checkpoint deadline at first expiry.",
+        "Records the single ETA-based extension, increments its count and re-arms enforcement; the follow-up does not reset the count.",
+        "Stops A at the extended deadline and B when its checkpoint is late or absent, rather than granting another extension or waiting indefinitely.",
+        "Confirms each stopped worker and its associated writes are quiescent before transferring ownership to a fresh routed replacement; otherwise reports a blocker."
+      ]
+    },
+    {
+      "id": 12,
+      "eval_name": "resume-reuse-and-completion-cleanup",
+      "prompt": "Give a read-only orchestration decision; do not run tools or dispatch. At 10:00 the parent returns from a user interruption. Worker A's assignment deadline passed at 09:59; worker B is awaiting a checkpoint due at 10:01, and worker C has a running deadline at 10:04. Worker D finished on time and its evidence is available. A previously used, now idle agent will receive a new authorized task. Explain the immediate decision, scheduling, any blocking operation, completion cleanup and what must be recorded for the new assignment. Provide draft assignment records and a simulated action log; mark unavailable values unresolved and do not claim enforcement or dispatch occurred.",
+      "expected_output": "Recheck all deadlines immediately and process A's expiry with a bounded checkpoint. Bound the next wait by the earliest active assignment or checkpoint deadline, including A's new checkpoint and B at 10:01, and independently time out operations that block enforcement. Cancel D's enforcement without treating worker completion as milestone acceptance. For the reused agent create a fresh record including task and agent IDs, start, deadline, zero extensions and enforcement handle, and arm enforcement before waiting.",
+      "files": [],
+      "assertions": [
+        "Rechecks deadlines after the interruption and initiates a bounded checkpoint for overdue A.",
+        "Bounds the next wait by the earliest active assignment or checkpoint deadline and independently times out operations blocking parent enforcement.",
+        "Cancels D's enforcement on completion and does not equate task completion with milestone acceptance.",
+        "Records the reused agent's new assignment ID, agent ID, start, deadline, zero extension count and enforcement handle or scheduler entry, and arms it before waiting."
       ]
     },
     {

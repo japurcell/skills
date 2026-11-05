@@ -625,3 +625,5 @@ skills/default/handoff/evals/files/owner-action-fixture/.agents/scratchpad/relea
 
 # Local benchmark artifacts for the AGENTS.md installer skill.
 /skills/default/agents-md-install-workspace/
+/skills/default/delegate-to-subagents-workspace/
+/skills/default/execplan-implement-workspace/

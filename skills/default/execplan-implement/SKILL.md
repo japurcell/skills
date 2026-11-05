@@ -13,27 +13,38 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 **Subagent management rules:**
 
 - Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask. Submit the exact routed model and reasoning effort through dispatch controls when dispatching a subagent. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
-- Enforce runtime limits based on expected effort and complexity. When overdue, request a **progress update** that includes: request status, completed work, blockers, and an updated ETA. Set a new runtime limit based on the **progress update**. If the second runtime limit is exceeded, cancel the subagent and dispatch a fresh **replacement agent**.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
-- Keep one persistent **integration coordinator** subagent across merge waves, progress updates, and final checks to reduce coordination overhead. The coordinator should also handle deterministic commits and status checks directly when safe.
+- Delegate integration to one persistent **integration coordinator** subagent. Reuse it across merge waves, progress updates, and final checks. The coordinator should also handle deterministic commits and status checks directly when safe.
+
+Enforce limits for exploration, implementation, review, and fixes. An agent is idle only with no outstanding assignment; dependency waits remain active.
 
 All commits must follow [commit message guidelines](references/message.md).
+
+## Runtime enforcement
+
+For every directly dispatched background assignment, including assignments to reused agents, the parent sets a runtime limit based on expected effort and complexity. Before dispatch, record the selected exact model, reasoning effort, and deadline. In the same record, capture assignment/task ID, agent ID, start time, extension count (zero), and enforcement handle or scheduler entry as they become available; record or confirm armed enforcement before waiting.
+
+Before waiting, arm a host timeout or parent-owned scheduler whose waits are bounded by the nearest assignment or checkpoint deadline. Independently time out operations that would block enforcement. Recheck deadlines whenever control returns, including after user interruptions; worker-prompt deadlines and completion notifications alone are insufficient.
+
+At first expiry, request status, completed work, blockers, and updated ETA by a bounded checkpoint deadline. On a timely checkpoint: confirm completion, stop the worker, or grant at most one ETA-based extension, increment its count, record the new deadline, and re-arm enforcement. Maintain an active deadline for every overdue unfinished assignment; follow-up messages never reset extension counts. Stop the worker if the checkpoint is late or absent, or the extended deadline expires.
+
+Confirm the worker and associated write-producing operations have stopped before transferring ownership; then route and dispatch a fresh replacement. Otherwise, report the blocker and continue independent authorized work without overlapping ownership. Cancel enforcement when the assignment finishes.
 
 ## Steps
 
 1. Activate the `exec-plans` skill, then read the plan, milestones, and tasks to understand the task graph.
 
-2. (optional) Use an **exploration subagent** to conduct any exploration required by the tasks - relevant codebase files or external documentation. Ensure the exploration subagent can save files - it should save its markdown notes in a directory next to the plan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
+2. (optional) Use an **exploration subagent** to conduct any exploration required by the tasks - relevant codebase files or external documentation. Brief it with the needed context, acceptance criteria, and known negative cases, using context pointers where those facts are already available. Ensure the exploration subagent can save files - it should save its markdown notes in a directory next to the plan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
-3. If current branch is `main` or `master`, create a new **integration branch**. Start the **integration coordinator** subagent.
+3. If current branch is `main` or `master`, create a new **integration branch**. Start the **integration coordinator** subagent, instructing it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
 
-4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Each implementer subagent:
+4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Apply model routing before dispatch and runtime enforcement as specified above. Each implementer subagent:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - calls the Skill tool with `tdd` to build the task;
    - merges the integration branch tip into its own branch before reporting done
 
-5. Once an **implementer subagent** completes, have the same **integration coordinator** merge its work to the integration branch.
+5. Once an **implementer subagent** completes, have the same **integration coordinator subagent** merge its work to the integration branch.
 
 6. If this changes the **frontier** of available tasks, kick off more **implementer subagents** to work on the new tasks. This allows for maximum concurrency.
 

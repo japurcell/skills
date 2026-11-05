@@ -26,7 +26,7 @@
     },
     {
       "id": 2,
-      "prompt": "Describe assignments and communication only; do not dispatch agents or write files. Three implementation tasks need the same large-log investigation. A research note and a previous commit already provide most context. Explain how to fill the remaining gap and share findings without repeated investigation or copying the full context into every message.",
+      "prompt": "Describe assignments and communication only; do not dispatch agents or write files. Three implementation tasks need the same large-log investigation. A research note and a previous commit already provide most context. Explain how to fill the remaining gap and share findings without repeated investigation or copying the full context into every message. Include a draft exploration brief with the available context pointers, acceptance criteria and known negative cases; mark details not supplied as unresolved.",
       "expected_output": "Use one exploration subagent for the shared gap, reuse the existing note and commit, and communicate concise results through accessible context pointers.",
       "files": [],
       "eval_name": "shared-exploration-context-pointers",
@@ -39,7 +39,7 @@
     {
       "id": 3,
       "eval_name": "route-distinct-subtasks",
-      "prompt": "Describe dispatch preparation only; do not dispatch or write files. One task is bounded read-only exploration; another is a substantive cross-file code review. All required task facts and runtime capabilities are available. Explain routing, how model and effort reach dispatch, and how runtime limits are chosen.",
+      "prompt": "Describe dispatch preparation only; do not dispatch or write files. One task is bounded read-only exploration; another is a substantive cross-file code review. The router instructions have already been loaded for the first task and remain in context for the second. All required task facts and runtime capabilities are available. Explain routing, how model and effort reach dispatch, and how runtime limits are chosen. Include draft dispatch records showing the proposed model, effort, runtime limit, deadline and enforcement state; leave unavailable concrete values unresolved and do not claim dispatch or arming occurred.",
       "expected_output": "Load subagent-model-router once per agent context, evaluate a distinct route for each materially different subtask, submit its exact model and reasoning effort through dispatch controls, and assign each worker an effort-appropriate runtime limit.",
       "files": [],
       "assertions": [
@@ -63,19 +63,20 @@
     },
     {
       "id": 5,
-      "eval_name": "overdue-worker-warning",
-      "prompt": "Describe coordination only; do not dispatch, send messages, or write files. A background worker has exceeded its assigned runtime limit but is still running. No separate failure or unsafe behavior is reported. Explain the immediate communication and whether lateness permits interrupting, cancelling, or replacing the worker.",
-      "expected_output": "Send a non-interrupting warning requesting status, completed work, blockers, and an updated ETA. Keep the worker running; the limit is a warning threshold and lateness alone does not justify interruption, cancellation, or replacement.",
+      "eval_name": "overdue-worker-checkpoint",
+      "prompt": "Describe coordination only; do not dispatch, send messages, or write files. A background worker reaches its initial deadline while still running, with no prior extension. Describe the immediate request and deadline. The worker replies in time with status, completed work, blockers, and an ETA; explain the available decisions and the records needed if it continues.",
+      "expected_output": "Request the four-part checkpoint by a bounded response deadline. A timely response permits confirming completion, stopping, or granting at most one ETA-based extension; a grant increments the count, records a deadline, and rearms enforcement.",
       "files": [],
       "assertions": [
-        "Requests status, completed work, blockers, and an updated ETA in a non-interrupting warning.",
-        "Keeps the worker running rather than interrupting, cancelling, or replacing it solely for lateness."
+        "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+        "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+        "If an extension is granted, increments the count, records the new deadline, and rearms enforcement."
       ]
     },
     {
       "id": 6,
       "eval_name": "small-task-still-delegated",
-      "prompt": "Give an execution decision only; do not execute tools, dispatch agents, or edit files. The delegate-to-subagents workflow is active. A ready task is a one-line documentation edit with a known check, and the coordinator already has the context. No user restriction prevents delegation. Choose the executor and describe communication and dispatch settings.",
+      "prompt": "Give an execution decision only; do not execute tools, dispatch agents, or edit files. The delegate-to-subagents workflow is active. A ready task is a one-line documentation edit with a known check, and the coordinator already has the context. No user restriction prevents delegation. Choose the executor and describe communication and dispatch settings. Include a draft dispatch record with the selected model, effort, deadline and enforcement state; mark unavailable values unresolved and do not claim dispatch or arming occurred.",
       "expected_output": "Delegate the documentation implementation task, use sparse context pointers, and submit the router-selected exact model and effort with a runtime limit.",
       "files": [],
       "assertions": [
@@ -94,6 +95,44 @@
         "Assigns both deterministic operations to subagents rather than direct parent execution.",
         "Honors an explicit no-commit instruction for every agent.",
         "Resolves uncertain commit scope before committing rather than treating delegation as authorization."
+      ]
+    },
+    {
+      "id": 8,
+      "eval_name": "concurrent-deadlines-and-completion",
+      "prompt": "Describe the parent's observable coordination actions only; do not dispatch or write files. Two background assignments are being started, with different effort estimates and deadlines. The parent intends to wait for updates; a blocking operation could outlast the earlier deadline. One worker then completes on time. State the records, monitoring setup and wait bound, handling of the blocking operation, and completion cleanup. Present a simulated fieldwise action log and records for both assignments, marking unknown values unresolved; do not claim any monitoring was actually armed.",
+      "expected_output": "For each assignment record identifiers, start, effort-based deadline, zero extensions and enforcement entry; arm monitoring before waiting, bound waits by the earliest deadline and independently time out blocking operations, and cancel the finished assignment's enforcement.",
+      "files": [],
+      "assertions": [
+        "Records each assignment or task ID, agent ID, start, effort-based deadline, initial zero extension count, and enforcement handle or scheduler entry.",
+        "Arms parent-side enforcement before waiting and bounds the wait by the nearest active deadline.",
+        "Independently times out an operation that would prevent enforcement.",
+        "Cancels enforcement for the on-time completed assignment while continuing to monitor the other."
+      ]
+    },
+    {
+      "id": 9,
+      "eval_name": "checkpoint-and-extension-expiry",
+      "prompt": "Describe actions only; do not dispatch or send messages. Consider two separate running assignments. A receives no checkpoint by its response deadline. B received one ETA-based extension after a timely checkpoint; follow-up messages arrived, and its extended deadline now expires. For each, state the immediate action, whether another extension is allowed, and what must precede any replacement. For each assignment, include a simulated action log through the decision about replacement, including any routing and conditions needed before replacement.",
+      "expected_output": "Stop A when its checkpoint deadline passes and stop B when the extension expires; follow-up messages cannot reset the count or grant a second extension. Confirm the worker and associated write-producing operations stopped before transferring ownership and dispatching a fresh routed replacement.",
+      "files": [],
+      "assertions": [
+        "Stops A when the bounded checkpoint response is absent or late.",
+        "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+        "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement."
+      ]
+    },
+    {
+      "id": 10,
+      "eval_name": "failed-stop-interruption-and-reuse",
+      "prompt": "Describe actions only; do not dispatch or write files. After a user interruption, the parent regains control. One overdue worker has been told to stop but its write operation may still be running; a separate completed worker is available for a new independent assignment. Explain deadline checks, the unresolved worker's ownership, useful independent work, and monitoring state for the reused worker's new assignment. Include a draft record for the new assignment and a simulated action log; mark unknown values unresolved and do not claim any enforcement or dispatch occurred.",
+      "expected_output": "Recheck deadlines on return, report the unconfirmed stop and keep ownership exclusive while continuing independent authorized work. Treat the reused agent's new assignment separately, with its own identifiers, start, deadline, zero extension count and armed enforcement.",
+      "files": [],
+      "assertions": [
+        "Rechecks active deadlines after the interruption when control returns.",
+        "Reports the unconfirmed stop and does not transfer ownership or dispatch overlapping work while the worker or its writes may continue.",
+        "Continues independent authorized work without claiming the blocked work completed.",
+        "Creates and arms a fresh runtime record for the reused agent's new assignment, including a zero extension count."
       ]
     }
   ]
