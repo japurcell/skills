@@ -25,12 +25,14 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 - Define scope, file ownership, acceptance criteria, and required completion evidence. Classify effort as explicit only for dedicated material planning or architecture, substantive review, security review, or an explicit user effort request. Coding, tests, debugging, local design, exploration, coordination, and mechanical review use host default even when risk or failure raises the tier. Split material planning from coding when both can stand alone.
 - Before routing, confirm model-control support and permission. Preflight effort-control support and permission before routing only when effort is required. Report the specific failed check; permission failure is not evidence of unavailable capability.
 - Brief exploration workers with the needed context, acceptance criteria, and known negative cases; use context pointers where those facts are already available.
-- Determine the most cost-efficient and capable model and reasoning effort for that subtask.
+- Determine the most capable model and effort policy for that subtask, selecting an effort value only when the policy is explicit.
 - If you have already dispatched a subagent that has the context needed for this subtask and matches the routed model and effort policy, assign the subtask to that subagent. Reuse for host-default work only when the original spawn omitted effort; for explicit effort, require the exact model/effort pair. Otherwise, dispatch a fresh subagent with the exact routed model and effort policy: submit effort only for `explicit`, and omit the effort argument for `host_default`. If the router lacks an exact model or required effort, or the host lacks support or permission for a required control, do not dispatch and name that blocker. Never invent an effort value.
 
 **Subagent rules**:
 
 - Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
+
+An exact model chosen by the user overrides the router’s advisory tier recommendation, subject to supported and authorized host controls, live acceptance, applicable restrictions, the task’s effort policy and any explicit user effort, and runtime deadlines. Without an exact user model choice, follow normal router selection and constraints. This uses existing host controls and does not add a CLI override API.
 
 ## Runtime enforcement
 
