@@ -1,0 +1,46 @@
+{
+  "skill_name": "spec-create",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-product-pass-gates",
+      "prompt": "Write the whole-product SPEC for Gate Pair. Two entrances redeem the same single-use passes. The only operation in scope is presenting a known pass at either entrance. The public result is admitted on first use and already_used thereafter, including after restart. Either entrance can win a simultaneous first presentation. A teammate suggested Redis. The operator only cares that a used pass stays used. This is a new project with no file conventions. Write the spec only.",
+      "expected_output": "A root product spec that covers shared cross-entrance behavior, permitted variation, and recovery through externally checkable cases.",
+      "files": [],
+      "assertions": [
+        "The product spec is SPEC.md at the project root.",
+        "For simultaneous first presentations exactly one result is admitted, the other is already_used, and either entrance may win.",
+        "A concrete case checks already_used when a redeemed pass is presented at the other entrance after restart.",
+        "The contractual behavior can be implemented without Redis and without adopting a prescribed storage design.",
+        "A planner can cite a descriptive heading and conformance case without a per-behavior ID."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "existing-feature-collapse-lines",
+      "prompt": "Write the SPEC for our existing Collapse Lines feature so another team can reproduce it. The README gives its scope and the runnable shipping entry point. This project has no spec location convention. Write the spec only.",
+      "expected_output": "A feature spec grounded in real CLI observations. Cases distinguish adjacent duplicates from separated repeats and case variants.",
+      "files": ["fixtures/collapse-lines/README.md"],
+      "assertions": [
+        "The only spec is docs/specs/collapse-lines/SPEC.md.",
+        "The run exercised the documented public entry point on meaningful inputs and the report or artifact distinguishes observed results from inference.",
+        "Conformance covers empty input and distinguishes adjacent identical lines, separated repeats, and differently cased lines.",
+        "The normative contract specifies line-filter behavior without requiring the original executable or locale command."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "revise-label-export-conflict",
+      "prompt": "Revise our current label export spec in place to add the public integer field count, the number of occurrences of each label. Preserve compatibility. Support left a report about ordering. Write the spec only and tell me if anything needs my decision.",
+      "expected_output": "Revise the existing spec without duplicating it. Preserve established behavior, express the count change, and leave the substantive ordering conflict open in a draft.",
+      "files": ["fixtures/label-export/contracts/labels.md", "fixtures/label-export/support.md"],
+      "assertions": [
+        "Only the existing contracts/labels.md spec is revised. No duplicate SPEC.md is produced.",
+        "The revised contract keeps the public label field, original spelling, distinct rows, and empty-list behavior, and checks count for repeated labels.",
+        "The draft identifies the first-seen promise and the reported contrary order, and does not authorize an arbitrary ordering.",
+        "The response asks which order to preserve, distinguishes the support report from a direct run, and does not claim readiness.",
+        "The additive change does not invent a new case-sensitivity or normalization rule for grouping labels."
+      ]
+    }
+  ]
+}
