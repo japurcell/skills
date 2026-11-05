@@ -10,8 +10,8 @@ The router should continue choosing the same catalog models while setting reason
 
 - [x] (2026-11-05) [milestone-1] P1: Read applicable instructions, relevant brain notes, router and caller contracts, and exact todos 25 and 26; reproduce current coding output.
 - [x] (2026-11-05) [milestone-1] P1: Save this current contract before implementation edits and identify file ownership.
-- [ ] [milestone-2] R1: Add failing public CLI tests, implement selective effort output and all fallback paths, then pass focused tests.
-- [ ] [milestone-2] D1: Update router guidance, direct callers, and affected behavioral evals with minimal scoped edits.
+- [x] (2026-11-05) [milestone-2] R1: Added failing public CLI tests, implemented selective effort output and fallback paths, and passed all 26 focused tests in commit `38a81158`.
+- [x] (2026-11-05) [milestone-2] D1: Updated router guidance, direct callers, and behavior evals; JSON cases (13/12/14), skill-source validation, and diff check passed in commit `f93b56b7`.
 - [ ] [milestone-3] V1: Integration coordinator runs CLI and documentation checks, inspects all changed-file diffs, and records acceptance evidence.
 - [ ] [milestone-3] V1: Integration coordinator reflects, reconciles this plan, and reports completion without claiming live dispatch evidence from static tests.
 
@@ -56,7 +56,7 @@ Acceptance: met
 P1, owned by the planning agent, had no prerequisites. It read applicable `AGENTS.md`, the planning/brain skills, `brain/todos.md`, `brain/codebase/skill-evaluation.md`, `brain/principles/cost-aware-delegation.md`, and relevant source/callers. The coding CLI reproduction above establishes the pre-change behavior. This file exists before source edits. P1 stops at planning and does not own source edits.
 
 ### Milestone 2: Deliver coherent router and caller behavior
-Status: open
+Status: in progress
 Acceptance: not met
 
 R1, owned by the delegated router implementer, depends on P1. Own only `skills/default/subagent-model-router/scripts/route.py` and `skills/default/subagent-model-router/scripts/test_route.py`. Activate `tdd` before editing source. First add public CLI tests that fail on the pre-change implementation, then implement the interface above. Cover default and explicit effort, planning and execplan, substantive/security review, mechanical review, every excluded work class, risk/failure escalation, fallback semantics, no recommendation, JSON/CLI parity, malformed data, and unchanged model ranking. The red/green test must expose externally visible JSON behavior. Stop when focused tests pass and provide commands/results; do not edit caller docs or catalog.
@@ -73,7 +73,7 @@ V1, owned by the persistent integration coordinator, depends on R1 and D1. Run t
 
 ## Concrete Steps
 
-Next unfinished authorized action: the parent dispatches R1 and D1 with the ownership boundaries above and a five-minute checkpoint/runtime limit. Parent-side deadline enforcement remains required by active delegation guidance. Both task worktrees must start from the integration branch tip; the integration coordinator merges their scoped changes and commits them on `feat/router-task-effort`.
+Current action: R1 and D1 have completed and their commits are integrated. The integration coordinator has prepared a fresh blinded old-versus-revised instruction evaluation fixture while preserving the immutable baseline. Next, run the integrated checks below, review the complete diff against base SHA `d780499db4f8a16fdc74317b54bc44b5aa6df948`, and record actual evidence. The two task worktrees started at the integration branch tip. Parent-side deadline enforcement remains required by active delegation guidance.
 
 R1 reproduces the existing CLI behavior, adds failing cases in the existing CLI test module, records the failure, implements the contract, and runs:
 
