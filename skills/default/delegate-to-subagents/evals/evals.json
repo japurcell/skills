@@ -40,13 +40,14 @@
       "id": 3,
       "eval_name": "route-distinct-subtasks",
       "prompt": "Describe dispatch preparation only; do not dispatch or write files. One task is bounded read-only exploration; another is a substantive cross-file code review. The router instructions have already been loaded for the first task and remain in context for the second. All required task facts and runtime capabilities are available. Explain routing, how model and effort reach dispatch, and how runtime limits are chosen. Include draft dispatch records showing the proposed model, effort, runtime limit, deadline and enforcement state; leave unavailable concrete values unresolved and do not claim dispatch or arming occurred.",
-      "expected_output": "Load subagent-model-router once per agent context, evaluate a distinct route for each materially different subtask, submit its exact model and reasoning effort through dispatch controls, and assign each worker an effort-appropriate runtime limit.",
+      "expected_output": "Load subagent-model-router once per agent context, evaluate a distinct route for each materially different subtask, submit model and effort policy through dispatch controls (explicit effort when required, otherwise omit effort), and assign each worker an effort-appropriate runtime limit.",
       "files": [],
       "assertions": [
         "Routes the exploration and substantive review as materially different subtasks.",
         "Reuses already available router instructions rather than loading them again for the second task.",
         "Submits the exact routed model and reasoning effort through dispatch controls.",
-        "Assigns every subagent a runtime limit based on expected effort and complexity."
+        "Assigns every subagent a runtime limit based on expected effort and complexity.",
+        "Omits effort for bounded exploration and applies explicit effort only to substantive review; risk tier alone does not create an effort requirement."
       ]
     },
     {
@@ -77,12 +78,13 @@
       "id": 6,
       "eval_name": "small-task-still-delegated",
       "prompt": "Give an execution decision only; do not execute tools, dispatch agents, or edit files. The delegate-to-subagents workflow is active. A ready task is a one-line documentation edit with a known check, and the coordinator already has the context. No user restriction prevents delegation. Choose the executor and describe communication and dispatch settings. Include a draft dispatch record with the selected model, effort, deadline and enforcement state; mark unavailable values unresolved and do not claim dispatch or arming occurred.",
-      "expected_output": "Delegate the documentation implementation task, use sparse context pointers, and submit the router-selected exact model and effort with a runtime limit.",
+      "expected_output": "Delegate the documentation implementation task, use sparse context pointers, submit the router-selected model and effort policy with a runtime limit, and omit effort when the task does not require it.",
       "files": [],
       "assertions": [
         "Assigns the task to a subagent rather than choosing local execution because it is cheaper.",
         "Uses sparse communication and context pointers.",
-        "Uses the router-selected exact model and effort with a runtime limit."
+        "Uses the router-selected exact model and effort with a runtime limit.",
+        "Records host_default omission instead of inventing an effort value for ordinary documentation implementation."
       ]
     },
     {
@@ -133,6 +135,19 @@
         "Reports the unconfirmed stop and does not transfer ownership or dispatch overlapping work while the worker or its writes may continue.",
         "Continues independent authorized work without claiming the blocked work completed.",
         "Creates and arms a fresh runtime record for the reused agent's new assignment, including a zero extension count."
+      ]
+    },
+    {
+      "id": 11,
+      "eval_name": "user-model-overrides-advisory-tier",
+      "prompt": "Describe dispatch preparation only; do not dispatch or write files. A task is ordinary coding with no explicit effort request. The user explicitly chooses an exact model whose catalog tier is below the router recommendation. Host model control is supported, permitted, and live acceptance is confirmed. Explain model choice, effort argument, recorded route, and deadline handling.",
+      "expected_output": "Honor the exact user-chosen model over the advisory tier, while applying host controls and the task-based host_default effort policy. Omit effort, record the choice and policy, and preserve the runtime deadline.",
+      "files": [],
+      "assertions": [
+        "Uses the exact user-selected model instead of enforcing the advisory tier.",
+        "Uses host_default and omits effort for ordinary coding.",
+        "Preserves host restrictions and runtime deadline enforcement.",
+        "Does not treat the router recommendation as user selection."
       ]
     }
   ]

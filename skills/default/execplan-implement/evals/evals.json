@@ -66,13 +66,14 @@
       "id": 5,
       "eval_name": "small-task-uses-implementer",
       "prompt": "Give an execution decision only; do not execute tools or delegate. An ExecPlan has one ready documentation task with a small edit and a known check. The coordinator already holds the context and delegation costs more than local execution. No user restriction prevents delegation. Choose the executor and branch arrangement under execplan-implement. Include a draft dispatch record and integration handoff, including model, effort, deadline and enforcement state; mark unavailable values unresolved and do not claim dispatch or arming occurred.",
-      "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort before dispatch, give a runtime limit, and use the same persistent integration coordinator subagent for integration. The parent cannot fill that role.",
+      "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort policy before dispatch, omit effort for routine documentation implementation, give a runtime limit, and use the same persistent integration coordinator subagent for integration. The parent cannot fill that role.",
       "files": [],
       "assertions": [
         "Selects an implementer subagent rather than local execution based on lower overhead.",
         "Uses a private worktree and branch based on the integration branch.",
         "Routes model and effort before dispatch and assigns a runtime limit.",
-        "Uses the same persistent integration coordinator subagent for integration, never the parent."
+        "Uses the same persistent integration coordinator subagent for integration, never the parent.",
+        "Uses host_default with omitted effort for routine documentation implementation."
       ]
     },
     {
@@ -160,6 +161,18 @@
       "assertions": [
         "Reports feature/parser as the integration branch and states that tasks and milestones are resolved.",
         "Includes cleanup of all completed implementer worktrees."
+      ]
+    },
+    {
+      "id": 13,
+      "eval_name": "material-plan-explicit-effort-and-user-model",
+      "prompt": "Give an execution decision only; do not execute tools, dispatch, or edit. A dedicated implementer must materially redesign architecture and sequencing in an ExecPlan. The user explicitly chooses an exact model outside the recommended planning tier and asks for high effort. Host controls permit the model and high effort, and acceptance is confirmed. Explain the selection, effort policy, dispatch record, and deadline.",
+      "expected_output": "Honor the exact user model and explicit high effort, record explicit effort policy and the exact pair, and enforce the runtime deadline. The exact user model overrides the advisory tier while host restrictions still apply.",
+      "files": [],
+      "assertions": [
+        "Uses the exact user-selected model over the advisory tier, subject to host restrictions.",
+        "Uses explicit high effort because the task is material planning and the user explicitly requested it.",
+        "Records the exact model/effort pair and preserves runtime deadline enforcement."
       ]
     }
   ]
