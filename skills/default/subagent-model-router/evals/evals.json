@@ -160,6 +160,19 @@
         "Names denied effort-override permission specifically.",
         "Does not conflate permission with capability or live availability."
       ]
+    },
+    {
+      "id": 14,
+      "eval_name": "user-model-bypasses-empty-catalog-only-with-verification",
+      "prompt": "Use the bundled CLI to examine two dispatch requests and return a final route for each; do not dispatch. The first task is ordinary coding with host_default effort policy. The user chose exact model `host-model-x`, which has no catalog entry, so the CLI returns recommendation_available false. Existing host facts confirm exact model control is supported, permitted, context-fit, and live-accepted; applicable host restrictions allow it. The second task is dedicated material planning with explicit high effort and the same user-chosen model. Its model checks pass, but the host has not exposed or confirmed the required effort control or high-effort acceptance. Explain whether either route is dispatchable, what values are recorded, and any blocker.",
+      "expected_output": "For ordinary coding, the exact user model bypasses the empty catalog-candidate gate and is dispatchable through the existing host control after the supplied checks. Record host_default, null reasoning_effort, capability_at_host_default_verified false, and no catalog tier or capability claim. For material planning, do not dispatch because required high effort is unconfirmed; report that specific blocker and do not substitute host default.",
+      "files": [],
+      "expectations": [
+        "Uses the exact user model despite recommendation_available false, after model support, permission, context-fit, live-acceptance, and restriction checks.",
+        "Applies host_default and omits effort, keeping capability_at_host_default_verified false and making no catalog tier or capability claim for the out-of-catalog model.",
+        "Blocks the explicit-effort route when required effort support or acceptance is unconfirmed and names the effort blocker.",
+        "Does not substitute host default for required explicit effort or invent a CLI override API."
+      ]
     }
   ]
 }
