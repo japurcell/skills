@@ -12,7 +12,8 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- For every implementation task, activate the `subagent-model-router` skill, obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
+- Activate the `subagent-model-router` skill.
+- For every subagent dispatch, use `subagent-model-router` to obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
 - Delegate integration to one persistent **integration coordinator** subagent. Reuse it across merge waves, progress updates, and final checks. The coordinator should also handle deterministic commits and status checks directly when safe.
@@ -48,11 +49,17 @@ Confirm the worker and associated write-producing operations have stopped before
 
 6. If this changes the **frontier** of available tasks, kick off more **implementer subagents** to work on the new tasks. This allows for maximum concurrency.
 
-7. Once all tickets are complete, call the Skill tool with `code-review-biaxis` on the integration branch. Track all issues raised by the code review as new tasks in the ExecPlan **frontier**, then fix them in a single **implementer subagent**. Repeat _code review → fix cycle_ until no issues remain for a maximum of three iterations. Report all unresolved issues.
+7. Once all tickets are complete, follow the [code review fix cycle](#code-review-fix-cycle).
 
 8. Ensure all tasks and milestones are resolved and report the integration branch.
 
 9. Clean up all **implementer subagent** worktrees and their related branches.
+
+## Code review fix cycle
+
+Call the Skill tool with `code-review-biaxis` on the integration branch. Track all issues raised by the code review as new tasks in the ExecPlan **frontier**, then fix them in a single **implementer subagent**. Repeat _code review → fix cycle_ until no issues remain for a maximum of three iterations. Report all unresolved issues.
+
+For each repeat of the cycle, prefer reusing the code review and implementer subagents from the previous iteration when they match the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
 
 ## Gotchas
 
