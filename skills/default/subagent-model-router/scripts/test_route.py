@@ -31,6 +31,58 @@ def decision(value):
 
 
 class RouterCliTests(unittest.TestCase):
+    def test_effort_policy_is_selective_across_public_cli(self):
+        cases = (
+            (("--work", "coding"), "gpt-6-luna", "Standard", "host_default", None),
+            (("--work", "bounded"), None, "Fast", "host_default", None),
+            (("--work", "exploration"), None, "Fast", "host_default", None),
+            (("--work", "standard"), None, "Standard", "host_default", None),
+            (("--review", "mechanical"), None, "Fast", "host_default", None),
+            (("--work", "coding", "--risk", "high_stakes"), None, "Premium", "host_default", None),
+            (("--work", "planning"), "gpt-6.1-sol", "Standard", "explicit", "medium"),
+            (("--work", "execplan"), "gpt-6.1-sol", "Standard", "explicit", "medium"),
+            (("--review", "substantive"), "gpt-6-luna", "Standard", "explicit", "high"),
+            (("--review", "security"), "gpt-6.1-terra", "Premium", "explicit", "high"),
+            (("--work", "coding", "--effort", "high"), None, "Standard", "explicit", "high"),
+        )
+        for arguments, expected_model, expected_tier, policy, effort in cases:
+            with self.subTest(arguments=arguments):
+                result = run_cli(*arguments)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                output = json.loads(result.stdout)
+                if expected_model:
+                    self.assertEqual(output["model"], expected_model)
+                self.assertEqual(output["tier"], expected_tier)
+                self.assertEqual(output["effort_policy"], policy)
+                self.assertEqual(output["reasoning_effort"], effort)
+                self.assertFalse(output["capability_at_host_default_verified"])
+                if isinstance(output["fallback"], dict):
+                    self.assertEqual(output["fallback"]["effort_policy"], policy)
+                    if policy == "host_default":
+                        self.assertIsNone(output["fallback"]["reasoning_effort"])
+                        self.assertNotEqual(output["fallback"]["model"], output["model"])
+                    else:
+                        self.assertIsNotNone(output["fallback"]["reasoning_effort"])
+
+    def test_no_match_keeps_no_recommendation_distinct_from_effort_omission(self):
+        result = run_cli("--work", "coding", "--model", "no-such-model")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        output = json.loads(result.stdout)
+        self.assertFalse(output["recommendation_available"])
+        self.assertIsNone(output["model"])
+        self.assertIsNone(output["reasoning_effort"])
+
+    def test_effort_policy_json_cli_parity_and_help(self):
+        request = {"task": {"work": "coding", "risks": {"unusually_difficult": True}}}
+        from_json = decision(request)
+        from_flags = json.loads(run_cli("--input", "-", "--work", "coding",
+                                        "--risk", "unusually_difficult",
+                                        input_text=json.dumps(request)).stdout)
+        self.assertEqual(from_flags, from_json)
+        help_text = run_cli("--help").stdout
+        self.assertIn("host_default", help_text)
+        self.assertIn("argument in host_default mode", help_text)
+
     def test_unspecified_usage_still_uses_copilot_rate_baseline(self):
         result = decision({"task": {"work": "standard", "review": "substantive",
                                     "prior_important_miss": True}})

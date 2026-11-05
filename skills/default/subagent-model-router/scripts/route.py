@@ -326,6 +326,10 @@ def route(request):
         start = max((floor, start), key=TIER_RANK.get)
         reason += "; one-tier escalation for a diagnosed capability gap"
     work = task.get("work", "standard")
+    effort_required = (work in ("planning", "execplan") or
+                       task.get("review") in ("substantive", "security") or
+                       "efforts" in constraints)
+    effort_policy = "explicit" if effort_required else "host_default"
     candidates, rates, defaults = load_catalog()
     planning = None
     if work in ("planning", "execplan"):
@@ -348,12 +352,14 @@ def route(request):
     if tier is None:
         return {"recommendation_available": False, "availability_verified": False, "floor": floor,
                 "tier": None, "model": None, "reasoning_effort": None,
+                "effort_policy": effort_policy, "capability_at_host_default_verified": False,
                 "reason": reason + "; no catalog configuration meets the floor and constraints",
                 "fallback": "none", "estimated_cost_usd": None, "cost_minimum_verified": False}
     selected = [item for item in eligible if item["tier"] == tier]
     _rank_candidates(selected, rates, planning)
     chosen = selected[0]
-    alternative = selected[1] if len(selected) > 1 else None
+    alternative = next((item for item in selected[1:]
+                        if effort_policy == "explicit" or item["model"] != chosen["model"]), None)
     reason += "; provisional catalog fit; live availability is not verified"
     if planning and chosen["model"] == planning[0][0]:
         reason += "; Planning starting model is preferred"
@@ -362,11 +368,15 @@ def route(request):
         reason += "; token estimates or applicable rates are incomplete; ranking uses equal uncached input and output unit rates at ordinary context"
     if TIER_RANK[tier] > TIER_RANK[floor]:
         reason += f"; selected {tier} from requested tier {start}; task floor remains {floor}"
+    fallback = ({"model": alternative["model"],
+                 "reasoning_effort": alternative["effort"] if effort_required else None,
+                 "effort_policy": effort_policy,
+                 "capability_at_host_default_verified": False} if alternative else "none")
     return {"recommendation_available": True, "availability_verified": False, "floor": floor, "tier": tier,
-            "model": chosen["model"], "reasoning_effort": chosen["effort"], "reason": reason,
+            "model": chosen["model"], "reasoning_effort": chosen["effort"] if effort_required else None,
+            "effort_policy": effort_policy, "capability_at_host_default_verified": False, "reason": reason,
             "escalation_trigger": "verification reveals a reasoning gap",
-            "fallback": ({"model": alternative["model"], "reasoning_effort": alternative["effort"]}
-                         if alternative else "none"),
+            "fallback": fallback,
             "catalog_restrictions": chosen["eligibility"],
             "fallback_restrictions": alternative["eligibility"] if alternative else {},
             "estimated_cost_usd": chosen["estimated_cost_usd"], "cost_minimum_verified": False,
@@ -376,7 +386,7 @@ def route(request):
 def main():
     parser = argparse.ArgumentParser(
         allow_abbrev=False,
-        description="Recommend a model and reasoning effort from task facts, constraints, and optional token estimates.",
+        description="Recommend a model and effort policy from task facts, constraints, and optional token estimates.",
         epilog=(
             "JSON fields and defaults:\n"
             "  task.work: standard; task.review and task.selected_tier: unset.\n"
@@ -417,13 +427,17 @@ def main():
             "Output and limits:\n"
             "  Success writes one JSON object to stdout (exit 0). Errors go to stderr\n"
             "  (exit 2). recommendation_available=false means no catalog match; it is\n"
-            "  still a valid result with exit 0. Live availability is not verified, and\n"
+            "  still a valid result with exit 0. effort_policy is explicit for planning,\n"
+            "  execplan, substantive/security review, or a user effort constraint; otherwise\n"
+            "  it is host_default and reasoning_effort is null. The caller omits the effort\n"
+            "  argument in host_default mode. Host-default capability is unverified.\n"
+            "  Live availability is not verified, and\n"
             "  estimated cost is not a verified minimum. If token estimates or rates\n"
             "  are incomplete, ranking assumes equal uncached input/output unit rates\n"
             "  at ordinary context. GitHub Copilot estimates exclude retries, verification,\n"
             "  and other overhead. The caller checks the returned model and\n"
-            "  reasoning_effort against interface facts already available to it, then\n"
-            "  dispatches that pair.\n"
+            "  checks the required model control and, for explicit policy, the exact effort\n"
+            "  control before dispatch.\n"
             "\n"
             "Examples:\n"
             "  python3 route.py --work bounded\n"
