@@ -149,6 +149,18 @@
         "Preserves host restrictions and runtime deadline enforcement.",
         "Does not treat the router recommendation as user selection."
       ]
+    },
+    {
+      "id": 12,
+      "eval_name": "reuse-requires-context-and-route-match",
+      "prompt": "Apply the delegate-to-subagents skill to three assignments. Do not dispatch or edit files.\n\nA: An already dispatched agent has all task context required by the subtask and its exact model matches the final route. The route is host_default, and the agent was originally spawned without an effort override.\n\nB: The existing agent matches the final route model and effort policy but lacks task context required by the subtask; no other current agent has that context.\n\nC: An existing agent has the task context and same model as the final host_default route, but its original spawn specified explicit effort.\n\nFor each assignment, explain whether you would use the existing agent or dispatch a fresh one.",
+      "expected_output": "Prefer the existing agent for A because context and route eligibility match. Dispatch a fresh agent for B because no existing agent has the needed context. Dispatch a fresh agent for C because its original explicit effort makes it ineligible for a host_default route despite matching model and context.",
+      "files": [],
+      "assertions": [
+        "Prefers reuse of an existing context-bearing agent when exact route eligibility matches.",
+        "Chooses a fresh agent when no existing agent has required task context.",
+        "Rejects an agent with an original effort override for host_default reuse, even when model and context match."
+      ]
     }
   ]
 }

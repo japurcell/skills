@@ -12,7 +12,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- For every implementation task, activate the `subagent-model-router` skill, obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker.
+- For every implementation task, activate the `subagent-model-router` skill, obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
 - Delegate integration to one persistent **integration coordinator** subagent. Reuse it across merge waves, progress updates, and final checks. The coordinator should also handle deterministic commits and status checks directly when safe.

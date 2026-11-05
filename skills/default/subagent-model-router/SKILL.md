@@ -40,7 +40,7 @@ Read `recommendation_available` separately from `effort_policy`. In normal catal
 
 Before routing, confirm the dispatch interface supports the exact model control and that the caller is permitted to set it. For `explicit` effort policy, also confirm effort-control support and permission before routing. These checks are distinct from verifying that the selected model or required effort is accepted live. If a check fails, return `dispatchable: false` and name that specific blocker; do not describe a permission failure as unavailable capability. For the selected model, verify applicable restrictions and live acceptance of that exact model, plus exact effort only when policy is `explicit`. Dispatch only after every required check succeeds. If an exact model or required effort is unconfirmed, do not dispatch.
 
-For same-model reuse, a host-default task may reuse only an agent originally spawned without an effort override. An explicit-effort task may reuse only an agent with the exact same model and effort pair. Fallbacks follow the same policy and checks; do not change policy to make a fallback dispatchable.
+Fallbacks follow the same effort policy and dispatch checks; do not change policy to make a fallback dispatchable.
 
 A fallback using the same model at another effort addresses effort-specific unavailability only. If the entire model is known unavailable, rule out all its efforts and reassess from already-known facts without gathering an inventory.
 
