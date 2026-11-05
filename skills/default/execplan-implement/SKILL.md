@@ -1,7 +1,7 @@
 ---
 name: execplan-implement
 description: ExecPlan implementation workflow. Use when implementing ExecPlans and you are the parent agent. Do not use if you are a subagent being delegated to.
-compatibility: Requires subagent dispatch with model controls and effort controls when task policy requires explicit effort.
+compatibility: Requires subagent dispatch with model controls and effort controls when the route requires explicit effort.
 ---
 
 You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.
@@ -12,7 +12,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- Activate the `subagent-model-router` skill. Route each subtask to the most capable model under the router guidance. Submit the exact model and effort policy through dispatch controls: supply effort only when policy is `explicit`, and omit it for `host_default`. If the route lacks an exact model or required effort, or required host support or permission is absent, do not dispatch and name that blocker. Never invent an effort value.
+- For every implementation task, use `subagent-model-router` to obtain the final dispatchable route. Apply its model and effort policy through dispatch controls, and stop on a named blocker.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
 - Delegate integration to one persistent **integration coordinator** subagent. Reuse it across merge waves, progress updates, and final checks. The coordinator should also handle deterministic commits and status checks directly when safe.
@@ -23,7 +23,7 @@ All commits must follow [commit message guidelines](references/message.md).
 
 ## Runtime enforcement
 
-For every directly dispatched background assignment, including assignments to reused agents, the parent sets a runtime limit based on expected effort and complexity. Before dispatch, record the selected exact model, effort policy, explicit reasoning effort or host-default omission, and deadline. Confirm model-control support and permission before routing; confirm effort-control support and permission before routing only when effort is required. Verify live acceptance separately and name the specific failed check. In the same record, capture assignment/task ID, agent ID, start time, extension count (zero), and enforcement handle or scheduler entry as they become available; record or confirm armed enforcement before waiting.
+For every directly dispatched background assignment, including assignments to reused agents, the parent sets a runtime limit based on expected effort and complexity. Before dispatch, record the final route’s exact model, effort policy, explicit reasoning effort or host-default omission, and deadline. In the same record, capture assignment/task ID, agent ID, start time, extension count (zero), and enforcement handle or scheduler entry as they become available; record or confirm armed enforcement before waiting.
 
 Before waiting, arm a host timeout or parent-owned scheduler whose waits are bounded by the nearest assignment or checkpoint deadline. Independently time out operations that would block enforcement. Recheck deadlines whenever control returns, including after user interruptions; worker-prompt deadlines and completion notifications alone are insufficient.
 
@@ -39,7 +39,7 @@ Confirm the worker and associated write-producing operations have stopped before
 
 3. If current branch is `main` or `master`, create a new **integration branch**. Start the **integration coordinator** subagent, instructing it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
 
-4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Apply model routing before dispatch and runtime enforcement as specified above. An exact model chosen by the user overrides the advisory tier recommendation, subject to host controls, permissions, restrictions, live acceptance, the task-based effort policy, explicit user effort, and deadlines. This uses existing host controls; it does not add a CLI model override API. Without an exact user model choice, follow normal router selection and constraints. Each implementer subagent:
+4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Follow the router’s final dispatchable route and runtime enforcement as specified above. Each implementer subagent:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - calls the Skill tool with `tdd` to build the task;
    - merges the integration branch tip into its own branch before reporting done
