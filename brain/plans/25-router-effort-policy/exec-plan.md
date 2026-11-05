@@ -12,6 +12,10 @@ The router should continue choosing the same catalog models while setting reason
 - [x] (2026-11-05) [milestone-1] P1: Save this current contract before implementation edits and identify file ownership.
 - [x] (2026-11-05) [milestone-2] R1: Added failing public CLI tests, implemented selective effort output and fallback paths, and passed all 26 focused tests in commit `38a81158`.
 - [x] (2026-11-05) [milestone-2] D1: Updated router guidance, direct callers, and behavior evals; JSON cases (13/12/14), skill-source validation, and diff check passed in commit `f93b56b7`.
+- [x] (2026-11-05) [milestone-3] V1: Integrated focused tests (26 passed), six CLI cases preserved primary model selection, three eval JSON files parsed, skill-source validation and `git diff --check` exited 0; merge base resolved to `d780499db4f8a16fdc74317b54bc44b5aa6df948` with a nonempty 10-file diff.
+- [x] (2026-11-05) [milestone-3] V1: Ran six genuine old-skill/revised-skill pairs; deterministic exact-field assertions scored 22/35 old and 35/35 revised after normalizing `reused_worker` to the boolean representation present in both actual outputs. Saved raw outputs and grades under `/private/tmp/router-task-effort-eval/iteration-1/`, aggregate evidence in `deterministic-grade-summary.json`, and static viewer at `/private/tmp/router-task-effort-eval/router-review.html`. No timing or token metrics were supplied.
+- [ ] [milestone-2] F1: Add a standalone exact-user-model override path to `skills/default/delegate-to-subagents/SKILL.md`, preserving host restrictions, permissions, live availability checks, effort policy, and deadlines.
+- [ ] [milestone-2] F2: Reconcile the generic model-and-effort instruction in `skills/default/delegate-to-subagents/SKILL.md` with `host_default`, so tasks that do not require explicit effort do not require an effort control.
 - [ ] [milestone-3] V1: Integration coordinator runs CLI and documentation checks, inspects all changed-file diffs, and records acceptance evidence.
 - [ ] [milestone-3] V1: Integration coordinator reflects, reconciles this plan, and reports completion without claiming live dispatch evidence from static tests.
 
@@ -21,6 +25,7 @@ The router should continue choosing the same catalog models while setting reason
 - Catalog rows classify model and effort pairs, not models independent of effort. The same model can occur in more than one tier. Omitting effort cannot establish capability at the host's actual default.
 - A scoped search of live Markdown sources found only two direct callers: `skills/default/delegate-to-subagents/SKILL.md` and `skills/default/execplan-implement/SKILL.md`. Their current unconditional exact-effort gates conflict with the approved policy. Historical `*-workspace` artifacts are evidence, not active callers.
 - Behavioral eval READMEs explicitly distinguish instruction coverage from live timers, cancellation, execution, and integration. Preserve that distinction.
+- Independent review found two remaining caller-spec gaps after D1: no standalone exact-user-model override path in `delegate-to-subagents`, and generic wording that still requires selecting a reasoning effort under host-default policy. Standards review found no issues. The independent spec review is the evidence for both findings; the six behavioral prompts did not detect these prose omissions.
 
 ## Decision Log
 
@@ -29,10 +34,11 @@ The router should continue choosing the same catalog models while setting reason
 - 2026-11-05, planning agent: Deduplicate omission-mode fallback candidates by model, so another effort of the selected model does not pretend to be a different fallback. Keep same-tier model order and restrictions. Exact-effort mode keeps existing pair semantics.
 - 2026-11-05, planning agent: Explicit user effort constraints win for every task. Risk and failure flags may change the model tier but cannot cause excluded tasks to emit effort. Dedicated material planning uses `planning` or `execplan`; local design, debugging, and tests remain `coding`. A role title such as coordinator does not itself imply planning.
 - 2026-11-05, planning agent: Honor todo 26 in caller orchestration guidance rather than weakening CLI model allowlist or tier semantics. Only an actual user instruction choosing an exact model activates the override path. Ordinary `constraints.models` filters and catalog recommendations do not activate it. A user-chosen exact model bypasses the advisory router tier choice, subject to host controls, permissions, verified availability, catalog restrictions where relevant, the same task-based effort policy, explicit user effort, and deadlines. Do not invent catalog entries for that choice or claim catalog/default-effort capability verification.
+- 2026-11-05, integration coordinator: Keep milestone acceptance open after independent spec review. Fix F1 as an explicit standalone user-model selection path and F2 as consistent model/effort wording; neither finding authorizes weakening host restrictions, availability verification, required-effort checks, or deadlines.
 
 ## Outcomes & Retrospective
 
-Planning and baseline CLI evidence are complete. Implementation and integrated acceptance remain open. No live dispatch, availability probe, timer, or cancellation has been established by this plan. Next work belongs to the router implementation and caller documentation owners, followed by parent integration verification.
+R1 and D1 are integrated; focused tests, CLI comparison, source validation, and six instruction-coverage comparisons are recorded. The Standards review is clean. Integrated acceptance remains open because the independent Spec review identified F1 and F2 in `delegate-to-subagents`; D1 is correcting those findings in its task worktree. The behavioral comparison is limited to six one-run scenarios and has no timing or token metrics. No live dispatch, availability probe, timer, or cancellation has been established by this plan.
 
 ## Context and Orientation
 
@@ -65,15 +71,17 @@ D1, owned by the delegated documentation implementer, depends on P1 and the inte
 
 All workers share the repository and must preserve others' edits. D1 and R1 do not share source ownership. Both must use the common interface and report an actual mismatch before making unilateral contract changes.
 
+F1 and F2 are follow-up tasks from the independent Spec review, assigned to the existing caller-docs owner after D1. Both edit only `skills/default/delegate-to-subagents/SKILL.md` and its behavior evals if needed. F1 must state that an explicit user choice of an exact model bypasses the advisory tier choice, while retaining host support, permissions, live acceptance, catalog restrictions where relevant, normal effort policy, and deadlines. F2 must ensure generic routing language does not require an effort value for host-default work; explicit effort stays required only for task classes or user instructions that require it. Verify with the affected existing behavioral eval cases, JSON parsing, skill-source validation, and a focused semantic diff review. Keep both progress entries open until the fix commit and evidence are reported; rerun integrated checks after merge.
+
 ### Milestone 3: Verify the integrated contract
-Status: open
+Status: in progress
 Acceptance: not met
 
 V1, owned by the persistent integration coordinator, depends on R1 and D1. Run the commands below against the integrated branch tip, inspect full diffs for unintended changes, and reconcile any contradictions between CLI output and caller behavior. Check JSON evaluation files parse and expectations no longer impose unconditional effort. Review explicit user overrides, no-effort reuse, unavailable model handling, same-model fallback semantics, and retained deadline enforcement across both callers. Invoke `reflect` at the end of this code-changing session. If todos are completed, use the `todo` workflow to update and archive them rather than silently removing entries. This plan must be updated with actual results and milestone state before final reporting.
 
 ## Concrete Steps
 
-Current action: R1 and D1 have completed and their commits are integrated. The integration coordinator has prepared a fresh blinded old-versus-revised instruction evaluation fixture while preserving the immutable baseline. Next, run the integrated checks below, review the complete diff against base SHA `d780499db4f8a16fdc74317b54bc44b5aa6df948`, and record actual evidence. The two task worktrees started at the integration branch tip. Parent-side deadline enforcement remains required by active delegation guidance.
+Current action: D1 is fixing the two open Spec findings F1/F2 in its isolated task worktree. The integrated checks and old-versus-revised instruction evidence are recorded in `/private/tmp/router-task-effort-eval/v1-validation.txt` and `/private/tmp/router-task-effort-eval/iteration-1/deterministic-grade-summary.json`; the static viewer is `/private/tmp/router-task-effort-eval/router-review.html`. After F1/F2 are merged, rerun caller JSON/source checks, inspect the final changed-file diff, and reconcile milestone status. Do not mark acceptance until the independent review findings are resolved. The two original task worktrees started at the integration branch tip. Parent-side deadline enforcement remains required by active delegation guidance.
 
 R1 reproduces the existing CLI behavior, adds failing cases in the existing CLI test module, records the failure, implements the contract, and runs:
 
@@ -97,7 +105,7 @@ Run these exact commands from the repository root:
 
 Expected, not yet observed: coding remains Luna Standard but emits host-default policy and null effort; planning remains Sol/medium, substantive review Luna/high, security review Terra/high; risk changes coding model selection without adding effort; explicit `--effort high` emits explicit effort. Every fallback follows the same policy and host checks. The unittest suite must pass with exit 0. Catalog/schema errors remain exit 2 on stderr without a recommendation. Validation of skill sources and diff whitespace must exit 0.
 
-Also parse the three affected `evals/evals.json` files with Python `json.loads` in one `rtk proxy python3 -c` invocation, inspect their assertions for policy consistency, and inspect `rtk git diff --` the nine owned source/guidance/eval files. Reading scenarios is instruction coverage only. No eval runner is claimed available from the examined READMEs, and no live dispatch success may be inferred from these static checks.
+Also parse the three affected `evals/evals.json` files with Python `json.loads` in one `rtk proxy python3 -c` invocation, inspect their assertions for policy consistency, and inspect `rtk git diff --` the owned source/guidance/eval files. Six paired instruction-coverage runs used the exact same prompts for `old_skill` and `with_skill`; deterministic exact-field grades and actual rationales are retained in the external evaluation workspace. One boolean rubric field was normalized to the boolean format returned in both actual decisions, and this calibration is retained with the evaluation evidence. The runs do not establish live dispatch, timing, token costs, or repeated-run variance.
 
 ## Idempotence and Recovery
 
