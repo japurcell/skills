@@ -15,39 +15,44 @@ Track each step through the available planning tools or a short checklist.
 
 ### 1. Read the brain
 
-Build a brain snapshot: `sh .agents/skills/meditate/scripts/snapshot.sh brain/ /tmp/brain-snapshot-ruminate.md`. Pass the snapshot path to each analysis agent. This avoids loading the full brain into the ruminate orchestrator's context.
+Create one temporary directory with Python's `tempfile.mkdtemp(prefix="ruminate-")`. Retain its exact path for extraction, snapshot, findings, and cleanup. Build the brain snapshot inside it:
+
+`sh .agents/skills/meditate/scripts/snapshot.sh brain/ <temporary-directory>/brain-snapshot.md`
+
+Replace the placeholder with the retained temporary path. Pass the snapshot path to each analysis agent. This avoids loading the full brain into the ruminate orchestrator's context.
 
 ### 2. Locate conversations
 
-Find both provider roots:
+Find available supported provider roots:
 
 1. Claude project directory:
    `~/.claude/projects/-<cwd-with-dashes-replacing-slashes>/`
 2. Codex sessions root:
    `~/.codex/sessions/`
-3. Copilot sessions root:
-   `~/.copilot/`
+
+The bundled extractor supports Claude and Codex JSONL formats only. Other provider histories require a separate supported extraction route; do not pass unsupported options to this script.
 
 ### 3. Extract conversations
 
 Run the extraction script to parse both JSONL formats into readable text and split into batches:
 
-```bash
-SKILL_DIR="$(dirname "$(realpath "$0")")/.."  # adjust path as needed
-CLAUDE_DIR="$HOME/.claude/projects/-<project-slug>"
-CODEX_DIR="$HOME/.codex/sessions"
-COPILOT_DIR="$HOME/.copilot"
-OUT_DIR="/tmp/ruminate-$(date +%s)"
+```python
+from pathlib import Path
+import subprocess
+import sys
 
-python3 "$SKILL_DIR/scripts/extract-conversations.py" "$OUT_DIR" \
-  --claude-dir "$CLAUDE_DIR" \
-  --codex-dir "$CODEX_DIR" \
-  --copilot-dir "$COPILOT_DIR" \
-  --cwd "$PWD" \
-  --batches N
+subprocess.run([
+    sys.executable, ".agents/skills/ruminate/scripts/extract-conversations.py",
+    "<temporary-directory>/extracted",
+    "--claude-dir", str(Path.home() / ".claude/projects/<project-slug>"),
+    "--codex-dir", str(Path.home() / ".codex/sessions"),
+    "--cwd", str(Path.cwd()), "--batches", "2",
+], check=True)
 ```
 
-Choose N based on total extracted conversations (Claude + Codex + Copilot): ~1 batch per 20 conversations, minimum 2, maximum 10.
+Replace placeholders with actual temporary and project paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
+
+Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
 
 ### 4. Spawn analysis team
 
@@ -55,10 +60,13 @@ Analyze each batch with available general analysis subagents, following the mode
 
 Each agent's prompt should include:
 
-- The batch manifest path (`$OUT_DIR/batches/batch_N.txt`)
-- The output path (`$OUT_DIR/findings_N.md`)
+- The actual batch manifest path (`<temporary-directory>/extracted/batches/batch_N.txt`)
+- The actual output path (`<temporary-directory>/findings_N.md`)
 - The list of topics **already captured** in the brain (compiled from step 1) - so agents skip known knowledge
 - A reminder that each extracted file includes provider/source metadata headers (`[PROVIDER]`, `[CWD]`, `[SOURCE_FILE]`) and should be used as evidence context
+- Evidence rules: distinguish human messages from injected skill/system text, scripted probes, and evaluation prompts, even when stored with a `user` role. Only attributable human messages support user-preference findings.
+- Deduplication rules: group copied transcripts and guardian/approval review logs by original conversation, using root/thread metadata and overlapping message IDs or transcript content. Separate files alone do not establish independent conversations; report unique-conversation counts and uncertain attribution.
+- Quote verification: check each retained quote against the full raw `[SOURCE_FILE]`, including speaker and surrounding context. Record the source line or event and original conversation identity. Extraction may truncate messages; inspect retained-transcript sections even when expected root-conversation markers are absent.
 - Instructions to extract from each conversation:
   - **User corrections**: times the user corrected the assistant's approach, code, or understanding
   - **Recurring preferences**: things the user explicitly asked for or pushed back on repeatedly
@@ -71,7 +79,7 @@ Agents write structured findings to their output files.
 
 ### 5. Synthesize
 
-After all agents complete, read all findings files. Cross-reference with existing brain content. Deduplicate across batches.
+After all agents complete, read all findings files. Cross-reference with existing brain content. Deduplicate across batches. Before presenting a proposed finding, recheck its cited raw evidence and unique-conversation count; an analysis agent's summary alone is not proof.
 
 **Filter by frequency and impact.** Most findings won't be worth adding. Apply these filters before presenting:
 
@@ -96,10 +104,11 @@ Apply only the changes the user approves. Follow brain writing conventions:
 
 ### 7. Clean up
 
-Remove the temporary extraction directory:
+After all analysis finishes, remove only the temporary directory this invocation created. Replace the placeholder with the exact retained path, never a provider history directory:
 
-```bash
-rm -rf "$OUT_DIR"
+```python
+import shutil
+shutil.rmtree("<temporary-directory>")
 ```
 
 ## Guidelines

@@ -64,6 +64,9 @@ Each agent's prompt should include:
 - The actual output path (`<temporary-directory>/findings_N.md`)
 - The list of topics **already captured** in the brain (compiled from step 1) - so agents skip known knowledge
 - A reminder that each extracted file includes provider/source metadata headers (`[PROVIDER]`, `[CWD]`, `[SOURCE_FILE]`) and should be used as evidence context
+- Evidence rules: distinguish human messages from injected skill/system text, scripted probes, and evaluation prompts, even when stored with a `user` role. Only attributable human messages support user-preference findings.
+- Deduplication rules: group copied transcripts and guardian/approval review logs by original conversation, using root/thread metadata and overlapping message IDs or transcript content. Separate files alone do not establish independent conversations; report unique-conversation counts and uncertain attribution.
+- Quote verification: check each retained quote against the full raw `[SOURCE_FILE]`, including speaker and surrounding context. Record the source line or event and original conversation identity. Extraction may truncate messages; inspect retained-transcript sections even when expected root-conversation markers are absent.
 - Instructions to extract from each conversation:
   - **User corrections**: times the user corrected the assistant's approach, code, or understanding
   - **Recurring preferences**: things the user explicitly asked for or pushed back on repeatedly
@@ -76,7 +79,7 @@ Agents write structured findings to their output files.
 
 ### 5. Synthesize
 
-After all agents complete, read all findings files. Cross-reference with existing brain content. Deduplicate across batches.
+After all agents complete, read all findings files. Cross-reference with existing brain content. Deduplicate across batches. Before presenting a proposed finding, recheck its cited raw evidence and unique-conversation count; an analysis agent's summary alone is not proof.
 
 **Filter by frequency and impact.** Most findings won't be worth adding. Apply these filters before presenting:
 
