@@ -1,7 +1,7 @@
 ---
 name: guidance-review
 description: Review guidance for contradictions, ambiguity, duplication, omissions, and opportunities for concise wording.
-argument-hint: '[guidance text or path/to/file.md]'
+argument-hint: "[guidance text or path/to/file.md]"
 disable-model-invocation: true
 ---
 
@@ -16,7 +16,7 @@ Review `guidance_corpus` for:
 - ambiguous, confusing, or underspecified guidance;
 - unnecessary duplication;
 - information apparently missing for the guidance's stated purpose; and
-- wording that can be shortened without changing the intended meaning.
+- wording that is not as concise as possible without changing the intended meaning.
 
 Report findings by category. For each finding, identify the relevant text or location, explain the issue briefly, and suggest a correction when useful. Distinguish definite issues from possible omissions that depend on unstated context.
 

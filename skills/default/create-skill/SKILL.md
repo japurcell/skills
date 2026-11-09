@@ -5,6 +5,27 @@ description: Create or revise portable agent skills with clear triggers, focused
 
 # Create Skill
 
+## Core Principles
+
+### Concise is key
+
+The context window is a public good. A Skill shares the context window with everything else an agent needs, including:
+
+- The system prompt
+- Conversation history
+- Other Skills’ metadata
+- The user request
+
+Being concise in SKILL.md matters: once an agent loads it, every token competes with conversation history and other context. So keep SKILL.md and its associated resources as concise as possible while preserving intended behavior.
+
+**Default assumption**: The agent is already very smart
+
+Only add context the agent doesn’t already have. Challenge each piece of information:
+
+- “Does the agent really need this explanation?”
+- “Can I assume the agent has this information?”
+- “Does this paragraph justify its token cost?”
+
 ## Workflow
 
 1. **Scope the request**
@@ -17,16 +38,16 @@ description: Create or revise portable agent skills with clear triggers, focused
    - Activate the `writing-for-agents` skill for context cost, progressive disclosure, pointers, and focused edits.
 
 3. **Draft or revise the skill**
-   - Before pruning or restructuring, map every behavioral obligation to its replacement. Preserve explicit exclusions, conditions, approval requirements, and actionable task verification unless removal is authorized.
+   - Before pruning or restructuring, map every behavioral obligation to its replacement. Preserve explicit exclusions, conditions, approval requirements, and actionable task verification.
    - Write invocation instructions as “activate the `<name>` skill” or “activate the `<name>` and `<name>` skills”, including worker instructions.
    - Retain an existing `disable-model-invocation: true` unless a human explicitly approves removing it, for any reason.
    - Consult the [Claude Code frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) when choosing invocation controls and argument hints. Use documented field names and account for differences in other target hosts. Additionally, include `arguments`, `allowed-tools`, `disallowed-tools`, `compatibility` and any other helpful fields when known.
    - Keep the description trigger-oriented: state what the skill does and clear `Use when ...` conditions. Keep workflow steps in the body.
-   - Keep the body under 500 lines. Keep references one level deep, preferably in an immediate reference directory; link directly from SKILL.md with a loading condition and read needed references completely. References longer than 100 lines MUST start with a table of contents.
+   - Keep the body under 200 lines. Keep references one level deep, preferably in an immediate reference directory; link directly from SKILL.md with a loading condition and read needed references completely. References longer than 100 lines MUST start with a table of contents.
    - Keep resources self-contained within the bundle. Refer to other skills through activation language, and derive target-project details from its applicable instructions instead of linking to the author's repository documents.
    - Keep a skill's own maintenance and evaluation instructions in README.md files. When writing or running evaluations and benchmarks is the skill's task, keep that procedure in its runtime instructions and bundled references.
    - Follow the [effective-skills checklist](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#checklist-for-effective-skills). Spell out exact commands and paths when required by the skill's task.
-   - Always look for opportunities to extract deterministic behavior into skill-bundled scripts. This helps reduce inference costs by avoiding repeated judgment during skill execution.
+   - **Extract deterministic logic into skill-bundled scripts when it would otherwise be rewritten repeatedly or when a script materially improves reliability.** Reuse existing tools and commands directly when they already meet the task's needs. Scripts can run without loading their source into context, reducing context use and repeated inference. Follow CLI design best practices, provide actionable errors and clear usage documentation, and document required packages and verify their availability.
 
 4. **Write and run evaluations**
    - Add or update `evals/evals.json` with at least three realistic scenarios covering creation, modification, and a negative or duplicate-avoidance case.
