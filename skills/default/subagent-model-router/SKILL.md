@@ -8,6 +8,8 @@ compatibility: Requires python3
 
 Classify the task and use the bundled CLI to recommend a catalog model and effort policy. The catalog uses GitHub Copilot prices. Its capability classifications are provisional and its results do not establish live host availability.
 
+Reuse these instructions while they remain current and available in the agent’s context. Run the CLI and verify the final route separately for each assignment, including assignments to a reused agent.
+
 ## Classify the task
 
 Set `task.work` to `bounded`, `standard`, `coding`, `exploration`, `planning`, or `execplan`. Use `exploration` for bounded, low-risk exploration with clear requirements and straightforward verification; it is Fast. Use `standard` for exploration requiring substantive judgment or cross-file behavioral reasoning. Substantive judgment, agentic coding, deep debugging, and ordinary substantive review are at least Standard. High stakes, security sensitivity, difficult reasoning, repeated failures, or a best-quality request call for Premium. For reviews, set `task.review` to `mechanical`, `substantive`, or `security`. Read [review-routing.md](reference/review-routing.md) only when review type or risk classification is unclear.

@@ -11,8 +11,7 @@ Review the conversation and persist learnings - to `brain/`, to skill files, or 
 
 Track the review in the active plan when one exists; otherwise use the available planning tools or a short checklist.
 
-1. **Read `brain/index.md`** to understand what notes already exist
-2. **Scan the conversation** for:
+1. **Scan the conversation** for:
    - Mistakes made and corrections received
    - User preferences and workflow patterns
    - Codebase knowledge gained (architecture, gotchas, patterns)
@@ -20,9 +19,9 @@ Track the review in the active plan when one exists; otherwise use the available
    - Decisions made and their rationale
    - Friction in skill execution, orchestration, or delegation
    - Repeated manual steps that could be automated or encoded
-3. **Skip** anything trivial or already captured in existing brain files
-4. **Route each learning** to the right destination (see Routing below)
-5. **Reconcile navigation** using the brain skill; hooks own the root inventory
+2. **Identify lessons** that will matter in a future session. If none qualify, finish here.
+3. **Route each remaining learning** to the appropriate destination below. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover.
+4. **Reconcile navigation** using the brain skill after a brain write. Hooks own the root inventory.
 
 ## Routing
 

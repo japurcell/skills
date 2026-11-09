@@ -44,7 +44,7 @@ Extract only those learnings that are **likely to recur** and **actionable**. Us
 
 ## Formulate Scoped Edits
 
-Suggested edits must be **scoped** to the targeted skill's instructions and purpose.
+Compare each durable learning with the target skill’s loaded instructions. Skip it if an existing rule already covers the same case. Propose only the missing behavior within that skill’s scope.
 
 ## Output
 

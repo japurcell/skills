@@ -35,7 +35,7 @@ Only add context the agent doesn’t already have. Challenge each piece of infor
 
 2. **Activate authoring guidance**
    - Activate the `skill-creator` skill for the authoring and iteration workflow.
-   - Activate the `writing-for-agents` skill for context cost, progressive disclosure, pointers, and focused edits.
+   - When drafting or changing agent-facing guidance, activate the `writing-for-agents` skill. Skip it when the change is confined to evaluation fixtures or graders.
 
 3. **Draft or revise the skill**
    - Before pruning or restructuring, map every behavioral obligation to its replacement. Preserve explicit exclusions, conditions, approval requirements, and actionable task verification.
