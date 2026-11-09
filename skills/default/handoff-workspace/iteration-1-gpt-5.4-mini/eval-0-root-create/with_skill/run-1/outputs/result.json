@@ -1,5 +1,0 @@
-{
-  "written_path": ".agents/scratchpad/handoff.md",
-  "scope": "root-scoped",
-  "next_step": "Change build_retry_schedule() to return the expected backoff, then rerun `python3 -m pytest tests/test_auth_refresh.py -q`."
-}
