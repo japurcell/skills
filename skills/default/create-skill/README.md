@@ -4,7 +4,7 @@ This README holds repository conventions and evaluation instructions for maintai
 
 ## Repository boundaries
 
-For archive edit/baseline scope, installation ownership, and independent workflow boundaries, use [skill sources and installation](../../../brain/codebase/skills-and-installation.md). Read [repository workflow](../../../brain/codebase/repository-workflow.md) and [evaluation caveats](../../../brain/codebase/skill-evaluation.md) for work in this checkout. A maintained skill's own README owns skill-specific acceptance exceptions.
+For archive edit/baseline scope, installation ownership, and independent workflow boundaries, use [skill sources and installation](../../../brain/codebase/skills-and-installation.md). Read [repository workflow](../../../brain/codebase/repository-workflow.md) for work in this checkout. A maintained skill's own README owns skill-specific acceptance exceptions.
 
 ## Evaluation and validation workflow
 
@@ -20,6 +20,7 @@ For archive edit/baseline scope, installation ownership, and independent workflo
 
 5. **Validate**
    - After changing a skill definition, run `rtk proxy env PYTHONPATH=scripts/vendor python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/<skill-name>`; substitute `.agents/skills/<skill-name>` for a repo-local workflow. Honor the maintained skill's own README acceptance scope.
+   - This checkout's [validator](../skill-creator/scripts/quick_validate.py) accepts `argument-hint` and `disable-model-invocation`. Check the validator in use when another installation rejects either field.
    - Run existing focused public-CLI checks when changing grader behavior; the validation and evidence section below explains the checks and evidence limits.
    - Run `python3 -m py_compile skills/default/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
    - Run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.

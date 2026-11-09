@@ -14,7 +14,7 @@
 | Emitters, traces, transcripts, audit/log maintenance | [Hook observability](hook-observability.md) and [hook tests](hook-testing.md) |
 | Tool Guardian, scanner security, performance acceptance | [Security testing](security-testing.md) |
 | Installed provider event delivery/visible messages | [Live-hook evidence](live-hook-testing.md) |
-| Skills, graders, evaluation artifacts | [Skill evaluation](skill-evaluation.md) |
+| Skills, graders, evaluation artifacts | [Repository validation commands](../../skills/default/create-skill/README.md#evaluation-and-validation-workflow) and [evaluation evidence](../../skills/default/create-skill/references/validation.md) |
 | Shell/Python helper scripts | [Script validation and fixtures](script-testing.md) |
 | Bash/PowerShell installers and agent conversion | [Installer validation](installer-testing.md) |
 | PowerShell/native Windows behavior | [PowerShell parity and native proof](powershell-installers.md) |

@@ -1,7 +1,6 @@
 # Codebase
 
 - [agents-installation](agents-installation.md)
-- [argument-hint-notation](argument-hint-notation.md)
 - [Brain hooks](brain-hooks.md)
 - [hook-observability](hook-observability.md)
 - [hook-testing](hook-testing.md)
@@ -20,6 +19,5 @@
 - [secret-scanner-recovery](secret-scanner-recovery.md)
 - [security-hooks](security-hooks.md)
 - [security-testing](security-testing.md)
-- [skill-evaluation](skill-evaluation.md)
 - [skills-and-installation](skills-and-installation.md)
 - [testing](testing.md)

@@ -16,7 +16,6 @@
 ## codebase
 
 - [codebase/agents-installation](<codebase/agents-installation.md>)
-- [codebase/argument-hint-notation](<codebase/argument-hint-notation.md>)
 - [codebase/brain-hooks](<codebase/brain-hooks.md>)
 - [codebase/hook-observability](<codebase/hook-observability.md>)
 - [codebase/hook-testing](<codebase/hook-testing.md>)
@@ -36,7 +35,6 @@
 - [codebase/secret-scanner](<codebase/secret-scanner.md>)
 - [codebase/security-hooks](<codebase/security-hooks.md>)
 - [codebase/security-testing](<codebase/security-testing.md>)
-- [codebase/skill-evaluation](<codebase/skill-evaluation.md>)
 - [codebase/skills-and-installation](<codebase/skills-and-installation.md>)
 - [codebase/testing](<codebase/testing.md>)
 
