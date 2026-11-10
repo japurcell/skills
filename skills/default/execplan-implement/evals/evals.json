@@ -175,6 +175,20 @@
         "Uses explicit high effort because the task is material planning and the user explicitly requested it.",
         "Records the exact model/effort pair and preserves runtime deadline enforcement."
       ]
+    },
+    {
+      "id": 14,
+      "eval_name": "model-choice-and-routing-authorization",
+      "prompt": "Give a read-only dispatch decision using execplan-implement and subagent-model-router; do not dispatch, edit, or claim a route was run. Evaluate each case independently. (A) The user authorizes implementation, delegation, and the routing controls needed by the skill, but names no model and has no model preference; controls are permitted and a live route is available. (B) The user explicitly names an exact model; host policy permits it and live acceptance is confirmed. (C) The selected model is available, but the caller is forbidden from setting the required model control. (D) The caller may set the control, but the selected model is reported unavailable live. For each, say whether to ask the user for a model, what to do next, and how to name any blocker. State the effort rule for routine implementation versus material planning with an explicit user effort request.",
+      "expected_output": "A: use the router's normal recommendation without asking the user to choose; authorization to delegate or use controls is not a model preference. B: use the exact user-selected model subject to host restrictions and acceptance. C: stop and name the permission/control blocker, not a capability gap or a reason to ask for a different model. D: treat live unavailability separately from permission and follow the router's fallback policy or stop if no fallback is dispatchable. Routine implementation uses host_default with effort omitted; material planning with an explicit user effort request uses that exact supported effort.",
+      "files": [],
+      "assertions": [
+        "Uses normal router selection without asking for a model when the user authorizes delegation or control use but names no exact model.",
+        "Honors an explicitly named exact model subject to restrictions and live acceptance.",
+        "Distinguishes permission to set controls from model capability and does not ask the user to choose a replacement model for a permission failure.",
+        "Distinguishes live model unavailability from a control permission failure and follows router fallback rules.",
+        "Uses host_default with omitted effort for routine implementation and explicit effort for material planning when the user requests it."
+      ]
     }
   ]
 }

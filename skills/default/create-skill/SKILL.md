@@ -58,6 +58,7 @@ Only add context the agent doesn’t already have. Challenge each piece of infor
    - Use the target project's existing validation tools and maintained skill's acceptance scope. Resolve tooling from the available skill installation rather than assuming the author's checkout layout.
 
 5. **Review the result**
+   - Compress changed passages before finalizing. Remove repetition and explanation that adds no behavioral guidance; preserve every obligation, condition, exception, and safeguard.
    - Check that each runtime reference resolves within the bundle and has a distinct loading trigger.
    - Confirm that another project can use the skill without this repository's documents or checkout layout.
    - Preserve unrelated content and report the changed source, verification performed, and any unresolved limits.
