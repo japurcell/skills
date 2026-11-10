@@ -39,7 +39,7 @@ If the user has already given enough direction, state your assumptions and move 
 
 If the design has to fit an existing codebase:
 
-1. Launch 2+ `code-explorer` subagents in parallel with different lenses using the `explore` skill:
+1. Launch 2+ `code-explorer` subagents in parallel with different lenses:
    - similar features and neighboring modules
    - integration points, data flow, or extension points
    - testing, operational, or UX constraints

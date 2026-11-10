@@ -28,7 +28,7 @@ Build a shortlist of changed functions, classes, modules, tests, configs, script
 
 ## 3. Find duplication
 
-Activate or load the `explore` skill to dispatch 1-3 `code-explorer` subagents scaled to scope size.
+Dispatch 1-3 `code-explorer` subagents scaled to scope size, or inspect the relevant code directly for a narrow scope.
 
 Search shortlist items against relevant nearby/codebase patterns for:
 

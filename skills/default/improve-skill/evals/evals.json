@@ -42,23 +42,6 @@
         "The change is minimal and surgical.",
         "No unrelated rules are removed or modified."
       ]
-    },
-    {
-      "id": 2,
-      "prompt": "Use the skill under test to improve the `explore` skill based on session notes in `evals/files/noop-session/session_notes.md` which contain only a one-time network timeout and files merely opened. Apply the skill to `skills/default/explore/SKILL.md` and save the output to `outputs/explore/SKILL.md`.",
-      "expected_output": "Recognizes that the session notes contain no durable learnings and leaves the explore skill unchanged, explaining that no updates were needed.",
-      "files": [
-        "evals/files/noop-session/session_notes.md",
-        "skills/default/explore/SKILL.md"
-      ],
-      "expectations": [
-        "No changes are written to outputs/explore/SKILL.md.",
-        "The output explains that no durable learnings were found because they were temporary blockers or files merely opened."
-      ],
-      "assertions": [
-        "No changes are written to outputs/explore/SKILL.md.",
-        "The output explains that no durable learnings were found because they were temporary blockers or files merely opened."
-      ]
     }
   ]
 }

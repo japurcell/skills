@@ -14,7 +14,6 @@ Create an unambiguous, implementation-ready PRD from the conversation and codeba
 - Do not implement or write code.
 - Do not interview the user; make reasonable assumptions and document them. If unsafe/contradictory, stop and report the blocker.
 - Follow existing codebase patterns. Prefer YAGNI.
-- If codebase context is missing, activate or load the `explore` skill.
 - Check available workspace conventions: `AGENTS.md`, scoped docs, repo docs, scripts, tests, existing modules/patterns.
 - Do not invent commands, files, paths, schemas, URLs, literals, DB objects, or conventions. Use exact names only when verified or clearly inferable.
 - Define each path, schema, key format, command, contract, and rollout order in one canonical place, then reference it consistently.
@@ -28,7 +27,7 @@ Save to `.agents/scratchpad/[feature-name]/prd.md`, where `[feature-name]` is sh
 ## Workflow
 
 1. Activate or load the `delegate-to-subagents` skill and delegate tasks to the most suitable subagents whenever possible.
-2. If codebase context is missing, activate or load the `explore` skill.
+2. Before drafting, fill any missing codebase context by dispatching 1-3 code-explorer subagents, scaled to scope, to inspect relevant repository files and conventions.
 3. Identify existing patterns, affected modules, contracts, test seams, risks, edge cases, rollout constraints, and conflicts with workspace conventions.
 4. Draft the PRD using the template below.
 5. Validate consistency across sections, especially requirements, acceptance criteria, technical decisions, Definition of Done, paths, schemas, commands, examples, and execution order.

@@ -126,27 +126,6 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
             expectation("The update is minimal and preserves general structure.", is_minimal, evidence),
         ]
 
-    if eval_id == 2:
-        explore_skill_path = outputs_dir / "explore" / "SKILL.md"
-        exists = explore_skill_path.exists()
-        content = read_text(explore_skill_path)
-        
-        # If it doesn't exist, that is actually correct since noop means no changes!
-        # If it exists, it should be identical to the original explore skill.
-        orig_explore_path = Path("skills/default/explore/SKILL.md")
-        orig_content = read_text(orig_explore_path)
-        is_identical = content == orig_content if exists else True
-        
-        explanation = read_text(run_dir / "transcript.md") + read_text(run_dir / "session.jsonl")
-        no_durable_noted = any(x in explanation.lower() for x in ["temporary", "noise", "no change", "noop", "non-durable"])
-        
-        evidence = f"File exists: {exists}. No-change explanation found: {no_durable_noted}."
-
-        return [
-            expectation("outputs/explore/SKILL.md is either not created or remains identical to source.", is_identical, evidence),
-            expectation("The run explanation notes that the learning was non-durable or noise.", no_durable_noted, evidence),
-        ]
-
     return [expectation(f"Unknown eval id {eval_id}.", False, f"Unsupported eval: {eval_id}")]
 
 
