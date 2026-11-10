@@ -1,14 +1,22 @@
 # Accomplishment report maintenance
 
-This opt-in Forest Service skill produces a sibling Markdown report for a completed ExecPlan. It activates `exec-plans` for plan interpretation and `agency-priorities` for strategic alignment. Its description enables model invocation at closeout; it does not install a filesystem hook or change the shared planning skill.
+This opt-in Forest Service skill produces one concise, copy-ready accomplishment paragraph and brief calculation notes for a completed ExecPlan. It activates `exec-plans` for plan interpretation and `agency-priorities` for supported alignment. Its description enables model invocation at closeout; it does not install a filesystem hook or change the shared planning skill.
+
+## Invocation
+
+Pass the hourly wage and currency as a skill argument: `$accomplishment-report --hourly-wage 100 USD` (or `/accomplishment-report --hourly-wage 100 USD` on slash-command hosts). This supplies USD 100 per human hour for the current report. An explicit argument overrides older rates; omission retains the existing behavior of using a user-supplied task rate or asking for one. Invalid or incomplete arguments require correction before a cost claim.
 
 ## Evaluation
 
-`evals/evals.json` contains three synthetic scenarios: completed work with known base costs, an existing report with unsupported savings and missing telemetry, and stale completion checkboxes with unresolved acceptance. Run each prompt with the exact local skill and without it, using the same model and supplied facts. Keep generated outputs in a sibling `accomplishment-report-workspace/iteration-N/`, outside this installed bundle.
+`evals/evals.json` contains creation, revision, and incomplete-work scenarios with realistic wage and effort evidence, plus missing-wage, insufficient-effort, zero-savings, negative-savings, explicit-argument, and invalid-argument branches. Each `files` entry points to a reusable input under `evals/fixtures/`; scenarios may share a fixture. For every run, copy the referenced fixture contents into a fresh isolated run root, run the prompt there with the exact local skill or without it, and keep generated outputs in a sibling `accomplishment-report-workspace/iteration-N/`, outside this installed bundle. Never run a scenario against the shared fixture itself.
 
-For each scenario, inspect the report and action transcript against every assertion. Verify the destination and preservation of existing content. Calculate all cost rows independently, including negative savings. Confirm that incomplete work produces no report. Treat unavailable output as failed, not a passing absence check: the negative case needs an explicit response explaining the unresolved acceptance.
+For each scenario, inspect the paragraph, calculation notes, and action transcript against every assertion. Verify the destination and preservation of existing content. Recalculate savings independently, check that missing wage leads to a question rather than a cost claim, and confirm that incomplete work produces no report. Treat unavailable output as failed, not a passing absence check.
 
-For the measured fixture, the base case is 24 human-only hours at USD 100/hour, versus 6 assisted human hours plus USD 40 AI spend: USD 2,400 versus USD 640, USD 1,760 estimated savings, 73.33%, and 18 human hours saved. Ten aggregate agent-hours and four elapsed hours are separate measures. Scenario assumptions and simulated evidence are not real project measurements.
+Before running, confirm each rate and hour estimate required by the rubric is present in the prompt or fixture. Keep missing inputs intentional in clarification scenarios.
+
+Executing agents receive only the prompt and fixture files. Keep `expected_output` and assertions out of their context; provide them only to graders after the run is complete.
+
+Fixtures are synthetic; their assumptions are not real project measurements. AI tool spend and net-cost claims are outside this skill's labor-savings measure.
 
 Check bundle metadata with the available skill-creator `scripts/quick_validate.py`, and from the repository root run `python3 scripts/validate-skill-sources.py skills`. Review report quality as well as assertion totals. One sample per scenario does not establish reliability, trigger performance, or productivity gains.
 
