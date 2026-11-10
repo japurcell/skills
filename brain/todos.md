@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 27 -->
+<!-- next-id: 28 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -30,3 +30,9 @@
 
 
 23. [ ] Investigate Cursor’s formal verification skill: [create-formal-verification-skill](https://github.com/cursor/plugins/blob/main/pstack/skills/create-formal-verification-skill/SKILL.md).
+
+
+## Skills
+
+27. [ ] Fix `execplan-implement` skill. Agent asked user to pick the model when invoking the `execplan-implement` skill instead of using `subagent-model-router`. When asked why, it replied: "I conflated permission to apply model overrides with choosing the model. That was the wrong question. You delegated model selection to subagent-model-router. I should use its recommendation, not ask you to choose." [Skill](../skills/default/execplan-implement/SKILL.md)
+
