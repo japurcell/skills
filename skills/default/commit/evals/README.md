@@ -50,8 +50,20 @@ Write `eval_metadata.json` beside the configuration directories with `eval_id: 4
 the scenario name, prompt, and assertions from `evals.json`. Replace `<run-dir>`
 in that prompt with the prepared absolute path, then give the prompt to the agent.
 The agent may change only the draft and fixture repository and write its response
-under `outputs/`. It must preserve the supplied skill, instrumentation, Git
-configuration, and evidence files.
+under `outputs/`. It must preserve the supplied skill, instrumentation, and Git
+configuration. Prohibit direct edits to `fixture.json` and `events.jsonl`, while
+explicitly allowing the bundled validator and Git hook to append their own
+observations to `events.jsonl`.
+
+Run each provider turn with the prepared `repo/` as its working directory. For
+Codex workspace-write sessions, pass the absolute run directory with `--add-dir`
+on both the initial invocation and the resume, so observers can append evidence
+and message drafts can be written outside `repo/`. Resume the same persistent
+session for contribution and commit turns; do not use an ephemeral session.
+For Copilot, use `--session-id` for the new session, `--resume=<id>` for the
+second turn, and `--add-dir` for the run directory. Do not combine `--trust-folder`
+with `--session-id`: the CLI rejects that combination. Record provider versions,
+model and reasoning settings, and use the same settings for paired runs.
 
 The copied validator records its actual exit status, input path, and message in
 `events.jsonl`, including the actual argument vector passed to the validator. A
