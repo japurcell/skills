@@ -347,9 +347,81 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
         return [expectation("Observed workflow evidence is complete and readable.", False, str(error))]
 
 
+def eval_attribution_workflow(run_dir: Path) -> list[dict]:
+    try:
+        events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines()]
+        fixture = json.loads((run_dir / "fixture.json").read_text())
+        expected_coauthors = fixture.get("expected_coauthors", [])
+        validations = [(index, event) for index, event in enumerate(events) if event.get("kind") == "validation"]
+        commits = [(index, event) for index, event in enumerate(events) if event.get("kind") == "commit"]
+        if not validations or len(commits) != 1:
+            raise ValueError("expected a validator observation and exactly one commit observation")
+        repo = run_dir / "repo"
+
+        def git(*args):
+            return subprocess.run(
+                ["git", *args], cwd=repo, capture_output=True, text=True, check=True, timeout=10,
+            ).stdout
+
+        initial_head = fixture["initial_head"]
+        count = git("rev-list", "--count", f"{initial_head}..HEAD").strip()
+        paths = git("diff", "--name-only", initial_head, "HEAD").splitlines()
+        message = git("log", "-1", "--format=%B").rstrip("\n")
+        author = git("show", "-s", "--format=%an <%ae>", "HEAD").strip()
+        committer = git("show", "-s", "--format=%cn <%ce>", "HEAD").strip()
+        last_index, last = validations[-1]
+        commit_index, commit = commits[0]
+        final_message = last.get("message", "")
+        argv = last.get("argv")
+        observed_coauthors = []
+        if isinstance(argv, list) and all(isinstance(arg, str) for arg in argv):
+            cursor = 0
+            while cursor < len(argv):
+                if argv[cursor] == "--co-author":
+                    if cursor + 1 == len(argv):
+                        observed_coauthors.append("<missing value>")
+                        break
+                    observed_coauthors.append(argv[cursor + 1])
+                    cursor += 2
+                else:
+                    cursor += 1
+        actual_trailers = [line for line in message.splitlines() if line.startswith("Co-authored-by: ")]
+        expected_trailers = [f"Co-authored-by: {identity}" for identity in expected_coauthors]
+        expectations = [
+            expectation("The agent's edit is the only committed change in one commit.",
+                        count == "1" and paths == ["notes.txt"]
+                        and git("show", "HEAD:notes.txt") == fixture["expected_content"]
+                        and git("status", "--porcelain") == "",
+                        json.dumps({"count": count, "paths": paths, "author": author, "committer": committer})),
+            expectation("The final validator invocation supplies every expected co-author once.",
+                        observed_coauthors == expected_coauthors and last.get("exit_code") == 0 and last_index < commit_index,
+                        json.dumps({"argv": argv, "observed_coauthors": observed_coauthors,
+                                    "expected_coauthors": expected_coauthors, "validation": last})),
+            expectation("The actual Git message contains exactly the expected co-author trailers and matches validation.",
+                        all(actual_trailers.count(trailer) == 1 for trailer in expected_trailers)
+                        and len(actual_trailers) == len(expected_coauthors)
+                        and final_message.rstrip("\n") == commit.get("message", "").rstrip("\n") == message,
+                        json.dumps({"actual_trailers": actual_trailers,
+                                    "expected_trailers": expected_trailers, "message": message})),
+            expectation("The fixture Git author and committer identities remain unchanged.",
+                        author == committer == "Workflow Fixture <fixture@example.com>",
+                        json.dumps({"author": author, "committer": committer})),
+        ]
+        if fixture.get("repository_policy") is not None:
+            policy_file = fixture.get("policy_file")
+            policy_content = git("show", f"{initial_head}:{policy_file}")
+            expectations.append(expectation("The repository policy was part of the fixture before the evaluated turn.",
+                                             policy_content == fixture["repository_policy"], policy_content))
+        return expectations
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        return [expectation("Observed attribution workflow evidence is complete and readable.", False, str(error))]
+
+
 def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
     if eval_id in (4, 5):
         return eval_validation_workflow(run_dir)
+    if eval_id in (6, 7, 8, 9, 10, 11, 12):
+        return eval_attribution_workflow(run_dir)
     result = read_json(run_dir / "outputs" / "result.json")
     if not result:
         return [expectation("result.json exists and is valid JSON.", False, "missing or invalid outputs/result.json")]

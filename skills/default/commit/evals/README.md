@@ -73,6 +73,9 @@ Its fixture metadata supplies the expected identity to the grader. The grader
 requires the final successful validator invocation to pass that identity once
 with `--co-author`, and checks that the actual Git message contains the matching
 trailer exactly once. Missing or malformed argument evidence fails grading.
+Use one Codex CLI session from the prepared `repo/` directory. Send the
+scenario's `contribution_prompt` first, then resume that same session with its
+ordinary `prompt`; the commit prompt contains no attribution hint.
 
 Grade the completed iteration:
 
@@ -86,3 +89,41 @@ grading. Preserve failed baseline results. One run per configuration demonstrate
 the observed case, not reliability across repeated model runs. Report measured
 wall time separately from unavailable token usage; the shared aggregator may
 substitute output characters for missing tokens.
+
+Scenario 6 checks Copilot attribution after a same-session contribution. Prepare
+it using the Copilot fixture:
+
+```sh
+python3 skills/default/commit/evals/prepare_validation_workflow.py \
+  <iteration>/eval-6-copilot-default-attribution/<configuration>/run-1 \
+  <skill-snapshot> \
+  --fixture skills/default/commit/evals/files/copilot-attribution/input.json
+```
+
+Use one Copilot CLI session for both scenario prompts. From the prepared `repo/`
+directory, send `contribution_prompt` first and verify the edit without
+committing; resume that same session with the ordinary `prompt`. Do not add
+attribution hints. Run the baseline from `iteration-5/baseline-skill/` and the
+candidate from a frozen candidate snapshot, with identical model settings per
+provider. Record CLI version, selected model, transcripts, actual validator
+arguments, committed message, and initial/final author metadata. Keep each run
+in a fresh directory. The grader inspects the argument vector, final Git
+message, changed paths, and unchanged fixture author; agent claims are not
+grading evidence.
+
+Use actual Codex and Copilot CLIs for their respective cases. Scenario 6 stores
+two prompts so the commit request itself remains neutral: the preceding turn
+establishes contribution, then the ordinary commit prompt measures attribution.
+
+Scenarios 7-12 exercise attribution precedence and exclusions with the same
+observed workflow grader: explicit identity, explicit opt-out, repository
+suppression, user identity over conflicting repository policy, no contribution,
+and preservation/deduplication of an existing matching trailer plus another
+established contributor. Prepare each from the fixture path named in
+`evals.json`. When a `contribution_prompt` exists, send it first in the same
+provider session and resume with that scenario's `prompt`. Scenario 11 has no
+contribution turn and starts with another person's staged change. Scenarios 9
+and 10 commit their repository policy in `AGENTS.md` as initial fixture state.
+The fixture's `expected_coauthors` is grading metadata; do not disclose it to
+the provider unless the scenario prompt itself supplies an explicit user
+identity. Keep the observed validator options and commit message for every run.

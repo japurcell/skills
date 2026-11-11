@@ -51,10 +51,11 @@ class WorkflowGradingTests(unittest.TestCase):
         )
 
     def grade(self, iteration, run):
-        subprocess.run(
+        result = subprocess.run(
             [sys.executable, str(GRADER), str(iteration)],
-            check=True, capture_output=True, text=True, timeout=10,
+            check=False, capture_output=True, text=True, timeout=10,
         )
+        self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads((run / "grading.json").read_text())
 
     def test_observed_failure_repair_revalidation_and_commit_pass(self):
@@ -235,6 +236,95 @@ class WorkflowGradingTests(unittest.TestCase):
         (run.parent.parent / "eval_metadata.json").write_text('{"eval_id": 5}\n')
         grading = self.grade(iteration, run)
         self.assertEqual(grading["summary"]["failed"], 0, grading)
+
+    def test_copilot_attribution_scenario_uses_fixture_expected_identity(self):
+        author = "Copilot <223556219+Copilot@users.noreply.github.com>"
+        fixture = {
+            "before": "Support hours: weekdays.\n",
+            "after": "Support hours: weekdays.\nResponse target: one business day.\n",
+            "draft": "docs: document response target\u2028\u2028Summary:\u2028- Document the target.\u2028\u2028Rationale:\u2028- Clarify timing.\u2028\u2028Tests:\u2028- not run\u2028",
+            "expected_coauthors": [author],
+            "agent_edits": True,
+        }
+        iteration, run = self.prepare(fixture)
+        self.assertEqual(self.validate(run).returncode, 1)
+        self.repair(run)
+        (run / "repo/notes.txt").write_text(fixture["after"], encoding="utf-8")
+        subprocess.run(["git", "add", "notes.txt"], cwd=run / "repo", check=True, timeout=5)
+        message = run / "message.txt"
+        message.write_text(message.read_text() + "\nCo-authored-by: " + author + "\n")
+        self.assertEqual(self.validate(run, options=("--co-author", author)).returncode, 0)
+        self.commit(run)
+        (run.parent.parent / "eval_metadata.json").write_text('{"eval_id": 6}\n')
+        grading = self.grade(iteration, run)
+        self.assertEqual(grading["summary"]["failed"], 0, grading)
+
+    def test_copilot_eval_separates_contribution_from_neutral_commit_request(self):
+        scenarios = json.loads((SKILL / "evals" / "evals.json").read_text())["evals"]
+        scenario = next(item for item in scenarios if item["id"] == 6)
+        self.assertIn("Do not commit.", scenario["contribution_prompt"])
+        self.assertEqual(scenario["prompt"], "Commit the current change.")
+        self.assertNotIn("co-author", scenario["prompt"].lower())
+        self.assertNotIn("trailer", scenario["prompt"].lower())
+
+    def test_codex_eval_does_not_prompt_for_attribution(self):
+        scenarios = json.loads((SKILL / "evals" / "evals.json").read_text())["evals"]
+        scenario = next(item for item in scenarios if item["id"] == 5)
+        self.assertIn("Do not commit.", scenario["contribution_prompt"])
+        self.assertNotIn("co-author", scenario["prompt"].lower())
+        self.assertNotIn("trailer", scenario["prompt"].lower())
+        self.assertNotIn("attribution", scenario["prompt"].lower())
+
+    def test_repository_policy_fixture_is_committed_before_agent_turn(self):
+        policy = "Commit messages must omit all co-author trailers.\n"
+        fixture = {
+            "before": "Support hours: weekdays.\n",
+            "after": "Support hours: weekdays.\nResponse target: one business day.\n",
+            "draft": "docs: document response target\\u2028\\u2028Summary:\\u2028- Document the target.\\u2028\\u2028Rationale:\\u2028- Clarify timing.\\u2028\\u2028Tests:\\u2028- not run\\u2028",
+            "expected_coauthors": [],
+            "agent_edits": True,
+            "policy_file": "AGENTS.md",
+            "repository_policy": policy,
+        }
+        _, run = self.prepare(fixture)
+        self.assertEqual((run / "repo/AGENTS.md").read_text(), policy)
+        actual = subprocess.run(
+            ["git", "show", "HEAD:AGENTS.md"], cwd=run / "repo",
+            check=True, capture_output=True, text=True, timeout=5,
+        )
+        self.assertEqual(actual.stdout, policy)
+
+    def test_override_optout_no_contribution_and_dedup_fixtures_grade(self):
+        evals = SKILL / "evals"
+        cases = (
+            (7, "explicit-identity-override"),
+            (8, "explicit-opt-out"),
+            (10, "user-overrides-repository-policy"),
+            (11, "no-agent-contribution"),
+            (12, "preserve-and-deduplicate-contributors"),
+        )
+        for eval_id, name in cases:
+            with self.subTest(name=name):
+                fixture = json.loads((evals / "files" / name / "input.json").read_text())
+                iteration, run = self.prepare(fixture)
+                if fixture["agent_edits"]:
+                    (run / "repo/notes.txt").write_text(fixture["after"], encoding="utf-8")
+                    subprocess.run(["git", "add", "notes.txt"], cwd=run / "repo", check=True, timeout=5)
+                authors = fixture["expected_coauthors"]
+                message = (
+                    "docs: record review reminder\n\n"
+                    "Summary:\n- Record the review reminder.\n\n"
+                    "Rationale:\n- Keep the change clear.\n\n"
+                    "Tests:\n- Not run (documentation-only change).\n"
+                ) + "".join(f"\nCo-authored-by: {author}" for author in authors) + "\n"
+                message_path = run / "message.txt"
+                message_path.write_text(message, encoding="utf-8")
+                options = tuple(arg for author in authors for arg in ("--co-author", author))
+                self.assertEqual(self.validate(run, options=options).returncode, 0)
+                self.commit(run)
+                (run.parent.parent / "eval_metadata.json").write_text(json.dumps({"eval_id": eval_id}) + "\n")
+                grading = self.grade(iteration, run)
+                self.assertEqual(grading["summary"]["failed"], 0, grading)
 
 
 if __name__ == "__main__":

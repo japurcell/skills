@@ -78,17 +78,152 @@
     {
       "id": 5,
       "name": "codex-default-attribution",
-      "prompt": "Apply only the supplied commit skill snapshot at <run-dir>/skill/SKILL.md; ignore other installed copies. Work only in the prepared repository <run-dir>/repo. Add the one-business-day response target to notes.txt, stage that file, and commit exactly once without pushing. Use <run-dir>/message.txt as the initial message draft and run its bundled validator before editing it. You produced the notes.txt change during this session; the user has not supplied a co-author identity or asked to omit attribution. Use the ordinary commit workflow without asking the user to supply an attribution identity. Validate the exact file supplied to git commit. Do not modify the supplied skill, instrumentation, Git hooks, Git configuration, fixture.json, or events.jsonl. Keep evidence files outside the repository. Save a concise result to <run-dir>/outputs/response.md with commands, validation outcomes, and the commit SHA or blocker.",
-      "expected_output": "The agent edits and stages notes.txt, repairs and revalidates the malformed message, supplies its verified Codex identity to the validator, and makes one scoped commit with exactly one Codex co-author trailer.",
+      "prompt": "Apply only the supplied commit skill snapshot at <run-dir>/skill/SKILL.md; ignore other installed copies. Work only in the prepared repository <run-dir>/repo. Commit the current change exactly once without pushing. Use <run-dir>/message.txt as the initial message draft. First run the bundled validator on that draft before editing it; then follow the skill to resolve validation failures and commit. The corrected draft may use a new file inside the run directory; validate the exact file supplied to git commit. The staged change documents a one-business-day support response target. Do not modify the supplied skill, instrumentation, Git hooks, Git configuration, fixture.json, or events.jsonl. Keep all evidence files outside the repository. Save a concise result to <run-dir>/outputs/response.md with commands, validation outcomes, and the commit SHA or blocker.",
+      "expected_output": "After a same-session contribution turn, a normal commit request repairs/revalidates the draft and commits one scoped change with the resolved Codex default trailer.",
       "files": [
         "evals/files/agent-attribution/input.json"
       ],
       "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/evals/files/agent-attribution/input.json",
       "assertions": [
-        "The prepared repository starts clean with the notes.txt change left for the agent to make.",
+        "The prepared repository starts clean with the notes.txt change left for the agent to make in the contribution turn.",
         "The initial malformed draft fails validation and the repaired message is revalidated before committing.",
         "The final validator argv contains the expected Codex identity exactly once.",
         "The actual Git commit contains exactly one matching Codex trailer and only the notes.txt change."
+      ],
+      "contribution_prompt": "Add the one-business-day response target to notes.txt. Do not commit."
+    },
+    {
+      "id": 6,
+      "name": "copilot-default-attribution",
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "prompt": "Commit the current change.",
+      "expected_output": "After the contribution turn, a normal commit request creates exactly one scoped commit with one Copilot trailer and a matching validator option.",
+      "files": [
+        "evals/files/copilot-attribution/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/evals/files/copilot-attribution/input.json",
+      "assertions": [
+        "Use the supplied skill snapshot in the prepared repository.",
+        "The first turn makes the notes.txt edit and does not commit.",
+        "The second turn is only the normal commit request shown in prompt.",
+        "The final successful validator argv contains the expected Copilot identity exactly once.",
+        "The actual Git message contains exactly one matching Copilot trailer and only the notes.txt change.",
+        "The fixture Git author remains unchanged."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "explicit-identity-override",
+      "prompt": "Commit the current change with co_author \"User <user@example.com>\".",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/explicit-identity-override/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/explicit-identity-override/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "expected_coauthors": [
+        "User <user@example.com>"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "explicit-opt-out",
+      "prompt": "Commit the current change. Do not add co-author attribution.",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/explicit-opt-out/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/explicit-opt-out/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "expected_coauthors": []
+    },
+    {
+      "id": 9,
+      "name": "repository-policy",
+      "prompt": "Commit the current change.",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/repository-policy/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/repository-policy/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "expected_coauthors": []
+    },
+    {
+      "id": 10,
+      "name": "user-overrides-repository-policy",
+      "prompt": "Commit the current change with co_author \"User <user@example.com>\".",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/user-overrides-repository-policy/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/user-overrides-repository-policy/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "expected_coauthors": [
+        "User <user@example.com>"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "no-agent-contribution",
+      "prompt": "Commit the current change.",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/no-agent-contribution/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/no-agent-contribution/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "setup_note": "No contribution turn is run; the agent is asked only to commit the pre-existing staged change.",
+      "expected_coauthors": []
+    },
+    {
+      "id": 12,
+      "name": "preserve-and-deduplicate-contributors",
+      "prompt": "Use message.txt as the draft. The existing Other <other@example.com> trailer identifies an established contributor and must be preserved. Commit the current change.",
+      "expected_output": "The actual Git message, validator argv, selected files, and fixture author follow the stated attribution precedence.",
+      "files": [
+        "files/preserve-and-deduplicate-contributors/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/files/preserve-and-deduplicate-contributors/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "contribution_prompt": "Add the exact line \"Review changes before committing.\" to notes.txt. Do not commit.",
+      "expected_coauthors": [
+        "Copilot <223556219+Copilot@users.noreply.github.com>",
+        "Other <other@example.com>"
       ]
     }
   ]

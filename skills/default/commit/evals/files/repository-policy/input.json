@@ -1,0 +1,9 @@
+{
+  "before": "Support hours: weekdays.\n",
+  "after": "Support hours: weekdays.\nReview changes before committing.\n",
+  "draft": "docs: add review reminder\n\nSummary:\n- Add review reminder.\n\nRationale:\n- Record the requested note.\n\nTests:\n- Not run (documentation-only change).\n",
+  "expected_coauthors": [],
+  "agent_edits": true,
+  "policy_file": "AGENTS.md",
+  "repository_policy": "For this repository, commit messages must not contain Co-authored-by trailers.\n"
+}

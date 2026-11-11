@@ -31,6 +31,15 @@ def prepare(run, skill, fixture_path=None):
     agent_edits = fixture.get("agent_edits", False)
     if type(agent_edits) is not bool:
         raise ValueError("workflow fixture agent_edits must be a boolean")
+    policy_file = fixture.get("policy_file")
+    repository_policy = fixture.get("repository_policy")
+    if repository_policy is not None:
+        if (not isinstance(policy_file, str) or not policy_file
+                or Path(policy_file).name != policy_file or policy_file in {".", ".."}
+                or not isinstance(repository_policy, str) or not repository_policy.strip()):
+            raise ValueError("workflow fixture repository policy needs a safe filename and nonempty text")
+    elif policy_file is not None:
+        raise ValueError("workflow fixture policy_file requires repository_policy text")
     (run / "message.txt").write_bytes(fixture["draft"].encode("utf-8"))
     repo = run / "repo"
     repo.mkdir()
@@ -48,13 +57,17 @@ def prepare(run, skill, fixture_path=None):
         git("config", key, value)
     notes = repo / "notes.txt"
     notes.write_text(fixture["before"], encoding="utf-8")
-    git("add", "notes.txt")
+    if repository_policy is not None:
+        (repo / policy_file).write_text(repository_policy, encoding="utf-8")
+    git("add", "-A")
     git("-c", "core.hooksPath=/dev/null", "commit", "-qm", "docs: add support hours")
     fixture_metadata = {
         "initial_head": git("rev-parse", "HEAD"),
         "expected_draft": fixture["draft"],
         "expected_content": fixture["after"],
         "expected_coauthors": expected_coauthors,
+        "policy_file": policy_file,
+        "repository_policy": repository_policy,
     }
     (run / "fixture.json").write_text(json.dumps(fixture_metadata) + "\n")
     if not agent_edits:

@@ -9,7 +9,7 @@ argument-hint: '[<issue_numbers>] [<co_author>]'
 ## Inputs
 
 - `issue_numbers`: accept `#123` or `123`; dedupe and keep order.
-- `co_author`: co-author attribution trailer.
+- `co_author`: explicit co-author attribution or user opt-out. User instructions take precedence over repository attribution rules and agent defaults.
 - Documented repo-specific commit conventions override message-format defaults in this skill; retain scope, safety, and execution rules.
 
 ## Steps
@@ -52,9 +52,11 @@ argument-hint: '[<issue_numbers>] [<co_author>]'
    git commit -F <message-file>
    ```
 
-   Pass `--issue <id>` for each verified issue in input order (`#123` or `123`; repeatable), `--fixes <id>` only for each specific issue the user explicitly intends to close, and `--co-author 'Name <email>'` for each contributor identified by the user or reliably established by session context. Attribution is optional; when attributing Codex, use the [bundled Codex identity](references/message.md#codex-attribution).
+   Before drafting, decide whether the current agent contributed by producing or editing changes in this session. Running Git for changes made by someone else does not establish contribution. Resolve attribution in this order: explicit user instructions, including an identity or opt-out; documented repository policy; then the verified default identity for each contributing agent in [contributor attribution](references/message.md#contributor-attribution). Preserve other reliably established contributors and deduplicate identical identities. Never guess an unknown agent's identity or treat an unknown agent as Codex. If a contributing agent's identity cannot be verified, stop and report that blocker.
 
-   Fix validation failures before committing the same file; revalidate after every edit. Exit 1 means invalid content; exit 2 means a usage or file-read error. Documented repo conventions still override default-format checks; resolve only those conflicts against the documented conventions. The checker cannot establish imperative wording, correct type, truthful content, session provenance, issue existence, closing intent, or authorship; verify those before passing options.
+   Add one `Co-authored-by: Name <email>` trailer for each resolved contributor. Pass the same identity once through `--co-author 'Name <email>'` for each trailer. Do not pass `--co-author` when the user opts out, repository policy excludes attribution, or no agent contributed. User instructions override conflicting repository policy; repository policy overrides the defaults. Keep Git's author name and email unchanged.
+
+   Pass `--issue <id>` for each verified issue in input order (`#123` or `123`; repeatable), and `--fixes <id>` only for each specific issue the user explicitly intends to close. Fix validation failures before committing the same file; revalidate after every edit. Exit 1 means invalid content; exit 2 means a usage or file-read error. Documented repo conventions still override default-format checks; resolve only those conflicts against the documented conventions. The checker cannot establish imperative wording, correct type, truthful content, session provenance, issue existence, closing intent, or authorship; verify those before passing options.
 
    Do not use escaped newlines with `-m`.
 

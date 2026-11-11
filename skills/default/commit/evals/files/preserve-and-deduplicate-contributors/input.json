@@ -1,0 +1,10 @@
+{
+  "before": "Support hours: weekdays.\n",
+  "after": "Support hours: weekdays.\nReview changes before committing.\n",
+  "draft": "docs: add review reminder\n\nSummary:\n- Add review reminder.\n\nRationale:\n- Record the note.\n\nTests:\n- Not run (documentation-only change).\n\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\nCo-authored-by: Other <other@example.com>\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n",
+  "expected_coauthors": [
+    "Copilot <223556219+Copilot@users.noreply.github.com>",
+    "Other <other@example.com>"
+  ],
+  "agent_edits": true
+}
