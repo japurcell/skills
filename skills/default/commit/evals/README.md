@@ -142,3 +142,9 @@ and 10 commit their repository policy in `AGENTS.md` as initial fixture state.
 The fixture's `expected_coauthors` is grading metadata; do not disclose it to
 the provider unless the scenario prompt itself supplies an explicit user
 identity. Keep the observed validator options and commit message for every run.
+
+Scenarios 13 and 14 start with another person's staged change and no agent
+contribution turn. Scenario 13 supplies a human identity explicitly; scenario
+14 establishes a human contributor in the supplied draft. Each must retain the
+human identity in both the commit and validator arguments without inventing an
+agent identity. Compare both against the immutable pre-fix skill snapshot.

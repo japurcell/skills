@@ -451,7 +451,7 @@ def eval_attribution_workflow(run_dir: Path) -> list[dict]:
 def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
     if eval_id in (4, 5):
         return eval_validation_workflow(run_dir)
-    if eval_id in (6, 7, 8, 9, 10, 11, 12):
+    if eval_id in (6, 7, 8, 9, 10, 11, 12, 13, 14):
         return eval_attribution_workflow(run_dir)
     result = read_json(run_dir / "outputs" / "result.json")
     if not result:

@@ -394,6 +394,14 @@ class WorkflowGradingTests(unittest.TestCase):
         self.assertEqual(self.grade(iteration, run)["summary"]["failed"], 0)
         return iteration, run
 
+    def test_git_only_scenarios_use_observed_attribution_grader(self):
+        for eval_id in (13, 14):
+            with self.subTest(eval_id=eval_id):
+                iteration, run = self.make_valid_no_identity_run()
+                (run.parent.parent / "eval_metadata.json").write_text(json.dumps({"eval_id": eval_id}))
+                grading = self.grade(iteration, run)
+                self.assertEqual(grading["summary"]["failed"], 0, grading)
+
     def test_empty_expected_identities_reject_missing_or_malformed_argv(self):
         malformed_argv_values = (None, [], ["--co-author"], ["message.txt", 7])
         for missing, argv in ((True, None), *((False, value) for value in malformed_argv_values)):

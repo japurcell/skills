@@ -225,6 +225,46 @@
         "Copilot <223556219+Copilot@users.noreply.github.com>",
         "Other <other@example.com>"
       ]
+    },
+    {
+      "id": 13,
+      "name": "git-only-explicit-human",
+      "prompt": "Commit the current change with co_author \"User <user@example.com>\".",
+      "expected_output": "A Git-only session preserves the human contributor, passes that identity to the validator, and does not invent an agent trailer.",
+      "files": [
+        "files/git-only-explicit-human/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/evals/files/git-only-explicit-human/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "setup_note": "No contribution turn is run; the agent is asked only to commit the pre-existing staged change.",
+      "expected_coauthors": [
+        "User <user@example.com>"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "git-only-established-human",
+      "prompt": "Use message.txt as the draft. The existing Other <other@example.com> trailer identifies an established contributor and must be preserved. Commit the current change.",
+      "expected_output": "A Git-only session preserves the human contributor, passes that identity to the validator, and does not invent an agent trailer.",
+      "files": [
+        "files/git-only-established-human/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/evals/files/git-only-established-human/input.json",
+      "assertions": [
+        "The prepared fixture includes the expected initial agent contribution or pre-existing staged change.",
+        "The validator argv contains each fixture expected identity exactly once and no unlisted identities.",
+        "The actual Git message contains exactly the expected trailer identities, with duplicates removed.",
+        "The only evaluated change is notes.txt and the fixture author remains unchanged."
+      ],
+      "setup_note": "No contribution turn is run; the agent is asked only to commit the pre-existing staged change.",
+      "expected_coauthors": [
+        "Other <other@example.com>"
+      ]
     }
   ]
 }
