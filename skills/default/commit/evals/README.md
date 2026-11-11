@@ -64,6 +64,10 @@ For Copilot, use `--session-id` for the new session, `--resume=<id>` for the
 second turn, and `--add-dir` for the run directory. Do not combine `--trust-folder`
 with `--session-id`: the CLI rejects that combination. Record provider versions,
 model and reasoning settings, and use the same settings for paired runs.
+For parallel runs, require a distinct message-file path inside each disposable
+run directory. Otherwise run comparisons sequentially. Audit the observed
+message paths and provider-turn times for overlaps, and retain any collisions
+as failed or excluded evidence.
 
 The copied validator records its actual exit status, input path, and message in
 `events.jsonl`, including the actual argument vector passed to the validator. A
