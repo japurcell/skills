@@ -71,3 +71,13 @@ Rules:
 - Use `Fixes` only when the user explicitly intends this commit to close that specific issue; otherwise use `Refs`.
 - Keep issue and co-author trailers contiguous, without blank lines between them.
 - Add `Co-authored-by` trailers only for contributors explicitly identified by the user or reliably established by session context.
+
+## Codex attribution
+
+For a Codex contributor established by session context, use this exact trailer unless the user or documented repository conventions specify otherwise:
+
+```text
+Co-authored-by: Codex <noreply@openai.com>
+```
+
+This identity was verified against the attribution instruction bundled with the official Codex CLI 0.167.1. Use it directly without a web lookup. Include the trailer exactly once and pass `--co-author 'Codex <noreply@openai.com>'` to the validator. Preserve other established contributors' trailers.

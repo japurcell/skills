@@ -1,6 +1,7 @@
 ---
 name: commit
 description: Create a well-formed git commit from current changes using session history for rationale and summary. Use when asked to commit, save, or push current changes.
+argument-hint: '[<issue_numbers>] [<co_author>]'
 ---
 
 # Commit
@@ -51,7 +52,7 @@ description: Create a well-formed git commit from current changes using session 
    git commit -F <message-file>
    ```
 
-   Pass `--issue <id>` for each verified issue in input order (`#123` or `123`; repeatable), `--fixes <id>` only for each specific issue the user explicitly intends to close, and `--co-author 'Name <email>'` for each contributor identified by the user or reliably established by session context. Attribution is optional.
+   Pass `--issue <id>` for each verified issue in input order (`#123` or `123`; repeatable), `--fixes <id>` only for each specific issue the user explicitly intends to close, and `--co-author 'Name <email>'` for each contributor identified by the user or reliably established by session context. Attribution is optional; when attributing Codex, use the [bundled Codex identity](references/message.md#codex-attribution).
 
    Fix validation failures before committing the same file; revalidate after every edit. Exit 1 means invalid content; exit 2 means a usage or file-read error. Documented repo conventions still override default-format checks; resolve only those conflicts against the documented conventions. The checker cannot establish imperative wording, correct type, truthful content, session provenance, issue existence, closing intent, or authorship; verify those before passing options.
 
