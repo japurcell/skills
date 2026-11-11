@@ -1,6 +1,6 @@
 ---
 name: delegate-to-subagents
-description: Pursue a long-running goal in a single session by co-ordinating subagents. Use when the user explicitly asks to delegate, spawn, dispatch, or fan out subagents.
+description: Pursue a long-running goal in a single session by co-ordinating subagents.
 compatibility: Requires subagent dispatch with model controls and effort controls when the route requires explicit effort.
 ---
 

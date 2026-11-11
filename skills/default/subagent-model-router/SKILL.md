@@ -1,6 +1,6 @@
 ---
 name: subagent-model-router
-description: Route subagent work to the cheapest capable model. Use before dispatching subagents, task tools, background agents, code reviewers, security reviewers, or parallel workers when a model must be selected. Use when asked to use tier-specific subagents.
+description: Route subagent work to the cheapest capable model. Use when asked to use subagents from a tier or when the user says "use a [fast|standard|premium] subagent".
 compatibility: Requires python3
 ---
 
