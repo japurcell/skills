@@ -376,6 +376,94 @@ class WorkflowGradingTests(unittest.TestCase):
                 grading = self.grade(iteration, run)
                 self.assertEqual(grading["summary"]["failed"], 0, grading)
 
+    def make_valid_no_identity_run(self):
+        fixture = json.loads((SKILL / "evals/files/explicit-opt-out/input.json").read_text())
+        iteration, run = self.prepare(fixture)
+        (run / "repo/notes.txt").write_text(fixture["after"], encoding="utf-8")
+        subprocess.run(["git", "add", "notes.txt"], cwd=run / "repo", check=True, timeout=5)
+        message = (
+            "docs: record review reminder\n\n"
+            "Summary:\n- Record the review reminder.\n\n"
+            "Rationale:\n- Respect the explicit attribution opt-out.\n\n"
+            "Tests:\n- Not run (documentation-only change).\n"
+        )
+        (run / "message.txt").write_text(message, encoding="utf-8")
+        self.assertEqual(self.validate(run).returncode, 0)
+        self.commit(run)
+        (run.parent.parent / "eval_metadata.json").write_text('{"eval_id": 8}\n')
+        self.assertEqual(self.grade(iteration, run)["summary"]["failed"], 0)
+        return iteration, run
+
+    def test_empty_expected_identities_reject_missing_or_malformed_argv(self):
+        malformed_argv_values = (None, [], ["--co-author"], ["message.txt", 7])
+        for missing, argv in ((True, None), *((False, value) for value in malformed_argv_values)):
+            with self.subTest(missing=missing, argv=argv):
+                iteration, run = self.make_valid_no_identity_run()
+                events_path = run / "events.jsonl"
+                events = [json.loads(line) for line in events_path.read_text().splitlines()]
+                validation = next(event for event in events if event["kind"] == "validation")
+                if missing:
+                    validation.pop("argv")
+                else:
+                    validation["argv"] = argv
+                events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                grading = self.grade(iteration, run)
+                self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_empty_expected_identities_require_validator_before_commit(self):
+        iteration, run = self.make_valid_no_identity_run()
+        events_path = run / "events.jsonl"
+        events = [json.loads(line) for line in events_path.read_text().splitlines()]
+        validation = next(event for event in events if event["kind"] == "validation")
+        commit = next(event for event in events if event["kind"] == "commit")
+        events[:] = [commit, validation]
+        events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+        grading = self.grade(iteration, run)
+        self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_empty_expected_identities_require_validated_message_to_match_commit(self):
+        iteration, run = self.make_valid_no_identity_run()
+        events_path = run / "events.jsonl"
+        events = [json.loads(line) for line in events_path.read_text().splitlines()]
+        validation = next(event for event in events if event["kind"] == "validation")
+        validation["message"] = validation["message"].replace(
+            "Respect the explicit attribution opt-out.", "Change the observed validation message."
+        )
+        events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+        grading = self.grade(iteration, run)
+        self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_empty_expected_identities_require_path_and_matching_argv(self):
+        for mutation in ("missing-path", "mismatched-argv-path"):
+            with self.subTest(mutation=mutation):
+                iteration, run = self.make_valid_no_identity_run()
+                events_path = run / "events.jsonl"
+                events = [json.loads(line) for line in events_path.read_text().splitlines()]
+                validation = next(event for event in events if event["kind"] == "validation")
+                if mutation == "missing-path":
+                    validation.pop("path")
+                else:
+                    validation["argv"][0] = str(run / "different-message.txt")
+                events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                grading = self.grade(iteration, run)
+                self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_malformed_event_records_fail_grading_without_crashing(self):
+        for malformed in ("validation-record", "commit-message"):
+            with self.subTest(malformed=malformed):
+                iteration, run = self.make_valid_no_identity_run()
+                events_path = run / "events.jsonl"
+                events = [json.loads(line) for line in events_path.read_text().splitlines()]
+                if malformed == "validation-record":
+                    validation_index = next(i for i, event in enumerate(events) if event["kind"] == "validation")
+                    events[validation_index] = []
+                else:
+                    commit_event = next(event for event in events if event["kind"] == "commit")
+                    commit_event["message"] = None
+                events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+                grading = self.grade(iteration, run)
+                self.assertGreater(grading["summary"]["failed"], 0, grading)
+
 
 if __name__ == "__main__":
     unittest.main()

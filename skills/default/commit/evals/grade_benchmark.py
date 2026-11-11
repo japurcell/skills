@@ -351,12 +351,43 @@ def eval_attribution_workflow(run_dir: Path) -> list[dict]:
     try:
         events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines()]
         fixture = json.loads((run_dir / "fixture.json").read_text())
+        if not isinstance(events, list) or any(not isinstance(event, dict) for event in events):
+            raise ValueError("event log must contain JSON objects")
+        if not isinstance(fixture, dict):
+            raise ValueError("fixture metadata must be a JSON object")
         expected_coauthors = fixture.get("expected_coauthors", [])
+        if (not isinstance(expected_coauthors, list)
+                or any(not isinstance(identity, str) or not identity.strip() for identity in expected_coauthors)
+                or len(set(expected_coauthors)) != len(expected_coauthors)):
+            raise ValueError("fixture expected_coauthors must be unique nonempty strings")
         validations = [(index, event) for index, event in enumerate(events) if event.get("kind") == "validation"]
         commits = [(index, event) for index, event in enumerate(events) if event.get("kind") == "commit"]
         if not validations or len(commits) != 1:
             raise ValueError("expected a validator observation and exactly one commit observation")
         repo = run_dir / "repo"
+
+        for _, event in validations:
+            path = event.get("path")
+            message = event.get("message")
+            argv = event.get("argv")
+            exit_code = event.get("exit_code")
+            if not isinstance(path, str) or not path.strip():
+                raise ValueError("validator observation needs a nonempty message path")
+            if not isinstance(message, str):
+                raise ValueError("validator observation needs the exact message text")
+            if (not isinstance(argv, list) or not argv
+                    or any(not isinstance(argument, str) for argument in argv)):
+                raise ValueError("validator observation needs a nonempty string argument vector")
+            if type(exit_code) is not int or exit_code not in (0, 1, 2):
+                raise ValueError("validator observation needs an integer exit code")
+            argument_path = Path(argv[0])
+            if not argument_path.is_absolute():
+                argument_path = repo / argument_path
+            if argument_path.resolve() != Path(path).resolve():
+                raise ValueError("validator argv message path does not match its observed input path")
+
+        if any(not isinstance(event.get("message"), str) for _, event in commits):
+            raise ValueError("commit observation needs the actual message text")
 
         def git(*args):
             return subprocess.run(
@@ -413,7 +444,7 @@ def eval_attribution_workflow(run_dir: Path) -> list[dict]:
             expectations.append(expectation("The repository policy was part of the fixture before the evaluated turn.",
                                              policy_content == fixture["repository_policy"], policy_content))
         return expectations
-    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+    except (OSError, RuntimeError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         return [expectation("Observed attribution workflow evidence is complete and readable.", False, str(error))]
 
 
