@@ -42,6 +42,9 @@ The run directory must not exist. Preparation copies only the runtime skill,
 creates a disposable repository with one staged documentation change, and writes
 a draft containing Unicode line separators. Local Git identity, signing, and hook
 settings affect only that fixture repository. No remote is configured.
+Read-only skill snapshots are accepted. Preparation temporarily enables writes
+on the copied `scripts/` directory while installing the validator observer, then
+restores that copied directory's original mode. The source snapshot is unchanged.
 
 Write `eval_metadata.json` beside the configuration directories with `eval_id: 4`,
 the scenario name, prompt, and assertions from `evals.json`. Replace `<run-dir>`

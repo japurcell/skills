@@ -4,6 +4,7 @@
 import argparse
 import json
 import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -76,8 +77,12 @@ def prepare(run, skill, fixture_path=None):
 
     # Observe the real validator without changing its result or imposing a gate.
     validator = copied / "scripts/validate_message.py"
-    validator.rename(validator.with_name("_validate_message.py"))
-    validator.write_text(f'''#!/usr/bin/env python3
+    scripts_directory = validator.parent
+    scripts_mode = stat.S_IMODE(scripts_directory.stat().st_mode)
+    scripts_directory.chmod(scripts_mode | stat.S_IWUSR)
+    try:
+        validator.rename(validator.with_name("_validate_message.py"))
+        validator.write_text(f'''#!/usr/bin/env python3
 import json
 import subprocess
 import sys
@@ -91,6 +96,9 @@ sys.stdout.write(result.stdout)
 sys.stderr.write(result.stderr)
 sys.exit(result.returncode)
 ''', encoding="utf-8")
+        validator.chmod(0o444)
+    finally:
+        scripts_directory.chmod(scripts_mode)
 
     # Record commit attempts, including attempts made after failed validation.
     hook = repo / ".git/hooks/commit-msg"

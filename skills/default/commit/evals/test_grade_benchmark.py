@@ -2,6 +2,8 @@
 """Check workflow grading through disposable repositories and public CLIs."""
 
 import json
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -33,6 +35,54 @@ class WorkflowGradingTests(unittest.TestCase):
             check=True, capture_output=True, text=True, timeout=10,
         )
         return iteration, run
+
+    def test_preparation_supports_read_only_skill_snapshots(self):
+        temporary = tempfile.TemporaryDirectory(prefix="commit-readonly-skill-")
+        self.addCleanup(temporary.cleanup)
+        snapshot = Path(temporary.name) / "skill-snapshot"
+        shutil.copytree(SKILL, snapshot)
+
+        def permissions(root):
+            paths = [root, *root.rglob("*")]
+            return {
+                path.relative_to(root).as_posix() if path != root else ".": stat.S_IMODE(path.stat().st_mode)
+                for path in paths
+            }
+
+        def restore_write_access(root):
+            for path in [root, *root.rglob("*")]:
+                mode = stat.S_IMODE(path.stat().st_mode)
+                path.chmod(mode | stat.S_IWUSR)
+
+        self.addCleanup(restore_write_access, snapshot)
+        for path in [snapshot, *snapshot.rglob("*")]:
+            path.chmod(stat.S_IMODE(path.stat().st_mode) & ~stat.S_IWUSR)
+        original_modes = permissions(snapshot)
+        original_content = {
+            path.relative_to(snapshot).as_posix(): path.read_bytes()
+            for path in snapshot.rglob("*") if path.is_file()
+        }
+
+        run = Path(temporary.name) / "run"
+        prepared = subprocess.run(
+            [sys.executable, str(PREPARE), str(run), str(snapshot)],
+            capture_output=True, text=True, timeout=10,
+        )
+        self.assertEqual(prepared.returncode, 0, prepared.stderr)
+        self.assertEqual(permissions(snapshot), original_modes)
+        self.assertEqual(
+            {path.relative_to(snapshot).as_posix(): path.read_bytes()
+             for path in snapshot.rglob("*") if path.is_file()},
+            original_content,
+        )
+        self.assertEqual(
+            stat.S_IMODE((run / "skill/scripts").stat().st_mode),
+            original_modes["scripts"],
+        )
+        self.assertEqual(self.validate(run).returncode, 1)
+        events = [json.loads(line) for line in (run / "events.jsonl").read_text().splitlines()]
+        self.assertEqual(events[0]["kind"], "validation")
+        self.assertEqual(events[0]["exit_code"], 1)
 
     def validate(self, run, message=None, options=()):
         return subprocess.run(
