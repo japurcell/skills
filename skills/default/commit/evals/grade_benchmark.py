@@ -2,6 +2,7 @@
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -247,7 +248,67 @@ def eval_three(result: dict) -> list[dict]:
     ]
 
 
+def eval_validation_workflow(run_dir: Path) -> list[dict]:
+    try:
+        events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines()]
+        fixture = json.loads((run_dir / "fixture.json").read_text())
+        expected = json.loads((Path(__file__).parent / "files/validation-before-commit/input.json").read_text())
+        if not isinstance(expected, dict) or any(not isinstance(expected.get(key), str) for key in ("draft", "after")):
+            raise ValueError("the source fixture needs the original draft and expected file content")
+        if not events or any(not isinstance(event, dict) for event in events):
+            raise ValueError("missing or malformed observation events")
+        for event in events:
+            if event.get("kind") not in ("validation", "commit") or not isinstance(event.get("message"), str):
+                raise ValueError("each observation needs a known kind and string message")
+            if event["kind"] == "validation" and (
+                type(event.get("exit_code")) is not int or not isinstance(event.get("path"), str)
+            ):
+                raise ValueError("validation observations need an integer exit_code and string path")
+        if not isinstance(fixture, dict) or not isinstance(fixture.get("initial_head"), str):
+            raise ValueError("fixture metadata needs the initial commit SHA")
+        validations = [(index, event) for index, event in enumerate(events) if event.get("kind") == "validation"]
+        commits = [(index, event) for index, event in enumerate(events) if event.get("kind") == "commit"]
+        if not validations or not commits:
+            raise ValueError("missing validator or commit observations")
+        repo = run_dir / "repo"
+
+        def git(*args):
+            return subprocess.run(
+                ["git", *args], cwd=repo, capture_output=True, text=True, check=True, timeout=10,
+            ).stdout
+
+        count = git("rev-list", "--count", f"{fixture['initial_head']}..HEAD").strip()
+        paths = git("diff", "--name-only", fixture["initial_head"], "HEAD").splitlines()
+        message = git("log", "-1", "--format=%B").rstrip("\n")
+        first = validations[0][1]
+        last_index, last = validations[-1]
+        commit_index, commit = commits[0]
+        scoped_files = all(Path(event["path"]).resolve().is_relative_to(run_dir.resolve()) for _, event in validations)
+        final_message = last.get("message", "")
+        return [
+            expectation("The initial malformed draft fails validation.",
+                        first.get("exit_code") == 1 and first["message"] == expected["draft"]
+                        and first["path"] == str((run_dir / "message.txt").resolve()),
+                        json.dumps(first)),
+            expectation("The repaired draft is revalidated successfully before committing.",
+                        len(validations) >= 2 and scoped_files and last.get("exit_code") == 0 and last_index < commit_index,
+                        json.dumps({"validations": validations, "commit_index": commit_index})),
+            expectation("Exactly one commit follows validation and contains only the scoped change.",
+                        len(commits) == 1 and count == "1" and paths == ["notes.txt"]
+                        and git("show", "HEAD:notes.txt") == expected["after"] and git("status", "--porcelain") == "",
+                        json.dumps({"attempts": len(commits), "commits": count, "paths": paths})),
+            expectation("The committed message matches the validated content and has real body lines.",
+                        final_message.rstrip("\n") == commit.get("message", "").rstrip("\n") == message
+                        and "\u2028" not in message and all("\n\n" + heading + "\n- " in message for heading in ("Summary:", "Rationale:", "Tests:")),
+                        message),
+        ]
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
+        return [expectation("Observed workflow evidence is complete and readable.", False, str(error))]
+
+
 def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
+    if eval_id == 4:
+        return eval_validation_workflow(run_dir)
     result = read_json(run_dir / "outputs" / "result.json")
     if not result:
         return [expectation("result.json exists and is valid JSON.", False, "missing or invalid outputs/result.json")]

@@ -1,7 +1,7 @@
 ---
 name: execplan-implement
 description: ExecPlan implementation workflow. Use when implementing ExecPlans and you are the parent agent. Do not use if you are a subagent being delegated to.
-compatibility: Requires subagent dispatch with model controls and effort controls when the route requires explicit effort.
+compatibility: Requires background subagent dispatch with follow-up messaging and Git worktrees.
 ---
 
 You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.
@@ -12,16 +12,15 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- Activate the `subagent-model-router` skill.
-- For every subagent dispatch, use `subagent-model-router` to obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker.
-- Use the router’s model unless the user explicitly names an exact model; do not ask them to choose. Authorization is not model selection. Separately check task authorization, control permissions, and live acceptance of the model and required effort (only under `explicit` policy). Report specific blockers without confusing permission with capability or bypassing router policy.
+- For every subagent dispatch, use the `subagent-model-router` skill to obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
-- Delegate integration to one persistent **integration coordinator** subagent. Reuse it across merge waves, progress updates, and final checks. The coordinator should also handle deterministic commits and status checks directly when safe.
+- Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
+- Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
 
-Enforce limits for exploration, implementation, review, and fixes. An agent is idle only with no outstanding assignment; dependency waits remain active.
+[Enforce limits](#runtime-enforcement) for exploration, implementation, review, and fixes. An agent is idle only with no outstanding assignment; dependency waits remain active.
 
-All commits must follow [commit message guidelines](references/message.md).
+Before every commit, the commit creator must activate the `commit` skill and follow its message validation workflow.
 
 ## Runtime enforcement
 
@@ -36,11 +35,10 @@ All commits must follow [commit message guidelines](references/message.md).
 
 2. (optional) Use an **exploration subagent** to conduct any exploration required by the tasks - relevant codebase files or external documentation. Brief it with the needed context, acceptance criteria, and known negative cases, using context pointers where those facts are already available. Ensure the exploration subagent can save files - it should save its markdown notes in a directory next to the plan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
-3. If current branch is `main` or `master`, create a new **integration branch**. Start the **integration coordinator** subagent, instructing it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
+3. If current branch is `main` or `master`, create a new **integration branch**. Start the background **integration coordinator** and verify follow-up messaging as above. Instruct it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
 
-4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Follow the router’s final dispatchable route and runtime enforcement as specified above. Each implementer subagent:
+4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Follow the router’s final dispatchable route and runtime enforcement above. Each implementer subagent:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
-   - calls the Skill tool with `tdd` to build the task;
    - merges the integration branch tip into its own branch before reporting done
 
 5. Once an **implementer subagent** completes, have the same **integration coordinator subagent** merge its work to the integration branch.
@@ -57,8 +55,9 @@ All commits must follow [commit message guidelines](references/message.md).
 
 Call the Skill tool with `code-review-biaxis` on the integration branch. Track all issues raised by the code review as new tasks in the ExecPlan **frontier**, then fix them in a single **implementer subagent**. Repeat _code review → fix cycle_ until no issues remain for a maximum of three iterations. Report all unresolved issues.
 
-For each repeat of the cycle, prefer reusing the code review and implementer subagents from the previous iteration when they match the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
+For each repeat of the cycle, prefer reusing the code review and implementer subagents from the previous iteration when they match the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent. Keep the two review axes independent.
 
 ## Gotchas
 
 - Do not create worktrees anywhere within the main project directory because agents will automatically discover files like `AGENTS.md` causing context window bloat. Recommend creating them in `../<project name>.worktrees`.
+- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.

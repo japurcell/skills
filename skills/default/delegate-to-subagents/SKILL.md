@@ -24,12 +24,11 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 
 - Define scope, file ownership, acceptance criteria, and required completion evidence.
 - Brief exploration workers with the needed context, acceptance criteria, and known negative cases; use context pointers where those facts are already available.
-- For every task, use `subagent-model-router` to obtain the final dispatchable route. Apply its model and effort policy through dispatch controls, and stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
+- Use `subagent-model-router` to obtain the final dispatchable route for the subtask. Apply its model and effort policy through dispatch controls, and stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
 
 **Subagent rules**:
 
 - Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
-
 
 ## Runtime enforcement
 

@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 30 -->
+<!-- next-id: 31 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -34,3 +34,5 @@
 28. [ ] agent self-reported inefficient orchestration and provided these skill improvement suggestions. Strengthen `execplan-implement` `SKILL.md` enforcement: require persistent integration coordinators to run in background mode and verify follow-up messaging; require intermediate acceptance-worker evidence checkpoints and split oversized validation matrices into bounded independent tasks; run full configuration matrices on the final source revision unless configurations or milestone gates require earlier runs, reusing evidence by source/configuration/toolchain identity; mechanically validate commit messages against `references/message.md` for required sections, real newlines, and trailers before committing.
 
 29. [ ] Investigate and fix `execplan-implement` blocking before implementation when router-selected subagent model controls are unavailable under session permissions. Reported blocker: "Required workflow needs router-selected subagent model controls unavailable under this session's permissions. Your requested workflow required model-controlled subagents, but I lacked authorization to select their models." Identify the requirement causing the block and make the workflow honor available permissions without requiring unauthorized model selection. `delegate-to-subagents` does not cause this issue. Reported by copilot cli agent.
+
+30. [ ] Create a council skill. References: [warpdotdev/common-skills](https://github.com/warpdotdev/common-skills/blob/main/.agents/skills/council/SKILL.md), [t3dotgg/tstack](https://github.com/t3dotgg/tstack/blob/main/skills/council/SKILL.md).

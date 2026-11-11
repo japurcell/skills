@@ -44,11 +44,16 @@ description: Create a well-formed git commit from current changes using session 
 
 6. If staging is incomplete or includes unrelated files, ask the user for confirmation before proceeding.
 
-7. Build the message using [commit message](references/message.md), then create exactly one commit using a file:
+7. Build the message using [commit message](references/message.md), write it to a UTF-8 file, and validate it with the bundled script before creating exactly one commit:
 
    ```bash
+   python3 <skill-root>/scripts/validate_message.py <message-file> [options]
    git commit -F <message-file>
    ```
+
+   Pass `--issue <id>` for each verified issue in input order (`#123` or `123`; repeatable), `--fixes <id>` only for each specific issue the user explicitly intends to close, and `--co-author 'Name <email>'` for each contributor identified by the user or reliably established by session context. Attribution is optional.
+
+   Fix validation failures before committing the same file; revalidate after every edit. Exit 1 means invalid content; exit 2 means a usage or file-read error. Documented repo conventions still override default-format checks; resolve only those conflicts against the documented conventions. The checker cannot establish imperative wording, correct type, truthful content, session provenance, issue existence, closing intent, or authorship; verify those before passing options.
 
    Do not use escaped newlines with `-m`.
 

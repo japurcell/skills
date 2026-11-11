@@ -58,6 +58,22 @@
         "Asks for confirmation before versioning those artifacts.",
         "Does not plan a push or PR."
       ]
+    },
+    {
+      "id": 4,
+      "name": "validation-before-commit",
+      "prompt": "Apply only the supplied commit skill snapshot at <run-dir>/skill/SKILL.md; ignore other installed copies. Work only in the prepared repository <run-dir>/repo. Commit the staged notes.txt change exactly once, without pushing. Use <run-dir>/message.txt as the initial message draft. First run the bundled validator on that draft before editing it; then follow the skill to resolve validation failures and commit. The corrected draft may use a new file inside the run directory; validate the exact file supplied to git commit. The staged change documents a one-business-day support response target. No issues or co-authors are associated with it. Do not modify the supplied skill, instrumentation, Git hooks, Git configuration, fixture.json, or events.jsonl. Keep all evidence files outside the repository. Save a concise result to <run-dir>/outputs/response.md, including commands run, validation outcomes, and the commit SHA or blocker.",
+      "expected_output": "The initial draft fails validation; the agent repairs and revalidates the draft, then creates exactly one scoped commit containing the validated message.",
+      "files": [
+        "evals/files/validation-before-commit/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot>",
+      "assertions": [
+        "The initial malformed draft fails validation.",
+        "The repaired draft is revalidated successfully before committing.",
+        "Exactly one commit follows validation and contains only the scoped change.",
+        "The committed message matches the validated content and has real body lines."
+      ]
     }
   ]
 }
