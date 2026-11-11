@@ -51,11 +51,28 @@ under `outputs/`. It must preserve the supplied skill, instrumentation, Git
 configuration, and evidence files.
 
 The copied validator records its actual exit status, input path, and message in
-`events.jsonl`. A commit-message hook records each commit attempt without blocking
-it. These observers do not fix the message or enforce the evaluated workflow.
-`fixture.json` records the initial commit. The grader checks event ordering and
-content against actual Git history; the agent's written claims are not grading
-evidence. Keep the raw events, response, timing, and snapshots for each run.
+`events.jsonl`, including the actual argument vector passed to the validator. A
+commit-message hook records each commit attempt without blocking it. These
+observers do not fix the message or enforce the evaluated workflow. `fixture.json`
+records the initial commit and expected fixture content. The grader checks event
+ordering and content against actual Git history; the agent's written claims are
+not grading evidence. Keep the raw events, response, timing, and snapshots for
+each run.
+
+Scenario 5 exercises Codex default attribution with a fixture that leaves the
+change for the agent to make. Prepare it with the scenario fixture:
+
+```sh
+python3 skills/default/commit/evals/prepare_validation_workflow.py \
+  <iteration>/eval-5-codex-default-attribution/with_skill/run-1 \
+  <skill-snapshot> \
+  --fixture skills/default/commit/evals/files/agent-attribution/input.json
+```
+
+Its fixture metadata supplies the expected identity to the grader. The grader
+requires the final successful validator invocation to pass that identity once
+with `--co-author`, and checks that the actual Git message contains the matching
+trailer exactly once. Missing or malformed argument evidence fails grading.
 
 Grade the completed iteration:
 

@@ -74,6 +74,22 @@
         "Exactly one commit follows validation and contains only the scoped change.",
         "The committed message matches the validated content and has real body lines."
       ]
+    },
+    {
+      "id": 5,
+      "name": "codex-default-attribution",
+      "prompt": "Apply only the supplied commit skill snapshot at <run-dir>/skill/SKILL.md; ignore other installed copies. Work only in the prepared repository <run-dir>/repo. Add the one-business-day response target to notes.txt, stage that file, and commit exactly once without pushing. Use <run-dir>/message.txt as the initial message draft and run its bundled validator before editing it. You produced the notes.txt change during this session; the user has not supplied a co-author identity or asked to omit attribution. Use the ordinary commit workflow without asking the user to supply an attribution identity. Validate the exact file supplied to git commit. Do not modify the supplied skill, instrumentation, Git hooks, Git configuration, fixture.json, or events.jsonl. Keep evidence files outside the repository. Save a concise result to <run-dir>/outputs/response.md with commands, validation outcomes, and the commit SHA or blocker.",
+      "expected_output": "The agent edits and stages notes.txt, repairs and revalidates the malformed message, supplies its verified Codex identity to the validator, and makes one scoped commit with exactly one Codex co-author trailer.",
+      "files": [
+        "evals/files/agent-attribution/input.json"
+      ],
+      "setup": "python3 <skill-root>/evals/prepare_validation_workflow.py <run-dir> <skill-snapshot> --fixture <skill-root>/evals/files/agent-attribution/input.json",
+      "assertions": [
+        "The prepared repository starts clean with the notes.txt change left for the agent to make.",
+        "The initial malformed draft fails validation and the repaired message is revalidated before committing.",
+        "The final validator argv contains the expected Codex identity exactly once.",
+        "The actual Git commit contains exactly one matching Codex trailer and only the notes.txt change."
+      ]
     }
   ]
 }

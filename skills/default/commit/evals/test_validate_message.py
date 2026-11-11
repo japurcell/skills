@@ -67,6 +67,24 @@ class MessageCliTests(unittest.TestCase):
         result = self.check_message(MESSAGE)
         self.assertEqual(result.returncode, 1, result.stderr)
 
+    def test_each_supplied_coauthor_is_required_exactly_once(self):
+        person = "Person <person@example.com>"
+        expected = ("--co-author", person)
+        absent = self.check_message(MESSAGE.replace(COPILOT, ""), *expected)
+        self.assertEqual(absent.returncode, 1, absent.stderr)
+        self.assertIn("missing required co-author", absent.stderr)
+
+        present = self.check_message(
+            MESSAGE.replace(COPILOT, "Co-authored-by: " + person), *expected,
+        )
+        self.assertEqual(present.returncode, 0, present.stderr)
+
+        duplicate = self.check_message(
+            MESSAGE.replace(COPILOT, "Co-authored-by: " + person + "\nCo-authored-by: " + person),
+            *expected,
+        )
+        self.assertEqual(duplicate.returncode, 1, duplicate.stderr)
+
     def test_rejects_malformed_body(self):
         cases = (
             "", MESSAGE.replace("\n", r"\n"),
@@ -109,7 +127,7 @@ class MessageCliTests(unittest.TestCase):
 
     def test_trailer_authorization_and_layout(self):
         cases = (
-            (MESSAGE.replace(COPILOT, ""), (), 0),
+            (MESSAGE.replace(COPILOT, ""), (), 1),
             (MESSAGE.replace(COPILOT, "Refs #123\n" + COPILOT), (), 1),
             (MESSAGE.replace(COPILOT, "Refs #123\n" + COPILOT), ("--issue", "123"), 0),
             (MESSAGE.replace(COPILOT, "Fixes #123\n" + COPILOT), ("--issue", "123"), 1),
@@ -120,7 +138,7 @@ class MessageCliTests(unittest.TestCase):
             (MESSAGE + "Co-authored-by: Person <person@example.com>\n", ("--co-author", "Person <person@example.com>"), 0),
             (MESSAGE + "Unknown: trailer\n", (), 1),
             (MESSAGE.replace(COPILOT, "Session: observed-session\n\n" + COPILOT), (), 0),
-            (MESSAGE.replace(COPILOT, "Session: observed-session"), (), 0),
+            (MESSAGE.replace(COPILOT, "Session: observed-session"), (), 1),
             (MESSAGE + COPILOT + "\n", (), 1),
             (MESSAGE + "Session: observed-session\n", (), 1),
             (MESSAGE.replace(COPILOT, "Session: first\nSession: second"), (), 1),

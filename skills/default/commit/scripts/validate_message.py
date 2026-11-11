@@ -45,6 +45,7 @@ def validate_trailers(lines, args):
     while lines and not lines[-1].strip():
         lines.pop()
     authors = []
+    expected_authors = list(dict.fromkeys(args.co_author))
     issues = list(dict.fromkeys(args.issue))
     last_issue = -1
     issue_or_author = False
@@ -77,6 +78,9 @@ def validate_trailers(lines, args):
             authors.append(line)
         else:
             raise ValueError(f"malformed or unsupported trailer: {line}")
+    for author in expected_authors:
+        if authors.count(f"Co-authored-by: {author}") != 1:
+            raise ValueError(f"missing required co-author trailer: {author}")
 
 
 def main():

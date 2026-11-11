@@ -252,7 +252,16 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
     try:
         events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines()]
         fixture = json.loads((run_dir / "fixture.json").read_text())
-        expected = json.loads((Path(__file__).parent / "files/validation-before-commit/input.json").read_text())
+        expected_coauthors = fixture.get("expected_coauthors", []) if isinstance(fixture, dict) else []
+        if (not isinstance(expected_coauthors, list)
+                or any(not isinstance(author, str) or not author.strip() for author in expected_coauthors)
+                or len(set(expected_coauthors)) != len(expected_coauthors)):
+            raise ValueError("fixture expected_coauthors must be unique nonempty identity strings")
+        source_fixture = json.loads((Path(__file__).parent / "files/validation-before-commit/input.json").read_text())
+        expected = {
+            "draft": fixture.get("expected_draft", source_fixture.get("draft")),
+            "after": fixture.get("expected_content", source_fixture.get("after")),
+        }
         if not isinstance(expected, dict) or any(not isinstance(expected.get(key), str) for key in ("draft", "after")):
             raise ValueError("the source fixture needs the original draft and expected file content")
         if not events or any(not isinstance(event, dict) for event in events):
@@ -264,6 +273,10 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
                 type(event.get("exit_code")) is not int or not isinstance(event.get("path"), str)
             ):
                 raise ValueError("validation observations need an integer exit_code and string path")
+            if event["kind"] == "validation" and "argv" in event and (
+                not isinstance(event["argv"], list) or any(not isinstance(arg, str) for arg in event["argv"])
+            ):
+                raise ValueError("validation argv evidence must be a list of strings")
         if not isinstance(fixture, dict) or not isinstance(fixture.get("initial_head"), str):
             raise ValueError("fixture metadata needs the initial commit SHA")
         validations = [(index, event) for index, event in enumerate(events) if event.get("kind") == "validation"]
@@ -285,7 +298,7 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
         commit_index, commit = commits[0]
         scoped_files = all(Path(event["path"]).resolve().is_relative_to(run_dir.resolve()) for _, event in validations)
         final_message = last.get("message", "")
-        return [
+        expectations = [
             expectation("The initial malformed draft fails validation.",
                         first.get("exit_code") == 1 and first["message"] == expected["draft"]
                         and first["path"] == str((run_dir / "message.txt").resolve()),
@@ -302,12 +315,40 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
                         and "\u2028" not in message and all("\n\n" + heading + "\n- " in message for heading in ("Summary:", "Rationale:", "Tests:")),
                         message),
         ]
+        if expected_coauthors:
+            argv = last.get("argv")
+            observed_coauthors = []
+            if isinstance(argv, list) and all(isinstance(arg, str) for arg in argv):
+                index = 0
+                while index < len(argv):
+                    if argv[index] == "--co-author":
+                        if index + 1 >= len(argv):
+                            observed_coauthors.append("<missing value>")
+                            break
+                        observed_coauthors.append(argv[index + 1])
+                        index += 2
+                    else:
+                        index += 1
+            actual_trailers = [line for line in message.splitlines() if line.startswith("Co-authored-by: ")]
+            required_trailers = [f"Co-authored-by: {author}" for author in expected_coauthors]
+            expectations.extend([
+                expectation("The final validator invocation supplies each expected co-author exactly once.",
+                            observed_coauthors == expected_coauthors,
+                            json.dumps({"argv": argv, "observed_coauthors": observed_coauthors,
+                                        "expected_coauthors": expected_coauthors})),
+                expectation("The actual Git message contains each expected co-author trailer exactly once.",
+                            all(actual_trailers.count(trailer) == 1 for trailer in required_trailers)
+                            and len(actual_trailers) == len(expected_coauthors),
+                            json.dumps({"actual_trailers": actual_trailers,
+                                        "required_trailers": required_trailers})),
+            ])
+        return expectations
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError) as error:
         return [expectation("Observed workflow evidence is complete and readable.", False, str(error))]
 
 
 def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
-    if eval_id == 4:
+    if eval_id in (4, 5):
         return eval_validation_workflow(run_dir)
     result = read_json(run_dir / "outputs" / "result.json")
     if not result:

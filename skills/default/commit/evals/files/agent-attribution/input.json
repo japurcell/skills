@@ -1,0 +1,7 @@
+{
+  "before": "Support hours: weekdays.\n",
+  "after": "Support hours: weekdays.\nResponse target: one business day.\n",
+  "draft": "docs: document response target\u2028\u2028Summary:\u2028- Document the one-business-day response target.\u2028\u2028Rationale:\u2028- Set clear expectations for support requests.\u2028\u2028Tests:\u2028- not run (documentation-only change)\u2028",
+  "expected_coauthors": ["Codex <noreply@openai.com>"],
+  "agent_edits": true
+}
