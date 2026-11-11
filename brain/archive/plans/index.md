@@ -11,3 +11,4 @@
 
 - [Scripts test organization](2026-11-04-scripts-test-organization/ExecPlan.md)
 - [Router effort policy](25-router-effort-policy/exec-plan.md)
+- [Todo 31: automatic commit attribution](todo-31-commit-attribution/ExecPlan.md)
