@@ -2,6 +2,8 @@
 
 ## Narrow checks
 
+- Restore and hash snapshot files from raw Git blob bytes. Use `rtk proxy git show` or `git show` through subprocess inside `rtk proxy python3`. Display-filtered `rtk git show` output can differ from the blob and must not establish file identity or restoration bytes.
+
 - Use syntax check plus the smallest relevant maintained suite; discover commands with [test-all.py](../../scripts/test-all.py) `--list`/`--help` rather than discovering fixture/archive tests. Apply [validation evidence limits](testing.md).
 - Generated-hook CLI: `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py` then `rtk proxy python3 scripts/generate-hooks.py --check`. Preserve deterministic rendering, freshness, ownership, modes, and transactional recovery; `--check` stays read-only.
 - RTK configuration/installer preflight: `rtk proxy python3 scripts/tests/installers/test-rtk-stable.py`; native proof uses [the dedicated Windows RTK suite](powershell-installers.md#fixture-isolation-and-verification) with real stable RTK.
