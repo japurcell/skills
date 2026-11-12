@@ -12,11 +12,13 @@ argument-hint: '[--hourly-wage <amount> <currency>]'
 2. Read the plan, repository overview, relevant changes, and acceptance evidence. Confirm every in-scope task and milestone is complete and acceptance is met. Checked boxes do not override unresolved tests, verification, or owner actions. If work remains, explain the gap and stop without generating a report or changing the plan. Reporting does not create a circular completion gate.
 3. Write to `<plan-directory>/accomplishment-report.md`. Update an existing report in place and preserve supported human edits, including owner notes, verbatim and separate from generated prose. Identify the plan. If the path belongs to another plan, ask how to resolve the collision. Do not create dated duplicates or modify implementation files.
 
-## Read the wage argument
+## Resolve the hourly wage
 
 Accept `--hourly-wage <amount> <currency>` from the invocation, for example `--hourly-wage 100 USD` means USD 100 per human hour. Read the invocation text or host-expanded arguments: `$ARGUMENTS`. The example is syntax only, never a default.
 
-Use a finite, non-negative amount and an explicit currency. The invocation argument takes precedence over rates in project files or earlier context. If the argument is omitted, use a rate the user already supplied for this task; otherwise ask for the hourly wage and currency. If an explicit argument is invalid or incomplete, ask for its correction rather than falling back to another rate. Do not finalize a cost claim until the rate and currency are resolved.
+Use a finite, non-negative amount and an explicit currency. The invocation argument takes precedence over rates in project files or earlier context. If the argument is omitted, use a rate the user already supplied for this task. Otherwise, ask directly: "What hourly wage and currency should I use for the labor-cost estimate?" Ask even when the skill was activated automatically at closeout.
+
+The argument is optional at invocation. A missing wage is a clarification to resolve, never a reason to skip the report or mark the reporting task complete. Keep the report pending while awaiting the answer, and continue evidence gathering and drafting that do not depend on the wage. Once the user supplies it, finish and save the report without requiring another invocation. If an explicit argument is invalid or incomplete, ask for its correction rather than falling back to another rate. Finalize cost claims only after the rate and currency are resolved.
 
 ## Establish the accomplishment
 
