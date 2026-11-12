@@ -563,13 +563,29 @@ def grade(manifest, cell_id):
     transfer = action("transfer", "B", 203, "transfer")
     parent_records = [r for a, r in matched if a["action"] == "parent-update" and a["assignment"] == "B" and a["at"] == 204 and r.get("kind") == "parent-update" and r.get("after") == parent and r.get("helper_args") == ["parent-update", "agent-old", "agent-new", "204"]]
     followups = [r for r in records if operation(r, "checkpoint", "B", 150)]
-    second_extensions = [r for r in records if operation(r, "extend", "B", 151, 2)]
+    def second_extension_rejected(record):
+        if not operation(record, "extend", "B", 151, 2):
+            return False
+        options = record["helper_args"][4:]
+        if len(options) != 4 or set(options[::2]) != {"--now", "--eta"}:
+            return False
+        try:
+            if float(dict(zip(options[::2], options[1::2]))["--eta"]) != 250:
+                return False
+        except (ValueError, TypeError):
+            return False
+        before = state_at(record, "B", "before")
+        return (record.get("stderr") == "extension unavailable or ETA must exceed current deadline and time\n"
+                and record.get("stdout") == "" and record["before"] == record["after"]
+                and before.get("status") == "active" and before.get("phase") == "extended"
+                and before.get("deadline") == 200 and before.get("extension_used") is True)
+    second_extensions = [r for r in records if second_extension_rejected(r)]
     checks = {}
     def check(name, passed, evidence):
         checks[name] = {"passed": bool(passed), "evidence": evidence}
     check("exact_output", schema_ok, "exact outputs/result.json and strictly confined artifact schema")
     check("stop_timing", chronological and a_stop and b_stop and state_at(a_stop,"A","before").get("phase") != "stop" and state_at(a_stop,"A","after").get("phase") == "stop" and state_at(b_stop,"B","before").get("phase") == "extended" and state_at(b_stop,"B","after").get("phase") == "stop", "native ordered finite scenario chronology, tick argv/time and before/after state")
-    check("single_extension", extension and state_at(extension,"B","before").get("phase") == "decision" and state_at(extension,"B","after").get("deadline") == 200 and state_at(extension,"B","after").get("extension_used") is True and any(state_at(r,"B","after").get("deadline") == 200 and state_at(r,"B","after").get("extension_used") is True for r in followups) and any(r["before"] == r["after"] for r in second_extensions), "real extension, follow-up at150 and rejected second extension at151")
+    check("single_extension", extension and state_at(extension,"B","before").get("phase") == "decision" and state_at(extension,"B","after").get("deadline") == 200 and state_at(extension,"B","after").get("extension_used") is True and any(state_at(r,"B","after").get("deadline") == 200 and state_at(r,"B","after").get("extension_used") is True for r in followups) and bool(second_extensions), "real extension, follow-up at150 and valid ETA250 second request at151 rejected by policy with unchanged state")
     check("exclusive_pending_shutdown", rejection and rejection["before"] == rejection["after"] and state_at(rejection,"B","before").get("stop_confirmed") is False and rejection.get("parent_before", {}).get("owner") == "agent-old" and rejection.get("parent_after", {}).get("owner") == "agent-old" and confirmation and state_at(confirmation,"B","after").get("stop_confirmed") is True, "actual exit2 and unchanged state before supplied shutdown")
     check("independent_progress", chronological and any(operation(r,"checkpoint","C",102) and state_at(r,"B","before").get("stop_confirmed") is False and state_at(r,"B","after").get("stop_confirmed") is False and confirmation and r["line"] < confirmation["line"] for r in records) and any(operation(r,"complete","C",104) and state_at(r,"C","after").get("status") == "completed" and state_at(r,"B","before").get("stop_confirmed") is False and state_at(r,"B","after").get("stop_confirmed") is False and confirmation and r["line"] < confirmation["line"] for r in records), "ordered real C progress with B shutdown unconfirmed before/after both operations")
     authorized_key = "transfer_authorized" if cell["variant"] == "candidate" else "transferred"

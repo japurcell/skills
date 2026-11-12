@@ -38,7 +38,7 @@ class PilotTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.data = json.loads(self.manifest.read_text())
 
-    def fixture(self, provider="codex", variant="candidate", omit=None, ordering="normal", smoke_case="normal", smoke_only=False, ack_reference="outputs/ownership.json"):
+    def fixture(self, provider="codex", variant="candidate", omit=None, ordering="normal", smoke_case="normal", smoke_only=False, ack_reference="outputs/ownership.json", second_extension=("--eta", "250")):
         cell_id = provider + "-" + variant
         cell = self.data["cells"][cell_id]
         repo = Path(cell["repo"])
@@ -114,7 +114,7 @@ class PilotTests(unittest.TestCase):
             op("complete","C",104)
         op("tick",at=105,label="stop")
         op("checkpoint","B",150)
-        op("extend","B",149 if ordering == "backdated-followup" else 151,["--eta","250"],expected=2)
+        op("extend","B",149 if ordering == "backdated-followup" else 151,second_extension,expected=2)
         op("tick",at=200,label="stop")
         op("transfer","B",201,label="transfer-rejected",expected=2)
         op("confirm-stopped","B",202,["--confirmation","worker-and-writes-stopped"],"confirm-stopped")
@@ -152,6 +152,27 @@ class PilotTests(unittest.TestCase):
                     cell,_=self.fixture(provider,variant)
                     report=self.grade(cell)
                     self.assertEqual(report["behavior_status"],"pass",report)
+
+    def test_second_extension_requires_valid_policy_rejection(self):
+        cases = (("valid", ("--eta", "250"), True),
+                 ("missing-eta", (), False),
+                 ("invalid-eta", ("--eta", "invalid"), False),
+                 ("nonfinite-eta", ("--eta", "nan"), False),
+                 ("expired-eta", ("--eta", "150"), False),
+                 ("unexpected-argument", ("--eta", "250", "--unexpected"), False),
+                 ("duplicate-eta", ("--eta", "invalid", "--eta", "250"), False))
+        for provider in ("codex", "copilot"):
+            for variant in ("baseline", "candidate"):
+                for label, extra, expected in cases:
+                    with self.subTest(provider=provider, variant=variant, case=label):
+                        self.matrix_root(label, provider, variant)
+                        cell, _ = self.fixture(provider, variant, second_extension=extra)
+                        report = self.grade(cell)
+                        self.assertEqual(report["setup_status"], "valid", report)
+                        self.assertEqual(report["assertions"]["single_extension"]["passed"], expected, report)
+                        self.assertEqual(report["behavior_status"], "pass" if expected else "fail", report)
+                        self.assertEqual(report["output_contract_status"], "pass", report)
+                        self.assertTrue(report["comparison_eligible"], report)
 
     def test_each_semantic_negative_fails(self):
         self.prepare()
