@@ -1,6 +1,6 @@
 # Complete the scheduler comparison with a focused native harness
 
-This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. Source `b0eae21c26605a4edc7d9ee64524658c9f061196` retains historical 38-test and zero-finding review acceptance. P04 consumed two native smoke sessions and neither passed automated qualification. Four scored sessions remain. The approved narrow correction below removes redundant cross-phase gates while retaining full current-phase execution, identity and behavioral proof. Correction acceptance and the paired report remain pending.
+This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. F2-D is accepted and integrated at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`. The final same-byte suite passed all 39 maintained tests in 137.926 seconds, and both [independent delta review axes](review-four-scenario.md) report zero material findings. The three changed files and unchanged helper match reviewed/tested/committed/integrated hashes. M2 correction acceptance is met. Parent next prepares and verifies a fresh exact four-scored-slot payload using its frozen PATH. Four total scored sessions remain, with independent current-phase validation, no extra smoke/retry, and no new planning or approval gate. Actual paired results and closeout remain incomplete.
 
 ## Purpose / Big Picture
 
@@ -35,7 +35,7 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - [x] (2026-11-12) [milestone-2] F2-C3 public canonical-state corruption reproduction and independent target/state-chain binding corrected, accepted in review 2.
 - [x] (2026-11-12) [milestone-2] F2 final 38-test verification, independent zero-finding review axes and exact-byte integration complete.
 - [x] (2026-11-12) [milestone-4] F3 P04 prepared and two native smokes consumed. Both automated qualifications failed, with no scored attempts. Preserve the report and source acceptance history.
-- [ ] [milestone-2] F2-D narrow helper invocation and independent scored-phase correction, focused/final verification and minimal delta review.
+- [x] (2026-11-12) [milestone-2] F2-D integrated `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`, 39 final-byte tests pass in 137.926 seconds and both independent delta axes report zero findings.
 - [ ] [milestone-4] F3 prepare/verify a fresh four-scored-session payload and execute all four independently validated scored slots.
 - [ ] [milestone-4] F4 verify each result independently and retain the paired report and machine-readable results.
 - [ ] [milestone-5] F5 persist durable lessons, reconcile all tasks, clean completed worker resources and archive the completed plan.
@@ -64,10 +64,10 @@ T3 accepted observations remain historical evidence. Further retained-trace anal
 
 ### Milestone 2 - Focused usable harness
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
-The accepted `b0eae21c` checkpoint remains historical, with 38 tests in 142.819 seconds and both [review axes](review-focused-2.md) reporting zero findings. F1/F2 and their three original corrections stay accepted at those bytes. F2-D is the narrow additional correction required before the remaining four scored sessions.
+The accepted `b0eae21c` checkpoint remains historical, with 38 tests in 142.819 seconds and both [review axes](review-focused-2.md) reporting zero findings. F1/F2 and their three original corrections stay accepted at those bytes. F2-D is now accepted at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13` before the remaining four scored sessions.
 #### F1 - Completed focused native execution and behavioral grading
 
 The retained implementation contract below describes accepted b0eae21c work. F2-D supersedes its separate-smoke requirement for new payloads.
@@ -111,8 +111,10 @@ The first frozen 36-test suite had 35 passing and one helper cleanup success-sub
 
 #### F2-D - Independent scored phases and narrow helper invocation
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
+
+F2-D is accepted and integrated at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`. The final same-byte suite passed all 39 maintained tests in 137.926 seconds, and both [independent delta review axes](review-four-scenario.md) report zero material findings. The three changed files and unchanged helper match reviewed/tested/committed/integrated hashes. M2 correction acceptance is met. Parent next prepares and verifies a fresh exact four-scored-slot payload using its frozen PATH. Four total scored sessions remain, with independent current-phase validation, no extra smoke/retry, and no new planning or approval gate. Actual paired results and closeout remain incomplete. The contract below is retained as completed implementation scope.
 
 Depends on accepted source `b0eae21c` and retained P04 raw samples. Worker `focused_harness_impl` owns only the existing harness/test/eval README source scope and directly needed small fixture changes. This contract is saved before source edits. Activate TDD and start with public process-boundary reproductions using actual raw sample shapes and real helper children. No new provider calls or modification of frozen P04 evidence are part of this correction.
 
@@ -150,11 +152,11 @@ F5 depends on F4 and resolution of all remaining plan tasks. Keep reusable behav
 
 ## Concrete Steps
 
-Worker `focused_harness_impl` begins F2-D under the saved contract, using P04 public reproductions without provider calls. Parent accepts only exact tested/reviewed correction bytes, then prepares and verifies a fresh four-scored-slot payload. Run four sessions independently under normal narrow permissions and the current-phase evidence contract. Preserve all P04 outcomes. No additional smoke/retry or repeat approval question is added.
+F2-D is accepted and integrated at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`. The final same-byte suite passed all 39 maintained tests in 137.926 seconds, and both [independent delta review axes](review-four-scenario.md) report zero material findings. The three changed files and unchanged helper match reviewed/tested/committed/integrated hashes. M2 correction acceptance is met. Parent next prepares and verifies a fresh exact four-scored-slot payload using its frozen PATH. Four total scored sessions remain, with independent current-phase validation, no extra smoke/retry, and no new planning or approval gate. Actual paired results and closeout remain incomplete. Parent verifies frozen source/prompt/helper/session identities and invokes each launch under the exact prepared PATH and ordinary narrow permissions. Preserve P04 receipts without backfill. Do not launch optional diagnostic smokes.
 
 ## Validation and Acceptance
 
-T1 and T3 acceptance stay met. M2 retains accepted b0eae21c evidence historically, while F2-D correction acceptance is pending. M4 requires accounting for all consumed sessions plus the remaining four scored slots, independent native helper/identity proof in every scored phase, and transparent paired results/report with full state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
+T1 and T3 acceptance stay met. M2 retains b0eae21c acceptance historically and now has accepted F2-D source, final tests and independent review. M4 requires accounting for all consumed sessions plus the remaining four scored slots, independent native helper/identity proof in every scored phase, and transparent paired results/report with full state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
 
 ## Idempotence and Recovery
 
@@ -170,6 +172,8 @@ P03 provider processes exited 0 while added conformance checks made both smokes 
 
 ## Decision Log
 
+- 2026-11-12. Accept exact F2-D source after 39 maintained tests and zero material findings on both delta axes. Proceed to fresh four-scenario payload verification. Optional diagnostic smoke support is outside the remaining call allocation.
+
 - 2026-11-12. Apply approved roadblock removal by deleting separate neutral-smoke and prior-phase-success gates. Four remaining scored phases must each independently prove full required identity, execution and state/rubric evidence. Recognize only the known pinned Codex interpreter prefix, clarify direct helper invocation and preserve narrow Copilot permissions.
 
 - 2026-11-12. Accept focused source after zero remaining findings on both review-2 axes and the final unchanged-byte 38-test run with scoped process permissions. Preserve sandbox failures and unchanged cleanup assertions. This historical checkpoint preceded P04. F2-D now precedes the four remaining scored sessions.
@@ -181,6 +185,6 @@ P03 provider processes exited 0 while added conformance checks made both smokes 
 
 ## Outcomes & Retrospective
 
-Focused F1/F2 work is accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Review-1 findings and failed preliminary runs remain historical alongside the successful unchanged-byte final proof. The subsequent P04 native smokes remain invalid under that checkpoint. F2-D acceptance and four fresh scored sessions remain pending.
+Focused F1/F2 work is accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Review-1 findings and failed preliminary runs remain historical alongside the successful unchanged-byte final proof. The subsequent P04 native smokes remain invalid under that checkpoint. F2-D is now accepted, while four fresh scored sessions remain pending.
 
-Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. Focused b0eae21c source acceptance remains historical. F2-D correction acceptance, four scored sessions, paired report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F2-D owns structural encoding of the narrow current correction. No general model preference or new generic framework is added.
+Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. Focused b0eae21c source acceptance remains historical. F2-D correction acceptance is complete. Four scored sessions, paired report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F2-D owns structural encoding of the narrow current correction. No general model preference or new generic framework is added.
