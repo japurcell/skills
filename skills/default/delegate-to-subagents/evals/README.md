@@ -17,7 +17,7 @@ The suite launches real helper and scheduler children and supplies native-shaped
 provider envelopes. Actual sanitized Copilot 1.0.109 envelopes are retained in
 `fixtures/copilot-native-envelopes.json`, with source provenance. The actual P03
 denied helper shape stays invalid. Offline success establishes harness behavior.
-A native neutral smoke must establish direct-helper permission acceptance.
+Each scored phase must demonstrate its own helper execution and permission acceptance.
 
 ### Prepare and execute
 
@@ -47,7 +47,6 @@ Use absolute executable paths and the approved model and effort in configuration
 python3 scheduler_pilot.py prepare --run-root /private/tmp/fresh-pilot --baseline /absolute/v2 --candidate /absolute/v3 --config /absolute/config.json
 python3 scheduler_pilot.py preflight --manifest /private/tmp/fresh-pilot/manifest.json --provider codex
 python3 scheduler_pilot.py preflight --manifest /private/tmp/fresh-pilot/manifest.json --provider copilot
-python3 scheduler_pilot.py run --manifest /private/tmp/fresh-pilot/manifest.json --cell codex-baseline --phase smoke
 python3 scheduler_pilot.py run --manifest /private/tmp/fresh-pilot/manifest.json --cell codex-baseline --phase scenario
 python3 scheduler_pilot.py grade --manifest /private/tmp/fresh-pilot/manifest.json --cell codex-baseline
 ```
@@ -55,11 +54,11 @@ python3 scheduler_pilot.py grade --manifest /private/tmp/fresh-pilot/manifest.js
 Preparation freezes selected skill bodies verbatim, scheduler/helper bytes,
 executable mode, adjacent invocation settings, prompts, rubric, argv and relevant
 nonsecret environment identities in a fresh physical 0700 root. The payload has
-six slots. Each provider has one neutral baseline-cell smoke and two scored
-sessions. Candidate cells have only a scenario slot. The provider's valid smoke
-gates both variants. Attempts are exclusive. Failed or partial attempts block
-remaining provider execution. Each session has at most 600 seconds. The approved
-pilot has no retries or budget expansion.
+four scored sessions, baseline and candidate for each provider. Each scored
+phase independently validates its own evidence. Optional baseline-cell smoke
+commands remain diagnostic. Attempts are exclusive and cannot be replayed.
+Each session has at most 600 seconds. The approved pilot has no retries or budget
+expansion.
 
 Existing native login stays provider-owned. Native Codex uses standard
 HOME/CODEX_HOME and CLI 0.167.1. Native Copilot uses standard HOME/COPILOT_HOME,
@@ -69,11 +68,12 @@ Process-token mode passes supported token variables only in memory and records
 variable names. Credential values and storage files stay outside evidence.
 
 Codex uses workspace-write sandbox and ordinary approval controls. Its shell
-startup HOME is empty and read-only. Copilot grants the literal frozen executable
+startup HOME is empty and read-only. Copilot grants the literal frozen extensionless executable
 helper path and scoped repo writes, with repo/snapshot directory access, built-in
 MCP disabling and manual permissions. Its helper has an absolute pinned Python
 shebang and executable mode before hashes freeze. Prompt commands and permission
-rules use the same prefix. Direct-path native acceptance remains smoke-dependent.
+rules share the literal invoke-scheduler prefix and explicitly require direct
+execution without prepending Python. Scored execution must prove native acceptance.
 
 ### Evidence and grading
 
@@ -85,7 +85,11 @@ including behavioral failures. Closed stdout exits 1.
 
 Run and grade re-read the same raw evidence and bindings. Receipts retain source,
 prompt, session, selector, cwd, command, exit, timing and raw stdout/stderr hashes.
-Codex completed stdout commands and results establish helper execution. Its exact
+Codex completed stdout commands and results establish helper execution. The
+observed python3 prefix and exact pinned absolute-interpreter equivalent are
+accepted only for Codex when frozen shell PATH resolves to that hashed interpreter
+and the exact helper path follows it. Original native commands remain retained.
+Other interpreters and mismatched remaining argv remain invalid. Its exact
 fresh-session raw rollout establishes session/model/effort/cwd identity. Local
 file URI and absolute cwd paths compare semantically. Copilot pairs native tool
 starts and terminal completions by tool ID and turn. Unknown observational

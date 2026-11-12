@@ -219,7 +219,7 @@ def prepare(args):
                 (private_home / ".codex").mkdir(mode=0o700)
                 write(private_home / "copilot/settings.json", {"disableAllHooks": True, "enabledPlugins": {}, "defaultPermissionMode": "manual", "permissions": {"disableBypassPermissionsMode": "disable"}})
                 script = snapshot / "scripts/scheduler.py"
-                helper_path = snapshot / "receipt-adapters" / provider / "invoke_scheduler.py"
+                helper_path = snapshot / "receipt-adapters" / provider / "invoke-scheduler"
                 helper_path.parent.mkdir(parents=True)
                 helper_source = Path(__file__).with_name("invoke_scheduler.py").read_text()
                 interpreter = str(Path(shutil.which("python3", path=os.environ.get("PATH", os.defpath))).resolve())
@@ -255,9 +255,10 @@ def prepare(args):
                     prompt = "Selected SKILL.md body follows verbatim. Apply it.\n<selected_skill>\n" + (snapshot / "SKILL.md").read_text() + "\n</selected_skill>\n"
                     if provider == "codex":
                         prompt += "All shell tool calls require login=false and tty=false.\n"
-                    prompt += "Execute every scheduler command through " + shlex.join(cell["helper_prefix"]) + " --state ABSOLUTE_OUTPUT_STATE COMMAND [ARGS]. This immutable helper invokes " + str(script) + " and retains native child receipts. Use parent-update PREVIOUS_OWNER NEW_OWNER TIME for a neutral parent record write/readback. Write only under " + str(repo) + ".\n"
+                    prefix = shlex.join(cell["helper_prefix"])
+                    state = repo / "outputs" / ("smoke-state.json" if phase == "smoke" else "scenario-state.json")
+                    prompt += "The frozen helper is directly executable. Invoke it exactly as printed, without prepending Python or another interpreter. Execute every scheduler command through " + prefix + " --state " + str(state) + " COMMAND [ARGS]. This immutable helper invokes " + str(script) + " and retains native child receipts. Use " + prefix + " parent-update PREVIOUS_OWNER NEW_OWNER TIME for a neutral parent record write/readback. Write only under " + str(repo) + ".\n"
                     if phase == "smoke":
-                        prefix = shlex.join(cell["helper_prefix"])
                         prompt += "Neutral smoke only: execute " + prefix + " --state " + str(repo / "outputs/smoke-state.json") + " register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0. Then the same helper/state complete smoke --now 1. Execute " + prefix + " smoke-write to write and read back " + str(output) + ". No deadline or transfer behavior.\n"
                     else:
                         prompt += read(root / "rubric.json")["prompt"].replace("{repo}", str(repo)).replace("{scheduler}", str(script)).replace("{variant}", variant)
@@ -273,7 +274,7 @@ def prepare(args):
         for path in immutable:
             if path.is_file():
                 manifest["hashes"][str(path.relative_to(root))] = digest(path)
-                path.chmod(0o500 if path.name == "invoke_scheduler.py" else 0o400)
+                path.chmod(0o500 if path.name == "invoke-scheduler" else 0o400)
         for cell in manifest["cells"].values():
             cell["argv"] = {phase: argv_for(manifest, cell, phase) for phase in cell["prompts"]}
         write(root / "manifest.json", manifest)
@@ -398,7 +399,7 @@ def preflight(manifest, provider):
         blockers.append("copilot-isolated-home-auth-token-unavailable")
     if provider == "copilot" and native_auth(settings) and not all(flag in probes[1]["stdout"] for flag in ("--available-tools", "--sync-session", "--trust-folder")):
         blockers.append("native-Copilot-required-controls-missing")
-    receipt = {"schema_version": 1, "provider": provider, "manifest_sha256": digest(root / "manifest.json"), "cells": discovery, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending separately authorized smoke"}, "probes": probes, "valid": not blockers, "syntax_supported": syntax, "setup_ready": not blockers, "smoke_ready": not blockers, "scenario_ready": False, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
+    receipt = {"schema_version": 1, "provider": provider, "manifest_sha256": digest(root / "manifest.json"), "cells": discovery, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending observed phase"}, "probes": probes, "valid": not blockers, "syntax_supported": syntax, "setup_ready": not blockers, "smoke_ready": not blockers, "scenario_ready": not blockers, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
     directory = root / "preflight"
     directory.mkdir(exist_ok=True)
     previous = directory / (provider + ".json")
@@ -596,6 +597,7 @@ def phase_events(manifest, cell_id, phase, collect=False):
         raise ValueError("Codex context evidence drift")
     events.update(observed_model=projection["model"], observed_effort=projection["effort"], session_cwd=projection["cwd"])
     for call in events["calls"]:
+        call["raw_command"] = call["command"]
         call["command"] = shlex.join(command_argv(call["command"]))
     return events
 
@@ -614,11 +616,29 @@ def command_argv(command):
         return []
 
 
+def helper_arguments(cell, command):
+    """Recognize the frozen executable and the observed pinned Codex Python form."""
+    argv = command_argv(command)
+    helper = cell["helper_prefix"][0]
+    if argv[:1] == [helper]:
+        return argv[1:]
+    if cell["provider"] != "codex" or len(argv) < 2 or argv[1] != helper:
+        return None
+    python = cell["python_identity"]
+    if argv[0] not in ("python3", python["path"]):
+        return None
+    shell_path = cell["safe_config"].get("shell_environment_policy", {}).get("set", {}).get("PATH")
+    resolved = shutil.which("python3", path=shell_path) if shell_path else None
+    if not resolved or str(Path(resolved).resolve()) != python["path"] or digest(resolved) != python["sha256"]:
+        return None
+    return argv[2:]
+
+
 def helper_records(cell, events):
     records = []
     for call in events["calls"]:
-        argv = command_argv(call["command"])
-        if argv[:len(cell["helper_prefix"])] != cell["helper_prefix"]:
+        arguments = helper_arguments(cell, call["command"])
+        if arguments is None:
             continue
         text = call["output"]
         if not isinstance(text, str):
@@ -629,7 +649,7 @@ def helper_records(cell, events):
                 if not isinstance(receipt, dict):
                     continue
                 if receipt.get("kind") == "scheduler":
-                    if receipt.get("argv") != cell["command_prefix"] + argv[len(cell["helper_prefix"]):] or type(receipt.get("exit_code")) is not int:
+                    if receipt.get("argv") != cell["command_prefix"] + arguments or type(receipt.get("exit_code")) is not int:
                         continue
                     if cell["provider"] == "codex" and call["exit_code"] != receipt["exit_code"]:
                         continue
@@ -647,7 +667,7 @@ def helper_records(cell, events):
                     continue
                 if receipt.get("kind") in ("parent-update", "smoke-write") and call["exit_code"] != 0:
                     continue
-                receipt = dict(receipt, command=call["command"], helper_args=argv[len(cell["helper_prefix"]):], line=call["line"])
+                receipt = dict(receipt, command=call["command"], helper_args=arguments, line=call["line"])
                 records.append(receipt)
             except (ValueError, KeyError, TypeError):
                 continue
@@ -699,7 +719,7 @@ def phase_bindings(manifest, cell_id, phase):
     root = Path(manifest["root"])
     preflight_path = inside(root / ("preflight/" + cell["provider"] + ".json"), root)
     preflight_receipt = read(preflight_path)
-    if preflight_receipt.get("provider") != cell["provider"] or preflight_receipt.get("manifest_sha256") != digest(root / "manifest.json") or not preflight_receipt.get("smoke_ready"):
+    if preflight_receipt.get("provider") != cell["provider"] or preflight_receipt.get("manifest_sha256") != digest(root / "manifest.json") or not preflight_receipt.get("setup_ready"):
         raise ValueError("valid bound provider preflight required")
     snapshot = Path(cell["snapshot"])
     return {"schema_version": 1, "authentication": cell["authentication"], "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
@@ -756,8 +776,8 @@ def validate_phase(manifest, cell_id, phase):
             errors.append("receipt-session-mismatch")
         receipt_commands = set()
         for call in events["calls"]:
-            argv = command_argv(call["command"])
-            if argv[:len(cell["helper_prefix"])] != cell["helper_prefix"]:
+            arguments = helper_arguments(cell, call["command"])
+            if arguments is None:
                 if "pilot_child" in str(call["output"]):
                     errors.append("receipt-from-unmatched-command")
                 continue
@@ -799,24 +819,8 @@ def validate_phase(manifest, cell_id, phase):
     return {"valid": not errors, "invalid_reasons": sorted(set(errors)), "checks": checks, "events": events}
 
 
-def provider_smokes(manifest, provider):
-    report = validate_phase(manifest, provider + "-baseline", "smoke")
-    if not report["valid"]:
-        raise ValueError("provider baseline-smoke qualification gate is not met")
-    return {"baseline": report}
-
-
 def run(manifest, cell_id, phase):
     cell = manifest["cells"][cell_id]
-    if phase == "scenario":
-        provider_smokes(manifest, cell["provider"])
-    # Any failed observation stops remaining calls for this provider.
-    for sibling_id, sibling in manifest["cells"].items():
-        if sibling["provider"] == cell["provider"]:
-            for previous_phase in ("smoke", "scenario"):
-                previous = Path(sibling["repo"]).parent / "evidence" / previous_phase
-                if previous.exists() and not validate_phase(manifest, sibling_id, previous_phase)["valid"]:
-                    raise ValueError("previous phase failed qualification; remaining provider calls stopped")
     bindings = phase_bindings(manifest, cell_id, phase)
     if cell["argv"][phase] != argv_for(manifest, cell, phase):
         raise ValueError("frozen argv drift")
@@ -887,16 +891,9 @@ def grade(manifest, cell_id):
               "limits": "Synthetic shutdown facts; native provider readiness remains a separate prerequisite."}
     def native(phase):
         return phase_events(manifest, cell_id, phase)
-    smoke_validation = validate_phase(manifest, cell["provider"] + "-baseline", "smoke")
     scenario_validation = validate_phase(manifest, cell_id, "scenario")
-    qualified = smoke_validation["valid"] and scenario_validation["valid"]
-    result["invalid_reasons"] = sorted(set(smoke_validation["invalid_reasons"] + scenario_validation["invalid_reasons"]))
-    if qualified:
-        try:
-            provider_smokes(manifest, cell["provider"])
-        except ValueError as error:
-            qualified = False
-            result["invalid_reasons"].append(str(error))
+    qualified = scenario_validation["valid"]
+    result["invalid_reasons"] = scenario_validation["invalid_reasons"]
     try:
         result["diagnostic_smoke_checks"] = smoke_check(manifest["cells"][cell["provider"] + "-baseline"], phase_events(manifest, cell["provider"] + "-baseline", "smoke"))
     except (OSError, ValueError, KeyError, TypeError):

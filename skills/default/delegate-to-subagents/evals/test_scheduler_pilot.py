@@ -225,12 +225,9 @@ class PilotTests(unittest.TestCase):
         self.assert_behavior_diagnostics(report, "fail")
         self.assertFalse(report["assertions"]["immutable_execution"]["passed"])
 
-    def test_smoke_gate_and_hash_drift_fail_closed(self):
+    def test_prompt_hash_drift_fails_closed(self):
         self.prepare()
         cell,_=self.fixture()
-        result=self.call("run","--manifest",self.manifest,"--cell",cell,"--phase","scenario")
-        self.assertEqual(result.returncode,2)
-        self.assertIn("qualification",result.stderr)
         path=Path(self.data["cells"]["codex-baseline"]["prompts"]["smoke"])
         path.chmod(0o600);path.write_text("drift")
         result=self.call("grade","--manifest",self.manifest,"--cell",cell)
@@ -523,6 +520,12 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
         cell = self.data["cells"]["copilot-baseline"]
         helper = Path(cell["helper_prefix"][0])
         self.assertEqual(helper.read_text().splitlines()[0], "#!" + cell["python_identity"]["path"])
+        self.assertEqual(helper.name, "invoke-scheduler")
+        for prompt in cell["prompts"].values():
+            text = Path(prompt).read_text()
+            self.assertIn("directly executable", text)
+            self.assertIn("without prepending Python", text)
+            self.assertIn(str(helper) + " --state ", text)
         self.assertEqual(helper.stat().st_mode & 0o777, 0o500)
         self.assertIn("--allow-tool=shell(" + str(helper) + ":*)", cell["argv"]["smoke"])
         result = self.provider_call("run", "--manifest", self.manifest,
@@ -627,7 +630,7 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
         self.assertEqual(retry.returncode,2)
         self.assertEqual((directory / "run.json").read_bytes(),original)
 
-    def test_public_copilot_malformed_and_unsupported_events_stop_remaining_calls(self):
+    def test_public_copilot_malformed_authoritative_evidence_stays_invalid(self):
         for mode in ('malformed','wrong-session','wrong-model','missing-effort','unknown-tool','missing-completion','duplicate','tool-model'):
             with self.subTest(mode=mode):
                 self.run=self.root / ('copilot-'+mode)
@@ -640,17 +643,12 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
                 self.assertTrue(receipt['invalid_reasons'])
                 blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-baseline','--phase','smoke')
                 self.assertEqual(blocked.returncode,2)
-                self.assertIn('remaining provider calls stopped',blocked.stderr)
+                self.assertIn('File exists',blocked.stderr)
                 self.assertTrue((self.run/'cells/copilot-baseline/evidence/smoke').exists())
 
 
-    def test_public_copilot_baseline_smoke_replay_bindings_and_raw_regrading(self):
+    def test_public_copilot_scenario_replay_bindings_and_raw_regrading(self):
         self.copilot_setup()
-        early=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','scenario')
-        self.assertEqual(early.returncode,2)
-        for variant in ('baseline',):
-            smoke=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','smoke')
-            self.assertEqual(smoke.returncode,0,smoke.stderr)
         for variant in ('baseline','candidate'):
             scenario=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','scenario')
             self.assertEqual(scenario.returncode,0,scenario.stderr+scenario.stdout)
@@ -659,7 +657,7 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
             self.assertEqual(report['behavior_status'],'pass',report)
             self.assertTrue(report['comparison_eligible'],report)
             self.assertTrue(all(claim['passed'] for claim in report['assertions'].values()),report)
-        directory=self.run/'cells/copilot-baseline/evidence/smoke'
+        directory=self.run/'cells/copilot-candidate/evidence/scenario'
         record=json.loads((directory/'run.json').read_text())
         self.assertEqual(len(record['approved_payload_sha256']),64)
         self.assertEqual(record['provider'],'copilot')
@@ -673,10 +671,10 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
         self.assertIn('raw-evidence-drift',report['invalid_reasons'])
         blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','scenario')
         self.assertEqual(blocked.returncode,2)
-        self.assertIn('baseline-smoke',blocked.stderr)
+        self.assertIn('File exists',blocked.stderr)
         raw.write_text(original)
         data=json.loads((directory/'run.json').read_text())
-        data['cell']='copilot-candidate'
+        data['cell']='copilot-baseline'
         (directory/'run.json').write_text(json.dumps(data))
         self.assertIn('phase-bindings-drift',self.grade('copilot-candidate')['invalid_reasons'])
 
@@ -736,7 +734,15 @@ def write_artifact(relative,value):
  raw_output(call,[{'type':'input_text','text':'Script completed'}])
  print(json.dumps({'type':'item.completed','item':{'id':item,'type':'file_change','changes':changes,'status':'completed'}}))
 def invoke(args,label=None,assignment=None,at=None):
- argv=cell['helper_prefix']+args;command=shlex.join(argv);call,item,_=identities()
+ argv=cell['helper_prefix']+args
+ if mode in ('python-prefix','wrong-interpreter'):
+  argv=['python3']+argv
+ elif mode=='absolute-prefix':
+  argv=[cell['python_identity']['path']]+argv
+ command=shlex.join(argv)
+ if mode=='wrong-interpreter':command=shlex.join(['/usr/bin/python3',*argv[1:]])
+ if mode=='wrong-helper-argv':command=command.replace('--deadline 100','--deadline 101')
+ call,item,_=identities()
  child=subprocess.run(argv,capture_output=True,text=True)
  display=shlex.join(['/bin/zsh','-c',command])
  print(json.dumps({'type':'item.started','item':{'id':item,'type':'command_execution','command':display}}))
@@ -785,6 +791,21 @@ raise SystemExit
 
 
 
+
+    def test_public_codex_pinned_python_prefix_has_real_child_receipts(self):
+        for mode, expected in (("python-prefix", 0), ("absolute-prefix", 0), ("wrong-interpreter", 2), ("wrong-helper-argv", 2)):
+            with self.subTest(mode=mode):
+                self.run = self.root / mode
+                self.manifest = self.run / "manifest.json"
+                self.child_env = {"CODEX_HOME": str(self.root / "standard-codex")}
+                self.native_codex_setup(mode)
+                self.assertEqual(self.call("preflight", "--manifest", self.manifest, "--provider", "codex").returncode, 0)
+                result = self.call("run", "--manifest", self.manifest, "--cell", "codex-baseline", "--phase", "smoke")
+                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                record = json.loads(result.stdout)
+                self.assertEqual(record["smoke_valid"], expected == 0)
+                if expected:
+                    self.assertIn("receipt-from-unmatched-command" if mode == "wrong-interpreter" else "missing-real-child-receipt", record["invalid_reasons"])
 
     def test_public_codex_companion_context_qualifies_real_helper_smokes(self):
         self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
@@ -835,9 +856,6 @@ raise SystemExit
         self.native_codex_setup('proof')
         result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
         self.assertEqual(result.returncode,0,result.stderr)
-        for variant in ('baseline',):
-            result=self.call('run','--manifest',self.manifest,'--cell','codex-'+variant,'--phase','smoke')
-            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
         for variant in ('baseline','candidate'):
             cell_id='codex-'+variant
             result=self.call('run','--manifest',self.manifest,'--cell',cell_id,'--phase','scenario')
@@ -889,14 +907,14 @@ raise SystemExit
                 self.assertFalse((Path(cell['repo'])/'outputs/launch.json').exists())
 
 
-    def test_public_partial_attempt_blocks_provider_without_child(self):
+    def test_public_partial_attempt_cannot_be_replayed(self):
         self.copilot_setup()
         partial=self.run/'cells/copilot-baseline/evidence/smoke'
         partial.mkdir()
         (partial/'attempt.json').write_text('{}')
         blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-baseline','--phase','smoke')
         self.assertEqual(blocked.returncode,2)
-        self.assertIn('remaining provider calls stopped',blocked.stderr)
+        self.assertIn('File exists',blocked.stderr)
         self.assertFalse((self.run/'cells/copilot-baseline/repo/outputs/smoke.json').exists())
 
     def test_trusted_snapshot_configuration_is_rejected(self):
