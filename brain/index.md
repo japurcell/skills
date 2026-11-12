@@ -31,10 +31,6 @@
 - [codebase/repository-workflow](<codebase/repository-workflow.md>)
 - [codebase/script-testing](<codebase/script-testing.md>)
 - [codebase/scripts-and-installers](<codebase/scripts-and-installers.md>)
-- [codebase/secret-scanner-recovery](<codebase/secret-scanner-recovery.md>)
-- [codebase/secret-scanner](<codebase/secret-scanner.md>)
-- [codebase/security-hooks](<codebase/security-hooks.md>)
-- [codebase/security-testing](<codebase/security-testing.md>)
 - [codebase/skills-and-installation](<codebase/skills-and-installation.md>)
 - [codebase/testing](<codebase/testing.md>)
 

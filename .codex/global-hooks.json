@@ -14,19 +14,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.codex/hooks/scan-status.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-status.py\"",
-            "timeout": 2,
-            "statusMessage": "Reading last secret-scan status"
-          }
-        ]
-      }
     ]
   }
 }

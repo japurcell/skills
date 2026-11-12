@@ -1,4 +1,4 @@
-"""Render installed security and brain launches without runtime interpreter lookup."""
+"""Render installed brain launches without runtime interpreter lookup."""
 
 from __future__ import annotations
 
@@ -7,9 +7,8 @@ import os
 from pathlib import Path
 import sys
 
-SECURITY_HOOK_FILES = ("scan-secrets.py", "tool-guard.py", "scan-status.py")
 BRAIN_HOOK_FILES = ("auto-index-brain.py", "inject-brain.py")
-PINNED_HOOK_FILES = SECURITY_HOOK_FILES + BRAIN_HOOK_FILES
+PINNED_HOOK_FILES = BRAIN_HOOK_FILES
 
 
 def hook_arguments(filename: str, provider: str) -> tuple[str, ...]:

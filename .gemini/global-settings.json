@@ -19,7 +19,9 @@
     "enabled": true
   },
   "mcp": {
-    "allowed": ["google-developer-knowledge"]
+    "allowed": [
+      "google-developer-knowledge"
+    ]
   },
   "mcpServers": {
     "google-developer-knowledge": {
@@ -27,7 +29,9 @@
       "type": "http",
       "authProviderType": "google_credentials",
       "oauth": {
-        "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+        "scopes": [
+          "https://www.googleapis.com/auth/userinfo.email"
+        ]
       },
       "headers": {
         "x-goog-user-project": "usfs-code-assist"
@@ -221,14 +225,6 @@
       {
         "hooks": [
           {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionStart"
-            }
-          },
-          {
             "name": "skill-context-injector",
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/skill-context-injector.py\"",
@@ -240,97 +236,7 @@
         ]
       }
     ],
-    "AfterAgent": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterAgent"
-            }
-          },
-          {
-            "name": "scan-secrets",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/scan-status.py\"",
-            "timeout": 2000,
-            "description": "Reports historical secret-scan status without scanning or blocking turn completion."
-          }
-        ]
-      }
-    ],
-    "BeforeAgent": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeAgent"
-            }
-          }
-        ]
-      }
-    ],
-    "BeforeModel": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeModel"
-            }
-          }
-        ]
-      }
-    ],
-    "AfterModel": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterModel"
-            }
-          }
-        ]
-      }
-    ],
-    "BeforeToolSelection": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeToolSelection"
-            }
-          }
-        ]
-      }
-    ],
     "BeforeTool": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeTool"
-            }
-          }
-        ]
-      },
       {
         "matcher": "run_shell_command",
         "hooks": [
@@ -338,62 +244,6 @@
             "type": "command",
             "command": "python \"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\"",
             "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "AfterTool": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterTool"
-            }
-          }
-        ]
-      }
-    ],
-    "PreCompress": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "PreCompress"
-            }
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "Notification"
-            }
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/send-event.py\"",
-            "env": {
-              "OBSERVABILITY_CAPTURE_EVENT": "true",
-              "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionEnd"
-            }
           }
         ]
       }

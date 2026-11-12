@@ -69,7 +69,6 @@ SOURCE_EVENT_NAME_MAP = {
     "SessionEnd": "SessionEnd",
     "SessionStart": "SessionStart",
     "SubagentStart": "SubagentStart",
-    "send-event.py": "send-event",
     "skill-context-injector.py": "SessionStart",
     "AfterTool": "AfterTool",
     "BeforeAgent": "BeforeAgent",
@@ -394,11 +393,6 @@ def _source_event_name(hook_name: str, payload: Mapping[str, Any]) -> str:
     override = os.environ.get("OBSERVABILITY_SOURCE_EVENT_NAME") or os.environ.get("GEMINI_OBSERVABILITY_SOURCE_EVENT_NAME")
     if override:
         return override
-
-    if hook_name == "send-event.py":
-        candidate = first_present(payload, "hook_event_name", "hookEventName", "source_event_name", "sourceEventName")
-        if candidate:
-            return stringify_value(candidate)
 
     if hook_name == "load-required-skills.py":
         if first_present(payload, "agentId", "agent_id", "agentName", "agent_name", "transcriptPath", "transcript_path"):
@@ -1920,7 +1914,7 @@ def begin_hook_capture(payload: Mapping[str, Any]) -> None:
     _STATE["sqlite_success"] = sqlite_success
 
     if not sqlite_success:
-        if _capture_event_enabled() or hook_name == "send-event.py":
+        if _capture_event_enabled():
             _write_record(_build_record("event_capture", raw_payload, source_event_name=source_event_name))
 
 

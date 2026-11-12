@@ -21,8 +21,7 @@ class TestHookHelpers(unittest.TestCase):
         import json
         import subprocess
 
-        for path in (gemini_helpers_path, copilot_helpers_path,
-                     repo_root / ".codex" / "hooks"):
+        for path in (gemini_helpers_path, copilot_helpers_path):
             for options, payload, expected in (
                 ({}, '{"x":"[{,:}\\\""}', {"x": '[{,:}"'}),
                 ({"max_bytes": 64}, '{"x":1' + ' ' * 57 + '}', {"x": 1}),
@@ -54,8 +53,7 @@ class TestHookHelpers(unittest.TestCase):
         import subprocess
         import tempfile
 
-        helper_paths = (gemini_helpers_path, copilot_helpers_path,
-                        repo_root / ".codex" / "hooks")
+        helper_paths = (gemini_helpers_path, copilot_helpers_path)
         with tempfile.TemporaryDirectory(prefix="common-command-") as directory:
             for path in helper_paths:
                 with self.subTest(provider=path.parts[-3]):
@@ -76,8 +74,7 @@ class TestHookHelpers(unittest.TestCase):
     def test_run_command_preserves_failures_timeout_and_bytes_output(self):
         import subprocess
 
-        helper_paths = (gemini_helpers_path, copilot_helpers_path,
-                        repo_root / ".codex" / "hooks")
+        helper_paths = (gemini_helpers_path, copilot_helpers_path)
         for path in helper_paths:
             with self.subTest(provider=path.parts[-3]):
                 common = self._get_common_module(path)
@@ -90,7 +87,7 @@ class TestHookHelpers(unittest.TestCase):
                 with self.assertRaises(subprocess.TimeoutExpired):
                     common.run_command([sys.executable, "-c", "import time; time.sleep(5)"], timeout=0.05)
                 with self.assertRaises(FileNotFoundError):
-                    common.run_command(["guardian-nonexistent-executable-" + uuid4().hex])
+                    common.run_command(["hook-test-nonexistent-executable-" + uuid4().hex])
                 for invalid in ("echo safe", b"echo safe"):
                     with self.assertRaises(TypeError):
                         common.run_command(invalid)

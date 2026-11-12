@@ -19,10 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from hooks.registrations import (
     check_parent_directories,
     configuration_lock,
-    preflight_status_path,
     reconcile,
     retire_assets,
-    validate_status_asset,
     verify_unchanged,
 )
 
@@ -137,13 +135,10 @@ def main() -> int:
         check_parent_directories(home, destination)
         if destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {destination}")
-        preflight_status_path(arguments.provider, template.get("hooks", {}), hook_directory)
         with configuration_lock(destination, arguments.check):
             exists = destination.exists()
             existing, old_bytes = load_object(destination, "existing") if exists else ({}, b"")
             merged = merge_hooks(existing, template, arguments.provider, home)
-            if not arguments.check:
-                validate_status_asset(arguments.provider, template.get("hooks", {}), hook_directory)
             if exists and merged == existing:
                 info = destination.stat()
                 needs_private_copy = info.st_nlink > 1 or (

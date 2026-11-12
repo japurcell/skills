@@ -4,7 +4,7 @@ description: ExecPlan implementation workflow. Use when implementing ExecPlans a
 compatibility: Requires background subagent dispatch with follow-up messaging and Git worktrees.
 ---
 
-You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.
+This workflow applies when the parent implements an ExecPlan, whether supplied by the user, created during the session, or resumed from earlier work. This plan should have tasks and milestones associated with it, describing how to implement the plan.
 
 The goal is the entire plan implemented on a single **integration branch**, with every task and milestone resolved.
 

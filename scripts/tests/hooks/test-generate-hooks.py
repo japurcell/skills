@@ -4,122 +4,31 @@
 from __future__ import annotations
 
 import importlib.util
-from contextlib import contextmanager
 import json
 import os
 from pathlib import Path, PurePosixPath
 import re
-from hashlib import sha256
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
-
-
-@contextmanager
-def verified_fixture(module, content):
-    """A complete protected capture for parser fixtures, never partial stdout."""
-    with tempfile.TemporaryFile(mode="w+b") as stream:
-        stream.write(content)
-        stream.flush()
-        yield module.VerifiedCapture(module.ScanContext(module.ScanLimits()), stream, len(content), time.monotonic() + 8, "git_index")
-
-
-def acquire_fixture(module, root, path):
-    """Exercise current worktree acquisition, classification and protected replay."""
-    candidate = (module.CANDIDATE_UNTRACKED, path)
-    with module.snapshot_source(root, [candidate], module.ScanBudget(module.ScanContext(module.ScanLimits()))) as source:
-        with source.acquire(candidate) as snapshot:
-            return b"".join(snapshot.chunks()), snapshot.classification
-
-
 SCRIPT = ROOT / "scripts" / "generate-hooks.py"
-OWNERSHIP = "# Generated from hooks/families/send_event.py by scripts/generate-hooks.py. Do not edit.\n"
-PILOT_RUNTIME_BODY = '''
-from __future__ import annotations
-
-import os
-import sys
-
-from helpers.common import emit_json, read_json_input
-
-
-def main() -> int:
-    if "--include-transcript" in sys.argv[1:]:
-        os.environ["OBSERVABILITY_INCLUDE_TRANSCRIPT"] = "true"
-
-    read_json_input()
-    emit_json({})
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-'''
+OWNERSHIP = "# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.\n"
 TARGETS = (
-    ".copilot/hooks/scripts/send-event.py",
-    ".gemini/hooks/scripts/send-event.py",
+    ".copilot/hooks/scripts/rtk-hook-copilot.py",
+    ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
+RTK_TARGETS = TARGETS
 OBSERVABILITY_TARGETS = (
     ".copilot/hooks/scripts/helpers/observability.py",
     ".gemini/hooks/scripts/helpers/observability.py",
-)
-TOOL_GUARD_TARGETS = (
-    ".copilot/hooks/scripts/tool-guard.py",
-    ".gemini/hooks/scripts/tool-guard.py",
-    ".codex/hooks/tool-guard.py",
-)
-TOOL_GUARD_POLICY_TARGETS = (
-    ".copilot/hooks/scripts/helpers/tool_guard_policy.py",
-    ".gemini/hooks/scripts/helpers/tool_guard_policy.py",
-    ".codex/hooks/helpers/tool_guard_policy.py",
-)
-SECRET_SCANNER_TARGETS = (
-    ".copilot/hooks/scripts/scan-secrets.py",
-    ".gemini/hooks/scripts/scan-secrets.py",
-    ".codex/hooks/scan-secrets.py",
-)
-STATUS_TARGETS = tuple(str(Path(entry).with_name("scan-status.py")) for entry in SECRET_SCANNER_TARGETS)
-SCANNER_RUNTIME_TARGETS = tuple(
-    str(Path(entry).parent / "helpers" / (name + ".py"))
-    for entry in SECRET_SCANNER_TARGETS
-    for name in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
-                 "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine")
-)
-CODEX_HELPER_TARGETS = (
-    ".codex/hooks/helpers/common.py",
-    ".codex/hooks/helpers/audit.py",
-)
-DIAGNOSTICS_TARGETS = (
-    ".codex/hooks/hooks-diagnostics.py",
-    ".copilot/hooks/scripts/hooks-diagnostics.py",
-    ".gemini/hooks/scripts/hooks-diagnostics.py",
-)
-
-BRAIN_BUNDLE_TARGETS = (
-    "skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py",
-    "skills/default/brain-install/assets/hooks/inject-brain.py",
-)
-BRAIN_TARGETS = (
-    ".github/hooks/scripts/auto-index-brain.py",
-    ".github/hooks/scripts/inject-brain.py",
-    ".gemini/hooks/scripts/auto-index-brain.py",
-    ".gemini/hooks/scripts/inject-brain.py",
-    ".codex/hooks/auto-index-brain.py",
-    ".codex/hooks/inject-brain.py",
-) + BRAIN_BUNDLE_TARGETS
-
-RTK_TARGETS = (
-    ".copilot/hooks/scripts/rtk-hook-copilot.py",
-    ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
@@ -138,12 +47,10 @@ OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('os.environ.get("COPILOT_OBSERVABILITY_SOURCE_EVENT_NAME")',
      'os.environ.get("GEMINI_OBSERVABILITY_SOURCE_EVENT_NAME")'),
 )
-COMMON_AUDIT_TARGETS = {
-    ".copilot/hooks/scripts/helpers/common.py": "aaa79bb5bcf9cbff37f12a7cb42ad3381cb481c5e491d37a315bc0e04a1e0705",
-    ".gemini/hooks/scripts/helpers/common.py": "21f4d0da01331d3d1f31901e82f99299d0271a1c0b257203808e1a73d06b7570",
-    ".copilot/hooks/scripts/helpers/audit.py": "042d556890bea3596780d8e6f0ec162d71d242fdd2be32604123534961e7dc6b",
-    ".gemini/hooks/scripts/helpers/audit.py": "a423db01bbf25bc7434299f3062a3e6ee40daac82e7a17f64e53e89036ab01fc",
-}
+BRAIN_BUNDLE_TARGETS = (
+    "skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py",
+    "skills/default/brain-install/assets/hooks/inject-brain.py",
+)
 
 
 def load_generator():
@@ -153,49 +60,6 @@ def load_generator():
     sys.modules[specification.name] = module
     specification.loader.exec_module(module)
     return module
-
-
-def load_module(name: str, path: Path):
-    specification = importlib.util.spec_from_file_location(name, path)
-    assert specification is not None and specification.loader is not None
-    module = importlib.util.module_from_spec(specification)
-    sys.modules[specification.name] = module
-    specification.loader.exec_module(module)
-    return module
-
-
-def load_runtime_module(package_name: str, entrypoint: Path, suffix: str):
-    import importlib
-    import types
-    package = types.ModuleType(package_name)
-    package.__path__ = [str(entrypoint.parent / "helpers")]
-    sys.modules[package_name] = package
-    return importlib.import_module(package_name + "." + suffix)
-
-
-def load_guard_runtime(name: str, entrypoint: Path):
-    return load_runtime_module(name, entrypoint, "tool_guard_policy")
-
-
-def load_scanner_runtime(name: str, entrypoint: Path):
-    package_name = name + "_runtime"
-    import importlib
-    git = load_runtime_module(package_name, entrypoint, "scan_git")
-    for suffix in ("scan_types", "scan_stream", "scan_engine", "scan_allowlist"):
-        other = importlib.import_module(package_name + "." + suffix)
-        for key, value in vars(other).items():
-            if key not in vars(git) and not key.startswith("__"):
-                setattr(git, key, value)
-    git.engine = importlib.import_module(package_name + ".scan_engine")
-    git.audit = importlib.import_module(package_name + ".scan_audit")
-    return git
-
-
-def append_fixture_log(module, **arguments):
-    module.audit.append_scan_log(module.audit.AuditPolicy(
-        "fixture", "fixture", "tool scan", module.MAX_FILES,
-        os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576"),
-        os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")), **arguments)
 
 
 def snapshot(root: Path) -> dict[str, tuple[bytes, int]]:
@@ -320,7 +184,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (62 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (16 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -367,34 +231,6 @@ class GenerateHooksTests(unittest.TestCase):
                     path.write_bytes(original)
                     path.chmod(mode)
 
-    def test_guardian_runtime_source_is_an_authoritative_generator_input(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            fixture = Path(temporary)
-            shutil.copytree(ROOT / "hooks", fixture / "hooks", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-            (fixture / "scripts").mkdir()
-            for name in ("generate-hooks.py", "file_io.py", "trusted_hook_launch.py"):
-                shutil.copy2(ROOT / "scripts" / name, fixture / "scripts" / name)
-            source = fixture / "hooks/runtime/tool_guard_policy.py"
-            self.assertTrue(source.is_file(), "Guardian policy must have an ordinary authoritative source")
-            command = [sys.executable, str(fixture / "scripts/generate-hooks.py")]
-            for name in (".copilot/hooks/hooks.json", ".gemini/global-settings.json", ".codex/global-hooks.json"):
-                destination = fixture / name
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(ROOT / name, destination)
-            for output in load_generator().render_all(ROOT):
-                (fixture / output.target.output_path.parent).mkdir(parents=True, exist_ok=True)
-            initial = subprocess.run([*command, "--write"], capture_output=True, text=True)
-            self.assertEqual(initial.returncode, 0, initial.stderr)
-            before = [(fixture / target).read_bytes() for target in TOOL_GUARD_TARGETS]
-            source.write_text(source.read_text() + "\n# authoritative-source fingerprint probe\n")
-            stale = subprocess.run([*command, "--check"], capture_output=True, text=True)
-            self.assertEqual(stale.returncode, 1, stale.stdout + stale.stderr)
-            refreshed = subprocess.run([*command, "--write"], capture_output=True, text=True)
-            self.assertEqual(refreshed.returncode, 0, refreshed.stderr)
-            for target, original in zip(TOOL_GUARD_TARGETS, before, strict=True):
-                self.assertNotEqual((fixture / target).read_bytes(), original,
-                                    "Canonical policy edits must update every Guardian build identity")
-
     def test_check_reads_canonical_sources_as_utf8_in_legacy_locales(self) -> None:
         # Inventory generated Python bytes and modes, excluding interpreter caches.
         paths = tuple(path for name in (".codex/hooks", ".copilot/hooks/scripts",
@@ -406,7 +242,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (62 files).\n")
+        self.assertEqual(result.stdout, "Generated hooks are current (16 files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -431,47 +267,12 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (62 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (16 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
             self.assertTrue(content.startswith("#!/usr/bin/env python3\n" + OWNERSHIP))
             self.assertEqual(stat.S_IMODE((ROOT / target_path).stat().st_mode), 0o755)
-
-    def test_rendered_pilot_preserves_the_pre_generation_runtime_body(self) -> None:
-        generator = load_generator()
-        outputs = generator.render_all(ROOT)
-        self.assertEqual(
-            tuple(output.target.output_path.as_posix() for output in outputs[:len(TARGETS)]),
-            TARGETS,
-        )
-        for target in TARGETS:
-            expected = "#!/usr/bin/env python3\n" + OWNERSHIP + PILOT_RUNTIME_BODY
-            rendered = next(output.content.decode("utf-8") for output in outputs if output.target.output_path.as_posix() == target)
-            self.assertEqual(rendered, expected)
-
-    def test_common_and_audit_match_reviewed_runtime_body_snapshots(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content
-            for output in generator.render_all(ROOT)
-        }
-        self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(STATUS_TARGETS) - set(SCANNER_RUNTIME_TARGETS) - set(CODEX_HELPER_TARGETS) - set(RTK_TARGETS) - set(DIAGNOSTICS_TARGETS) - set(BRAIN_TARGETS),
-            set(COMMON_AUDIT_TARGETS),
-        )
-        for target, expected_digest in COMMON_AUDIT_TARGETS.items():
-            with self.subTest(target=target):
-                content = rendered[target].decode("utf-8")
-                lines = content.splitlines(keepends=True)
-                self.assertEqual(lines[0], "#!/usr/bin/env python3\n")
-                self.assertEqual(
-                    lines[1],
-                    f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
-                )
-                body = "".join(lines[2:])
-                self.assertEqual(sha256(body.encode("utf-8")).hexdigest(), expected_digest)
-
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         rendered = self.rendered_text_outputs()
@@ -486,642 +287,10 @@ class GenerateHooksTests(unittest.TestCase):
             normalized = normalized.replace(copilot_value, gemini_value)
         self.assertEqual(normalized, gemini, "Observability outputs diverged outside their named provider differences.")
 
-    def test_tool_guard_renderings_share_one_policy_outside_provider_adapters(self) -> None:
-        rendered = self.rendered_text_outputs()
-        self.assertTrue(set(TOOL_GUARD_TARGETS).issubset(rendered))
-        self.assertEqual(len({rendered[target] for target in TOOL_GUARD_POLICY_TARGETS}), 1,
-                         "Provider-local policy helpers must be byte-identical and context neutral.")
-
-        shared_sections = []
-        for target in TOOL_GUARD_TARGETS:
-            source = rendered[target]
-            self.assertTrue(source.startswith(
-                "#!/usr/bin/env python3\n"
-                "# Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.\n"
-            ))
-            sections = re.split(
-                r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
-                source,
-                flags=re.DOTALL,
-            )
-            self.assertEqual(len(sections), 3, f"Expected two explicit provider adapters in {target}.")
-            shared_sections.append(sections)
-
-        self.assertEqual(
-            shared_sections[0],
-            shared_sections[1],
-            "Tool Guardian policy diverged outside explicit provider adapters.",
-        )
-
-    def test_tool_guard_provider_neutral_matcher_and_allowlist_vectors(self) -> None:
-        vectors = load_module(
-            "tool_guard_vectors",
-            ROOT / "scripts" / "fixtures" / "tool_guard_vectors.py",
-        )
-        modules = (
-            ("copilot", load_guard_runtime("copilot_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[0])),
-            ("gemini", load_guard_runtime("gemini_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[1])),
-        )
-
-        provider_outcomes = []
-        for provider, module in modules:
-            self.assertEqual(len(module.RULES), len(vectors.POSITIVE_MATCHER_VECTORS))
-            for pattern, vector in zip(module.RULES, vectors.POSITIVE_MATCHER_VECTORS, strict=True):
-                with self.subTest(provider=module.__name__, vector=vector.name):
-                    rule_id, category, severity, matcher, cause, action = pattern
-                    self.assertTrue(category)
-                    self.assertTrue(severity)
-                    self.assertTrue(rule_id)
-                    self.assertTrue(cause)
-                    self.assertTrue(action)
-                    self.assertEqual(matcher(vector.text, vector.text.lower()), vector.expected_match)
-                    aggregated_threats = module.build_threats(vector.text)
-                    self.assertIn(category, {threat["category"] for threat in aggregated_threats})
-                    self.assertTrue(
-                        all(set(threat) == {"category", "severity", "rule_id", "cause", "matched"} for threat in aggregated_threats)
-                    )
-
-            outcomes = []
-            for name, text in vectors.NEGATIVE_AGGREGATION_VECTORS:
-                with self.subTest(provider=module.__name__, vector=name):
-                    threats = module.build_threats(text)
-                    self.assertEqual(threats, [])
-                    outcomes.append(threats)
-
-            for name, text, expected_category in vectors.ADVERSARIAL_AGGREGATION_VECTORS:
-                with self.subTest(provider=module.__name__, vector=name):
-                    threats = module.build_threats(text)
-                    self.assertIn(expected_category, {threat["category"] for threat in threats})
-
-            for name, text in vectors.LIMIT_EXCEEDING_VECTORS:
-                with self.subTest(provider=module.__name__, vector=name):
-                    threats = module.build_threats(text)
-                    self.assertEqual(len(threats), 1)
-                    self.assertEqual(threats[0]["category"], "input_limits")
-                    self.assertEqual(threats[0]["severity"], "critical")
-                    self.assertTrue(threats[0]["rule_id"])
-                    self.assertIn("exceeds limit", threats[0]["cause"])
-
-            multi_threats = module.build_threats(vectors.MULTI_THREAT_TEXT)
-            self.assertEqual(
-                [(threat["category"], threat["severity"]) for threat in multi_threats],
-                [("system_danger", "high"), ("system_danger", "high")],
-            )
-            sensitive_threats = module.build_threats(vectors.SENSITIVE_THREAT_TEXT)
-            self.assertTrue(sensitive_threats)
-            for threat in sensitive_threats:
-                self.assertEqual(set(threat), {"category", "severity", "rule_id", "cause", "matched"})
-            serialized_sensitive_output = json.dumps(
-                {
-                    "threats": module.log_threat_metadata(sensitive_threats),
-                    "reason": module.build_block_reason(
-                        "bash", sensitive_threats,
-                        module.build_action_excerpt(sensitive_threats),
-                        "blocked",
-                    ),
-                }
-            )
-            for sensitive_value in vectors.FAKE_SENSITIVE_VALUES:
-                self.assertNotIn(sensitive_value, serialized_sensitive_output)
-            allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
-            self.assertEqual(
-                tuple((entry["tool"], entry["input"]) for entry in allowlist),
-                vectors.ALLOWLIST_ENTRIES,
-            )
-            self.assertTrue(module.allowlist_contains("Bash", f"  {vectors.ALLOWLIST_INPUT}  ", allowlist))
-            self.assertFalse(module.allowlist_contains("write_file", vectors.ALLOWLIST_INPUT, allowlist))
-            self.assertFalse(module.allowlist_contains("bash", f"echo safe && {vectors.ALLOWLIST_INPUT}", allowlist))
-            self.assertFalse(module.allowlist_contains("bash", f"{vectors.ALLOWLIST_INPUT} && echo unsafe", allowlist))
-            self.assertFalse(module.allowlist_contains("bash", vectors.ALLOWLIST_INPUT.upper(), allowlist))
-            self.assertEqual(module.parse_allowlist(None), [])
-            self.assertEqual(module.parse_allowlist(""), [])
-            self.assertEqual(module.parse_allowlist(vectors.ALLOWLIST_INPUT), [])
-            self.assertEqual(module.parse_allowlist('[{"tool":"bash"}]'), [])
-            for separator in ("\n", "\r", "\t", r"\n"):
-                separated_input = f"{vectors.ALLOWLIST_INPUT}{separator}echo safe"
-                encoded_allowlist = json.dumps([{"tool": "bash", "input": separated_input}])
-                self.assertEqual(module.parse_allowlist(encoded_allowlist), [])
-                self.assertFalse(module.allowlist_contains("bash", separated_input, allowlist))
-            for allowlisted_input, compatibility_input in vectors.ALLOWLIST_COMPATIBILITY_PAIRS:
-                compatibility_allowlist = module.parse_allowlist(
-                    json.dumps([{"tool": "bash", "input": allowlisted_input}])
-                )
-                self.assertFalse(
-                    module.allowlist_contains("bash", compatibility_input, compatibility_allowlist)
-                )
-            internal_spacing = vectors.ALLOWLIST_INPUT.replace(" ", "  ", 1)
-            self.assertFalse(module.allowlist_contains("bash", internal_spacing, allowlist))
-
-            input_key = module.PROVIDER_KEYS[provider][1][0]
-            structured_inputs = module.read_tool_scan_inputs(
-                {
-                    input_key: {
-                        "request": {"query": vectors.STRUCTURED_DESTRUCTIVE_QUERY},
-                        "options": {"timeout": 5},
-                    }
-                }, module.InspectionResult(), provider
-            )
-            self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
-            metadata = module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs))
-            self.assertEqual(len(metadata), 1)
-            self.assertEqual(metadata[0]["category"], "database_destruction")
-            self.assertEqual(metadata[0]["severity"], "high")
-            self.assertEqual(metadata[0]["rule_id"], "delete_without_where")
-            self.assertEqual(metadata[0]["cause"], "SQL DELETE has no WHERE clause")
-            safe_structured_inputs = module.read_tool_scan_inputs(
-                {
-                    input_key: {
-                        "request": {"query": vectors.STRUCTURED_SAFE_QUERY},
-                        "options": {"timeout": 5},
-                    }
-                }, module.InspectionResult(), provider
-            )
-            self.assertEqual(module.build_input_threats("database_query", safe_structured_inputs), [])
-            overdeep: object = "safe"
-            for _ in range(module.MAX_STRUCTURED_DEPTH + 1):
-                overdeep = {"nested": overdeep}
-            with self.assertRaises(module.ScanLimitExceeded):
-                module.read_tool_scan_inputs({input_key: overdeep}, module.InspectionResult(), provider)
-            provider_outcomes.append((outcomes, multi_threats, allowlist))
-
-        self.assertEqual(provider_outcomes[0], provider_outcomes[1])
-
-    def test_secret_scanner_renderings_share_policy_outside_provider_adapters(self) -> None:
-        generator = load_generator()
-        allowlist_source = (ROOT / "hooks/runtime/scan_allowlist.py").read_text(encoding="utf-8")
-
-        rendered = self.rendered_text_outputs()
-        self.assertTrue(set(SECRET_SCANNER_TARGETS).issubset(rendered))
-
-        shared_sections = []
-        for target in SECRET_SCANNER_TARGETS:
-            source = rendered[target]
-            self.assertTrue(source.startswith(
-                "#!/usr/bin/env python3\n"
-                "# Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.\n"
-            ))
-            sections = re.split(
-                r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
-                source,
-                flags=re.DOTALL,
-            )
-            self.assertEqual(len(sections), 5, f"Expected four explicit provider adapters in {target}.")
-            self.assertNotIn('"permissionDecision": "deny"', "".join(sections))
-            self.assertNotIn('"decision": "deny"', "".join(sections))
-            self.assertNotIn(allowlist_source, source)
-            helper = str(Path(target).parent / "helpers/scan_allowlist.py")
-            self.assertEqual(rendered[helper].count(allowlist_source.rstrip()), 1)
-            shared_sections.append(sections)
-
-        for target in TOOL_GUARD_POLICY_TARGETS:
-            self.assertIn("from .scan_allowlist import allowlist_contains, parse_allowlist", rendered[target])
-
-        self.assertEqual(
-            shared_sections[0],
-            shared_sections[1],
-            "Secret scanner policy diverged outside explicit provider adapters.",
-        )
-
-    def test_secret_scanner_provider_neutral_detection_and_allowlist_vectors(self) -> None:
-        vectors = load_module(
-            "secret_scanner_vectors",
-            ROOT / "scripts" / "fixtures" / "secret_scanner_vectors.py",
-        )
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-
-        provider_outcomes = []
-        for module in modules:
-            patterns = {name: (severity, regex) for name, severity, regex in [entry[:3] for entry in module._STREAM_COMPILED]}
-            outcomes = []
-            for name, text, expected_severity, expected_redaction in vectors.PATTERN_VECTORS:
-                with self.subTest(provider=module.__name__, vector=name):
-                    severity, regex = patterns[name]
-                    match = regex.search(text)
-                    self.assertIsNotNone(match)
-                    assert match is not None
-                    self.assertEqual(severity, expected_severity)
-                    self.assertEqual(module.redact_match(match.group(0)), expected_redaction)
-                    outcomes.append((name, severity, expected_redaction))
-            for text in vectors.NEGATIVE_PATTERN_VECTORS:
-                with self.subTest(provider=module.__name__, negative=text):
-                    self.assertFalse(any(regex.search(text) for _severity, regex in patterns.values()))
-            for path, expected in vectors.CREDENTIAL_PATH_VECTORS:
-                self.assertEqual(module.is_credential_path(path), expected)
-            for path, expected in vectors.ENV_PATH_VECTORS:
-                self.assertEqual(module.is_env_path(path), expected)
-            with tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                (root / "notes.txt").write_bytes(b"safe text\n")
-                (root / "image.bin").write_bytes(b"safe\x00binary")
-                self.assertEqual(acquire_fixture(module, root, "notes.txt"), (b"safe text\n", "text"))
-                self.assertEqual(acquire_fixture(module, root, "image.bin"), (b"safe\x00binary", "binary"))
-            self.assertEqual(list(module.full_line_events([b"one\ntwo\n"], "text")),
-                             [("start", 1), ("data", "one"), ("end", None),
-                              ("start", 2), ("data", "two"), ("end", None)])
-            process = mock.Mock()
-            process.pid = os.getpid()
-            process.poll.return_value = 0
-            with mock.patch("subprocess.Popen", return_value=process) as run, \
-                 mock.patch("os.killpg", side_effect=ProcessLookupError):
-                self.assertEqual(module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT), "")
-            invocation = run.call_args
-            self.assertEqual(invocation.args[0], [shutil.which("git"), "status"])
-            self.assertEqual(invocation.kwargs["env"]["GIT_TERMINAL_PROMPT"], "0")
-            self.assertEqual(invocation.kwargs["env"]["GIT_ASKPASS"], "")
-            self.assertEqual(invocation.kwargs["env"]["GIT_LITERAL_PATHSPECS"], "1")
-
-            allowlist = module.parse_allowlist(vectors.ALLOWLIST_RAW)
-            self.assertEqual(
-                tuple((entry["tool"], entry["input"]) for entry in allowlist),
-                vectors.ALLOWLIST_ENTRIES,
-            )
-            self.assertTrue(
-                module.allowlist_contains("SCAN_SECRETS", f"  {vectors.ALLOWLIST_INPUT}  ", allowlist)
-            )
-            self.assertFalse(module.allowlist_contains("tool_guard", vectors.ALLOWLIST_INPUT, allowlist))
-            self.assertFalse(
-                module.allowlist_contains(
-                    "scan_secrets", f"prefix:{vectors.ALLOWLIST_INPUT}", allowlist
-                )
-            )
-            self.assertEqual(module.parse_allowlist(vectors.ALLOWLIST_INPUT), [])
-            self.assertEqual(module.parse_allowlist('[{"tool":"scan_secrets"}]'), [])
-            separated = f"{vectors.ALLOWLIST_INPUT}\\nextra"
-            self.assertEqual(
-                module.parse_allowlist(json.dumps([{"tool": "scan_secrets", "input": separated}])),
-                [],
-            )
-            provider_outcomes.append((outcomes, allowlist))
-
-        self.assertEqual(provider_outcomes[0], provider_outcomes[1])
-
-    def test_secret_scanner_git_failures_are_not_clean_results(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-        commands = (
-            ["diff", "--name-only", "--"],
-            ["ls-files", "--others"],
-            ["show", ":notes.txt"],
-        )
-
-        for module in modules:
-            for command in commands:
-                with self.subTest(provider=module.__name__, command=command[0], failure="exit"):
-                    process = mock.Mock()
-                    process.pid = os.getpid()
-                    process.poll.return_value = 9
-                    with mock.patch("subprocess.Popen", return_value=process), \
-                         mock.patch("os.killpg", side_effect=ProcessLookupError):
-                        with self.assertRaises(module.GitCommandError):
-                            module.run_git(module.ScanContext(module.ScanLimits()), command, cwd=ROOT)
-                with self.subTest(provider=module.__name__, command=command[0], failure="launch"):
-                    with mock.patch("subprocess.Popen", side_effect=OSError("unavailable")):
-                        with self.assertRaises(module.GitCommandError):
-                            module.run_git(module.ScanContext(module.ScanLimits()), command, cwd=ROOT)
-
-    def test_secret_scanner_git_output_and_cumulative_deadline_are_bounded(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-
-        with tempfile.TemporaryDirectory() as directory:
-            fake_bin = Path(directory)
-            git_path = fake_bin / "git"
-            original_path = os.environ.get("PATH", "")
-            bounded_path = f"{fake_bin}{os.pathsep}{original_path}"
-
-            for module in modules:
-                pid_path = fake_bin / f"{module.__name__}.pid"
-                git_path.write_text(
-                    "#!/usr/bin/env python3\n"
-                    "import os\n"
-                    "import time\n"
-                    "from pathlib import Path\n"
-                    "Path(os.environ['GIT_TEST_PID_PATH']).write_text(str(os.getpid()))\n"
-                    "os.write(1, b'x' * 2048)\n"
-                    "time.sleep(10)\n",
-                    encoding="utf-8",
-                )
-                git_path.chmod(0o755)
-                with self.subTest(provider=module.__name__, case="output-cap"):
-                    with mock.patch.dict(
-                        os.environ,
-                        {"PATH": bounded_path, "GIT_TEST_PID_PATH": str(pid_path)},
-                    ):
-                        with mock.patch.object(module, "ScanLimits", return_value=module.ScanLimits(max_capture_bytes=1024)):
-                            started = time.monotonic()
-                            with self.assertRaises(module.ScanLimitExceeded):
-                                module.run_git(module.ScanContext(module.ScanLimits()),
-                                    ["status"],
-                                    cwd=ROOT,
-                                    deadline=time.monotonic() + 2.0,
-                                )
-                            self.assertLess(time.monotonic() - started, 1.0)
-                    stopped_pid = int(pid_path.read_text(encoding="utf-8"))
-                    with self.assertRaises(ProcessLookupError):
-                        os.kill(stopped_pid, 0)
-
-                git_path.write_text(
-                    "#!/usr/bin/env bash\n"
-                    "sleep 1.2\n"
-                    "printf 'ok\\n'\n",
-                    encoding="utf-8",
-                )
-                git_path.chmod(0o755)
-                with self.subTest(provider=module.__name__, case="cumulative-deadline"):
-                    # Each command fits; both cannot. Allow real process-startup
-                    # margin while preserving the shared cumulative deadline.
-                    deadline = time.monotonic() + 2.0
-                    with mock.patch.dict(os.environ, {"PATH": bounded_path}):
-                        self.assertEqual(
-                            module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT, deadline=deadline),
-                            "ok\n",
-                        )
-                        with self.assertRaises(module.ScanLimitExceeded):
-                            module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT, deadline=deadline)
-
-    def test_secret_scanner_parses_git_paths_and_diff_lines_without_ambiguity(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-        cached_output = b"shared.txt\0"
-        worktree_output = b"shared.txt\0"
-        untracked_output = b"line\nbreak.txt\0tab\tname.txt\0nonutf-\xff.txt\0"
-        diff_output = (
-            b"diff --git a/notes.txt b/notes.txt\n"
-            b"--- a/notes.txt\n"
-            b"+++ b/notes.txt\n"
-            b"@@ -0,0 +1,2 @@\n"
-            b"+first\n"
-            b"+++starts-with-two-plus\n"
-        )
-
-        for module in modules:
-            with self.subTest(provider=module.__name__, behavior="paths"):
-                expected_candidates = sorted(
-                    (
-                        (module.CANDIDATE_STAGED, "shared.txt"),
-                        (module.CANDIDATE_WORKTREE, "shared.txt"),
-                        (module.CANDIDATE_UNTRACKED, "line\nbreak.txt"),
-                        (module.CANDIDATE_UNTRACKED, "tab\tname.txt"),
-                        (module.CANDIDATE_UNTRACKED, os.fsdecode(b"nonutf-\xff.txt")),
-                    ),
-                    key=lambda candidate: (candidate[1], candidate[0]),
-                )
-                with mock.patch.object(
-                    module,
-                    "capture_git",
-                    side_effect=[verified_fixture(module, data) for data in (b"", cached_output, worktree_output, untracked_output)],
-                ) as run:
-                    self.assertEqual(
-                        module.collect_files(module.ScanContext(module.ScanLimits()), ROOT, "diff", True),
-                        expected_candidates,
-                    )
-                unmerged_args = run.call_args_list[0].args[1]
-                cached_args = run.call_args_list[1].args[1]
-                worktree_args = run.call_args_list[2].args[1]
-                ls_args = run.call_args_list[3].args[1]
-                self.assertIn("--unmerged", unmerged_args)
-                self.assertIn("-z", unmerged_args)
-                self.assertIn("-z", cached_args)
-                self.assertIn("--cached", cached_args)
-                self.assertIn("HEAD", cached_args)
-                self.assertIn("-z", worktree_args)
-                self.assertNotIn("--cached", worktree_args)
-                self.assertNotIn("HEAD", worktree_args)
-                self.assertIn("-z", ls_args)
-                self.assertIn("--no-color", cached_args)
-                self.assertIn("--no-textconv", worktree_args)
-
-            with self.subTest(provider=module.__name__, behavior="diff"):
-                with mock.patch.object(module.engine, "snapshot_diff_inputs",
-                                       return_value=__import__("contextlib").nullcontext((Path("before"), Path("after")))), \
-                     mock.patch.object(module.engine, "capture_git",
-                                       return_value=verified_fixture(module, diff_output)) as run:
-                    events = list(module.diff_added_line_events([diff_output]))
-                    self.assertEqual(
-                        events,
-                        [("start", 1), ("data", "first"), ("end", None),
-                         ("start", 2), ("data", "++starts-with-two-plus"), ("end", None)],
-                    )
-                    report = module.StreamReport()
-                    module.scan_diff_added_lines(module.ScanContext(module.ScanLimits()), ROOT, "notes.txt", module.CANDIDATE_WORKTREE,
-                                                 report, lambda key: False, root_has_head=True,
-                                                 snapshot=__import__("types").SimpleNamespace(conversion="none", baseline_has_crlf=False, diff_algorithm="myers", indent_heuristic=True, private_git_dir=None))
-                    self.assertEqual(report.findings, [])
-                args = run.call_args.args[1]
-                self.assertIn("--no-color", args)
-                self.assertIn("--no-textconv", args)
-                self.assertIn("--output-indicator-new=+", args)
-                self.assertNotIn("--cached", args)
-                self.assertNotIn("HEAD", args)
-
-            with self.subTest(provider=module.__name__, behavior="staged-index"):
-                oid = b"a" * 40
-                candidate = (module.CANDIDATE_STAGED, "0:notes.env")
-                header = oid + b" blob 5\n"
-                outputs = (b"100644 " + oid + b" 0\t0:notes.env\0", header, header + b"token\n")
-                with mock.patch.object(module, "capture_git", side_effect=[verified_fixture(module, data) for data in outputs]) as run:
-                    with module.snapshot_source(ROOT, [candidate], module.ScanBudget(module.ScanContext(module.ScanLimits()))) as source:
-                        with source.acquire(candidate) as snapshot:
-                            self.assertEqual(b"".join(snapshot.chunks()), b"token")
-                self.assertEqual(run.call_args_list[0].args[1], ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", "0:notes.env"])
-                for invocation in run.call_args_list[1:]:
-                    self.assertEqual(invocation.kwargs["input_bytes"], oid + b"\n")
-                self.assertEqual(run.call_args_list[1].args[1], ["cat-file", "--batch-check"])
-                self.assertEqual(run.call_args_list[2].args[1], ["cat-file", "--batch"])
-
-    def test_secret_scanner_rejects_unsafe_or_oversized_candidate_files(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-
-        with tempfile.TemporaryDirectory() as directory:
-            parent = Path(directory)
-            repo = parent / "repo"
-            repo.mkdir()
-            (parent / "outside.txt").write_text("outside", encoding="utf-8")
-            (repo / "regular.txt").write_text("inside", encoding="utf-8")
-
-            for module in modules:
-                with self.subTest(provider=module.__name__, case="regular"):
-                    self.assertEqual(
-                        acquire_fixture(module, repo, "regular.txt"),
-                        (b"inside", "text"),
-                    )
-                with self.subTest(provider=module.__name__, case="escape"):
-                    with self.assertRaises(module.ScanSecurityError):
-                        acquire_fixture(module, repo, "../outside.txt")
-                oversized = repo / "oversized.bin"
-                oversized.write_bytes(b"x" * (module.MAX_TOTAL_BYTES + 1))
-                with self.subTest(provider=module.__name__, case="oversized"):
-                    with self.assertRaises(module.ScanLimitExceeded):
-                        acquire_fixture(module, repo, "oversized.bin")
-                oversized.unlink()
-                if hasattr(os, "symlink"):
-                    linked = repo / "linked.txt"
-                    linked.symlink_to(parent / "outside.txt")
-                    with self.subTest(provider=module.__name__, case="symlink"):
-                        with self.assertRaises(module.ScanSecurityError):
-                            acquire_fixture(module, repo, "linked.txt")
-                    linked.unlink()
-
-    def test_secret_scanner_enforces_file_count_total_bytes_and_time_limits(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-        for module in modules:
-            too_many_paths = b"".join(
-                f"file-{index}.txt".encode("ascii") + b"\0"
-                for index in range(module.MAX_FILES + 1)
-            )
-            with self.subTest(provider=module.__name__, case="file-count"):
-                with mock.patch.object(
-                    module,
-                    "capture_git",
-                    side_effect=[verified_fixture(module, data) for data in (b"", too_many_paths, b"", b"")],
-                ):
-                    with self.assertRaises(module.ScanLimitExceeded):
-                        module.collect_files(module.ScanContext(module.ScanLimits()), ROOT, "diff", True)
-            with self.subTest(provider=module.__name__, case="total-bytes"):
-                with self.assertRaises(module.ScanLimitExceeded):
-                    module.ScanBudget(module.ScanContext(module.ScanLimits())).charge(module.MAX_TOTAL_BYTES + 1)
-            with self.subTest(provider=module.__name__, case="elapsed-time"):
-                with self.assertRaises(module.ScanLimitExceeded):
-                    module.ScanContext(module.ScanLimits(), started=time.monotonic() - module.MAX_SCAN_SECONDS - 0.01).check_deadline()
-
-    def test_secret_scanner_logs_are_owner_only_and_reject_links(self) -> None:
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-
-        for module in modules:
-            with tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                log_dir = root / "logs"
-                log_dir.mkdir(mode=0o755)
-                log_path = log_dir / "scan.log"
-                arguments = {
-                    "log_path": log_path,
-                    "status": "clean",
-                    "session_id": "safe-session",
-                    "timestamp": "2026-09-17T07:30:00Z",
-                    "mode": "warn",
-                    "scope": "diff",
-                    "repo_root_path": root,
-                    "env_files": [],
-                    "findings": [],
-                }
-                append_fixture_log(module, **arguments)
-                existing_size = log_path.stat().st_size
-                with mock.patch.dict(
-                    os.environ,
-                    {
-                        "AUDIT_LOG_MAX_BYTES": str(existing_size + 1),
-                        "AUDIT_LOG_MAX_BACKUPS": "2",
-                    },
-                ):
-                    append_fixture_log(module, **arguments)
-
-                self.assertEqual(stat.S_IMODE(log_dir.stat().st_mode), 0o700)
-                self.assertEqual(stat.S_IMODE(log_path.stat().st_mode), 0o600)
-                self.assertEqual(stat.S_IMODE((log_dir / "scan.log.lock").stat().st_mode), 0o600)
-                self.assertEqual(stat.S_IMODE((log_dir / "scan.log.1").stat().st_mode), 0o600)
-
-                oversized_arguments = {
-                    **arguments,
-                    "session_id": "x" * module.MAX_LOG_RECORD_BYTES,
-                }
-                with self.subTest(provider=module.__name__, case="oversized-record"):
-                    append_fixture_log(module, **oversized_arguments)
-                    record_bytes = log_path.read_bytes().splitlines(keepends=True)[-1]
-                    self.assertLessEqual(len(record_bytes), module.MAX_LOG_RECORD_BYTES)
-                    record = json.loads(record_bytes)
-                    self.assertEqual(record["sessionId"], "x" * 157 + "...")
-                    self.assertEqual(record["status"], "clean")
-                    self.assertEqual(record["security_outcome"], "clean")
-                    self.assertEqual(record["audit_outcome"], "written")
-
-                if hasattr(os, "symlink"):
-                    log_path.unlink()
-                    target = root / "outside.log"
-                    target.write_text("unchanged\n", encoding="utf-8")
-                    log_path.symlink_to(target)
-                    with self.subTest(provider=module.__name__, case="linked-log"):
-                        with self.assertRaises(module.ScanSecurityError):
-                            append_fixture_log(module, **arguments)
-                    self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
-                    log_path.unlink()
-                    lock_path = log_dir / "scan.log.lock"
-                    lock_path.unlink()
-                    lock_path.symlink_to(target)
-                    with self.subTest(provider=module.__name__, case="linked-lock"):
-                        with self.assertRaises(module.ScanSecurityError):
-                            append_fixture_log(module, **arguments)
-                    self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
-                    lock_path.unlink()
-                    linked_log_dir = root / "linked-logs"
-                    linked_log_dir.symlink_to(log_dir, target_is_directory=True)
-                    linked_dir_arguments = {
-                        **arguments,
-                        "log_path": linked_log_dir / "scan.log",
-                    }
-                    with self.subTest(provider=module.__name__, case="linked-directory"):
-                        with self.assertRaises(module.ScanSecurityError):
-                            append_fixture_log(module, **linked_dir_arguments)
-
-    def test_secret_scanner_log_lock_wait_is_bounded(self) -> None:
-        try:
-            import fcntl
-        except ImportError:
-            self.skipTest("POSIX flock is unavailable")
-
-        modules = (
-            load_scanner_runtime("copilot_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_scanner_runtime("gemini_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[1]),
-        )
-        for module in modules:
-            with tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                log_path = root / "logs" / "scan.log"
-                log_path.parent.mkdir()
-                lock_path = log_path.with_name("scan.log.lock")
-                lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
-                fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                try:
-                    with mock.patch.object(module.audit, "LOG_LOCK_TIMEOUT_SECONDS", 0.1):
-                        started = time.monotonic()
-                        with self.assertRaises(module.ScanLimitExceeded):
-                            append_fixture_log(module,
-                                log_path=log_path,
-                                status="clean",
-                                session_id="locked",
-                                timestamp="2026-09-17T07:31:00Z",
-                                mode="block",
-                                scope="diff",
-                                repo_root_path=root,
-                                env_files=[],
-                                findings=[],
-                            )
-                        self.assertLess(time.monotonic() - started, 1.0)
-                finally:
-                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
-                    os.close(lock_fd)
-
     def test_rendering_rejects_unsafe_paths_and_invalid_python_before_writing(self) -> None:
         generator = load_generator()
         original = snapshot(ROOT)
-        bad_path = generator.GeneratedTarget("send_event", "copilot", Path("outside.py"))
+        bad_path = generator.GeneratedTarget("rtk", "copilot", Path("outside.py"))
         with self.assertRaises(generator.GenerateError):
             generator.validate_target(ROOT, bad_path)
         bad_render = generator.RenderedOutput(

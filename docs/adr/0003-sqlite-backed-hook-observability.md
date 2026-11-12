@@ -1,3 +1,5 @@
 # SQLite-backed hook observability with NDJSON fallback
 
+Status: retained for shared RTK/startup capture. The standalone event emitter and its lifecycle registrations were retired on 2026-11-11; the original lifecycle delivery description below is historical.
+
 Hook observability uses a SQLite-backed trace store with per-session and per-span state, while keeping NDJSON as a best-effort fallback audit stream so observability never blocks hook control flow. Top-level sessions finalize only on `sessionEnd` / `SessionEnd`, distinct child subagent sessions finalize on `subagentStop`, every hook invocation becomes a span, transcript chunks are written only for textual or mutated spans, and saved transcripts keep normalized JSONL envelopes with 100% error retention plus sampled successes. This shape is harder to reverse than incremental NDJSON growth, but it gives explicit parent-child session links, safer finalization under concurrency, portable recovery from lock or corruption failures, and bounded retention without making ordinary tool denials look like observability failures.
