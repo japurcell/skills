@@ -432,7 +432,7 @@ if mode=='unknown': print(json.dumps({'type':'tool.unrecognized','data':{}}))
 print(json.dumps({'type':'session.start','data':{'sessionId':'wrong' if mode=='wrong-session' else cell['session_ids'][phase],'context':{'cwd':str(repo)},'selectedModel':'wrong' if mode=='wrong-model' else 'gpt-6.1-sol','reasoningEffort':None if mode=='missing-effort' else 'medium'}}))
 
 def write_artifact(relative,value):
- text=json.dumps(value)+'\n'
+ text=('{"neutral_patch":true}' if relative=='outputs/smoke-patch.json' else json.dumps(value))+'\n'
  path=repo/relative
  patch='*** Begin Patch\n*** Add File: '+relative+'\n'+''.join('+'+line+'\n' for line in text.splitlines())+'*** End Patch\n'
  if mode=='traversal': patch=patch.replace('*** Add File: outputs/','*** Add File: outputs/../outputs/',1)
@@ -487,6 +487,7 @@ for number,args in enumerate(operations):
  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'toolName':'write_stdin' if mode=='unknown-tool' else 'bash','model':'wrong' if mode=='tool-model' else 'gpt-6.1-sol','turnId':'0','arguments':{'command':shlex.join(argv)}}}))
  if mode!='missing-completion': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':child.returncode==0,'result':{'content':child.stdout}}}))
  if mode=='duplicate': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':True,'result':{'content':child.stdout}}}))
+if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!='native-skip-patch':write_artifact('outputs/smoke-patch.json',{'neutral_patch':True})
 print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':'denied','toolName':'bash','turnId':'0','arguments':{'command':cell['control']['denied_probe']}}}))
 print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied','turnId':'0','success':False,'result':{'content':'Permission denied by native grant fixture'}}}))
 """)
@@ -1163,6 +1164,7 @@ for key,value in json.loads(r"""{
   "experimental_realtime_ws_backend_prompt": null,
   "computer_use": null
 }""").items():config.setdefault(key,value)
+config.setdefault('skills',{}).setdefault('bundled',{})['enabled']=True
 def merge(target,source):
  for key,value in source.items():
   if isinstance(value,dict):merge(target.setdefault(key,{}),value)
@@ -1174,39 +1176,106 @@ for i,arg in enumerate(sys.argv):
 if 'app-server' not in sys.argv:
  import datetime,shlex,subprocess
  repo=pathlib.Path.cwd();manifest=json.loads((repo.parents[2]/'manifest.json').read_text());cell=manifest['cells'][repo.parent.name]
- prompt=sys.stdin.read();session=cell['session_ids']['smoke'];turn='turn-'+session
+ prompt=sys.stdin.read();phase=pathlib.Path(sys.argv[sys.argv.index('--output-last-message')+1]).parent.name
+ session=cell['session_ids'][phase];turn='turn-'+session
  rollout=pathlib.Path(os.environ['CODEX_HOME'])/'sessions'/('rollout-'+session+'.jsonl');rollout.parent.mkdir(parents=True,exist_ok=True)
  rows=[{'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'type':'session_meta','payload':{'id':session,'cwd':str(repo),'originator':'codex_exec','cli_version':'0.167.1','model_provider':'openai'}},{'type':'turn_context','payload':{'turn_id':turn,'cwd':str(repo),'approval_policy':'never','sandbox_policy':dict(type='workspace-write',**cell['safe_config']['sandbox_workspace_write']),'model':'gpt-6.1-sol','effort':'medium'}}]
+ native_stdout=[];emit=print
+ def print(value):native_stdout.append(value)
  print(json.dumps({'type':'thread.started','thread_id':session}))
- state=str(repo/'outputs/smoke-state.json')
- actions=[cell['helper_prefix']+a for a in (['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write'])]
- commands=[shlex.join(a) for a in actions]+[cell['control']['denied_probe']]
- for number,command in enumerate(commands):
-  call='call_'+str(number);item='item_'+str(number)
-  event={'hook_event_name':'PreToolUse','tool_use_id':call,'cwd':str(repo),'tool_name':'Bash','tool_input':{'command':command,'login':False,'tty':False}}
-  verdict=subprocess.run([sys.executable,cell['control']['script'],'--manifest',manifest['root']+'/manifest.json','--cell',repo.parent.name],input=json.dumps(event),capture_output=True,text=True)
-  child=subprocess.run(actions[number],capture_output=True,text=True) if number<len(actions) else verdict
+ number=0
+ def identities():
+  global number
+  number+=1
+  return 'call_'+str(number),'item_'+str(number),'exec-'+str(number)
+ def policy(tool,command,key):
+  event={'hook_event_name':'PreToolUse','tool_use_id':'hook-'+key,'cwd':str(repo),'tool_name':tool,'tool_input':{'command':command,**({'login':False,'tty':False} if tool=='Bash' else {})}}
+  return subprocess.run([sys.executable,cell['control']['script'],'--manifest',manifest['root']+'/manifest.json','--cell',repo.parent.name],input=json.dumps(event),capture_output=True,text=True)
+ def raw_call(key,source):
+  rows.append({'type':'response_item','payload':{'type':'custom_tool_call','call_id':key,'name':'exec','input':source,'internal_chat_message_metadata_passthrough':{'turn_id':turn}}})
+ def raw_output(key,value):
+  rows.append({'type':'response_item','payload':{'type':'custom_tool_call_output','call_id':key,'output':value}})
+ def write_artifact(relative,value):
+  text=('{"neutral_patch":true}' if relative=='outputs/smoke-patch.json' else json.dumps(value))+'\n'
+  patch='*** Begin Patch\n*** Add File: '+relative+'\n'+''.join('+'+line+'\n' for line in text.splitlines())+'*** End Patch\n'
+  call,item,exec_id=identities();path=repo/relative
+  verdict=policy('apply_patch',patch,call)
+  if verdict.returncode:raise RuntimeError(verdict.stderr)
+  changes=[{'path':str(path),'kind':'add'}]
+  print(json.dumps({'type':'item.started','item':{'id':item,'type':'file_change','changes':changes,'status':'in_progress'}}))
+  raw_call(call,'text(await tools.apply_patch('+json.dumps(patch)+'));')
+  path.write_text(text)
+  rows.append({'type':'event_msg','payload':{'type':'item_completed','thread_id':session,'turn_id':turn,'item':{'id':exec_id,'type':'FileChange','changes':{str(path):{'type':'add','content':text}},'status':'completed','stdout':'Success. Updated the following files:\nA '+relative+'\n','stderr':''}}})
+  raw_output(call,[{'type':'input_text','text':'Script completed'}])
+  print(json.dumps({'type':'item.completed','item':{'id':item,'type':'file_change','changes':changes,'status':'completed'}}))
+ def invoke(args,label=None,assignment=None,at=None):
+  argv=cell['helper_prefix']+args;command=shlex.join(argv);call,item,_=identities()
+  verdict=policy('Bash',command,call)
+  if verdict.returncode:raise RuntimeError(verdict.stderr)
+  child=subprocess.run(argv,capture_output=True,text=True)
   display=shlex.join(['/bin/zsh','-c',command])
   print(json.dumps({'type':'item.started','item':{'id':item,'type':'command_execution','command':display}}))
   print(json.dumps({'type':'item.completed','item':{'id':item,'type':'command_execution','command':display,'exit_code':child.returncode,'aggregated_output':child.stdout}}))
-  rows.append({'type':'response_item','payload':{'type':'custom_tool_call','call_id':call,'name':'exec','input':'text(await tools.exec_command({cmd:'+json.dumps(command)+',login:false,tty:false}));','internal_chat_message_metadata_passthrough':{'turn_id':turn}}})
-  rows.append({'type':'response_item','payload':{'type':'custom_tool_call_output','call_id':call,'output':child.stdout}})
+  raw_call(call,'text(await tools.exec_command({cmd:'+json.dumps(command)+',login:false,tty:false}));');raw_output(call,child.stdout)
+  if label:
+   relative='outputs/'+label+'-'+str(at)+'.json';write_artifact(relative,{'command':command,'exit_code':child.returncode})
+   actions.append({'action':label,'assignment':assignment,'at':at,'evidence':relative})
+ if phase=='smoke':
+  state=str(repo/'outputs/smoke-state.json')
+  for args in (['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write']):invoke(args)
+  write_artifact('outputs/smoke-patch.json',{'neutral_patch':True})
+  command=cell['control']['denied_probe'];call,item,_=identities();verdict=policy('Bash',command,call)
+  display=shlex.join(['/bin/zsh','-c',command])
+  print(json.dumps({'type':'item.started','item':{'id':item,'type':'command_execution','command':display}}))
+  print(json.dumps({'type':'item.completed','item':{'id':item,'type':'command_execution','command':display,'exit_code':verdict.returncode,'aggregated_output':verdict.stdout}}))
+  raw_call(call,'text(await tools.exec_command({cmd:'+json.dumps(command)+',login:false,tty:false}));');raw_output(call,verdict.stdout)
+ else:
+  state=str(repo/'outputs/scenario-state.json');actions=[]
+  def op(command,assignment=None,at=0,extra=(),label=None):
+   invoke(['--state',state,command]+([assignment] if assignment else [])+list(extra)+['--now',str(at)],label,assignment or ('A' if at==105 else 'B'),at)
+  for assignment,agent in (('A','agent-a'),('B','agent-old'),('C','agent-c')):op('register',assignment,extra=[agent,'task','--deadline','100','--checkpoint','300','--grace','5'])
+  op('tick',at=100)
+  op('checkpoint','B',102,['--eta','200'])
+  op('checkpoint','C',102)
+  op('extend','B',103,['--eta','200'],'extend')
+  op('complete','C',104)
+  op('tick',at=105,label='stop')
+  op('checkpoint','B',150)
+  op('extend','B',151,['--eta','250'])
+  op('tick',at=200,label='stop')
+  op('transfer','B',201,label='transfer-rejected')
+  op('confirm-stopped','B',202,['--confirmation','worker-and-writes-stopped'],'confirm-stopped')
+  op('transfer','B',203,label='transfer')
+  invoke(['parent-update','agent-old','agent-new','204'],'parent-update','B',204)
+  if cell['variant']=='candidate':op('confirm-transfer','B',205,['--owner','agent-new','--evidence','outputs/ownership.json','--confirmation','parent-ownership-updated'],'confirm-transfer')
+  write_artifact('outputs/result.json',{'actions':actions,'final_state':{'old_owner':'agent-old','new_owner':'agent-new','worker_stopped':True,'writes_stopped':True,'transfer_authorized':True,'parent_record':'outputs/ownership.json','scheduler_state':'outputs/scenario-state.json'}})
  rollout.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+ if mode=='proof-overlap':native_stdout[2],native_stdout[3]=native_stdout[3],native_stdout[2]
+ if mode=='proof-patch-overlap':
+  index=next(i for i,line in enumerate(native_stdout) if json.loads(line).get('item',{}).get('type')=='file_change')
+  native_stdout[index-1],native_stdout[index]=native_stdout[index],native_stdout[index-1]
+ for line in native_stdout:emit(line)
  raise SystemExit
 for line in sys.stdin:
  q=json.loads(line);method=q['method']
  if method=='initialized':continue
  result={}
- if method=='config/read':result={'config':config,'layers':[{'name':{'type':'user','file':str(pathlib.Path(os.environ.get('CODEX_HOME',str(pathlib.Path.home()/'.codex')))/'config.toml')}},{'name':{'type':'project','dotCodexFolder':str(pathlib.Path.cwd()/'.codex')},'disabledReason':None if mode in ('trusted','proof') else 'untrusted project'}]}
+ if method=='config/read':result={'config':config,'layers':[{'name':{'type':'user','file':str(pathlib.Path(os.environ.get('CODEX_HOME',str(pathlib.Path.home()/'.codex')))/'config.toml')}},{'name':{'type':'project','dotCodexFolder':str(pathlib.Path.cwd()/'.codex')},'disabledReason':None if mode in ('trusted','proof','proof-overlap','proof-patch-overlap') else 'untrusted project'}]}
  if method=='skills/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'skills':[{'path':'/fixture/SKILL.md','scope':'user','enabled':not bool(config.get('skills',{}).get('config'))}]}]}
+ if method=='skills/list' and config.get('features',{}).get('plugins') is not False:result['data'][0]['skills'].append({'path':'/plugin/SKILL.md','scope':'user','enabled':True})
+ if method=='skills/list' and config.get('skills',{}).get('bundled',{}).get('enabled') is not False:result['data'][0]['skills'].append({'path':'/system/bundled/SKILL.md','scope':'system','enabled':True})
  if method=='hooks/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'warnings':[],'hooks':[{'source':'user','sourcePath':'/fixture/hooks.json','key':'disabled','eventName':'sessionStart','handlerType':'command','enabled':False,'currentHash':'sha256:fixture','trustStatus':'trusted'}]}]}
  if method=='model/list':print(json.dumps({'method':'account/updated','params':{'authMode':{'bad':True} if mode=='bad-account' else 'chatgpt','planType':'pro'}}),flush=True)
  if method=='model/list':result={'data':[{'id':'gpt-6.1-sol','supportedReasoningEfforts':[{'reasoningEffort':'medium'}]}]}
  if method=='thread/read':
   repo=pathlib.Path.cwd();session=q['params']['threadId'];result={'thread':{'id':session,'sessionId':session,'cwd':str(repo),'path':str(pathlib.Path(os.environ['CODEX_HOME'])/'sessions'/('rollout-'+session+'.jsonl')),'model':'gpt-6.1-sol','reasoningEffort':'medium','modelProvider':'openai','source':'exec','cliVersion':'0.167.1'}}
- if method=='hooks/list' and mode in ('trusted','proof'):
+ if method=='hooks/list' and mode in ('trusted','proof','proof-overlap','proof-patch-overlap'):
   path=pathlib.Path.cwd()/'.codex/hooks.json';hook=json.loads(path.read_text())['hooks']['PreToolUse'][0]['hooks'][0]
   result['data'][0]['hooks'].append(dict(source='project',sourcePath=str(path),key=str(path)+':pre_tool_use:0:0',eventName='preToolUse',handlerType='command',enabled=True,currentHash='sha256:project-fixture',trustStatus='trusted',command=hook['command'],timeoutSec=3,**{'async':False}))
+ if method=='config/read':
+  for server in result['config']['mcp_servers'].values():server.pop('required',None)
+ if method=='config/read' and mode=='required-true':result['config']['mcp_servers']['fixture']['required']=True
+ if method=='config/read' and mode=='required-null':result['config']['mcp_servers']['fixture']['required']=None
  if method=='config/read' and mode=='enabled-mcp':result['config']['mcp_servers']['fixture']['enabled']=True
  if method=='config/read' and mode=='new-plugin':result['config']['plugins']['extra@bundle']={'enabled':False}
  if method=='config/read' and mode=='wrong-sandbox':result['config']['sandbox_mode']='danger-full-access'
@@ -1260,7 +1329,7 @@ for line in sys.stdin:
         receipt=json.loads(result.stdout)
         self.assertTrue(receipt['setup_ready'])
         self.assertFalse(receipt['scenario_ready'])
-        for mode in ('notify-command','login-shell','new-mcp','enabled-mcp','new-plugin','wrong-sandbox','wrong-approval','unknown-key','skill-drift','hook-hash','unsafe-instructions','unknown-layer','wrong-provider','active-user-hook'):
+        for mode in ('required-true','required-null','notify-command','login-shell','new-mcp','enabled-mcp','new-plugin','wrong-sandbox','wrong-approval','unknown-key','skill-drift','hook-hash','unsafe-instructions','unknown-layer','wrong-provider','active-user-hook'):
             with self.subTest(mode=mode):
                 (self.root/'native-mode').write_text(mode)
                 result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
@@ -1297,6 +1366,112 @@ for line in sys.stdin:
             self.assertEqual(result.returncode,0,result.stderr+result.stdout)
             record=json.loads(result.stdout)
             self.assertTrue(record['smoke_valid'],record)
+
+    def test_public_codex_native_complete_both_version_scenarios(self):
+        self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+        self.native_codex_setup('proof')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,0,result.stderr)
+        for variant in ('baseline','candidate'):
+            result=self.call('run','--manifest',self.manifest,'--cell','codex-'+variant,'--phase','smoke')
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+        for variant in ('baseline','candidate'):
+            cell_id='codex-'+variant
+            result=self.call('run','--manifest',self.manifest,'--cell',cell_id,'--phase','scenario')
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            report=self.grade(cell_id)
+            self.assertEqual(report['setup_status'],'valid',report)
+            self.assertEqual(report['behavior_status'],'pass',report)
+            self.assertTrue(report['comparison_eligible'],report)
+            cell=self.data['cells'][cell_id]
+            raw=json.loads((Path(cell['repo']).parent/'evidence/scenario/native-events.json').read_text())
+            patches=[call for call in raw['calls'] if call['tool_type']=='apply_patch']
+            self.assertTrue(patches)
+            self.assertTrue(all(call['exit_code'] is None for call in patches))
+            self.assertTrue(any(call['exit_code']==2 for call in raw['calls'] if call['tool_type']=='command_execution'))
+
+    def test_public_native_copilot_requires_neutral_patch_probe(self):
+        self.copilot_setup('native-skip-patch',native=True)
+        result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+        self.assertEqual(result.returncode,2,result.stdout)
+        record=json.loads(result.stdout)
+        self.assertFalse(record['smoke_valid'])
+        self.assertFalse(record['smoke_checks']['neutral_patch'])
+        self.assertIn('smoke:neutral_patch',record['invalid_reasons'])
+
+    def test_public_codex_overlapping_stdout_intervals_rejected(self):
+        for mode in ('proof-overlap','proof-patch-overlap'):
+            with self.subTest(mode=mode):
+                self.run=self.root/mode;self.manifest=self.run/'manifest.json'
+                self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+                self.native_codex_setup(mode)
+                self.assertEqual(self.call('preflight','--manifest',self.manifest,'--provider','codex').returncode,0)
+                result=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+                record=json.loads(result.stdout)
+                self.assertEqual(result.returncode,2,result.stdout)
+                self.assertFalse(record['smoke_valid'])
+                self.assertTrue(any('overlap' in reason for reason in record['invalid_reasons']),record)
+
+    def test_public_codex_literal_patch_context_and_bytes_fail_closed(self):
+        self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+        self.native_codex_setup('proof')
+        self.assertEqual(self.call('preflight','--manifest',self.manifest,'--provider','codex').returncode,0)
+        result=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+        self.assertEqual(result.returncode,0,result.stderr)
+        cell=self.data['cells']['codex-candidate'];directory=Path(cell['repo']).parent/'evidence/smoke'
+        companion=json.loads((directory/'codex-context.json').read_text());rollout=Path(companion['rollout']);original=rollout.read_text()
+        rows=[json.loads(line) for line in original.splitlines()]
+        patch_call=next(i for i,row in enumerate(rows) if row.get('payload',{}).get('input','').startswith('text(await tools.apply_patch'))
+        native_change=next(i for i,row in enumerate(rows) if row.get('payload',{}).get('item',{}).get('type')=='FileChange')
+        for mode in ('computed','mixed','traversal','absolute','extra-target','update','wrong-content','wrong-kind','failed','stderr','missing','duplicate','cross-turn','outside-call'):
+            with self.subTest(mode=mode):
+                changed=json.loads(json.dumps(rows));payload=changed[patch_call]['payload'];item=changed[native_change]['payload']['item']
+                if mode=='computed':payload['input']='text(await tools.apply_patch(patchVariable));'
+                if mode=='mixed':payload['input']+='text(await tools.exec_command({cmd:"true",login:false,tty:false}));'
+                patch=json.loads(payload['input'][len('text(await tools.apply_patch('):-3]) if mode not in ('computed','mixed') else ''
+                if mode=='traversal':payload['input']='text(await tools.apply_patch('+json.dumps(patch.replace('outputs/','outputs/../outputs/'))+'));'
+                if mode=='absolute':payload['input']='text(await tools.apply_patch('+json.dumps(patch.replace('outputs/smoke-patch.json',str(Path(cell['repo'])/'outputs/smoke-patch.json')))+'));'
+                if mode=='extra-target':payload['input']='text(await tools.apply_patch('+json.dumps(patch.replace('*** End Patch','*** Add File: outputs/extra.json\n+{}\n*** End Patch'))+'));'
+                if mode=='update':payload['input']='text(await tools.apply_patch('+json.dumps(patch.replace('*** Add File:','*** Update File:'))+'));'
+                if mode=='wrong-content':next(iter(item['changes'].values()))['content']='wrong\n'
+                if mode=='wrong-kind':next(iter(item['changes'].values()))['type']='update'
+                if mode=='failed':item['status']='failed'
+                if mode=='stderr':item['stderr']='patch error'
+                if mode=='missing':changed.pop(native_change)
+                if mode=='duplicate':changed.insert(native_change,changed[native_change])
+                if mode=='cross-turn':changed[native_change]['payload']['turn_id']='other-turn'
+                if mode=='outside-call':changed.insert(patch_call,changed.pop(native_change))
+                rollout.write_text(''.join(json.dumps(row)+'\n' for row in changed))
+                report=self.grade('codex-candidate')
+                self.assertTrue(any('Codex' in reason or 'patch' in reason or 'Add File' in reason for reason in report['invalid_reasons']),report)
+        rollout.write_text(original)
+        target=Path(cell['repo'])/'outputs/smoke-patch.json';content=target.read_bytes();target.write_text('wrong')
+        self.assertTrue(any('content mismatch' in reason for reason in self.grade('codex-candidate')['invalid_reasons']))
+        target.write_bytes(content)
+        audit=Path(cell['control']['audit']);audit_original=audit.read_text();audit_rows=[json.loads(line) for line in audit_original.splitlines()]
+        patch_index=next(i for i,row in enumerate(audit_rows) if row['tool_name']=='apply_patch')
+        for mode in ('empty-digest','wrong-tool','wrong-decision'):
+            with self.subTest(patch_audit=mode):
+                changed=json.loads(json.dumps(audit_rows))
+                if mode=='empty-digest':changed[patch_index]['command_sha256']=hashlib.sha256(b'').hexdigest()
+                if mode=='wrong-tool':changed[patch_index]['tool_name']='wrong_tool!'
+                if mode=='wrong-decision':changed[patch_index]['decision']='deny!'
+                audit.write_text(''.join(json.dumps(row)+'\n' for row in changed))
+                report=self.grade('codex-candidate')
+                expected='audit-command-count-mismatch' if mode=='empty-digest' else 'audit-policy-or-decision-mismatch'
+                self.assertIn(expected,report['invalid_reasons'],report)
+        audit.write_text(audit_original)
+        raw=directory/'stdout.jsonl';raw_original=raw.read_text();stdout_rows=[json.loads(line) for line in raw_original.splitlines()]
+        for mode in ('missing-start','failed-status','wrong-kind','duplicate-id'):
+            with self.subTest(stdout=mode):
+                changed=json.loads(json.dumps(stdout_rows));indices=[i for i,row in enumerate(changed) if row.get('item',{}).get('type')=='file_change'];start,complete=indices
+                if mode=='missing-start':changed.pop(start)
+                if mode=='failed-status':changed[complete]['item']['status']='failed'
+                if mode=='wrong-kind':changed[complete]['item']['changes'][0]['kind']='update'
+                if mode=='duplicate-id':changed.insert(start,changed[start])
+                raw.write_text(''.join(json.dumps(row)+'\n' for row in changed))
+                self.assert_invalid_diagnostics(self.grade('codex-candidate'))
+        raw.write_text(raw_original)
 
     def test_public_codex_context_and_ordered_audit_regrading_fail_closed(self):
         self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}

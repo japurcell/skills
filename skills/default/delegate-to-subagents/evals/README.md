@@ -12,9 +12,9 @@ Live smoke/scenario execution requires separate approval of the exact payload.
 Successful metadata or offline fixtures establish their own prerequisites only.
 Each accepted phase requires observed selectors, real helper child receipts,
 scoped outputs and matched command/permission evidence. The harness makes no
-universal tool-coverage claim. Missing proof invalidates qualification. Native Codex scenario qualification remains
-incomplete pending grounded `apply_patch`/`file_change` mapping and a complete
-real-child scenario fixture. Current context fixtures qualify neutral smokes.
+universal tool-coverage claim. Missing proof invalidates qualification. Native-shaped fixtures exercise complete Codex scenarios for both scheduler
+versions. Actual native phase qualification still requires approved smoke
+evidence under the exact prepared policy and payload.
 
 The public commands are `prepare`, `preflight`, `run` and `grade`; each has `--help`.
 Stdin is unused. JSON results go to stdout, diagnostics to stderr. Exit 0 means
@@ -187,9 +187,14 @@ Sol/medium, OpenAI provider, approval and actual sandbox. Raw rollout references
 hashes and safe context are pinned and recomputed during grade. Missing companion
 proof preserves the earlier invalid diagnostic outcome.
 
-Codex `apply_patch` scenario writes and stdout `file_change` mapping remain
-pending a dependent bounded implementation. Until that mapping is verified,
-observed patch events invalidate qualification.
+Codex patch authoring supports one standalone literal
+`text(await tools.apply_patch(JSON_STRING));` call per file. Stdout file_change
+start/completion, the raw call/output interval and exactly one rollout FileChange
+must agree on the Add File target, completed status and exact newline-preserving
+content. Current single-link physical file bytes must match. Updates, computed or
+mixed scripts, extra targets, repeated targets and ambiguous events fail.
+Patches retain completed status and no numeric scheduler child exit. Each patch
+needs its own ordered apply_patch allow audit using the decoded patch digest.
 
 Raw native shell text stays retained. Only one canonical logical command through
 a grounded `/bin/bash -c` or `/bin/zsh -c` envelope is decoded. Rollout input must
@@ -217,7 +222,8 @@ Existing-login runs may update normal provider session indexes, session-state/<e
 
 Codex accepts optional `authentication` with mode `private` (the default) or
 `native-existing-login`. Native mode requires CLI 0.167.1 and exact
-`gpt-6.1-sol`/`medium`. Preparation performs bounded metadata discovery, freezes
+`gpt-6.1-sol`/`medium`. Preparation seeds bundled-skill and app/plugin suppression before inventory,
+then performs bounded metadata discovery and freezes
 component/skill identities and disabled user hooks, and derives one ordered
 runtime override vector shared by app-server and exec. Native authentication
 uses the invoking standard HOME/CODEX_HOME. Global configuration and credential
@@ -255,3 +261,15 @@ notification commands are suppressed with `notify=[]`, and `allow_login_shell`
 is false. Desktop/UI/provider-owned collections receive shape checks and their
 values stay outside saved evidence. Behavior flags and source identities remain
 pinned. Existing configuration fixtures retain the full sanitized native shape.
+
+Native-login smokes for both providers and variants additionally require exactly
+one literal Add File at `outputs/smoke-patch.json` containing
+`{"neutral_patch":true}` plus a final newline. Register/complete, helper write and
+readback, and the forbidden-command denial remain required. This neutral probe
+exercises scenario authoring within the existing smoke call budget.
+
+Native MCP `required=false` is serialized by omission in the inspected CLI.
+Only an absent required field normalizes to false. Explicit null, non-boolean or
+true values fail, and the runtime false override remains frozen. Enabled fields
+must remain explicit false. Unknown native protocol notifications report only a
+validated method name with sanitized classification, excluding parameters.
