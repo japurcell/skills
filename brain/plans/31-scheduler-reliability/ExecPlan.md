@@ -16,9 +16,9 @@ The user authorized T1/T2 implementation and focused deterministic verification,
 
 - [x] (2026-11-11) [milestone-0] Read current source and retained conclusions; remove only archived review copies, reconcile current references, and author/index this plan.
 - [x] (2026-11-11) [milestone-1] T1: Reproduce authorization-only completion through the public CLI and parent fixture; implement and verify explicit transfer acknowledgment.
-- [x] (2026-11-11) [milestone-2] T2: Add a narrow maintained scheduler scenario harness and validate delivery, permissions, output paths and rubrics with fake providers.
-- [ ] [milestone-3] (in progress) T3: Inspect retained native traces and explain the measured time/token deltas before proposing any optimization.
-- [ ] [milestone-4] T4: Freeze pilot inputs and obtain separate authorization for the exact live call budget.
+- [ ] [milestone-2] (reopened; preflight hardening/review pending) T2: Add a narrow maintained scheduler scenario harness and validate delivery, permissions, output paths and rubrics with fake providers.
+- [x] (2026-11-11) [milestone-3] T3: Inspect retained native traces and explain the measured time/token deltas before proposing any optimization.
+- [ ] [milestone-4] T4: Preflight captured; fix and review prerequisites before freezing pilot inputs or seeking live-call approval.
 - [ ] [milestone-4] T5: Execute the authorized both-provider matched pilot, review every artifact, and report limits without automatic retries or expansion.
 
 ## Context and Orientation
@@ -46,6 +46,8 @@ Codex current A added a mean 8.1 seconds and 30,657 reported input tokens; B add
 - 2026-11-11: Use a scheduler-specific standard-library harness under `evals/`. Reuse documented evidence conventions, not the incompatible commit-phase workflow.
 - 2026-11-11: Inspect existing traces before optimizing. No speculative polling, prompt, batching or caching changes belong to the initial correctness fix.
 - 2026-11-11: Use the frozen current v2 scheduler as baseline against the proposed v3 fix. Propose one combined scenario per variant/provider, four scored calls plus four unscored smoke calls. Fresh authorization must cover the complete eight-call ceiling; no retries or automatic scale-up.
+- 2026-11-11: Independently review integrated T1/T2 source before freezing the T4 pilot payload; offline harness tests do not establish live provider permissions or smoke readiness.
+- 2026-11-11: Reopen M2 after T4 preflight inspection exposed incomplete provider permission isolation; offline fake-provider tests remain valid but are insufficient for live-readiness acceptance.
 
 ## Milestone 0: Finish bounded authoring
 Status: done
@@ -76,8 +78,8 @@ Version 2 files must fail closed with an actionable unsupported-version diagnost
 Verification is vertical red/green through the public CLI, extending `SchedulerCliTests`. Cover the reproducer, successful parent update/acknowledgment, unauthorized and premature acknowledgment, missing/blank evidence, malformed receipt/state, v2 rejection, duplicate matching acknowledgment, conflicting retry, output failure recovery via list, and cancel with no transfer. Keep existing extension and timing cases. Run from repository root, once authorized: `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`. Expect exit 0; every negative transition returns 2, no traceback, and unchanged state. Update help checks for the new command. Then run the skill definition validator documented in create-skill README. Stop at the correctness contract; no optimization or live evaluation.
 
 ## Milestone 2: Make evaluation prerequisites enforceable
-Status: complete
-Acceptance: met (2026-11-11, offline fake-provider acceptance only)
+Status: in progress
+Acceptance: not met (offline fake-provider acceptance passed; live-preflight hardening and review remain)
 
 ### T2: Narrow scenario preparation and evidence grading
 
@@ -97,17 +99,27 @@ Before live use, fake-provider public CLI tests prove both providers' argv/grant
 
 **Completion evidence:** Worker commit `48cad3a9ea34a06a3b542f0d7813307fc88b6de2`, based on integration commit `2edbdc01a1f2833b58063e5b018579ba5a3030e7`, was fast-forwarded onto `scheduler-reliability`. The scoped change adds the maintained stdlib harness, scenario manifest and rubric, documentation, and test-runner registration. The integrated `rtk proxy python3 skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py` run passed all 12 fake-provider tests, covering command/grant construction, delivery and output gates, grading assertions, timeouts and retained failures without inference. The registered-suite fixture run `rtk proxy python3 scripts/tests/runner/test_test_all.py` passed all 14 tests. `rtk git diff --check` passed. This establishes offline harness behavior only; no live provider smoke or inference was run, and milestone 4 remains separately gated.
 
+**Preflight findings pending:** Captured installed CLI help, environment/config observations, and draft settings are in `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-preflight/`; see `prerequisites.md` and `draft-config.json`. No inference, run command, or immutable manifest preparation occurred. Copilot documents recursive `write(/absolute/repo/**)` grants, but the harness grants only `write(<repo>)`; path grants do not cover shell redirection, and automatic temp access, inherited/global permission sources, `COPILOT_ALLOW_ALL`, and assisted-approval state must be pinned, excluded, or cause fail-closed refusal. `--add-dir` also loads trusted `.github` configuration. The narrow local Copilot config could not be parsed, so effective merged settings remain unverified. Codex `exec` help advertises `--ignore-user-config` and `--ignore-rules`, omitted from the harness and stale README guidance; local config otherwise selects Astra/xhigh, while requested Sol/medium is only an explicit override. Codex `workspace-write` is a filesystem sandbox, not a native command allowlist; document and report that boundary accurately rather than claiming command-level enforcement. Copilot help does not establish that the selected account supports Sol/medium. Treat these as unresolved prerequisites, not evidence that a live call succeeded.
+
+### T2 follow-up: Close provider preflight contract gaps
+
+Prerequisites: captured evidence above. The parent will assign a Sol implementer and Sol reviewer; the integration coordinator owns only plan/integration updates. Reconcile harness and README claims with the installed provider controls without redesigning permission policy. Add the supported recursive Copilot write grant and required temp/config controls; freeze or reject inherited permission state and repository trust configuration when it cannot be bounded. Account for Codex config/rule isolation flags and state clearly that workspace-write does not enforce an exact command allowlist. Keep provider/model compatibility unresolved until a non-inference catalog source or separately authorized smoke can establish it. Add fake-provider tests for exact grants/argv, permission isolation and fail-closed cases. Do not make live calls. Acceptance requires the focused harness and registry fixture suites pass, independent source review accepts the corrected contract, and README/manifest claims match verified capabilities. Keep T4 payload freezing blocked until then.
+
 ## Milestone 3: Explain overhead from existing traces
-Status: in progress
-Acceptance: not met
+Status: complete
+Acceptance: met (2026-11-11)
 
 ### T3: Retained-trace analysis before optimization
 
 Prerequisites: authorized by the current plan instruction; read-only access to EVIDENCE. Independent of T1/T2. Ownership: `brain/plans/31-scheduler-reliability/overhead-analysis.md` only, with concise status/evidence updates in this plan by the coordinator. Raw evidence and archived benchmark are immutable inputs.
 
+Analysis: [Retained scheduler overhead analysis](overhead-analysis.md).
+
 Inspect every eligible Codex A/B pair from the benchmark, then use C and Copilot only to identify confounds. Build a per-cell timeline using native events and subprocess elapsed times: selected-skill reads, repeated context delivery, routing calls, scheduler calls, provider turns, command batching and authored output. Cite event line ranges and paths. Reconcile totals to native counters and paired deltas; distinguish requested from observed model identity. Report input/output separately, cached/reasoning as subsets, unavailable fields as unmeasured. Do not turn tokens into dollars or use output length as tokens.
 
 Acceptance requires explaining which observed events support an overhead mechanism and which time/token portions cannot be attributed with available traces. Native cumulative input can include repeated context; do not equate it with unique skill-body size. Separate setup/smoke/review from scored process time, and report timing granularity/tool-call confounds. If trace coverage is absent, record the exact gap and preserve an inconclusive result. Optimization is not a task in this plan: any proposed change needs measured evidence, a focused acceptance target and separately authorized scope before source edits. Stop after analysis and recommendations; missing traces do not authorize fresh calls.
+
+**Completion evidence:** Commit `81b1e206ab1d65d80c58aa1ab760bdeab3f20e8d` adds the linked read-only report. It traces all eight eligible Codex A/B cells, reconciles native usage/time counters and matched deltas to the retained benchmark, and distinguishes observed context reads from unmeasured per-action token and time contributions. C and Copilot are treated as confounds with limitations recorded; no optimization or fresh provider calls were made. Navigation checks found all nine report Markdown links and all eight linked native A/B JSONL targets present; ten supplemental C/Copilot and sibling evidence paths were also present. The report limits its findings to a small diagnostic sample and does not establish scheduler execution overhead or reliability.
 
 ## Milestone 4: Run a small both-provider matched pilot
 Status: open
@@ -115,7 +127,7 @@ Acceptance: not met
 
 ### T4: Freeze the reviewable pilot and its authorization boundary
 
-Prerequisites: T1/T2 offline acceptance and T3 analysis. Ownership: coordinator owns frozen pilot manifest/config/prompts and plan status. Produce a dry-run command list and hashes without model execution. Pin the selected models/effort, provider versions, sandbox grants, absolute paths, 600-second per-call limit and an eight-call total ceiling. The user must separately authorize these exact live calls after seeing the payload. The prior experiment's permission is exhausted.
+Prerequisites: T1 acceptance, T2 follow-up completion and independent source review of integrated T1/T2, and T3 analysis. Ownership: coordinator owns the independent review, then frozen pilot manifest/config/prompts and plan status. Produce a dry-run command list and hashes without model execution. Pin the selected models/effort, provider versions, sandbox grants, absolute paths, 600-second per-call limit and an eight-call total ceiling. The user must separately authorize these exact live calls after seeing the payload. The prior experiment's permission is exhausted.
 
 Budget: one combined scenario x two variants x two providers x one repeat = four scored fresh sessions, plus one unscored smoke per provider/variant = four calls, total at most eight. Non-inference version/help preflight calls are counted separately and launch no models. Run serially for interpretable timing. Each cell has a new run/session identity; successful smoke evidence can gate that provider/variant's cells only under unchanged hashes/settings/grants. Any provider needs unavailable controls or incompatible sessions, stop before inference and report the missing prerequisite. Do not switch provider/model or add calls to compensate.
 
@@ -131,13 +143,13 @@ Acceptance is a fully accounted authorized attempt ledger, valid both-provider p
 
 ## Concrete Steps
 
-Current action: T1 and T2 are complete and integrated. Continue T3 retained-trace analysis in its assigned worktree using the immutable native traces and benchmark; preserve unrelated staging and edits. Prepare the T4 dry-run payload only after T3 acceptance. Show the exact payload for review and wait for explicit approval before any T5 live model call. T4 depends on T1/T2/T3; T5 depends on T4 plus separate approval of the reviewed payload.
+Current action: T1 and T3 are complete. T2 remains open pending provider permission isolation fixes and independent review. Reconcile the operator's T4-preflight findings with the harness and README, then run focused offline tests and complete independent source review. Only after M2 acceptance is restored may the coordinator prepare the T4 dry-run payload without model execution; show the exact payload for review and wait for explicit user approval before any T5 live call. T4/T5 remain incomplete.
 
 Once T1 is authorized, its CLI reproducer can use a disposable state path and prefix each invocation with `rtk proxy python3 skills/default/delegate-to-subagents/scripts/scheduler.py --state <temporary>/state.json`. Use `register B agent-old task --deadline 100 --checkpoint 300 --grace 5 --now 0`, `tick --now 100`, `tick --now 105`, and the transition sequence specified in T1. Synthetic times avoid sleeping. Record expected versus observed exit codes and state, then run only the focused commands named in each milestone. No automatic aggregate run or provider evaluation follows a passing offline suite.
 
 ## Validation and Acceptance
 
-Milestones 1 and 2 passed their integrated offline acceptance criteria; see each completion evidence section. T2 proves fake-provider preparation, preflight and grading behavior but does not prove live provider permissions or smoke readiness. Milestone 3 still requires trace-backed attribution or explicitly stated uncertainty. Milestone 4 verifies actual provider prerequisites through separately authorized live smoke before any scored session, then requires both-provider matching and a complete budget ledger, including invalid and permission-confounded observations.
+Milestone 1 passed its integrated acceptance criteria. T2's fake-provider suites passed but M2 acceptance is reopened because provider permission isolation is incomplete or unverified; see the preflight findings and retained evidence pointer above. T3 passed with trace-backed context/tool-turn mechanisms and explicitly unmeasured attribution limits; see the linked analysis. Before T4 payload freezing, fix and independently review the T2 permission setup. Milestone 4 remains open and requires separately authorized live smoke before any scored session, then both-provider matching and a complete budget ledger, including invalid and permission-confounded observations.
 
 ## Idempotence and Recovery
 
@@ -153,4 +165,4 @@ Keep original v2 state immutable during manual reconciliation and use new paths 
 
 ## Outcomes & Retrospective
 
-The requested cleanup and planning are complete. Reports, benchmark, embedded viewer and external raw evidence remain retained. T1 and T2 are complete with acceptance met; T3 is in progress; T4 and T5 remain open. T1/T2 focused offline tests and skill validation passed after integration; no provider calls were performed. T1/T2/T3 and T4 preparation are authorized; T5 live calls remain gated on explicit approval of their concrete payload. The integration coordinator owns plan state and integration commits on `scheduler-reliability`; no main merge or push is authorized. Reusable evaluation guidance remains linked from the existing durable brain notes rather than duplicated as new policy.
+The requested cleanup and planning are complete. Reports, benchmark, embedded viewer and external raw evidence remain retained. T1 and T3 are complete with acceptance met; T2/M2 is reopened pending preflight hardening and independent review; T4 and T5 remain open. The T1/T2 offline suites passed, and T3's read-only analysis reconciles retained traces and records attribution limits. T4-preflight inspection surfaced incomplete/unverified Copilot recursive write grants and inherited permission state, plus Codex exec controls omitted from the harness/README. No live provider calls were performed. Next, resolve those findings and complete independent source review before T4 payload preparation. T1/T2/T3 work and T4 preparation remain authorized; T5 live calls require explicit approval of the concrete payload. The integration coordinator owns plan state and integration commits on `scheduler-reliability`; no main merge or push is authorized. Reusable evaluation guidance remains linked from the existing durable brain notes rather than duplicated as new policy.
