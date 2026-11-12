@@ -2,7 +2,7 @@
 
 Original review target `ab51884db265331f7522dd055290fe7afebf35cb`, base and merge-base `df54c117e8b8bccc46420d87ae6e3671c6c14ae1`, previous target `c76587dee707b4674b9012514d3174ea864ea43b`.
 
-Standards approves with zero findings. Spec requests changes with one Important / P2 EOF finding. These original verdicts remain intact. Correction `2470dac6f5ed0fb17577bf5e9155e5a292e44a28` is integrated, and limited independent closure verification of that exact finding remains pending. The correction completes the fix portion of the third review-and-fix iteration. No fourth broad review is planned. Native qualification, owner prerequisites and T4/T5 remain incomplete.
+Standards approves with zero findings. Spec requests changes with one Important / P2 EOF finding. These original verdicts remain intact. Correction `2470dac6f5ed0fb17577bf5e9155e5a292e44a28` is integrated, and limited independent closure verification of that exact finding is complete and resolved. The correction completes the fix portion of the third review-and-fix iteration. No fourth broad review is planned. Native qualification, owner prerequisites and T4/T5 remain incomplete.
 
 Source diff SHA-256 `813987e6325157d5dba3eda03b0748cd1e8643f95ee63c1555659af0962bf0fe`. Incremental source diff SHA-256 `c4e835af9050c8aced8b26cf1daa2dde405b1ed6af3d882f2a5f95e4f51ec9f2`. Full diff SHA-256 `b667d3a09a0c2c8502446f3eab2db09fa1e67e030f1ba01e01d8f14531d8a92c`.
 
@@ -74,3 +74,12 @@ No findings.
 ### Verification and limits
 
 Tests reviewed first. Three maintained notification/correlation/warning/timeout/interruption tests passed in 10.148 seconds, retained in `spec-focused-checks.json`. Sanitized warning retention and unchanged request deadlines are implemented. Retained worker evidence records all 37 tests passing against the final harness hash. Parent native-check evidence uses identical bytes. This review ran focused offline checks only. No full suite, native/model calls, authentication/trust changes, source edits or other-axis report inspection occurred. Native execution qualification remains unsupported. Review cap reached, finding retained for owner decision.
+
+## Limited EOF finding closure
+
+The independent reviewer marked only the reported EOF finding RESOLVED at correction `2470dac6f5ed0fb17577bf5e9155e5a292e44a28`. The original third broad review above remains Standards zero / Spec one P2 REQUEST CHANGES. This closure completes that review-and-fix iteration and is no fourth broad review. The original counterexample now yields public preflight exit 2 with the sanitized truncated-notification error and all three readiness flags false. Two independent focused tests passed in 0.960 seconds, preserving the supported disabled-notification positive and asserting both fake-server PIDs absent before teardown. Source correction is accepted with the retained 38-test final-source result and this bounded closure. Native qualification and model approval remain incomplete.
+
+- [Independent closure report](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-qualification-r3/closure.md)
+- [Independent focused checks](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-qualification-r3/closure-focused.json)
+- [Corrected counterexample](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-qualification-r3/closure-counterexample.json)
+- [Current prepared payload and owner action](pilot-setup-review.md)
