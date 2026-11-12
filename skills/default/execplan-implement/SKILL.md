@@ -28,6 +28,8 @@ Before launching an agent or assigning new work to an existing agent, run the ro
 
 Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
 
+Automatically apply the router's final dispatchable model and effort policy, including verified fallbacks. Do not request separate user confirmation for routine routing choices. Preserve explicit user constraints and required host approval flows.
+
 After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
 
 ## Runtime enforcement
