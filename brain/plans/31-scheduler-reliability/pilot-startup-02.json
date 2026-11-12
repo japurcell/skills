@@ -43,7 +43,7 @@
       "wrapper_exit_code": 2,
       "wrapper_wall_seconds": 1.0182549953460693,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "codex-baseline",
@@ -55,7 +55,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "codex-candidate",
@@ -67,7 +67,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "codex-candidate",
@@ -79,7 +79,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "copilot-baseline",
@@ -91,7 +91,7 @@
       "wrapper_exit_code": 2,
       "wrapper_wall_seconds": 4.998297929763794,
       "provider_exit_code": 1,
-      "provider_elapsed_seconds": 0.07235570799093693
+      "provider_execution_and_evidence_elapsed_seconds": 0.07235570799093693
     },
     {
       "cell": "copilot-baseline",
@@ -103,7 +103,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "copilot-candidate",
@@ -115,7 +115,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     },
     {
       "cell": "copilot-candidate",
@@ -127,7 +127,7 @@
       "wrapper_exit_code": null,
       "wrapper_wall_seconds": null,
       "provider_exit_code": null,
-      "provider_elapsed_seconds": null
+      "provider_execution_and_evidence_elapsed_seconds": null
     }
   ],
   "failures": {

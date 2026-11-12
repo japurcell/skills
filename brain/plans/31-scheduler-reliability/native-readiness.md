@@ -6,7 +6,7 @@ Current startup checkpoint 2026-11-12. The frozen `T4-native-pilot-02` pilot is 
 
 [Copilot findings](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-copilot/findings.md) and [version/hash-bound parser evidence](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-copilot/parser-evidence.json) establish the argument conflict and four corrected parser positives. [Codex investigation](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-codex-notes.md) and [paired samples](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-codex-paired-samples.json) establish validated transient-event variance and the discarded original delta.
 
-The next implementation task is [T4-STARTUP](ExecPlan.md#t4-startup-bounded-native-startup-correction). Source/test changes and provider execution remain separately owned.
+The [T4-STARTUP source task](ExecPlan.md#t4-startup-bounded-native-startup-correction) is complete and accepted. Parent owns fresh payload preparation and native qualification.
 
 ## Current B2 checkpoint
 
@@ -109,3 +109,9 @@ Historical first-wrapper snapshot. At the final approval-documentation snapshot,
 ## Current readiness outcome
 
 Current startup checkpoint 2026-11-12. The frozen `T4-native-pilot-02` pilot is gated after two wrapper dispatches, one exclusive phase attempt and zero model calls. Copilot failed native argument parsing, while Codex failed discovery comparison before phase-attempt creation or provider spawn. The [authoritative startup outcome](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-02/startup-outcome.json) distinguishes these counts. Existing source acceptance and successful no-inference preflights remain retained evidence; startup qualification is incomplete. No retries or replacement live calls may run until a corrected fresh frozen payload has been reviewed and explicitly approved. M2, T4 and T5 remain incomplete. The passing 52-test source and two zero-finding reviews establish the prior source checkpoint; they did not establish native startup compatibility. The correction contract preserves all acceptance protections.
+
+## Accepted startup correction and remaining native work
+
+T4-STARTUP source correction is complete and accepted at `3d5a2b5888adf77a49a000e80557bc655f19d8de`, integrated through `0f416340a39abe2398c86a7b50d94b6eed15e1ee`. All 55 affected tests passed in 200.507 seconds with exact three-file start/end hashes, and independent [Standards/Spec review](review-startup-1.md) reports zero findings on each axis. Native startup and smoke qualification remain incomplete. The frozen P02 pilot remains failed and immutable with two wrappers, one exclusive phase attempt and zero model calls. Parent next prepares a fresh final-source payload and validates no-inference setup. Replacement live calls require that fresh payload to be reviewed and explicitly approved. M2/T4/T5 remain incomplete.
+
+[Final suite](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/final-suite.json), [worker outcome](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/worker-outcome.json) and [final parser binding](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/final-rendered-parser-binding.json) retain exact verification. Original static review reports preserve their then-pending suite wording, with completed-suite evidence recorded separately.
