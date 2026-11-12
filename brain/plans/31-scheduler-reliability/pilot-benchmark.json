@@ -1,0 +1,725 @@
+{
+  "schema_version": 1,
+  "report_kind": "four_slot_native_diagnostic_pilot",
+  "checkpoint_date": "2026-11-12",
+  "source_commit": "c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3",
+  "harness_sha256": "2983c40a5bf864917f07c440b2cc991f051b376e436de4da7546ccf8fbfad739",
+  "manifest_sha256": "012f1c7591c55130f24a62de379f508abe0f8a1ba37ece57a2066811e6ce4f9d",
+  "baseline_commit": "5db7440017e081b4d391c92f28d325b2fccf95a0",
+  "baseline_version": 2,
+  "candidate_version": 3,
+  "counts": {
+    "authorized_scored_root_slots": 4,
+    "terminal_slots": 4,
+    "remaining_budget": 0,
+    "original_automatic_eligible_pairs": 0,
+    "retries": 0,
+    "optional_smokes_launched": 0,
+    "linked_codex_child_sessions_observed": 3,
+    "backend_api_call_count": null
+  },
+  "slots": [
+    {
+      "slot": 1,
+      "cell": "codex-baseline",
+      "phase": "scenario",
+      "status": "terminal",
+      "root_native_session_id": "01a1d072-43fb-7503-98d8-e87f01a66f31",
+      "requested_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "root_observed_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "linked_descendant_selectors": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        },
+        {
+          "model": "gpt-6-luna",
+          "effort": "max"
+        }
+      ],
+      "provider_version": "codex-cli 0.167.1",
+      "native_exit_code": 124,
+      "harness_wrapper_exit_code": 124,
+      "provider_execution_and_evidence_seconds": 600.0260740419908,
+      "wrapper_elapsed_seconds": 600.4203355420032,
+      "original_automatic": {
+        "setup_status": "invalid",
+        "behavior_status": "not_evaluated",
+        "output_contract_status": "fail",
+        "comparison_eligible": false,
+        "execution_status": "failure",
+        "assertions": {
+          "exact_output": {
+            "passed": false,
+            "evidence": "exact outputs/result.json and strictly confined artifact schema"
+          },
+          "stop_timing": {
+            "passed": false,
+            "evidence": "native ordered finite scenario chronology, tick argv/time and before/after state"
+          },
+          "single_extension": {
+            "passed": false,
+            "evidence": "real extension, follow-up at150 and valid ETA250 second request at151 rejected by policy with unchanged state"
+          },
+          "exclusive_pending_shutdown": {
+            "passed": false,
+            "evidence": "actual exit2 and unchanged state before supplied shutdown"
+          },
+          "independent_progress": {
+            "passed": false,
+            "evidence": "ordered real C progress with B shutdown unconfirmed before/after both operations"
+          },
+          "parent_transfer": {
+            "passed": false,
+            "evidence": "native confirmed-stop authorization then trusted helper parent write/readback"
+          },
+          "immutable_execution": {
+            "passed": false,
+            "evidence": "exact native trusted helper invocation and captured real child argv/results"
+          }
+        },
+        "candidate_only": {},
+        "invalid_reasons": [
+          "missing-real-child-receipt",
+          "provider-exit-failure",
+          "receipt-from-unmatched-command",
+          "scenario-state-or-output-invalid"
+        ],
+        "assertions_are_diagnostic": true
+      },
+      "original_qualification_status": "invalid",
+      "independent_corrected_offline_assessment": {
+        "method": "independent linked-native audit, diagnostic generations kept separate",
+        "whole_phase": "ineligible, timeout/no final result and resets",
+        "common_supported": null,
+        "common_total": 7,
+        "audit": "pilot-audit-codex-baseline-descendants.md",
+        "initial_generation": "wrong ordering and missing checkpoint150",
+        "restarted_generation": {
+          "assessment": "local behavior supported, no final result",
+          "audit": "pilot-audit-codex-baseline-descendants.md"
+        },
+        "automated_grade_replaced": false,
+        "candidate_acknowledgment": {
+          "assessment": "not baseline capability"
+        }
+      },
+      "substantiated_command_counts": {
+        "initial_scheduler_receipts": 14,
+        "restarted_scheduler_receipts": 15,
+        "parent_write_receipts": 2,
+        "scope": "linked descendant generations, never concatenated into one valid state chain"
+      },
+      "native_usage": {
+        "availability": "root_usage_unavailable",
+        "provider_defined_fields": null,
+        "descendant_usage_aggregated": false,
+        "monetary_cost": null
+      },
+      "evidence": {
+        "run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/run.json",
+        "attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/attempt.json",
+        "stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/stdout.jsonl",
+        "stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/stderr.txt",
+        "native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/native-events.json",
+        "original_grading": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/grading.json",
+        "codex_rollout": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/codex-rollout.jsonl",
+        "codex_context": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/codex-context.json",
+        "usage_source": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-baseline/evidence/scenario/native-events.json"
+      },
+      "evidence_sha256": {
+        "run.json": "437939fee888f8a5787a44c2cc04bc0a807dcea13dddca5706515edef95db769",
+        "attempt.json": "f4e9906869bf4b7caaf444e6c79dc73c52c2076e8ec52dc03ff3c8ef45d322c2",
+        "stdout.jsonl": "a6c536f029cd23ccdd01d39b56372e62e658c9633be450370146fd513234b419",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "native-events.json": "fc94eb727ac0847507b9aed4718f02ab313e3a2e1f0190e385ee651cc5614d54",
+        "original_grading": "b4e0997171eb03f535759583622ad1aeeb6b5092b2744a7c4ee8e68afb052ba8",
+        "codex_rollout": "ab4bb20eeb1110f32a2f0543f24512f751b4905a2e8154c0514e03af6b72f19e",
+        "codex_context": "5b26345b00c3f4171b2d4bc0d2e096d61ccb949ead3fe25cc5c1c8d379bf7b82",
+        "usage_source": "fc94eb727ac0847507b9aed4718f02ab313e3a2e1f0190e385ee651cc5614d54"
+      }
+    },
+    {
+      "slot": 2,
+      "cell": "codex-candidate",
+      "phase": "scenario",
+      "status": "terminal",
+      "root_native_session_id": "01a1d07d-5170-75b3-a2cb-8dcfcbc61a06",
+      "requested_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "root_observed_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "linked_descendant_selectors": [
+        {
+          "model": "gpt-6-luna",
+          "effort": "medium"
+        }
+      ],
+      "provider_version": "codex-cli 0.167.1",
+      "native_exit_code": 0,
+      "harness_wrapper_exit_code": 2,
+      "provider_execution_and_evidence_seconds": 337.168053625006,
+      "wrapper_elapsed_seconds": 337.5741652919969,
+      "original_automatic": {
+        "setup_status": "invalid",
+        "behavior_status": "not_evaluated",
+        "output_contract_status": "fail",
+        "comparison_eligible": false,
+        "execution_status": "success",
+        "assertions": {
+          "exact_output": {
+            "passed": false,
+            "evidence": "exact outputs/result.json and strictly confined artifact schema"
+          },
+          "stop_timing": {
+            "passed": false,
+            "evidence": "native ordered finite scenario chronology, tick argv/time and before/after state"
+          },
+          "single_extension": {
+            "passed": false,
+            "evidence": "real extension, follow-up at150 and valid ETA250 second request at151 rejected by policy with unchanged state"
+          },
+          "exclusive_pending_shutdown": {
+            "passed": false,
+            "evidence": "actual exit2 and unchanged state before supplied shutdown"
+          },
+          "independent_progress": {
+            "passed": false,
+            "evidence": "ordered real C progress with B shutdown unconfirmed before/after both operations"
+          },
+          "parent_transfer": {
+            "passed": false,
+            "evidence": "native confirmed-stop authorization then trusted helper parent write/readback"
+          },
+          "immutable_execution": {
+            "passed": false,
+            "evidence": "exact native trusted helper invocation and captured real child argv/results"
+          }
+        },
+        "candidate_only": {
+          "candidate_acknowledgment": {
+            "passed": false,
+            "evidence": "real acknowledgment receipt resolves to the same current parent target and final native readback"
+          }
+        },
+        "invalid_reasons": [
+          "scenario-state-or-output-invalid"
+        ],
+        "assertions_are_diagnostic": true
+      },
+      "original_qualification_status": "invalid",
+      "independent_corrected_offline_assessment": {
+        "method": "independent linked-native audit, diagnostic generations kept separate",
+        "whole_phase": "ineligible clean-phase comparison, initial sequencing errors and explicit reset",
+        "common_supported": null,
+        "common_total": 7,
+        "audit": "pilot-audit-codex-candidate.md",
+        "initial_generation": "wrong ordering and premature-transfer test executed after shutdown confirmation",
+        "restarted_generation": {
+          "assessment": "7 common assertions plus actual acknowledgment supported locally",
+          "audit": "pilot-audit-codex-candidate.md"
+        },
+        "automated_grade_replaced": false,
+        "candidate_acknowledgment": {
+          "assessment": "supported only in restarted generation",
+          "native_citation": "child rollout273 after real parent update266, readback matches ownership recorded_at205"
+        }
+      },
+      "substantiated_command_counts": {
+        "initial_scheduler_receipts": 8,
+        "restarted_scheduler_receipts": 18,
+        "parent_write_receipts": 1,
+        "scope": "linked descendant generations, never concatenated into one valid state chain"
+      },
+      "native_usage": {
+        "availability": "observed_root_turn_usage",
+        "provider_defined_fields": {
+          "input_tokens": 280492,
+          "cached_input_tokens": 237056,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2213,
+          "reasoning_output_tokens": 345
+        },
+        "descendant_usage_aggregated": false,
+        "monetary_cost": null
+      },
+      "evidence": {
+        "run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/run.json",
+        "attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/attempt.json",
+        "stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/stdout.jsonl",
+        "stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/stderr.txt",
+        "native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/native-events.json",
+        "original_grading": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/grading.json",
+        "codex_rollout": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/codex-rollout.jsonl",
+        "codex_context": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/codex-context.json",
+        "usage_source": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/codex-candidate/evidence/scenario/native-events.json"
+      },
+      "evidence_sha256": {
+        "run.json": "8e3258a456c5f795404281723eaf4f3f80549850ac51f20198aed5b96ad3316a",
+        "attempt.json": "900c7d7d796d820880ef2b566cb98bdd1f847284b4e48191894104e5c97f09f1",
+        "stdout.jsonl": "244e9574df9be2ad21c137fb9cae2f8acbbcbb613d5f7dcf48369eba08fc98ee",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "native-events.json": "0f4a287a4c92433664ee0fee5a752cf6c82ea07dcedb9dad2f09aa02ee4ace48",
+        "original_grading": "740a0ca69af634f9c6be60b0cdcf60e354f4efba5e0ef727db7e137200c72a1a",
+        "codex_rollout": "2f92855d58df57f0feb3b0ae8190ae69201a80845d7ecb7d92092d673a09e6d3",
+        "codex_context": "6b15a54b5e269cb2c5834e62d1a6b7c1f4f6cc3182edace3da143c01b2aab44a",
+        "usage_source": "0f4a287a4c92433664ee0fee5a752cf6c82ea07dcedb9dad2f09aa02ee4ace48"
+      }
+    },
+    {
+      "slot": 3,
+      "cell": "copilot-baseline",
+      "phase": "scenario",
+      "status": "terminal",
+      "root_native_session_id": "dbdc0992-9670-41aa-855f-acfa5406ece0",
+      "requested_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "root_observed_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "linked_descendant_selectors": [],
+      "provider_version": "GitHub Copilot CLI 1.0.109.",
+      "native_exit_code": 0,
+      "harness_wrapper_exit_code": 2,
+      "provider_execution_and_evidence_seconds": 162.91314474999672,
+      "wrapper_elapsed_seconds": 164.7395400420064,
+      "original_automatic": {
+        "setup_status": "invalid",
+        "behavior_status": "not_evaluated",
+        "output_contract_status": "fail",
+        "comparison_eligible": false,
+        "execution_status": "permission_failure",
+        "assertions": {
+          "exact_output": {
+            "passed": false,
+            "evidence": "exact outputs/result.json and strictly confined artifact schema"
+          },
+          "stop_timing": {
+            "passed": false,
+            "evidence": "native ordered finite scenario chronology, tick argv/time and before/after state"
+          },
+          "single_extension": {
+            "passed": false,
+            "evidence": "real extension, follow-up at150 and valid ETA250 second request at151 rejected by policy with unchanged state"
+          },
+          "exclusive_pending_shutdown": {
+            "passed": false,
+            "evidence": "actual exit2 and unchanged state before supplied shutdown"
+          },
+          "independent_progress": {
+            "passed": false,
+            "evidence": "ordered real C progress with B shutdown unconfirmed before/after both operations"
+          },
+          "parent_transfer": {
+            "passed": false,
+            "evidence": "native confirmed-stop authorization then trusted helper parent write/readback"
+          },
+          "immutable_execution": {
+            "passed": true,
+            "evidence": "exact native trusted helper invocation and captured real child argv/results"
+          }
+        },
+        "candidate_only": {},
+        "invalid_reasons": [
+          "missing-real-child-receipt",
+          "receipt-from-unmatched-command"
+        ],
+        "assertions_are_diagnostic": true
+      },
+      "original_qualification_status": "invalid",
+      "independent_corrected_offline_assessment": {
+        "method": "independent offline native/state audit under required-action contract",
+        "common_supported": 7,
+        "common_total": 7,
+        "assertions": {
+          "exact_output": {
+            "assessment": "independently_supported",
+            "native_citation": "Required schema/confined paths and 12 unique authored/native matches",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "immutable_execution": {
+            "assessment": "independently_supported",
+            "native_citation": "Exact helper and scheduler argv; 15 scoring scheduler receipts plus parent write, stdout780-3314",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "stop_timing": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout2170/2685",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "single_extension": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout1830/2342/2516, active-state ETA250 rejection151 exit2",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "exclusive_pending_shutdown": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout2854/3036, rejected transfer201 then confirmation202",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "independent_progress": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout1656/1998 before3036; B shutdown unconfirmed",
+            "audit": "pilot-audit-copilot-baseline.md"
+          },
+          "parent_transfer": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout3036/3205/3314, real owner write204",
+            "audit": "pilot-audit-copilot-baseline.md"
+          }
+        },
+        "whole_chain": "single continuous root generation, no reset/replay",
+        "candidate_acknowledgment": {
+          "assessment": "not a baseline capability"
+        },
+        "automated_grade_replaced": false,
+        "programmatic_corrected_grader_status": "F2-E source correction/review pending"
+      },
+      "substantiated_command_counts": {
+        "scheduler_scoring_receipts": 15,
+        "parent_write_receipts": 1,
+        "authored_action_rows": 12,
+        "scope": "auditor-confirmed continuous scoring chain, excludes incidental help"
+      },
+      "native_usage": {
+        "availability": "observed",
+        "provider_defined_modelMetrics": {
+          "requests": {
+            "count": 27,
+            "cost": 1
+          },
+          "usage": {
+            "inputTokens": 603944,
+            "outputTokens": 14147,
+            "cacheReadTokens": 561625,
+            "cacheWriteTokens": 42238,
+            "reasoningTokens": 854
+          },
+          "tokenDetails": {
+            "input": {
+              "tokenCount": 81
+            },
+            "cache_read": {
+              "tokenCount": 561625
+            },
+            "cache_write": {
+              "tokenCount": 42238
+            },
+            "output": {
+              "tokenCount": 14147
+            }
+          }
+        },
+        "provider_defined_totals": {
+          "totalApiDurationMs": 157840,
+          "totalNanoAiu": 30338950000,
+          "totalPremiumRequestCost": 1,
+          "totalUserRequests": 1
+        },
+        "monetary_cost": null
+      },
+      "evidence": {
+        "run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/run.json",
+        "attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/attempt.json",
+        "stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/stdout.jsonl",
+        "stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/stderr.txt",
+        "native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/native-events.json",
+        "original_grading": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/grading.json",
+        "raw_usage": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-baseline/evidence/scenario/usage.json"
+      },
+      "evidence_sha256": {
+        "run.json": "889f9bc846cd7807087a93a41ad897efd16f86d1effbce87269fdf011ada5af9",
+        "attempt.json": "760f290deae4d8e739e098cc1b7db9bfe010299a8f65470cf8eea1f88ee2732b",
+        "stdout.jsonl": "a98e569ebb3707e4d0926ce5a6bb52238206d5b834169fd045624ce37a9004a6",
+        "stderr.txt": "48f0ade33677fbb66b8a5ffac6fbf9b7587ba2000b3a24270220daf73cd10535",
+        "native-events.json": "9f231a60651aa144c8c1c672748d44627cc678a6a2200ed13f9d86a80c3c4e50",
+        "original_grading": "82ed99b51d17e670af84740798b4633fa41b553a8618562c71e9aaa7d86a52cd",
+        "raw_usage": "3d3a58d3bc3a022c778bc9fbccd166da138a4b908b55415f6bfd54eb248a4c9d"
+      }
+    },
+    {
+      "slot": 4,
+      "cell": "copilot-candidate",
+      "phase": "scenario",
+      "status": "terminal",
+      "root_native_session_id": "a9edf11a-60c0-4f5b-8821-1567aa71f86e",
+      "requested_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "root_observed_selector": {
+        "model": "gpt-6.1-sol",
+        "effort": "medium"
+      },
+      "linked_descendant_selectors": [],
+      "provider_version": "GitHub Copilot CLI 1.0.109.",
+      "native_exit_code": 0,
+      "harness_wrapper_exit_code": 2,
+      "provider_execution_and_evidence_seconds": 185.38688058299886,
+      "wrapper_elapsed_seconds": 187.03238512499956,
+      "original_automatic": {
+        "setup_status": "invalid",
+        "behavior_status": "not_evaluated",
+        "output_contract_status": "fail",
+        "comparison_eligible": false,
+        "execution_status": "permission_failure",
+        "assertions": {
+          "exact_output": {
+            "passed": false,
+            "evidence": "exact outputs/result.json and strictly confined artifact schema"
+          },
+          "stop_timing": {
+            "passed": false,
+            "evidence": "native ordered finite scenario chronology, tick argv/time and before/after state"
+          },
+          "single_extension": {
+            "passed": false,
+            "evidence": "real extension, follow-up at150 and valid ETA250 second request at151 rejected by policy with unchanged state"
+          },
+          "exclusive_pending_shutdown": {
+            "passed": false,
+            "evidence": "actual exit2 and unchanged state before supplied shutdown"
+          },
+          "independent_progress": {
+            "passed": false,
+            "evidence": "ordered real C progress with B shutdown unconfirmed before/after both operations"
+          },
+          "parent_transfer": {
+            "passed": false,
+            "evidence": "native confirmed-stop authorization then trusted helper parent write/readback"
+          },
+          "immutable_execution": {
+            "passed": true,
+            "evidence": "exact native trusted helper invocation and captured real child argv/results"
+          }
+        },
+        "candidate_only": {
+          "candidate_acknowledgment": {
+            "passed": false,
+            "evidence": "real acknowledgment receipt resolves to the same current parent target and final native readback"
+          }
+        },
+        "invalid_reasons": [
+          "missing-real-child-receipt",
+          "receipt-from-unmatched-command"
+        ],
+        "assertions_are_diagnostic": true
+      },
+      "original_qualification_status": "invalid",
+      "independent_corrected_offline_assessment": {
+        "method": "independent offline native/state audit under required-action contract",
+        "common_supported": 7,
+        "common_total": 7,
+        "assertions": {
+          "exact_output": {
+            "assessment": "independently_supported",
+            "native_citation": "Required8 actions unique; extra A/B/C batch observations at stdout1143 map to distinct native events",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "immutable_execution": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout612-3299 and final list13266, continuous exact helper chain",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "stop_timing": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout1989/2497",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "single_extension": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout1656/2159/2330, actual exit2 plus unchanged active/extended state",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "exclusive_pending_shutdown": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout2662/2840",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "independent_progress": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout1484/1822 before2840",
+            "audit": "pilot-audit-copilot-candidate.md"
+          },
+          "parent_transfer": {
+            "assessment": "independently_supported",
+            "native_citation": "stdout2840/3007/3111, real owner write204",
+            "audit": "pilot-audit-copilot-candidate.md"
+          }
+        },
+        "whole_chain": "single continuous root generation, no reset/replay",
+        "candidate_acknowledgment": {
+          "assessment": "supported",
+          "native_citation": "stdout3299 after parent write3111; final readback13266; owner agent-new recorded_at205"
+        },
+        "automated_grade_replaced": false,
+        "programmatic_corrected_grader_status": "F2-E source correction/review pending",
+        "batch_interpretation": {
+          "original_implementation": "global receipt reuse rejects 3 extra request-checkpoint rows from one tick",
+          "approved_contract": "required8 actions uniquely matched; three extra rows map to distinct A/B/C actual batch events",
+          "audit_revision": "Initial6/7 implementation-based interpretation corrected to7/7 after contract/batch inspection; no output edits",
+          "required_duplicate_replay_protection": "retained"
+        }
+      },
+      "substantiated_command_counts": {
+        "scheduler_scoring_receipts": 17,
+        "parent_write_receipts": 1,
+        "authored_action_rows": 19,
+        "scope": "auditor-confirmed continuous scoring chain, excludes incidental help"
+      },
+      "native_usage": {
+        "availability": "observed",
+        "provider_defined_modelMetrics": {
+          "requests": {
+            "count": 28,
+            "cost": 1
+          },
+          "usage": {
+            "inputTokens": 708547,
+            "outputTokens": 15470,
+            "cacheReadTokens": 661558,
+            "cacheWriteTokens": 46905,
+            "reasoningTokens": 1374
+          },
+          "tokenDetails": {
+            "input": {
+              "tokenCount": 84
+            },
+            "cache_read": {
+              "tokenCount": 661558
+            },
+            "cache_write": {
+              "tokenCount": 46905
+            },
+            "output": {
+              "tokenCount": 15470
+            }
+          }
+        },
+        "provider_defined_totals": {
+          "totalApiDurationMs": 180917,
+          "totalNanoAiu": 33828630000,
+          "totalPremiumRequestCost": 1,
+          "totalUserRequests": 1
+        },
+        "monetary_cost": null
+      },
+      "evidence": {
+        "run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/run.json",
+        "attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/attempt.json",
+        "stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/stdout.jsonl",
+        "stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/stderr.txt",
+        "native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/native-events.json",
+        "original_grading": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/grading.json",
+        "raw_usage": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/cells/copilot-candidate/evidence/scenario/usage.json"
+      },
+      "evidence_sha256": {
+        "run.json": "f283358916134e4e1ff04ca1fe2a53155e43d03b67c336f8133a22a1fe026ece",
+        "attempt.json": "df8de8ff4e5c489002a6f3dc5d66567e45a82d8bcc613023014bb7de0efd2152",
+        "stdout.jsonl": "f2869ff711c60ec884be72f14fcb671e222e5530e6aed96742faadfe3928d188",
+        "stderr.txt": "1dfec0dd9559c0f9421662146840a8498706643a56d0f8298582dbf951164164",
+        "native-events.json": "ad0f64c0d5acc5fc276da61818ca761e92885e8d8d333daa7ce0afb3c90707be",
+        "original_grading": "279fc4e39b0766c5d89b4caf1ca08a1c283792616fef3e2b683c6c391f71c74d",
+        "raw_usage": "a7de6f07583ff82d62ecc255381101be914a6f69f5b88c4733feea180b0f7c7a"
+      }
+    }
+  ],
+  "pairs": {
+    "copilot": {
+      "n": 1,
+      "original_automatic": "both invalid/ineligible",
+      "independent_offline": "baseline7/7 and candidate7/7 common assertions, plus separately supported candidate acknowledgment",
+      "interpretation": "descriptive native-evidence comparison, original grades unchanged; programmatic F2-E interpretation pending"
+    },
+    "codex": {
+      "n": 1,
+      "original_automatic": "both invalid/ineligible",
+      "independent_offline": "local restarted-generation evidence only; timeout/missing result, resets and Luna child selectors prevent clean whole-phase comparison"
+    }
+  },
+  "limits": [
+    "Synthetic shutdown facts",
+    "No repeat variance or statistical significance",
+    "No causal reliability or model-preference claim",
+    "Root Sol/medium does not fix Codex delegated child selectors",
+    "Provider-defined token fields are unnormalized, optional missing data stays null",
+    "No price or dollar conversion",
+    "No native rerun, output repair or original grade replacement"
+  ],
+  "correction_status": {
+    "F2-E": "pending accepted source/review",
+    "programmatic_corrected_grader_commit": null,
+    "independent_audit_provenance": {
+      "codex-baseline": {
+        "retained_report": "pilot-audit-codex-baseline.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/codex-baseline.md",
+        "external_sha256": "176fc434b8356d28520a678e49f5b44ef269744e355e590fe1c81524e3ec75c7",
+        "retained_sha256": "44f6c972695ff3d7774ce74de1fedf9972fdfa88c83ed55483b70899e22d63cd"
+      },
+      "codex-baseline-descendants": {
+        "retained_report": "pilot-audit-codex-baseline-descendants.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/codex-baseline-descendants.md",
+        "external_sha256": "c984cf8f803a9818e5f757c87f6268b65d5837868773af51615d1909ab9e2a10",
+        "retained_sha256": "9e9c1d3affe6f1909152e0998c40cf9726affdfaf139c4b87bf1571e1ccc7380"
+      },
+      "codex-candidate": {
+        "retained_report": "pilot-audit-codex-candidate.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/codex-candidate.md",
+        "external_sha256": "578bc02e223b6c8b902d6d1365cf88474773a778bc5b69ba291cbf21be5a6431",
+        "retained_sha256": "de859621298257ebd5079c90b0a9e41e2415a75bb24d734e40619676dcee4220"
+      },
+      "copilot-baseline": {
+        "retained_report": "pilot-audit-copilot-baseline.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/copilot-baseline.md",
+        "external_sha256": "c679edc236b56e2d5a1acc01c4283247747fff569373bf39a1be88c621b949d9",
+        "retained_sha256": "abf44de2b8d218aa86b1ec20c7e1e96ff9bf81feced03a62a0648e676a16be6d"
+      },
+      "copilot-candidate": {
+        "retained_report": "pilot-audit-copilot-candidate.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/copilot-candidate.md",
+        "external_sha256": "3b311e40cb9e1113e9341823dbe1fcf25bc49c916fa9c6adccd9015c76c2fac8",
+        "retained_sha256": "2ad43b518273c899afd64ec6493e7a7fba76fbd12f4156c082bbfce5c2ec3ba9"
+      },
+      "pair-synthesis": {
+        "retained_report": "pilot-pair-synthesis.md",
+        "external_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/pair-synthesis.md",
+        "external_sha256": "e717708764147107fafb1386bcbea77fd986dec98947976cdb6d74bce07f9cb6",
+        "retained_sha256": "9a2618a0edc98dd0e97e705e4a94b5d5fe12336040ed9c66407e9663393a0548"
+      }
+    }
+  },
+  "historical_boundaries": {
+    "P02": "startup0model sessions",
+    "P03": "2root evaluation sessions",
+    "P04": "2root smoke sessions; prelaunch PATH failure0phase/model sessions",
+    "source47_P05_draft": "superseded0phase/model sessions",
+    "P05_ledger_wrapper_format_repair": "newline only; original wrapper text retained; native evidence unchanged"
+  },
+  "primary_evidence": {
+    "ledger": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/slot-ledger.json",
+    "source_binding": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/source-binding.json",
+    "parent_verification": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/parent-verification.json",
+    "manifest": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/run-01/manifest.json",
+    "wrapper_format_original": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/slot-ledger-wrapper-format-original.txt"
+  },
+  "primary_evidence_sha256": {
+    "ledger": "d9e3af30b4b2ba75dc2f42622d0527a7e6124fa212d5d2fcf91c2c887c678015",
+    "source_binding": "38d00ca29b465acee62a5716f2b6a02a44fcf64ad6d40daa8ff46e462358eec2",
+    "parent_verification": "2a9bc2ea959376b6042421c2e274bf8ca6a5173d3ff35b57e0776632d2d98328",
+    "manifest": "012f1c7591c55130f24a62de379f508abe0f8a1ba37ece57a2066811e6ce4f9d",
+    "wrapper_format_original": "888d7ea22a8352e634e5a649c509086158fd5fa0c68a33e01e688c39aaa4206a"
+  }
+}
