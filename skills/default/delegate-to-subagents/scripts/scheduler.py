@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-VERSION = 2
+VERSION = 3
 
 
 @contextlib.contextmanager
@@ -47,7 +47,9 @@ def load(path):
         return {'version': VERSION, 'assignments': {}}
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-        if not isinstance(data, dict) or data.get('version') != VERSION or not isinstance(data.get('assignments'), dict):
+        if isinstance(data, dict) and data.get('version') != VERSION:
+            raise ValueError('unsupported state version; use the matching CLI or reconcile assignments into a fresh version 3 state path; preserve the original file')
+        if not isinstance(data, dict) or not isinstance(data.get('assignments'), dict):
             raise ValueError('unsupported schema')
         for key, a in data['assignments'].items():
             if not isinstance(a, dict) or not isinstance(key, str) or not key or a.get('id') != key:
@@ -62,8 +64,22 @@ def load(path):
                 raise ValueError('invalid assignment ETA')
             if a.get('phase') in ('checkpoint', 'decision') and not finite(a.get('phase_deadline')):
                 raise ValueError('invalid phase deadline')
-            if any(not isinstance(a.get(k), bool) for k in ('extension_used', 'stop_confirmed', 'transferred')):
+            if any(not isinstance(a.get(k), bool) for k in ('extension_used', 'stop_confirmed', 'transfer_authorized', 'transfer_completed')) or 'transferred' in a:
                 raise ValueError('invalid assignment flags')
+            if a['stop_confirmed'] and a['phase'] != 'stop':
+                raise ValueError('confirmed stop requires stop phase')
+            if a['transfer_authorized'] and not a['stop_confirmed']:
+                raise ValueError('transfer authorization requires confirmed stop')
+            if a['transfer_completed']:
+                receipt = a.get('transfer_receipt')
+                if not a['transfer_authorized'] or not a['stop_confirmed']:
+                    raise ValueError('transfer completion requires authorization and confirmed stop')
+                if (not isinstance(receipt, dict) or set(receipt) != {'owner', 'evidence', 'recorded_at'}
+                        or any(not isinstance(receipt.get(k), str) or not receipt[k].strip() for k in ('owner', 'evidence'))
+                        or not finite(receipt.get('recorded_at'))):
+                    raise ValueError('invalid transfer receipt')
+            elif 'transfer_receipt' in a:
+                raise ValueError('transfer receipt requires completed transfer')
         return data
     except (OSError, ValueError, TypeError) as exc:
         raise ValueError(f'malformed state at {path}: {exc}') from exc
@@ -140,6 +156,7 @@ def parser():
         'cancel': 'Cancel an assignment.',
         'confirm-stopped': 'Record verified worker and write shutdown.',
         'transfer': 'Emit permission for the host to transfer ownership.',
+        'confirm-transfer': 'Acknowledge the parent ownership update with an opaque evidence reference.',
         'tick': 'Persist and emit currently due actions.',
         'wait': 'Wait for a due action or a bounded timeout.',
         'list': 'List stored assignments.',
@@ -154,7 +171,7 @@ def parser():
     r.add_argument('--grace', type=float, default=60, help='status and decision grace in seconds (default: 60)')
     r.add_argument('--route', default='', help='coordination metadata')
     r.add_argument('--now', type=float, help='override current Unix timestamp in seconds for testing')
-    for name in ('checkpoint', 'extend', 'complete', 'cancel', 'confirm-stopped', 'transfer'):
+    for name in ('checkpoint', 'extend', 'complete', 'cancel', 'confirm-stopped', 'transfer', 'confirm-transfer'):
         q = command(name)
         q.add_argument('id')
         q.add_argument('--now', type=float, help='override current Unix timestamp in seconds for testing')
@@ -162,6 +179,10 @@ def parser():
             q.add_argument('--eta', type=float, required=name == 'extend', help='estimated completion Unix timestamp in seconds')
         if name == 'confirm-stopped':
             q.add_argument('--confirmation', required=True, help='literal worker-and-writes-stopped')
+        if name == 'confirm-transfer':
+            q.add_argument('--owner', required=True, help='new parent-record owner, nonblank')
+            q.add_argument('--evidence', required=True, help='opaque reference to the actual parent ownership record, nonblank')
+            q.add_argument('--confirmation', required=True, help='literal parent-ownership-updated')
     for name in ('tick', 'wait'):
         q = command(name)
         q.add_argument('--now', type=float, help='override current Unix timestamp in seconds for testing')
@@ -202,7 +223,7 @@ def main():
                 elif args.cmd == 'register':
                     if not args.id or args.id in assignments or args.deadline <= now or args.checkpoint <= 0 or args.grace < 0:
                         raise ValueError('duplicate ID or invalid deadline/checkpoint/grace')
-                    assignments[args.id] = dict(id=args.id, agent=args.agent, task=args.task, route=args.route, status='active', phase='running', deadline=args.deadline, checkpoint_interval=args.checkpoint, checkpoint_grace=args.grace, next_checkpoint=add_time(now, args.checkpoint), extension_used=False, stop_confirmed=False, transferred=False)
+                    assignments[args.id] = dict(id=args.id, agent=args.agent, task=args.task, route=args.route, status='active', phase='running', deadline=args.deadline, checkpoint_interval=args.checkpoint, checkpoint_grace=args.grace, next_checkpoint=add_time(now, args.checkpoint), extension_used=False, stop_confirmed=False, transfer_authorized=False, transfer_completed=False)
                     out = {'registered': args.id}
                 elif args.cmd == 'list':
                     out = {'assignments': list(assignments.values())}
@@ -244,10 +265,24 @@ def main():
                         a['phase'] = 'stop'
                         out = {'stop_confirmed': True}
                     elif args.cmd == 'transfer':
-                        if not a['stop_confirmed'] or a['transferred']:
+                        if not a['stop_confirmed'] or a['transfer_authorized']:
                             raise ValueError('ownership transfer requires confirmed shutdown and must be new')
-                        a['transferred'] = True
-                        out = {'host_action': 'ownership transfer may now be performed by host'}
+                        a['transfer_authorized'] = True
+                        out = {'transfer_authorized': True, 'transfer_completed': False, 'host_action': 'update parent ownership, then acknowledge with confirm-transfer'}
+                    elif args.cmd == 'confirm-transfer':
+                        if (not a['stop_confirmed'] or not a['transfer_authorized']
+                                or args.confirmation != 'parent-ownership-updated'
+                                or not args.owner.strip() or not args.evidence.strip()):
+                            raise ValueError('transfer acknowledgment requires confirmed stop, authorization, nonblank owner/evidence and parent-ownership-updated confirmation')
+                        if a['transfer_completed']:
+                            receipt = a['transfer_receipt']
+                            if receipt['owner'] != args.owner or receipt['evidence'] != args.evidence:
+                                raise ValueError('transfer acknowledgment conflicts with stored receipt')
+                            out = {'transfer_completed': True, 'transfer_receipt': receipt}
+                            break
+                        a['transfer_completed'] = True
+                        a['transfer_receipt'] = {'owner': args.owner, 'evidence': args.evidence, 'recorded_at': now}
+                        out = {'transfer_completed': True, 'transfer_receipt': a['transfer_receipt']}
                 if args.cmd not in ('tick', 'wait'):
                     save(args.state, data)
                     break
