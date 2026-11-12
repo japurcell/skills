@@ -11,6 +11,8 @@
 
 ## Investigations
 
+18. [x] Incorporate relevant brain principles into code review skills. - Archived at user request 2026-11-12.
+
 9. [x] An agent executing the 'execplan-implement' skill didn't enforce a subagent runtime limit. It suggested this improvement to the skill: "Deadlines require parent-side enforcement. Before each background assignment, record its task ID, start time, deadline, extension count, and enforcement handle. Arm a host timeout or parent-owned deadline timer before waiting.
 At expiry, request a checkpoint with a bounded response deadline. Allow only one ETA-based extension, update the recorded deadline, and re-arm enforcement. Follow-up messages do not reset the extension count.
 At the second expiry, stop the worker and confirm it is quiescent before assigning a replacement. Cancel timers when tasks finish. Recheck active deadlines after user interruptions. Never rely solely on deadlines written in worker prompts or completion notifications." - Archived at user request 2026-11-10.
