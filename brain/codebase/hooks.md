@@ -18,4 +18,4 @@ Evidence: [generator](../../scripts/generate-hooks.py), [common renderer](../../
 
 For runtime or registration changes, read [hook testing](hook-testing.md); for shared trace lifecycle changes, read [observability](hook-observability.md).
 
-- Retained Copilot/Gemini RTK and startup hooks share common, audit, and observability helpers. Codex startup and brain scripts are self-contained. Provider refresh retains exact retired registration identities and file hashes so it can remove owned historical assets while preserving modified files.
+- Retained Copilot/Gemini RTK and startup hooks share common, audit, and observability helpers. Codex startup and brain scripts are self-contained. Provider refresh retains exact retired registration identities and file hashes so it can remove owned historical assets while preserving modified files. Older standalone scanner bundles and repository-local gates require explicit operator-led retirement; follow the [scanner retirement guide](../../docs/retiring-scan-secrets.md).
