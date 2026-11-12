@@ -331,6 +331,8 @@ def discover_codex(cell):
                 break
             chunk = os.read(child.stdout.fileno(), 65536)
             if not chunk:
+                if pending:
+                    raise DiscoveryError("truncated trailing discovery notification", notifications)
                 break
             received_bytes += len(chunk)
             pending += chunk

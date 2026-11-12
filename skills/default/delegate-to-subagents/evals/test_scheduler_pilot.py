@@ -592,7 +592,7 @@ if 'app-server' in sys.argv:
    if mode=='wrong-reply': print(json.dumps({'id':99,'result':{}}),flush=True)
    elif mode=='duplicate-reply': print(json.dumps({'id':1,'result':{}}),flush=True)
    else: print(json.dumps({'method':'unknown/native/event' if mode=='notification-unknown' else 'remoteControl/status/changed','params':[] if mode=='notification-malformed' else {'status':'enabled' if mode=='notification-active' else 'disabled'},'emittedAtMs':{} if mode=='notification-bad-timestamp' else 0}),flush=True)
-  if method=='hooks/list' and mode in ('notification-disabled','configuration-warning'):
+  if method=='hooks/list' and mode in ('notification-disabled','configuration-warning','notification-truncated-eof'):
    if mode=='configuration-warning': print(json.dumps({'method':'configWarning','params':{'summary':'offline-auth-adjacent-sensitive-summary','details':None},'emittedAtMs':0}),flush=True)
    print(json.dumps({'method':'remoteControl/status/changed','params':{'status':'disabled','serverName':None,'installationId':None,'environmentId':None},'emittedAtMs':0}),flush=True)
   if method=='hooks/list':
@@ -608,6 +608,12 @@ if 'app-server' in sys.argv:
    if mode=='wrong-source': h['sourcePath']='/outside/hooks.json'
    if mode=='changed-hash': h['currentHash']='sha256:changed-native-definition'
   if method=='config/read' and mode=='wrong-model': result['config']['model']='wrong'
+  if method=='config/read' and mode=='notification-truncated-eof':
+   (repo/'outputs/discovery-server.pid').write_text(str(os.getpid()))
+   sys.stdout.write(json.dumps({'id':request['id'],'result':result})+'\n'+json.dumps({'method':'remoteControl/status/changed','params':{'status':'enabled'}}))
+   sys.stdout.flush();os.close(1)
+   import time;time.sleep(30)
+   raise SystemExit
   print(json.dumps({'id':request['id'],'result':result}),flush=True)
   if method=='config/read' and mode=='duplicate-final': print(json.dumps({'id':request['id'],'result':result}),flush=True)
  raise SystemExit
@@ -672,6 +678,20 @@ print(json.dumps({'type':'item.completed','item':dict(item,exit_code=verdict.ret
             discovery=receipt['cells']['codex-'+variant]
             self.assertEqual(discovery['notifications'],[{'method':'remoteControl/status/changed','status':'disabled'}])
             self.assertEqual([row['id'] for row in discovery['safe_responses']],[1,2,3])
+
+    def test_public_codex_eof_with_pending_notification_invalidates_setup(self):
+        self.codex_setup('notification-truncated-eof')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,2,result.stderr)
+        receipt=json.loads((self.run/'preflight/codex.json').read_text())
+        self.assertFalse(receipt['setup_ready'])
+        self.assertFalse(receipt['smoke_ready'])
+        self.assertFalse(receipt['scenario_ready'])
+        self.assertIn('truncated trailing discovery notification',result.stderr)
+        for variant in ('baseline','candidate'):
+            self.assertEqual(receipt['cells']['codex-'+variant]['notifications'],[{'method':'remoteControl/status/changed','status':'disabled'}])
+            pid=int((self.run/('cells/codex-'+variant+'/repo/outputs/discovery-server.pid')).read_text())
+            with self.assertRaises(ProcessLookupError): os.kill(pid,0)
 
     def test_public_codex_startup_notification_failures_are_safe_and_closed(self):
         for mode in ('configuration-warning','notification-active','notification-unknown','notification-malformed','notification-bad-timestamp','wrong-reply','duplicate-reply','duplicate-final','rpc-error','notification-timeout'):
