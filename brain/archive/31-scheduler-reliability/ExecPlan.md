@@ -1,6 +1,6 @@
 # Complete the scheduler comparison with a focused native harness
 
-This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. All four P05 scored slots are terminal and no evaluation budget remains. Source c52/harness2983 and manifest012f1c remain frozen. Original automatic qualification is invalid/ineligible in every cell. Final independent offline audits support seven common assertions for both Copilot variants plus actual candidate acknowledgment. Codex restarted generations provide limited diagnostic support, with timeout/missing output, resets and Luna child selector confounds preventing a clean pair. [Final report](pilot-report.md), [benchmark JSON](pilot-benchmark.json) and [independent synthesis](pilot-pair-synthesis.md) retain exact identities, per-assertion native citations, raw usage and separate timing measurements. F4 independently audited semantic report is accepted. F2-E/F2-E1 source acceptance and F5 remain pending. No programmatic regrade is required. No new model call or retry is authorized.
+Archived completed ExecPlan, 2026-11-12. All planned work is complete. Final offline source correction `94dc13e86187280425f88051fb082f88e896ee94` is accepted with zero remaining findings on both axes and six targeted tests in13.487 seconds. Its earlier 42-test suite remains bound to ade005b8/8761dc45/dafc3386. The final parser was never rerun on P05. All four P05 sessions are terminal, no budget remains, and the independently audited semantic report is accepted. Original automatic grades remain invalid/ineligible and unchanged. Copilot has seven independently supported common assertions in each variant plus candidate acknowledgment. Codex evidence stays limited by timeout/missing output, resets and Luna child selectors. Task-owned clean fully merged worktrees/branches were removed after parent confirmed all workers stopped. Durable guidance, evidence navigation and archive are complete. Root scheduler-reliability and external evidence remain preserved.
 
 ## Purpose / Big Picture
 
@@ -37,11 +37,11 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - [x] (2026-11-12) [milestone-4] F3 P04 prepared and two native smokes consumed. Both automated qualifications failed, with no scored attempts. Preserve the report and source acceptance history.
 - [x] (2026-11-12) [milestone-2] F2-D prompt clarity addendum integrated at `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`, three targeted tests pass in 5.623 seconds, both mechanical acknowledgments zero findings.
 - [x] (2026-11-12) [milestone-2] F2-D integrated `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`, 39 final-byte tests pass in 137.926 seconds and both independent delta axes report zero findings.
-- [ ] [milestone-2] F2-E source correction final review has Standards zero and one remaining Spec P2 permission gate. F2-E1 focused correction/reviewer acceptance pending.
-- [ ] [milestone-2] F2-E1 scope permission failure to required execution and retain incidental denials as observations, with focused final-byte verification and independent acceptance.
+- [x] (2026-11-12) [milestone-2] F2-E accepted at `94dc13e86187280425f88051fb082f88e896ee94`, final reviewer axes zero remaining findings. Prior 42-test proof and final six-targeted-test proof remain separately bound. [Review](review-observation-fix.md).
+- [x] (2026-11-12) [milestone-2] F2-E1 incidental-denial P2 resolved, six final-byte tests pass in13.487 seconds, both final reviewer axes zero. [Review](review-observation-fix.md).
 - [x] (2026-11-12) [milestone-4] F3 all four authorized P05 scored slots terminal, zero evaluation budget remains. Preserve original automatic invalidity and no retries.
 - [x] (2026-11-12) [milestone-4] F4 final semantic report and benchmark accepted after independent zero-material-finding report audit. Original automatic grades unchanged. No programmatic regrade is required.
-- [ ] [milestone-5] F5 persist durable lessons, reconcile all tasks, clean completed worker resources and archive the completed plan.
+- [x] (2026-11-12) [milestone-5] F5 durable lessons retained, both stopped clean merged owned worktrees/branches removed, archive/navigation verified.
 
 ## Context and Orientation
 
@@ -129,10 +129,12 @@ Recognize the Codex observed known Python prefix only when it resolves through t
 
 Use public reproductions for the actual known-prefix receipt mismatch and missing direct-helper prompt instruction, then focused checks and one final maintained affected suite on exact final bytes. Add tests for retained/new core semantics, including a scored phase with no smoke/prior success, pinned-prefix acceptance, wrong interpreter/argv rejection and independent full state/rubric checks. Retain logs/hashes and a minimal independent delta review. No whole-project redesign or new conformance gates. Stop at accepted corrected source, then parent prepares a fresh four-slot payload and verifies it before live dispatch.
 
-#### F2-E - Harmless source inspection is not an execution receipt
+#### F2-E - Completed harmless-inspection and required-execution correction
 
-Status: open
-Acceptance: not met
+Accepted at `94dc13e86187280425f88051fb082f88e896ee94`. [Final review and exact verification chronology](review-observation-fix.md). The task contract below is historical completed scope.
+
+Status: done
+Acceptance: met
 
 Depends on the actual P05 evidence and the existing harmless-read-only-inspection contract. Worker `focused_harness_impl` owns only the harness/tests and directly required small fixture evidence. This narrow contract is saved before source edits. Activate TDD. Use a public process-boundary reproduction of reading the frozen helper source with `cat`, where output contains literal `pilot_child` source text. Current validation falsely emits `receipt-from-unmatched-command`. The read is observation and supplies no child-execution claim.
 
@@ -142,10 +144,12 @@ The actual baseline audit confirms exploratory helper `--state --help` exits 2 w
 
 The directly observed Copilot transport also marks native tool success true for required rejection commands whose actual shell metadata and helper receipt both report exit 2. Distinguish tool transport success from the actual command exit using only grounded native shell exit metadata. Required exit-2 commands must still match real native process exit 2 and unchanged state. Retain wrong-exit, wrong-argv, missing required execution and forged structured-JSON negatives. Exclude proven benign helper/help inspections from required-execution errors without allowing them to satisfy any required action. Preserve genuine incidental denials as observations, while distinguishing them from failure of required helper execution. No general wrapper/permission framework is added. No descendant collector, provider framework, prompt change or model rerun is part of F2-E. No source edits or writes to frozen P05 artifacts, logs or grades are permitted. Original P05 automated qualification, original grades and ineligible pairs remain historical. After exact tested/reviewed correction, retain final parser provenance separately from c52 P05 execution. The accepted independent semantic assessment already supplies the report interpretation. No new programmatic grading/API is required. Do not backfill observations or overwrite frozen grades. Stop at the bounded accepted source correction. This change does not authorize a new model call or replace any consumed slot.
 
-##### F2-E1 - Required execution versus incidental permission denials
+##### F2-E1 - Completed required-execution denial correction
 
-Status: open
-Acceptance: not met
+The initial P2 finding is resolved with final Standards/Spec zero remaining findings. Six final-byte tests passed in13.487 seconds. The earlier 42-test suite is separate. [Accepted correction](review-observation-fix.md).
+
+Status: done
+Acceptance: met
 
 Depends on the final-review frozen snapshot, harness `8761dc45e36f5e1589885d52ff19357cbbb969ee2b887c53bc65cdf7f5f4ec2e`, tests `dafc338633c37604d67a0123948b836b67a37f3e4bced885a4b2318175269b25`. Standards has zero findings. Spec has one remaining P2 finding in `scheduler_pilot.py:957` and `:1117-1118` of that snapshot. The aggregate denied/permission scan covers every failed native call and forces failure/ineligibility even if all required helper operations have valid proof. The active requirement is “Preserve genuine incidental denials as observations, while distinguishing them from failure of required helper execution.” [Frozen metadata](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-observation-fix/final-review/metadata.json) and [Spec finding](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-observation-fix/final-review/spec.md).
 
@@ -155,8 +159,8 @@ Run focused final-byte verification for this narrow correction and obtain indepe
 
 ### Milestone 4 - Fresh paired pilot and report
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### F3 - Completed four-scored-session payload and execution
 
@@ -177,14 +181,14 @@ Write `pilot-report.md` and `pilot-benchmark.json` beside this plan with source/
 
 ### Milestone 5 - Durable closeout, cleanup and archive
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 F5 depends on F4 and resolution of all remaining plan tasks. Keep reusable behavior in the maintained helper, tests and eval README, with concise links to existing indexed brain topics when useful. Verify no lessons remain only in this temporary plan. Confirm workers stopped, worktrees clean and fully merged before removing only completed task worktrees/branches. Preserve external evidence and root integration branch. Update current outcome and navigation, then archive the completed plan through the repository's existing archive structure. No main merge or push is authorized by this task. Never mark a task complete without its evidence.
 
 ## Concrete Steps
 
-All four P05 scored slots are terminal and no evaluation budget remains. Source c52/harness2983 and manifest012f1c remain frozen. Original automatic qualification is invalid/ineligible in every cell. Final independent offline audits support seven common assertions for both Copilot variants plus actual candidate acknowledgment. Codex restarted generations provide limited diagnostic support, with timeout/missing output, resets and Luna child selector confounds preventing a clean pair. [Final report](pilot-report.md), [benchmark JSON](pilot-benchmark.json) and [independent synthesis](pilot-pair-synthesis.md) retain exact identities, per-assertion native citations, raw usage and separate timing measurements. F4 independently audited semantic report is accepted. F2-E/F2-E1 source acceptance and F5 remain pending. No programmatic regrade is required. No new model call or retry is authorized. Worker finishes only the bounded F2-E source/tests correction without changing P05. Finish the narrow F2-E1 required-permission gate, focused verification and reviewer acceptance, then integrate exact accepted bytes. Parent has accepted the audited report. Carry F5 durable lessons/cleanup/archive forward only after source acceptance and stopped/merged task-worker confirmation. There are no further live launches.
+No work remains under this plan. Use the [accepted pilot report](pilot-report.md), [benchmark data](pilot-benchmark.json) and [final offline source acceptance](review-observation-fix.md). No further evaluation sessions, cleanup, main merge or push are authorized.
 
 ## Validation and Acceptance
 
@@ -205,6 +209,8 @@ Focused review 1 found retained cancellation coverage removed with an obsolete l
 P03 provider processes exited 0 while added conformance checks made both smokes invalid. Copilot's actual command identifier explains helper permission denial. Codex's actual context includes a file URI cwd and semantically different sandbox representation. The complete [Codex diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-codex/findings.md) and [Copilot diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-copilot/findings.md) are evidence inputs for minimal parsing and the narrow helper candidate. Their broader proposed schema/journal repair designs are superseded by this approved scope. Optional telemetry and usage do not establish scheduler behavior.
 
 ## Decision Log
+
+- 2026-11-12. Accept final F2-E/E1 offline correction and audited semantic report. Complete only authorized owned cleanup and same-depth archive, preserving exact historical bytes, original P05 grading and external evidence. All tasks are closed with no new evaluation calls.
 
 - 2026-11-12. Accept F4 semantic report after independent report audit found zero material issues. No programmatic regrade/API is required. Track the remaining narrow permission-taint Spec finding as F2-E1 before edits, preserving original P05 grades and final parser provenance separately.
 
@@ -227,6 +233,6 @@ P03 provider processes exited 0 while added conformance checks made both smokes 
 
 ## Outcomes & Retrospective
 
-All four P05 scored slots are terminal and no evaluation budget remains. Source c52/harness2983 and manifest012f1c remain frozen. Original automatic qualification is invalid/ineligible in every cell. Final independent offline audits support seven common assertions for both Copilot variants plus actual candidate acknowledgment. Codex restarted generations provide limited diagnostic support, with timeout/missing output, resets and Luna child selector confounds preventing a clean pair. [Final report](pilot-report.md), [benchmark JSON](pilot-benchmark.json) and [independent synthesis](pilot-pair-synthesis.md) retain exact identities, per-assertion native citations, raw usage and separate timing measurements. F4 independently audited semantic report is accepted. F2-E/F2-E1 source acceptance and F5 remain pending. No programmatic regrade is required. No new model call or retry is authorized.
+All planned work is complete. Final offline source correction `94dc13e86187280425f88051fb082f88e896ee94` is accepted with zero remaining findings on both axes and six targeted tests in13.487 seconds. Its earlier 42-test suite remains bound to ade005b8/8761dc45/dafc3386. The final parser was never rerun on P05. All four P05 sessions are terminal, no budget remains, and the independently audited semantic report is accepted. Original automatic grades remain invalid/ineligible and unchanged. Copilot has seven independently supported common assertions in each variant plus candidate acknowledgment. Codex evidence stays limited by timeout/missing output, resets and Luna child selectors. Task-owned clean fully merged worktrees/branches were removed after parent confirmed all workers stopped. Durable guidance, evidence navigation and archive are complete. Root scheduler-reliability and external evidence remain preserved.
 
-The meaningful native comparison is retained with limits. Copilot common behavior is tied under independent required-action inspection and candidate acknowledgment is separately supported. This does not convert original automatic grades into passes. Native direct-helper grant acceptance is demonstrated for exercised Copilot operations. Codex's child-model confounds, resets and baseline timeout prevent a clean efficacy comparison. Historical source acceptance and all failed intermediate pilot reports remain reachable. F2-E/F4/F5 remain unfinished, with durable mechanisms in maintained code/tests/README and task-specific audit history in the report.
+The behavior and evidence lessons are encoded in the maintained [harness](../../../skills/default/delegate-to-subagents/evals/scheduler_pilot.py), [tests](../../../skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py) and [README](../../../skills/default/delegate-to-subagents/evals/README.md). Durable [provider boundary guidance](../../codebase/live-hook-testing.md) distinguishes hook conformance from benchmark proof, and [fixture guidance](../../codebase/script-testing.md) retains real-child authority, actual child selectors, reset generations and original-versus-independent reporting. Reflection found no need for a new generic skill or model preference.

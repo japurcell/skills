@@ -15,3 +15,6 @@
 - [Skill workflow hardening](31-skill-workflow-hardening/ExecPlan.md)
 - [Scheduler evaluation](31-scheduler-evaluation/ExecPlan.md)
 - [Scheduler evaluation report](31-scheduler-evaluation/report.md)
+
+- [Scheduler reliability and native pilot](../31-scheduler-reliability/ExecPlan.md)
+- [Scheduler native pilot report](../31-scheduler-reliability/pilot-report.md)

@@ -660,7 +660,7 @@
     "No native rerun, output repair or original grade replacement"
   ],
   "correction_status": {
-    "F2-E": "source correction awaiting remaining Spec P2 permission-gate fix and reviewer acceptance",
+    "F2-E": "accepted and integrated, final independent axes zero remaining findings",
     "independent_audit_provenance": {
       "codex-baseline": {
         "retained_report": "pilot-audit-codex-baseline.md",
@@ -701,12 +701,25 @@
     },
     "programmatic_regrade_required": false,
     "final_parser_provenance": {
-      "status": "pending accepted correction integration",
-      "candidate_commit": "ade005b8735cd72cd5da96c4fe2e067bd1d0e9ef",
-      "candidate_harness_sha256": "8761dc45e36f5e1589885d52ff19357cbbb969ee2b887c53bc65cdf7f5f4ec2e",
-      "candidate_suite_tests": 42,
-      "candidate_suite_seconds": 151.453,
-      "remaining_review_finding": "Spec P2 incidental-permission gate"
+      "status": "accepted offline-only correction",
+      "commit": "94dc13e86187280425f88051fb082f88e896ee94",
+      "harness_sha256": "1ab8d15dabe5306050a86465eefb7c0a49b6b0fd6bf6dcbf9cec17dca42e3187",
+      "tests_sha256": "00ec6657b05a7a10193cd9f90aaa32d2f3d8795a4b5e162c49f1a24ae8b90703",
+      "final_targeted_tests": 6,
+      "final_targeted_seconds": 13.487,
+      "final_targeted_log": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-observation-fix/denial-fix/final-targeted.log",
+      "final_review_metadata": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-observation-fix/denial-fix/review/metadata.json",
+      "review_report": "review-observation-fix.md",
+      "prior_full_suite": {
+        "commit": "ade005b8735cd72cd5da96c4fe2e067bd1d0e9ef",
+        "harness_sha256": "8761dc45e36f5e1589885d52ff19357cbbb969ee2b887c53bc65cdf7f5f4ec2e",
+        "tests_sha256": "dafc338633c37604d67a0123948b836b67a37f3e4bced885a4b2318175269b25",
+        "tests": 42,
+        "seconds": 151.453
+      },
+      "native_P05_rerun": false,
+      "original_pilot_source": "c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3",
+      "original_grades_overwritten": false
     }
   },
   "historical_boundaries": {
@@ -737,5 +750,20 @@
     "audit_sha256": "2f62029e350fbcab0d305822b061d614c925301d318f0ef02801a14b121838ec",
     "findings": 0,
     "note": "Audit binds original semantic report bytes; subsequent workflow metadata removes an unnecessary regrade requirement without changing observations."
+  },
+  "closeout": {
+    "status": "complete and archived",
+    "archive": "brain/archive/31-scheduler-reliability",
+    "task_owned_worktrees_removed": [
+      "/private/tmp/skills-scheduler-codex-auth",
+      "/private/tmp/skills-scheduler-native-auth"
+    ],
+    "task_owned_branches_removed": [
+      "scheduler-codex-auth",
+      "scheduler-native-auth"
+    ],
+    "root_branch_preserved": "scheduler-reliability",
+    "external_evidence_preserved": true,
+    "new_model_calls": 0
   }
 }
