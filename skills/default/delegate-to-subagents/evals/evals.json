@@ -162,5 +162,10 @@
         "Rejects an agent with an original effort override for host_default reuse, even when model and context match."
       ]
     }
-  ]
+  ],
+  "pilot_harness": {
+    "entrypoint": "scheduler_pilot.py",
+    "scenario_manifest": "pilot-scenarios.json",
+    "scope": "offline maintained preparation and evidence grading; live runs need separate authorization"
+  }
 }
