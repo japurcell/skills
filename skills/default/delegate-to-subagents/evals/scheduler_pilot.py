@@ -487,7 +487,23 @@ def native_events(provider, stdout):
                 result = data.get("result", {})
                 if type(data.get("success")) is not bool or not isinstance(result, dict) or not isinstance(result.get("content"), str):
                     errors.append("malformed-tool-result")
-                calls.append({"id": key, "tool_type": start.get("toolName"), "turn_id": start.get("turnId"), "command": arguments.get("command", "") if isinstance(arguments, dict) else "", "patch": arguments if isinstance(arguments, str) else None, "file_edits": data.get("fileEdits"), "success": data.get("success"), "native_exit_code": None, "exit_code_source": "derived-from-native-success-boolean", "exit_code": 0 if data.get("success") is True else 1, "output": result.get("content", ""), "start_line": start_line, "line": number})
+                native_exit = None
+                if start.get("toolName") == "bash":
+                    execution = data.get("shellExecution", {})
+                    if isinstance(execution, dict) and "exitCode" in execution:
+                        if type(execution["exitCode"]) is int:
+                            native_exit = execution["exitCode"]
+                        else:
+                            errors.append("native-shell-exit-mismatch")
+                    footer = re.search(r"(?:^|\n)<shellId: ([^\s>]+) completed with exit code (-?[0-9]+)>\s*$", result.get("content", ""))
+                    shell = result.get("structuredContent", {})
+                    if footer:
+                        if not isinstance(shell, dict) or shell.get("shellId") != footer[1] or (native_exit is not None and native_exit != int(footer[2])):
+                            errors.append("native-shell-exit-mismatch")
+                            native_exit = None
+                        else:
+                            native_exit = int(footer[2])
+                calls.append({"id": key, "tool_type": start.get("toolName"), "turn_id": start.get("turnId"), "command": arguments.get("command", "") if isinstance(arguments, dict) else "", "patch": arguments if isinstance(arguments, str) else None, "file_edits": data.get("fileEdits"), "success": data.get("success"), "native_exit_code": native_exit, "exit_code_source": "native-shell-completion" if start.get("toolName") == "bash" else "native-tool-success", "exit_code": native_exit if start.get("toolName") == "bash" else (0 if data.get("success") is True else 1), "output": result.get("content", ""), "start_line": start_line, "line": number})
                 continue
             if provider == "codex" and kind in ("item.started", "item.completed"):
                 item = row.get("item", {})
@@ -634,26 +650,54 @@ def helper_arguments(cell, command):
     return argv[2:]
 
 
+def receipt_claims(output):
+    for candidate in output.splitlines():
+        try:
+            claim = json.loads(candidate)
+        except ValueError:
+            continue
+        if isinstance(claim, dict) and "pilot_child" in claim:
+            yield claim["pilot_child"]
+
+
+def helper_inspection(cell, arguments, call):
+    claims = list(receipt_claims(str(call["output"])))
+    if arguments == ["--help"]:
+        return call["exit_code"] == 0 and not claims
+    if not arguments or arguments[:1] != ["--state"] or len(arguments) < 3:
+        return False
+    states = [str(Path(cell["repo"]) / "outputs" / name) for name in ("smoke-state.json", "scenario-state.json")]
+    if arguments[1] not in states:
+        return False
+    if arguments[2:] == ["--help"]:
+        return call["exit_code"] == 2 and not claims
+    if arguments[2:] != ["register", "--help"] or call["exit_code"] != 0 or len(claims) != 1:
+        return False
+    receipt = claims[0]
+    return (isinstance(receipt, dict) and receipt.get("kind") == "scheduler"
+            and receipt.get("argv") == cell["command_prefix"] + arguments
+            and receipt.get("exit_code") == 0 and receipt.get("before") == receipt.get("after")
+            and receipt.get("parent_before") == receipt.get("parent_after")
+            and receipt.get("stderr") == "" and str(receipt.get("stdout", "")).startswith("usage:"))
+
+
 def helper_records(cell, events):
     records = []
     for call in events["calls"]:
         arguments = helper_arguments(cell, call["command"])
-        if arguments is None:
+        if arguments is None or helper_inspection(cell, arguments, call):
             continue
         text = call["output"]
         if not isinstance(text, str):
             continue
-        for line in text.splitlines():
+        for receipt in receipt_claims(text):
             try:
-                receipt = json.loads(line)["pilot_child"]
                 if not isinstance(receipt, dict):
                     continue
                 if receipt.get("kind") == "scheduler":
                     if receipt.get("argv") != cell["command_prefix"] + arguments or type(receipt.get("exit_code")) is not int:
                         continue
-                    if cell["provider"] == "codex" and call["exit_code"] != receipt["exit_code"]:
-                        continue
-                    if cell["provider"] == "copilot" and (call["exit_code"] == 0) != (receipt["exit_code"] == 0):
+                    if call["exit_code"] != receipt["exit_code"]:
                         continue
                     if not isinstance(receipt.get("before"), (dict, type(None))) or not isinstance(receipt.get("after"), dict):
                         continue
@@ -778,8 +822,8 @@ def validate_phase(manifest, cell_id, phase):
         for call in events["calls"]:
             arguments = helper_arguments(cell, call["command"])
             if arguments is None:
-                if "pilot_child" in str(call["output"]):
-                    errors.append("receipt-from-unmatched-command")
+                continue
+            if helper_inspection(cell, arguments, call):
                 continue
             receipts = helper_records(cell, {"calls": [call]})
             if len(receipts) != 1:
@@ -929,6 +973,7 @@ def grade(manifest, cell_id):
             raise ValueError("invalid final state schema")
         matched = []
         used_actions = set()
+        used_batch_members = set()
         for action in actions:
             if not isinstance(action, dict) or set(action) != {"action", "assignment", "at", "evidence"}:
                 raise ValueError("invalid action schema")
@@ -940,9 +985,18 @@ def grade(manifest, cell_id):
             record = next((r for r in records if r["command"] == evidence.get("command") and r.get("exit_code", 0) == evidence.get("exit_code")), None)
             if record is None:
                 raise ValueError("action lacks demonstrated immutable invocation")
-            if record["command"] in used_actions:
-                raise ValueError("duplicated action receipt")
-            used_actions.add(record["command"])
+            if action["action"] == "request-checkpoints":
+                args = record.get("helper_args", [])
+                events = json.loads(record.get("stdout", "{}")).get("events", [])
+                members = [event for event in events if event.get("assignment") == action["assignment"] and event.get("type") == "deadline_expired" and event.get("host_action") == "request status by the checkpoint deadline"]
+                member = (record["command"], action["assignment"], "deadline_expired")
+                if record.get("kind") != "scheduler" or record.get("exit_code") != 0 or args[2:] != ["tick", "--now", "100"] or action["at"] != 100 or len(members) != 1 or member in used_batch_members:
+                    raise ValueError("unverified or duplicated batch action member")
+                used_batch_members.add(member)
+            else:
+                if record["command"] in used_actions:
+                    raise ValueError("duplicated action receipt")
+                used_actions.add(record["command"])
             matched.append((action, record))
         state = artifact(final["scheduler_state"])
         canonical_state = outputs / "scenario-state.json"

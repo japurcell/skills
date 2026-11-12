@@ -56,7 +56,7 @@ class PilotTests(unittest.TestCase):
                 rows.append({"type":"item.completed", "item":{"type":"command_execution", "command":command, "exit_code":child.returncode, "aggregated_output":child.stdout}})
             else:
                 key = str(len(rows))
-                rows.extend([{"type":"tool.execution_start", "data":{"toolCallId":key,"arguments":{"command":command}}}, {"type":"tool.execution_complete", "data":{"toolCallId":key,"success":child.returncode==0,"result":{"content":child.stdout}}}])
+                rows.extend([{"type":"tool.execution_start", "data":{"toolCallId":key,"toolName":"bash","turnId":"0","arguments":{"command":command}}}, {"type":"tool.execution_complete", "data":{"toolCallId":key,"turnId":"0","success":True,"shellExecution":{"exitCode":child.returncode},"result":{"content":child.stdout+"\n<shellId: "+key+" completed with exit code "+str(child.returncode)+">","structuredContent":{"shellId":key}}}}])
             return {"command":command, "exit_code":child.returncode}, json.loads(child.stdout)["pilot_child"]
         def save(phase):
             directory = evidence / phase
@@ -452,6 +452,12 @@ def write_artifact(relative,value):
  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'apply_patch','turnId':'0','arguments':patch}}))
  path.write_text(text)
  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'fileEdits':[{'path':str(repo/relative.replace('outputs/','outputs/../outputs/',1)) if mode=='traversal' else str(path),'kind':'create'}],'result':{'content':'Patch applied'}}}))
+if phase=='scenario' and mode=='help-inspection':
+ state=str(repo/'outputs/scenario-state.json')
+ for index,args in enumerate((['--help'],['--state',state,'--help'],['--state',state,'register','--help'])):
+  argv=cell['helper_prefix']+args;child=subprocess.run(argv,capture_output=True,text=True);key='help-'+str(index);shell=str(900+index)
+  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'bash','turnId':'0','arguments':{'command':shlex.join(argv)}}}))
+  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'shellExecution':{'exitCode':child.returncode},'result':{'content':child.stdout+child.stderr+'\n<shellId: '+shell+' completed with exit code '+str(child.returncode)+'>','structuredContent':{'shellId':shell}}}}))
 if phase=='scenario':
  state=str(repo/'outputs/scenario-state.json')
  actions=[]
@@ -463,7 +469,7 @@ if phase=='scenario':
   key='scenario-'+str(number);number+=1
   print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'bash','turnId':'0','arguments':{'command':command}}}))
   child=subprocess.run(argv,capture_output=True,text=True)
-  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':child.returncode==0,'result':{'content':child.stdout}}}))
+  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'shellExecution':{'exitCode':0 if mode=='wrong-native-exit' else child.returncode},'result':{'content':child.stdout+'\n<shellId: '+key+' completed with exit code '+str(child.returncode)+'>','structuredContent':{'shellId':'wrong' if mode=='wrong-shell-id' else key}}}}))
   if label:
    relative='outputs/'+label+'-'+str(at)+'.json'
    write_artifact(relative,{'command':command,'exit_code':child.returncode})
@@ -472,7 +478,13 @@ if phase=='scenario':
   invoke(['--state',state,command]+([assignment] if assignment else [])+list(extra)+['--now',str(at)],label,assignment or ('A' if at==105 else 'B'),at)
  for assignment,agent in (('A','agent-a'),('B','agent-old'),('C','agent-c')):
   op('register',assignment,extra=[agent,'task','--deadline','100','--checkpoint','300','--grace','5'])
- op('tick',at=100)
+ if mode in ('batch-observations','duplicate-batch','wrong-batch-member','duplicate-required'):
+  op('tick',at=100,label='request-checkpoints')
+  actions[-1]['assignment']='A'
+  actions.extend([dict(actions[-1],assignment='B'),dict(actions[-1],assignment='C')])
+  if mode=='duplicate-batch':actions.append(dict(actions[-1]))
+  if mode=='wrong-batch-member':actions[-1]['assignment']='D'
+ else:op('tick',at=100)
  op('checkpoint','B',102,['--eta','200'])
  op('checkpoint','C',102)
  op('extend','B',103,['--eta','200'],'extend')
@@ -486,6 +498,7 @@ if phase=='scenario':
  op('transfer','B',203,label='transfer')
  invoke(['parent-update','agent-old','agent-new','204'],'parent-update','B',204)
  if cell['variant']=='candidate': op('confirm-transfer','B',205,['--owner','agent-new','--evidence','outputs/ownership.json','--confirmation','parent-ownership-updated'],'confirm-transfer')
+ if mode=='duplicate-required':actions.append(dict(next(a for a in actions if a['action']=='stop' and a['assignment']=='A')))
  write_artifact('outputs/result.json',{'actions':actions,'final_state':{'old_owner':'agent-old','new_owner':'agent-new','worker_stopped':True,'writes_stopped':True,'transfer_authorized':True,'parent_record':'outputs/ownership.json','scheduler_state':'outputs/scenario-state.json'}})
  raise SystemExit
 
@@ -499,8 +512,8 @@ for number,args in enumerate(operations):
   complete=samples['tool.execution_complete'];complete['data']['toolCallId']=str(number)
   print(json.dumps(start));print(json.dumps(complete));continue
  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'toolName':'write_stdin' if mode=='unknown-tool' else 'bash','model':'wrong' if mode=='tool-model' else 'gpt-6.1-sol','turnId':'0','arguments':{'command':shlex.join(argv)}}}))
- if mode!='missing-completion': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':child.returncode==0,'result':{'content':child.stdout}}}))
- if mode=='duplicate': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':True,'result':{'content':child.stdout}}}))
+ if mode!='missing-completion': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':True,'shellExecution':{'exitCode':0 if mode=='wrong-native-exit' else child.returncode},'result':{'content':child.stdout+'\n<shellId: '+str(number)+' completed with exit code '+str(child.returncode)+'>','structuredContent':{'shellId':'wrong' if mode=='wrong-shell-id' else str(number)}}}}))
+ if mode=='duplicate': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':True,'shellExecution':{'exitCode':0 if mode=='wrong-native-exit' else child.returncode},'result':{'content':child.stdout}}}))
 if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!='native-skip-patch':write_artifact('outputs/smoke-patch.json',{'neutral_patch':True})
 """)
         fake.chmod(0o700)
@@ -544,6 +557,34 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
         self.assertFalse(record["smoke_valid"])
         repo = Path(self.data["cells"]["copilot-baseline"]["repo"])
         self.assertFalse((repo / "outputs/smoke-state.json").exists())
+
+    def test_public_native_shell_exit_and_benign_help_preserve_real_scenario_proof(self):
+        for mode, expected in (("normal", 0), ("help-inspection", 0), ("wrong-native-exit", 2), ("wrong-shell-id", 2)):
+            with self.subTest(mode=mode):
+                self.run = self.root / mode
+                self.manifest = self.run / "manifest.json"
+                self.copilot_setup(mode, native=True)
+                result = self.provider_call("run", "--manifest", self.manifest, "--cell", "copilot-baseline", "--phase", "scenario")
+                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                report = self.grade("copilot-baseline")
+                if expected:
+                    self.assert_invalid_diagnostics(report)
+                else:
+                    self.assertEqual(report["behavior_status"], "pass", report)
+                    self.assertTrue(report["assertions"]["single_extension"]["passed"], report)
+                    self.assertTrue(report["assertions"]["exclusive_pending_shutdown"]["passed"], report)
+
+    def test_public_distinct_batch_members_and_required_action_uniqueness(self):
+        for mode, passed in (("batch-observations", True), ("duplicate-batch", False), ("wrong-batch-member", False), ("duplicate-required", False)):
+            with self.subTest(mode=mode):
+                self.run = self.root / mode
+                self.manifest = self.run / "manifest.json"
+                self.copilot_setup(mode, native=True)
+                result = self.provider_call("run", "--manifest", self.manifest, "--cell", "copilot-candidate", "--phase", "scenario")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                report = self.grade("copilot-candidate")
+                self.assertEqual(report["assertions"]["exact_output"]["passed"], passed, report)
+                self.assertEqual(report["behavior_status"], "pass" if passed else "fail", report)
 
     def test_public_native_login_uses_standard_lookup_without_process_tokens(self):
         settings=Path.home()/'.copilot/settings.json'
@@ -713,6 +754,12 @@ if mode=='wrong-cwd':rows[0]['payload']['cwd']='file:///wrong/repo'
 native_stdout=[];emit=print
 def print(value):native_stdout.append(value)
 print(json.dumps({'type':'thread.started','thread_id':session}))
+if mode=='source-inspection':
+ inspection=subprocess.run(['cat',cell['helper_prefix'][0]],capture_output=True,text=True)
+ inspection_command=shlex.join(['/bin/zsh','-c',shlex.join(['cat',cell['helper_prefix'][0]])])
+ inspection_output=inspection.stdout
+ print(json.dumps({'type':'item.started','item':{'id':'source-inspection','type':'command_execution','command':inspection_command}}))
+ print(json.dumps({'type':'item.completed','item':{'id':'source-inspection','type':'command_execution','command':inspection_command,'exit_code':inspection.returncode,'aggregated_output':inspection_output}}))
 number=0
 def identities():
  global number
@@ -792,6 +839,21 @@ raise SystemExit
 
 
 
+    def test_public_source_inspection_is_observation(self):
+        for mode, expected in (("source-inspection", 0),):
+            with self.subTest(mode=mode):
+                self.run = self.root / mode
+                self.manifest = self.run / "manifest.json"
+                self.child_env = {"CODEX_HOME": str(self.root / "standard-codex")}
+                self.native_codex_setup(mode)
+                self.assertEqual(self.call("preflight", "--manifest", self.manifest, "--provider", "codex").returncode, 0)
+                result = self.call("run", "--manifest", self.manifest, "--cell", "codex-baseline", "--phase", "scenario")
+                self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+                report = self.grade("codex-baseline")
+                self.assertTrue(all(a["passed"] for a in report["assertions"].values()), report)
+                self.assertEqual(report["behavior_status"], "pass", report)
+                self.assertTrue(report["comparison_eligible"], report)
+
     def test_public_codex_pinned_python_prefix_has_real_child_receipts(self):
         for mode, expected in (("python-prefix", 0), ("absolute-prefix", 0), ("wrong-interpreter", 2), ("wrong-helper-argv", 2)):
             with self.subTest(mode=mode):
@@ -805,7 +867,7 @@ raise SystemExit
                 record = json.loads(result.stdout)
                 self.assertEqual(record["smoke_valid"], expected == 0)
                 if expected:
-                    self.assertIn("receipt-from-unmatched-command" if mode == "wrong-interpreter" else "missing-real-child-receipt", record["invalid_reasons"])
+                    self.assertIn("smoke:register" if mode == "wrong-interpreter" else "missing-real-child-receipt", record["invalid_reasons"])
 
     def test_public_codex_companion_context_qualifies_real_helper_smokes(self):
         self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
