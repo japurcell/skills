@@ -71,6 +71,16 @@ provider-owned authentication and exact model/effort catalog support. Executing
 selector evidence comes from the approved phase. Codex shares one frozen runtime
 override vector between metadata and exec. Copilot native status validates its
 exact headless RPC invocation, including controls omitted from public help.
+Codex run/preflight equality excludes validated transient notifications and
+preflight-only authentication metadata. Strict notification validation remains
+active, and sanitized run observations are retained in phase receipts. Stable
+drift reports bounded known field names only. Notification variance is a
+plausible startup failure cause. The discarded original live delta is unknown.
+Native Copilot uses create-only `--new-session-id` with the exact frozen UUID
+and `--trust-folder`. Installed 1.0.109 pure-parser evidence accepts all four
+complete corrected arrays. Parser acceptance establishes argument compatibility.
+The offline fixture rejects conflicting flags, malformed UUIDs and reused IDs.
+Process-token mode retains its separate `--session-id` path.
 
 Copilot argv scopes recursive `write(ABSOLUTE_REPO/**)`, the exact frozen
 helper Python prefix, repo/snapshot path access, disables automatic temp access,

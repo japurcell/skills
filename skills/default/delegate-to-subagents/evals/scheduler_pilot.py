@@ -888,7 +888,7 @@ def argv_for(manifest, cell, phase):
                  "--output-last-message", str(evidence / "response.md"), "-"]
     else:
         argv += ["--model", settings["model"], "--reasoning-effort", settings["effort"],
-                 "--session-id", cell["session_ids"][phase], "--add-dir", cell["repo"], "--add-dir", cell["snapshot"],
+                 "--new-session-id" if native_auth(settings) else "--session-id", cell["session_ids"][phase], "--add-dir", cell["repo"], "--add-dir", cell["snapshot"],
                  "--disallow-temp-dir", "--disable-builtin-mcps", "--no-bash-env", "--secret-env-vars=COPILOT_GITHUB_TOKEN,GH_TOKEN,GITHUB_TOKEN", "--allow-tool=write(" + cell["repo"] + "/**)",
                  "--allow-tool=shell(" + shlex.join(cell["helper_prefix"]) + ":*)", "--no-custom-instructions", "--output-format", "json",
                  "--share", str(evidence / "transcript.md"), "--usage-output-file", str(evidence / "usage.json"),
@@ -1502,8 +1502,13 @@ def run(manifest, cell_id, phase):
         raise ValueError("frozen argv drift")
     if cell["provider"] == "codex":
         receipt = read(Path(manifest["root"]) / "preflight/codex.json")
-        if discover_codex(cell) != {key: value for key, value in receipt["cells"][cell_id].items() if key != "authentication"}:
-            raise ValueError("private discovery drift")
+        discovery = discover_codex(cell)
+        stable = {key: value for key, value in discovery.items() if key != "notifications"}
+        frozen = {key: value for key, value in receipt["cells"][cell_id].items() if key not in ("authentication", "notifications")}
+        if stable != frozen:
+            safe_fields = ("argv", "requests", "hook", "config", "config_layers_checked", "safe_layers", "safe_responses", "inventory", "disabled_user_hooks", "layers", "behavior", "features", "setup_ready")
+            changed = [key for key in safe_fields if (key in stable) != (key in frozen) or stable.get(key) != frozen.get(key)]
+            raise ValueError("private discovery drift; changed fields=" + ",".join(changed))
         if native_auth(cell["requested_settings"]):
             code, stdout, stderr = capture([cell["requested_settings"]["executable"], "login", "status"], 3, cwd=cell["repo"], env=cell["environment"])
             if code or (stdout + stderr).strip() not in ("Logged in using ChatGPT", "Logged in using an API key"):
@@ -1523,6 +1528,8 @@ def run(manifest, cell_id, phase):
     os.close(descriptor)
     audit = audit_bytes(manifest, cell)
     record = {**bindings, "attempt_id": str(uuid.uuid4()), "started_at": time.time(), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" or native_auth(cell["requested_settings"]) else "private-CODEX_HOME-status"}
+    if cell["provider"] == "codex":
+        record["discovery_notifications"] = discovery["notifications"]
     atomic_receipt(directory / "attempt.json", record)
     started = time.monotonic()
     config = read(manifest["config"])

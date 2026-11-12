@@ -393,6 +393,14 @@ if '--version' in sys.argv:
 if '--help' in sys.argv:
  print('--available-tools --sync-session --trust-folder --output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
  raise SystemExit
+if '--trust-folder' in sys.argv and '--session-id' in sys.argv:
+ print('error: --session-id cannot be combined with --trust-folder',file=sys.stderr);raise SystemExit(2)
+if '--new-session-id' in sys.argv:
+ import uuid
+ if any(flag in sys.argv for flag in ('--session-id','--resume','--continue')):
+  print('error: conflicting new-session-id option',file=sys.stderr);raise SystemExit(2)
+ try:uuid.UUID(sys.argv[sys.argv.index('--new-session-id')+1])
+ except ValueError:print('error: invalid session UUID',file=sys.stderr);raise SystemExit(2)
 repo=pathlib.Path.cwd()
 mode=(repo.parents[3]/'copilot-mode').read_text()
 if sys.argv[1:3]==['config','--list']:
@@ -425,7 +433,14 @@ if '--headless' in sys.argv:
 if cell.get('authentication',{}).get('mode')=='native-existing-login':
  import os
  (repo/'outputs/native-environment.json').write_text(json.dumps({'HOME':os.environ.get('HOME'),'COPILOT_HOME':os.environ.get('COPILOT_HOME'),'auth_names':[k for k in ('GH_TOKEN','GITHUB_TOKEN','COPILOT_GITHUB_TOKEN') if k in os.environ]}))
-phase='smoke'  if sys.argv[sys.argv.index('--session-id')+1]==cell['session_ids']['smoke'] else 'scenario'
+session_flag='--new-session-id' if '--new-session-id' in sys.argv else '--session-id'
+session_id=sys.argv[sys.argv.index(session_flag)+1]
+if session_flag=='--new-session-id':
+ sessions=repo.parents[3]/'copilot-sessions';sessions.mkdir(exist_ok=True)
+ marker=sessions/session_id
+ try:marker.open('x').close()
+ except FileExistsError:print('error: session already exists or is in use',file=sys.stderr);raise SystemExit(2)
+phase='smoke' if session_id==cell['session_ids']['smoke'] else 'scenario'
 mode=(repo.parents[3]/'copilot-mode').read_text()
 if mode=='malformed': print('{')
 if mode=='unknown': print(json.dumps({'type':'tool.unrecognized','data':{}}))
@@ -519,6 +534,9 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
             self.assertEqual(override['disabledSkills'],['inherited'])
             result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','smoke')
             self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            self.assertNotIn('--session-id',cell['argv']['smoke'])
+            index=cell['argv']['smoke'].index('--new-session-id')
+            self.assertEqual(cell['argv']['smoke'][index+1],cell['session_ids']['smoke'])
             record=json.loads(result.stdout)
             self.assertEqual(record['auth_environment_names'],[])
             env=json.loads((Path(cell['repo'])/'outputs/native-environment.json').read_text())
@@ -695,6 +713,10 @@ if '--version' in sys.argv:print('codex-cli 0.167.1');raise SystemExit
 if '--help' in sys.argv:print('--json --model --sandbox --cd --add-dir --output-last-message --enable');raise SystemExit
 if sys.argv[1:]==['login','status']:print('Logged in using ChatGPT');raise SystemExit
 mode=(pathlib.Path.cwd().parents[3]/'native-mode').read_text()
+event_control=pathlib.Path.cwd().parents[3]/'native-events'
+event_mode=event_control.read_text() if event_control.exists() else 'account'
+drift_control=pathlib.Path.cwd().parents[3]/'native-drift'
+drift_mode=drift_control.read_text() if drift_control.exists() else ''
 config={'mcp_servers':{'fixture':{'enabled':True,'required':True,'env':{'TOKEN':'fixture-sensitive'}}},'plugins':{'fixture@bundle':{'enabled':True}},'features':{}}
 # Complete native 0.167.1 shape, with opaque UI/provider values redacted.
 for key,value in json.loads(r"""{
@@ -1174,6 +1196,7 @@ for i,arg in enumerate(sys.argv):
   key,value=sys.argv[i+1].split('=',1)
   merge(config,tomllib.loads('.'.join(json.dumps(part) for part in key.split('.'))+'='+value))
 if 'app-server' not in sys.argv:
+ (pathlib.Path.cwd().parents[3]/'native-inference').touch()
  import datetime,shlex,subprocess
  repo=pathlib.Path.cwd();manifest=json.loads((repo.parents[2]/'manifest.json').read_text());cell=manifest['cells'][repo.parent.name]
  prompt=sys.stdin.read();phase=pathlib.Path(sys.argv[sys.argv.index('--output-last-message')+1]).parent.name
@@ -1265,13 +1288,23 @@ for line in sys.stdin:
  if method=='skills/list' and config.get('features',{}).get('plugins') is not False:result['data'][0]['skills'].append({'path':'/plugin/SKILL.md','scope':'user','enabled':True})
  if method=='skills/list' and config.get('skills',{}).get('bundled',{}).get('enabled') is not False:result['data'][0]['skills'].append({'path':'/system/bundled/SKILL.md','scope':'system','enabled':True})
  if method=='hooks/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'warnings':[],'hooks':[{'source':'user','sourcePath':'/fixture/hooks.json','key':'disabled','eventName':'sessionStart','handlerType':'command','enabled':False,'currentHash':'sha256:fixture','trustStatus':'trusted'}]}]}
- if method=='model/list':print(json.dumps({'method':'account/updated','params':{'authMode':{'bad':True} if mode=='bad-account' else 'chatgpt','planType':'pro'}}),flush=True)
+ events=[]
+ if method=='model/list':
+  account={'method':'account/updated','params':{'authMode':{'bad':True} if mode=='bad-account' or event_mode=='malformed' else 'chatgpt','planType':'pro'}}
+  remote={'method':'remoteControl/status/changed','params':{'status':'enabled' if event_mode=='active' else 'disabled'}}
+  events={'none':[], 'account':[account], 'account-remote':[account,remote], 'remote-account':[remote,account], 'trailing':[account], 'malformed':[account], 'active':[remote], 'unknown':[{'method':'future/event','params':{}}], 'warning':[{'method':'configWarning','params':{'summary':'fixture'}}]}.get(event_mode,[account])
+  if event_mode!='trailing':
+   for event in events:print(json.dumps(event),flush=True)
  if method=='model/list':result={'data':[{'id':'gpt-6.1-sol','supportedReasoningEfforts':[{'reasoningEffort':'medium'}]}]}
  if method=='thread/read':
   repo=pathlib.Path.cwd();session=q['params']['threadId'];result={'thread':{'id':session,'sessionId':session,'cwd':str(repo),'path':str(pathlib.Path(os.environ['CODEX_HOME'])/'sessions'/('rollout-'+session+'.jsonl')),'model':'gpt-6.1-sol','reasoningEffort':'medium','modelProvider':'openai','source':'exec','cliVersion':'0.167.1'}}
  if method=='hooks/list' and mode in ('trusted','proof','proof-overlap','proof-patch-overlap'):
   path=pathlib.Path.cwd()/'.codex/hooks.json';hook=json.loads(path.read_text())['hooks']['PreToolUse'][0]['hooks'][0]
   result['data'][0]['hooks'].append(dict(source='project',sourcePath=str(path),key=str(path)+':pre_tool_use:0:0',eventName='preToolUse',handlerType='command',enabled=True,currentHash='sha256:project-fixture',trustStatus='trusted',command=hook['command'],timeoutSec=3,**{'async':False}))
+ if method=='hooks/list' and drift_mode=='hook':result['data'][0]['hooks'][-1]['currentHash']='sha256:private-drift-value'
+ if method=='config/read' and drift_mode=='config':result['config']['model']='private-drift-value'
+ if method=='skills/list' and drift_mode=='inventory':result['data'][0]['skills'][0]['path']='/private-drift-value/SKILL.md'
+ if method=='config/read' and drift_mode=='features':result['config']['features']['remote_control']=True
  if method=='config/read':
   for server in result['config']['mcp_servers'].values():server.pop('required',None)
  if method=='config/read' and mode=='required-true':result['config']['mcp_servers']['fixture']['required']=True
@@ -1290,7 +1323,9 @@ for line in sys.stdin:
  if method=='config/read' and mode=='unknown-layer':result['layers'].append({'name':{'type':'unknown'}})
  if method=='config/read' and mode=='wrong-provider':result['config']['model_provider']='other'
  if method=='hooks/list' and mode=='active-user-hook':result['data'][0]['hooks'][0]['enabled']=True
- print(json.dumps({'id':q['id'],'result':result}),flush=True)
+ payload=json.dumps({'id':q['id'],'result':result})+'\n'
+ if method=='model/list' and event_mode=='trailing':payload+=''.join(json.dumps(event)+'\n' for event in events)
+ sys.stdout.write(payload);sys.stdout.flush()
 ''')
         fake.chmod(0o700)
         config=json.loads(self.config.read_text())
@@ -1366,6 +1401,73 @@ for line in sys.stdin:
             self.assertEqual(result.returncode,0,result.stderr+result.stdout)
             record=json.loads(result.stdout)
             self.assertTrue(record['smoke_valid'],record)
+
+    def test_public_codex_valid_notification_variance_completes_smoke(self):
+        for before,after in (('account','none'),('none','account'),('account-remote','remote-account'),('none','trailing')):
+            with self.subTest(before=before,after=after):
+                self.setUp()
+                self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+                self.native_codex_setup('proof')
+                control=self.root/'native-events'
+                control.write_text(before)
+                result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+                self.assertEqual(result.returncode,0,result.stderr)
+                receipt=self.run/'preflight/codex.json'
+                frozen=receipt.read_bytes()
+                control.write_text(after)
+                result=self.call('run','--manifest',self.manifest,'--cell','codex-baseline','--phase','smoke')
+                self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+                record=json.loads(result.stdout)
+                self.assertTrue(record['smoke_valid'])
+                self.assertEqual(len(record['discovery_notifications']),{'none':0,'account':1,'remote-account':2,'trailing':1}[after])
+                self.assertTrue((self.root/'native-inference').exists())
+                self.assertEqual(receipt.read_bytes(),frozen)
+                for pid in (self.root/'native-pids').read_text().splitlines():
+                    with self.assertRaises(ProcessLookupError):os.kill(int(pid),0)
+
+    def test_public_codex_startup_drift_and_invalid_notifications_prevent_inference(self):
+        self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+        self.native_codex_setup('proof')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,0,result.stderr)
+        receipt=self.run/'preflight/codex.json'
+        frozen=receipt.read_bytes()
+        events=self.root/'native-events'
+        drift=self.root/'native-drift'
+        for kind,value in [('drift',item) for item in ('hook','config','inventory','features')]+[('events',item) for item in ('malformed','unknown','active','warning')]:
+            with self.subTest(kind=kind,value=value):
+                events.write_text(value if kind=='events' else 'account')
+                drift.write_text(value if kind=='drift' else '')
+                result=self.call('run','--manifest',self.manifest,'--cell','codex-baseline','--phase','smoke')
+                self.assertEqual(result.returncode,2,result.stdout)
+                self.assertFalse((self.root/'native-inference').exists())
+                self.assertFalse((Path(self.data['cells']['codex-baseline']['repo']).parent/'evidence/smoke').exists())
+                self.assertEqual(receipt.read_bytes(),frozen)
+                if value=='hook':
+                    self.assertIn('changed fields=hook',result.stderr)
+                self.assertNotIn('private-drift-value',result.stderr)
+        for pid in (self.root/'native-pids').read_text().splitlines():
+            with self.assertRaises(ProcessLookupError):os.kill(int(pid),0)
+
+    def test_public_copilot_create_only_identity_rejects_conflicts_and_reuse(self):
+        self.copilot_setup(native=True)
+        cell=self.data['cells']['copilot-baseline']
+        argv=cell['argv']['smoke']
+        for option in ('--session-id','--resume','--continue'):
+            extra=[option,cell['session_ids']['smoke']] if option!='--continue' else [option]
+            result=subprocess.run(argv+extra,cwd=cell['repo'],env=cell['environment'],capture_output=True,text=True)
+            self.assertEqual(result.returncode,2,result.stdout)
+            self.assertIn('--session-id cannot be combined' if option=='--session-id' else 'conflicting new-session-id',result.stderr)
+        invalid=list(argv)
+        invalid[invalid.index('--new-session-id')+1]='invalid'
+        result=subprocess.run(invalid,cwd=cell['repo'],env=cell['environment'],capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertIn('invalid session UUID',result.stderr)
+        result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-baseline','--phase','smoke')
+        self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+        result=subprocess.run(argv,cwd=cell['repo'],env=cell['environment'],capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertIn('session already exists or is in use',result.stderr)
 
     def test_public_codex_native_complete_both_version_scenarios(self):
         self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
