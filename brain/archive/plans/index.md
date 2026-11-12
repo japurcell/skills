@@ -15,3 +15,4 @@
 - [Skill workflow hardening](31-skill-workflow-hardening/ExecPlan.md)
 - [Scheduler evaluation](31-scheduler-evaluation/ExecPlan.md)
 - [Scheduler evaluation report](31-scheduler-evaluation/report.md)
+- [Scanner, Guardian, and event-emitter hook retirement](2026-11-11-retire-hooks/ExecPlan.md)
