@@ -1,6 +1,6 @@
 # Restore one current VERSION2 scheduler and retain verified useful guidance
 
-This living ExecPlan is `brain/plans/31-scheduler-current/ExecPlan.md`, saved before source edits. Apply exec-plans, brain, handoff and reflection workflows. Starting integration HEAD is `504049f75ee93878af29341ddf8e41147ecd6209` on `scheduler-reliability`, initially clean. D1 approved inventory is now recorded below. All audit/disposition prerequisites are resolved. Parent can dispatch the bounded source worker from this committed baseline. This is a new user-authorized cleanup. The previous completed task remains completed.
+This living ExecPlan is `brain/plans/31-scheduler-current/ExecPlan.md`, saved before source edits. Apply exec-plans, brain, handoff and reflection workflows. The original clean integration HEAD was `504049f75ee93878af29341ddf8e41147ecd6209` on `scheduler-reliability`. The plan-only D1 commit is `ba782a3968bc40d6b9cfd4983a9d56dc46d0938b`; source work is isolated in `/private/tmp/skills-scheduler-current-cleanup`. D1 approved inventory is now recorded below. All audit/disposition prerequisites are resolved. The bounded source worker is active in the isolated clone. This is a new user-authorized cleanup. The previous completed task remains completed.
 
 ## Purpose / Big Picture
 
@@ -30,8 +30,8 @@ Audit reports and non-source task evidence stay outside the repository at `/var/
 - [x] (2026-11-12) [milestone-1] A2 baseline/reference/install inventory complete. Current installed/main behavior is v2, with no install/main edit required.
 - [x] (2026-11-12) [milestone-1] A2-F resolved, installed scheduler is byte-identical to baseline SHA94f32f8b. Prior apparent difference came from filtered display bytes. Nested-index scan remains part of W1 cleanup.
 - [x] (2026-11-12) [milestone-1] D1 parent-approved exact disposition and one-worker ownership recorded below. All dispatch prerequisites are resolved.
-- [ ] [milestone-2] W1 one worker restores/deletes only approved paths and reconciles guidance/references.
-- [ ] [milestone-2] V1 focused deterministic v2 verification and exact restoration evidence.
+- [ ] [milestone-2] W1 (in progress) worker in `/private/tmp/skills-scheduler-current-cleanup` restores/deletes only approved paths and reconciles guidance/references. No worker result has been accepted or integrated.
+- [ ] [milestone-2] V1 focused deterministic v2 verification and exact restoration evidence (pending W1).
 - [ ] [milestone-2] R1 independent delta review and accepted integration.
 - [ ] [milestone-3] C1 verify current durable guidance/navigation and remove this temporary plan on completion.
 
@@ -78,10 +78,10 @@ Worker restoration and provenance must use raw Git bytes, such as `git show` via
 
 ### Milestone 2 - Bounded restoration, verification and review
 
-Status: open
+Status: in progress
 Acceptance: not met
 
-W1 depends on D1. One serialized worker owns source restoration/deletion and directly coupled documentation according to the approved inventory. It is not alone and must preserve others' edits. Restore the designated current source/test/skill/README from exact commit `5db7440017e081b4d391c92f28d325b2fccf95a0` where approved. Remove obsolete alternate/previous/v3 implementations, failed/unproven eval harness and provider guidance, and confirmed obsolete scheduler evaluation archives and their navigation. Keep genuinely verified useful guidance in existing indexed topics. Do not carry forward the old archive-preservation contract or create replacement archives.
+W1 depends on D1. The assigned worker is active in the isolated clone `/private/tmp/skills-scheduler-current-cleanup`; the coordinator owns only this plan/index and integration. No source delta, verification result or review has been accepted yet. One serialized worker owns source restoration/deletion and directly coupled documentation according to the approved inventory. It is not alone and must preserve others' edits. Restore the designated current source/test/skill/README from exact commit `5db7440017e081b4d391c92f28d325b2fccf95a0` where approved. Remove obsolete alternate/previous/v3 implementations, failed/unproven eval harness and provider guidance, and confirmed obsolete scheduler evaluation archives and their navigation. Keep genuinely verified useful guidance in existing indexed topics. Do not carry forward the old archive-preservation contract or create replacement archives.
 
 V1 depends on W1's exact bytes. From the worker repository root run the focused existing v2 suite identified by A2, expected `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`, and relevant public v2 CLI checks. Expected result is exit 0 with existing baseline semantics, help/stream/exit behavior and retained supported inputs intact. Audit findings determine any exact applicable command adjustment before execution. Verify restored file identities against the pinned baseline, VERSION2 as the sole current scheduler implementation, removed obsolete paths and repaired references. Check installed symlink targets read-only against the resulting current files. No paid/provider call, broad suite or feature-deletion regression test is added.
 
@@ -96,7 +96,7 @@ C1 depends on accepted R1. Reflect on retained guidance and leave only verified 
 
 ## Concrete Steps
 
-A1/A2/A2-F and parent D1 disposition are complete. Parent dispatches one bounded W1 worker on the approved inventory from the committed baseline. Worker uses raw pinned Git bytes and verifies current v2 behavior deterministically. Parent obtains independent R1 review and integrates accepted bytes. Finish C1 and remove this temporary plan. This D1 assignment may commit only the plan/index to provide a clean worker baseline. No source edits/deletions or installation actions occur here.
+A1/A2/A2-F and parent D1 disposition are complete. The bounded W1 worker is active in `/private/tmp/skills-scheduler-current-cleanup`; no output is accepted yet. The coordinator waits for the worker commit, focused verification evidence and independent R1 review, then integrates only accepted bytes. Finish C1 and remove this temporary plan after final exact-hash/reference/navigation checks. This coordinator assignment is limited to the plan/index and external integration checklist; no source edits/deletions or installation actions occur here.
 
 ## Validation and Acceptance
 
@@ -120,4 +120,4 @@ A1/A2/A2-F establish v2 as current installed/main behavior and byte-identical to
 
 ## Outcomes & Retrospective
 
-Planning contract and approved inventory are saved before source work. Audits and D1 are complete. Installed-difference follow-up is resolved. Restoration, focused verification, independent review and cleanup are pending. Reflection records this task-specific direction here. No global model preference or general framework is introduced.
+Planning contract and approved inventory are saved before source work. Audits and D1 are complete. Installed-difference follow-up is resolved. The isolated worker has the approved source scope; restoration, focused verification, independent review and cleanup remain pending. Coordinator preparation records only the current owner, commit boundary and final integration checks. No global model preference or general framework is introduced.
