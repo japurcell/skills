@@ -2,6 +2,8 @@
 
 ## Focused checks
 
+The maintained [create-skill provider runner](../../create-skill/references/provider-runs.md) prepares a private copied fixture repository and binds provider evidence to one smoke-tested session. Its path checks apply to validator observations and message argument paths, including symlinks; use a distinct run root for each concurrent evaluation.
+
 From the repository root:
 
 ```sh

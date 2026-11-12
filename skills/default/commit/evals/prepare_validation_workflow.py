@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import os
 import shutil
 import stat
 import subprocess
@@ -11,7 +12,8 @@ from pathlib import Path
 
 
 def prepare(run, skill, fixture_path=None):
-    run.mkdir(parents=True, exist_ok=False)
+    run.mkdir(parents=True, mode=0o700, exist_ok=False)
+    run.chmod(0o700)
     copied = run / "skill"
     copied.mkdir()
     shutil.copy2(skill / "SKILL.md", copied / "SKILL.md")
@@ -110,17 +112,25 @@ with Path({str(events)!r}).open("a", encoding="utf-8") as stream:
     stream.write(json.dumps({{"kind": "commit", "message": Path(sys.argv[1]).read_text(encoding="utf-8")}}) + "\\n")
 ''', encoding="utf-8")
     hook.chmod(0o755)
-    print(run)
+    print(run, flush=True)
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False, epilog="Input: arguments and fixture JSON. Prints the run directory to stdout; diagnostics go to stderr. Exit 0 on success, 2 on input or preparation error.")
     parser.add_argument("run_directory", type=Path)
     parser.add_argument("skill_snapshot", type=Path)
     parser.add_argument("--fixture", type=Path, help="workflow input fixture; defaults to validation-before-commit")
     args = parser.parse_args()
-    prepare(args.run_directory.resolve(), args.skill_snapshot.resolve(), args.fixture.resolve() if args.fixture else None)
+    try:
+        prepare(args.run_directory.resolve(), args.skill_snapshot.resolve(), args.fixture.resolve() if args.fixture else None)
+    except BrokenPipeError:
+        sys.stdout = open(os.devnull, "w")
+        return 0
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        print(f"prepare_validation_workflow: {exc}", file=sys.stderr)
+        return 2
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

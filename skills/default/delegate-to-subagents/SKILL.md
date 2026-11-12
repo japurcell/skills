@@ -1,7 +1,7 @@
 ---
 name: delegate-to-subagents
 description: Pursue a long-running goal in a single session by co-ordinating subagents.
-compatibility: Requires subagent dispatch with model controls and effort controls when the route requires explicit effort.
+compatibility: Requires Python 3 and subagent dispatch with model controls and effort controls when the route requires explicit effort.
 ---
 
 # Delegate to Subagents
@@ -32,7 +32,12 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 
 ## Runtime enforcement
 
-1. **Record each background assignment you dispatch**, including reuse. Before dispatch, set a deadline based on expected effort and complexity. Record the routed model and its exact explicit effort or host-default omission. Track task and agent IDs, start time, extension count (initially zero), and enforcement handle as available.
-2. **Arm enforcement before waiting.** Use a host timeout or parent-owned scheduler bounded by the nearest assignment or checkpoint deadline. Independently time out blocking operations. Recheck deadlines whenever control returns, including after user interruptions.
-3. **At expiry**, request status, completed work, blockers, and updated ETA by a bounded checkpoint deadline. Keep overdue work under a deadline. On timely status, confirm completion, stop the worker, or grant its only ETA-based extension. If extended, record the new deadline, increment the count, and re-arm enforcement. Preserve the count across follow-ups. Stop the worker on a missed checkpoint or expired extension.
-4. **Before transferring ownership**, confirm the worker and its write-producing operations have stopped, then route and dispatch a fresh replacement. If shutdown is unconfirmed, report the blocker and continue independent work. Cancel enforcement on completion.
+Use [`scripts/scheduler.py`](scripts/scheduler.py) with a session-specific state file. Read [`README.md`](README.md) and the CLI's `--help` before first use for commands and state behavior.
+
+1. **Register assignments.** Choose a deadline based on expected effort and complexity before dispatch. Register task and returned agent IDs before waiting, including new assignments to reused agents. Preserve the same assignment record across follow-ups.
+2. **Service the scheduler.** Call `tick` whenever control returns, including after user interruptions. Use bounded `wait` calls while awaiting work. Independently time out blocking tools.
+3. **Carry out emitted actions.** For status requests, collect status, completed work, blockers, and updated ETA; record a timely `checkpoint`, then choose completion, stopping, or the single ETA-based `extend`. Stop workers when a checkpoint or decision deadline is missed or an extension expires.
+4. **Verify shutdown before transfer.** Confirm the worker and its write-producing operations have stopped before recording `confirm-stopped` and `transfer`; then route and dispatch a fresh replacement. If shutdown is unconfirmed, report the blocker and continue independent work.
+5. **Close assignments.** Record verified completion with `complete`, or cancellation with `cancel` after stopping the worker.
+
+Keep dispatch start time, routed model, exact effort or host-default omission, and any host enforcement handle in a separate coordination record keyed by assignment ID; the scheduler lacks structured fields for these. Let the scheduler own deadline transitions and extension state. It advances only when called and emits JSON actions; the parent performs communication, worker control, and shutdown verification.

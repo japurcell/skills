@@ -54,7 +54,8 @@ Use this annotated outline and adapt detail to the work. The file-reporting exam
     ## Outcomes & Retrospective
 
     Compare achieved results with the purpose at major milestones and
-    completion. State remaining work and useful lessons. Distinguish
+    completion. State remaining work and task-specific evidence. Link durable
+    lessons saved in the repository's durable documentation. Distinguish
     completed implementation from pending acceptance or owner actions.
 
     ## Context and Orientation

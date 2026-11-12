@@ -8,6 +8,10 @@ For archive edit/baseline scope, installation ownership, and independent workflo
 
 ## Evaluation and validation workflow
 
+For workflows within the runner's capability limits, use [provider run tooling](references/provider-runs.md) and `scripts/eval_runner.py` for isolated preparation, preflight, smoke, and bounded same-session turns. That reference also routes unsupported scenarios. Its public-CLI tests use fake providers; they do not run model evaluations.
+
+Run the deterministic runner CLI suite from the repository root with `python3 skills/default/create-skill/scripts/test_eval_runner.py`. It uses fake provider executables and disposable Git fixtures, including an end-to-end commit observer/grader wiring case.
+
 4. **Add eval and benchmark support**
    - Add or update `evals/evals.json` with at least 3 realistic evals. Cover create, modify, and a negative or dedupe edge case.
    - When assertions can be checked objectively, add `evals/grade_benchmark.py` and prefer deterministic file/content checks over subjective grading.
@@ -30,7 +34,7 @@ For archive edit/baseline scope, installation ownership, and independent workflo
 ### Benchmarking guidance
 
 - For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/default/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
-- For live runs, use `--output-format json` plus `--share <transcript.md>`; save `response.md`, `timing.json`, and `transcript.md` before grading.
+- Before grading, follow the native-evidence mapping and normalization requirements in [evaluation validation and evidence](references/validation.md#runner-evidence-and-benchmark-artifacts). The runner and a direct provider harness produce different artifacts; preserve raw evidence and satisfy the selected consumer's input contract.
 - Review authored outputs and retained evidence as well as scores. Preserve valid failures and the selected run identity; the validation and evidence section below defines rubric correction and honest metric reporting.
 - For a brand-new skill, compare against `without_skill`. For a modified skill, compare against an explicit `old_skill` or snapshot baseline.
 - For a published owner `skills/<category>/<name>/`, show its sibling `skills/<category>/<name>-workspace/iteration-N/`; for example, `skills/default/create-skill-workspace/iteration-N/` beside `skills/default/create-skill/`.

@@ -55,16 +55,37 @@ Use standard Markdown links with destinations relative to the file containing th
 
 ## After Writing
 
-Let the brain hooks reconcile the machine-owned `brain/index.md` after additions or removals. If hooks are unavailable, run a standalone brain indexer as described in `brain/codebase/brain-hooks.md`. Keep human prose in topic notes. Also update the relevant entrypoint (`brain/principles.md`, `brain/delegation.md`, or `brain/plans/index.md`) when applicable. Keep indexes link-only and scannable.
+First update the relevant curated entrypoint for every indexed category affected by additions, moves, or removals: `brain/principles.md`, `brain/plans/index.md`, `brain/audits/index.md`, `brain/archive/index.md`, or any other category's index. Maintain links through nested curated indexes to each affected note. Keep curated indexes link-only and scannable, with human prose in topic notes.
+
+Then let the brain hooks reconcile the machine-owned `brain/index.md`. The indexer normally links a category's existing `index.md` without traversing its contents; `brain/codebase/` is the exception. It does not repair curated links. If hooks are unavailable, run the bundled indexer manually with Python 3.12+. From the target repository root, run this Python snippet, replacing `<brain-skill-path>` with this skill's directory:
+
+```python
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+result = subprocess.run(
+    [sys.executable, "-I", "-S", "-B",
+     "<brain-skill-path>/scripts/auto-index-brain.py", "--provider", "codex"],
+    input=json.dumps({"cwd": str(Path.cwd()), "hook_event_name": "PostToolUse"}),
+    text=True, capture_output=True,
+)
+print(result.stderr, end="")
+```
+
+The `codex` payload is a manual invocation format; Codex need not be installed. Check diagnostics and the expected generated root links: hooks can exit zero after reporting a nonblocking error. Verify every added or moved note is reachable from `brain/index.md` by following its Markdown links through any curated indexes; a root link to the category alone is insufficient. After removals, check affected curated indexes for broken links. Correct navigation before treating the write as complete.
 
 ## Durability Test
 
 Ask: "Would I include this in a prompt for a _different_ task?"
 
-- **Yes** → write to `brain/`. It's durable knowledge.
-- **No, it's plan-specific** → update the plan's phase doc instead.
+- **Yes** → write to an existing indexed brain topic, or create and index a focused topic. It's durable knowledge.
+- **No, it's task-specific status, decisions, or evidence** → update the plan's phase doc instead.
 - **No, it's a skill issue** → update the skill file directly.
 - **No, it needs follow-up work** → file a todo with the `todo` skill.
+
+Plans are temporary and may be deleted, including archived plans. Persist reusable lessons and guidance in their canonical topic notes when identified; a plan may link to those notes. Before archiving or deleting a plan, extract any durable guidance that exists only there and verify its saved content and index links. Keep task-specific outcomes and evidence in the plan.
 
 ## Maintenance
 

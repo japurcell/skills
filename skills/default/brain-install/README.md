@@ -4,7 +4,7 @@ Runtime instructions are in SKILL.md and references/migration.md. This README is
 
 ## Snapshot sources
 
-The payload snapshots the six `.agents/skills/{brain,meditate,reflect,ruminate,todo,todo-refine}` trees, `brain/principles.md` and its 14 linked notes, and the Brain/End of Work Session Defined sections of root AGENTS.md. Principles and AGENTS sections remain byte-identical for fresh installs. Starter todos and four directory indexes are minimal; do not copy this repository's backlog or project notes.
+`assets/skills/` is the canonical portable source for the six repo-installed `.agents/skills/{brain,meditate,reflect,ruminate,todo,todo-refine}` bundles. Promote reusable improvements into assets first, then synchronize the installed bundles, including their resources. The payload also seeds `brain/principles.md` and its 14 linked notes, and the Brain/End of Work Session Defined sections of root AGENTS.md. Merge reusable principle improvements into assets selectively; populated vaults retain their own indexes, backlog, and project notes. Starter todos and four directory indexes remain minimal.
 
 Hook implementations come from `hooks/families/brain.py`; the indexer has one bundled output under `assets/skills/brain/scripts/`. Registration assets contain only brain handlers from `.github/hooks/hooks.json`, `.codex/hooks.json`, and `.gemini/settings.json`. Canonical registrations use the PATH alias `python` on every provider/platform, never the installer's absolute interpreter. Selected hooks require this alias to run Python 3.12+; inspection and apply validate it before writes. The same alias must be available in the provider's environment. Python-only Windows installations work without `python3`; python3-only or py-only hosts must explicitly provide a `python` alias before installing hooks. No automatic shell-specific fallback is claimed: Gemini exposes one host-shell command, while Copilot and Codex have platform-specific fields. Helpers also diagnose an old runtime interpreter without emitting non-JSON stdout.
 
@@ -12,17 +12,18 @@ Reinstallation upgrades only exact known brain registrations differing in their 
 
 Both bundled hook helpers are declared in `hooks/manifest.py` and generated alongside the provider scripts. Edit the canonical family, then run `python3 scripts/generate-hooks.py --write` from the repository root; `--check` detects drift in the bundle as well as provider outputs. Do not hand-edit or maintain bundle-local forks of generated helpers. The portable bundle remains self-contained at runtime and does not require the repository generator.
 
-Intentional skill adaptations: portable `snapshot.py` replaces `snapshot.sh`; callers use Python and invocation-owned temporary directories; ruminate documents only supported Claude/Codex extraction and its extractor emits UTF-8 diagnostics and output paths; brain carries its own manual index command; reflect uses installed principle paths and optional authoring fallbacks. Explicit-only meditate/ruminate flags remain. Ordinary activation references use skill names. Minor punctuation normalization follows repository conventions. Source skills are not modified.
+Both the assets and repo-installed skills use portable `snapshot.py`, Python callers, and invocation-owned temporary directories. Ruminate documents only supported Claude/Codex extraction and its extractor emits UTF-8 diagnostics and output paths; brain carries its own manual index command; reflect uses installed principle paths and optional authoring fallbacks. Explicit-only meditate/ruminate flags remain. Ordinary activation references use skill names. Minor punctuation normalization follows repository conventions.
 
 Project-scoped extraction requires matching working-directory metadata; missing or empty attribution is excluded only when `--cwd` is supplied. Brain writes maintain curated navigation before root-index reconciliation, because generated inventory does not repair links below curated boundaries. Preserve these bundled workflow adaptations when refreshing their source snapshots.
 
-When refreshing, map obligations before editing. Recheck resource closure, source parity with these explicit exceptions, and provider schemas. Do not copy historical live-provider claims into target instructions.
+When refreshing, map obligations before editing. Recheck resource closure, source parity, and provider schemas. `RepositoryParityTests` checks all six installed skill bundles, excluding Python caches, and compares brain registrations semantically while allowing equivalent `python`, `python3`, and `py -3` prefixes. Populated brain content is outside strict parity. Do not copy historical live-provider claims into target instructions.
 
 ## Verification
 
 From the repository root:
 
 ```text
+python3 -B skills/default/brain-install/tests/test_install.py RepositoryParityTests -v
 python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'
 python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/brain-install
 python3 scripts/generate-hooks.py --check

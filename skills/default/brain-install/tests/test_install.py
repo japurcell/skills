@@ -19,6 +19,56 @@ def copy_bundle(root, *, ignore=None):
     return relocated
 
 
+class RepositoryParityTests(unittest.TestCase):
+    def test_installed_skill_bundles_match_portable_assets(self):
+        repository = BUNDLE.parents[2]
+
+        def source_files(directory):
+            return {path.relative_to(directory): path for path in directory.rglob("*")
+                    if path.is_file() and "__pycache__" not in path.parts
+                    and path.suffix not in (".pyc", ".pyo")}
+
+        for skill in ("brain", "meditate", "reflect", "ruminate", "todo", "todo-refine"):
+            expected = source_files(BUNDLE / "assets/skills" / skill)
+            actual = source_files(repository / ".agents/skills" / skill)
+            with self.subTest(skill=skill):
+                self.assertEqual(actual.keys(), expected.keys(),
+                                 f"Reconcile {skill} resources with brain-install assets")
+                for relative, source in expected.items():
+                    self.assertEqual(actual[relative].read_bytes(), source.read_bytes(),
+                                     f"Reconcile {skill}/{relative} with brain-install assets")
+
+    def test_installed_brain_registrations_match_portable_contract(self):
+        repository = BUNDLE.parents[2]
+
+        def normalize(value):
+            if isinstance(value, list):
+                return [normalize(item) for item in value]
+            if not isinstance(value, dict):
+                return value
+            result = {key: normalize(item) for key, item in value.items()}
+            for field in ("command", "commandWindows", "bash", "powershell"):
+                command = result.get(field, "")
+                for prefix in ("python3", "py -3"):
+                    if command.startswith(prefix + " -I -S -B -c "):
+                        result[field] = "python" + command[len(prefix):]
+            return result
+
+        def brain_entries(config):
+            return [(event, normalize(entry))
+                    for event, entries in config["hooks"].items() for entry in entries
+                    if any(name in json.dumps(entry)
+                           for name in ("inject-brain.py", "auto-index-brain.py"))]
+
+        for provider, relative in (("copilot", ".github/hooks/hooks.json"),
+                                   ("codex", ".codex/hooks.json"),
+                                   ("gemini", ".gemini/settings.json")):
+            with self.subTest(provider=provider):
+                expected = json.loads((BUNDLE / f"assets/hooks/{provider}.json").read_text())
+                actual = json.loads((repository / relative).read_text())
+                self.assertEqual(brain_entries(actual), brain_entries(expected))
+
+
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
@@ -420,6 +470,86 @@ class InstallerTests(unittest.TestCase):
 
 
 class PayloadTests(unittest.TestCase):
+    def run_snapshot(self, relocated, root, directory, output):
+        return subprocess.run(
+            [sys.executable, "-I", "-S", "-B",
+             str(relocated / "assets/skills/meditate/scripts/snapshot.py"),
+             str(directory), str(output)],
+            cwd=root, stdin=subprocess.DEVNULL, capture_output=True,
+            text=True, encoding="utf-8", timeout=10, check=False,
+        )
+
+    @unittest.skipIf(os.name == "nt", "POSIX symlinks without Windows developer mode")
+    def test_snapshot_excludes_linked_markdown_and_directories(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            relocated = copy_bundle(root)
+            vault = root / "brain"
+            vault.mkdir()
+            (vault / "note.md").write_text("In-scope note\n", encoding="utf-8")
+            outside = root / "outside"
+            outside.mkdir()
+            sentinel = outside / "private.md"
+            sentinel.write_text("Outside-vault sentinel\n", encoding="utf-8")
+            (vault / "external.md").symlink_to(sentinel)
+            (vault / "internal.md").symlink_to(vault / "note.md")
+            (vault / "broken.md").symlink_to(outside / "missing.md")
+            (vault / "linked-directory").symlink_to(outside, target_is_directory=True)
+            output = root / "snapshot.md"
+
+            result = self.run_snapshot(relocated, root, vault, output)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stderr, "")
+            self.assertEqual(result.stdout, f"{output}\n")
+            self.assertEqual(output.read_text(encoding="utf-8"),
+                             f"=== {vault / 'note.md'} ===\nIn-scope note\n\n\n")
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "Outside-vault sentinel\n")
+
+    def test_snapshot_prunes_directory_links_and_rejects_linked_source_root(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            relocated = copy_bundle(root)
+            vault = root / "brain"
+            vault.mkdir()
+            (vault / "note.md").write_text("In-scope note\n", encoding="utf-8")
+            outside = root / "outside"
+            outside.mkdir()
+            (outside / "private.md").write_text("Outside-vault sentinel\n", encoding="utf-8")
+            link = vault / "linked-directory"
+            if os.name == "nt":
+                created = subprocess.run(
+                    ["cmd", "/d", "/c", "mklink", "/J", str(link), str(outside)],
+                    capture_output=True, text=True, timeout=10, check=False,
+                )
+                self.assertEqual(created.returncode, 0, created.stdout + created.stderr)
+            else:
+                link.symlink_to(outside, target_is_directory=True)
+            output = root / "snapshot.md"
+            try:
+                result = self.run_snapshot(relocated, root, vault, output)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(output.read_text(encoding="utf-8"),
+                                 f"=== {vault / 'note.md'} ===\nIn-scope note\n\n\n")
+
+                output.write_text("Preserve existing output\n", encoding="utf-8")
+                result = self.run_snapshot(relocated, root, link, output)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("symlink or reparse point", result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(output.read_text(encoding="utf-8"), "Preserve existing output\n")
+
+                result = self.run_snapshot(relocated, root, root / "missing", output)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("not a directory", result.stderr)
+                self.assertEqual(result.stdout, "")
+                self.assertEqual(output.read_text(encoding="utf-8"), "Preserve existing output\n")
+            finally:
+                if os.name == "nt":
+                    link.rmdir()
+                else:
+                    link.unlink()
+
     def run_extractor(self, relocated, root, home, output, *arguments):
         return subprocess.run(
             check=False,

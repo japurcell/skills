@@ -1,0 +1,2953 @@
+{
+  "metadata": {
+    "skill_name": "delegate-to-subagents",
+    "evals_run": [
+      "A",
+      "B",
+      "C"
+    ],
+    "runs_per_configuration": 2,
+    "note": "Different providers, missing matches and permission-confounded C are not pooled."
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "A / codex",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 33.51982837500691,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[1:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[4]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "A / codex",
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 35.33638500000234,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[1:4]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[3]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "A / codex",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 44.5711112919962,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[1:3]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[3:5]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "A / codex",
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 40.45037870800297,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[1:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[3]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / codex",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 61.15128045799793,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[2]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[7]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[3], actions[8]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / codex",
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 56.4718111250113,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[2]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[9]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[3:5], actions[10:12]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / codex",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 65.82200324999576,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[1]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[8]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[2:5], actions[9:12]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / codex",
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 64.05400262499461,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[1]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[6]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[2:4], actions[7:9]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / copilot",
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.6666666666666666,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 75.86398691700015,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[0:3]; Starts another checkpoint window after an already missed response deadline."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[7:9]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[3:5], actions[9:11]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "B / copilot",
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 82.0217951250088,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[3:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[1:3], actions[5:7]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / codex",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 176.82300479200785,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / codex",
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 161.62394862499787,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / codex",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 90.91702429100405,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions[12:14], final_state and evidence/stdout.jsonl lines 70-79: confirm and transfer CLI return authorization; no separate synthetic parent transfer appears in action records."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / codex",
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 119.15742308300105,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions[19:22] records synthetic transfer B to parent after synthetic verification; evidence/stdout.jsonl lines 61,63,67 and repo/outputs/state.json show confirm, transfer authorization, cancel and final state."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / copilot",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 5,
+        "total": 5,
+        "time_seconds": 133.69415237499925,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / copilot",
+      "configuration": "without_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 5,
+        "total": 5,
+        "time_seconds": 112.08036250001169,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / copilot",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 337.73373712500324,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/evidence/parent-ownership.json records synthetic transfer B to parent at 133 after verified fixture evidence; repo/outputs/result.json final_state and evidence/stdout.jsonl lines 4487-4665 show confirmation, authorization and cancellation."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "C / copilot",
+      "configuration": "with_skill",
+      "run_number": 2,
+      "result": {
+        "pass_rate": 0.8,
+        "passed": 4,
+        "failed": 1,
+        "total": 5,
+        "time_seconds": 398.0361994160048,
+        "tokens": null,
+        "tool_calls": null,
+        "errors": null
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions[11:15], final_state.worker_control and repo/evidence/candidate/host-events.json: fixture confirmation followed by transfer authorization, expressly no transfer asserted; stdout.jsonl lines 5421-5901 show actual CLI calls."
+        }
+      ],
+      "notes": [
+        "eligible",
+        "See report for permission confounding, contract and C6."
+      ]
+    }
+  ],
+  "run_summary": {},
+  "paired_comparisons": [
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "repeat": 1,
+      "old_passed": 3,
+      "candidate_passed": 3,
+      "common_total": 3,
+      "pass_fraction_delta": 0.0,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": 11.051282916989294,
+      "token_deltas": {
+        "input_tokens_reported": 34328,
+        "cached_input_tokens_reported": 29824,
+        "output_tokens_reported": 279,
+        "reasoning_tokens_reported": -14
+      },
+      "interpretation": "matched written simulation"
+    },
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "repeat": 2,
+      "old_passed": 3,
+      "candidate_passed": 3,
+      "common_total": 3,
+      "pass_fraction_delta": 0.0,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": 5.113993708000635,
+      "token_deltas": {
+        "input_tokens_reported": 26986,
+        "cached_input_tokens_reported": 26112,
+        "output_tokens_reported": 62,
+        "reasoning_tokens_reported": -94
+      },
+      "interpretation": "matched written simulation"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "repeat": 1,
+      "old_passed": 3,
+      "candidate_passed": 3,
+      "common_total": 3,
+      "pass_fraction_delta": 0.0,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": 4.670722791997832,
+      "token_deltas": {
+        "input_tokens_reported": 26863,
+        "cached_input_tokens_reported": 18432,
+        "output_tokens_reported": -89,
+        "reasoning_tokens_reported": 36
+      },
+      "interpretation": "matched written simulation"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "repeat": 2,
+      "old_passed": 3,
+      "candidate_passed": 3,
+      "common_total": 3,
+      "pass_fraction_delta": 0.0,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": 7.58219149998331,
+      "token_deltas": {
+        "input_tokens_reported": 70478,
+        "cached_input_tokens_reported": 65792,
+        "output_tokens_reported": 534,
+        "reasoning_tokens_reported": -23
+      },
+      "interpretation": "matched written simulation"
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "repeat": 2,
+      "old_passed": 2,
+      "candidate_passed": 3,
+      "common_total": 3,
+      "pass_fraction_delta": 0.3333333333333333,
+      "old_contract": true,
+      "candidate_contract": false,
+      "seconds_delta": 6.157808208008646,
+      "token_deltas": {
+        "input_tokens_reported": 30154,
+        "cached_input_tokens_reported": 28409,
+        "output_tokens_reported": 230,
+        "reasoning_tokens_reported": -29
+      },
+      "interpretation": "matched written simulation"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "repeat": 1,
+      "old_passed": 5,
+      "candidate_passed": 4,
+      "common_total": 5,
+      "pass_fraction_delta": -0.2,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": -85.9059805010038,
+      "token_deltas": {
+        "input_tokens_reported": -28212,
+        "cached_input_tokens_reported": -71808,
+        "output_tokens_reported": -2693,
+        "reasoning_tokens_reported": -701
+      },
+      "interpretation": "C timing confounded by instruction to use separate shell calls"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "repeat": 2,
+      "old_passed": 5,
+      "candidate_passed": 5,
+      "common_total": 5,
+      "pass_fraction_delta": 0.0,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": -42.466525541996816,
+      "token_deltas": {
+        "input_tokens_reported": 612296,
+        "cached_input_tokens_reported": 584320,
+        "output_tokens_reported": -2089,
+        "reasoning_tokens_reported": -694
+      },
+      "interpretation": "C timing confounded by instruction to use separate shell calls"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "repeat": 1,
+      "old_passed": 0,
+      "candidate_passed": 5,
+      "common_total": 5,
+      "pass_fraction_delta": 1.0,
+      "old_contract": false,
+      "candidate_contract": true,
+      "seconds_delta": 204.039584750004,
+      "token_deltas": {
+        "input_tokens_reported": 1178328,
+        "cached_input_tokens_reported": 1147376,
+        "output_tokens_reported": 19995,
+        "reasoning_tokens_reported": 10035
+      },
+      "interpretation": "permission-confounded baseline execution"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "repeat": 2,
+      "old_passed": 0,
+      "candidate_passed": 4,
+      "common_total": 5,
+      "pass_fraction_delta": 0.8,
+      "old_contract": true,
+      "candidate_contract": true,
+      "seconds_delta": 285.95583691599313,
+      "token_deltas": {
+        "input_tokens_reported": 3227582,
+        "cached_input_tokens_reported": 3196987,
+        "output_tokens_reported": 18226,
+        "reasoning_tokens_reported": 6765
+      },
+      "interpretation": "permission-confounded baseline execution"
+    }
+  ],
+  "paired_groups": [
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "n_pairs": 2,
+      "pass_fraction_delta": {
+        "observations": [
+          0.0,
+          0.0
+        ],
+        "mean": 0.0,
+        "sample_stddev": 0.0
+      },
+      "seconds_delta": {
+        "observations": [
+          11.051282916989294,
+          5.113993708000635
+        ],
+        "mean": 8.082638312494964,
+        "sample_stddev": 4.198297461541594
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [
+            34328,
+            26986
+          ],
+          "mean": 30657,
+          "sample_stddev": 5191.577987471632
+        },
+        "cached_input_tokens_reported": {
+          "observations": [
+            29824,
+            26112
+          ],
+          "mean": 27968,
+          "sample_stddev": 2624.7803717644642
+        },
+        "output_tokens_reported": {
+          "observations": [
+            279,
+            62
+          ],
+          "mean": 170.5,
+          "sample_stddev": 153.4421715174808
+        },
+        "reasoning_tokens_reported": {
+          "observations": [
+            -14,
+            -94
+          ],
+          "mean": -54,
+          "sample_stddev": 56.568542494923804
+        }
+      }
+    },
+    {
+      "scenario": "A",
+      "provider": "copilot",
+      "n_pairs": 0,
+      "pass_fraction_delta": {
+        "observations": [],
+        "mean": null,
+        "sample_stddev": null
+      },
+      "seconds_delta": {
+        "observations": [],
+        "mean": null,
+        "sample_stddev": null
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [],
+          "mean": null,
+          "sample_stddev": null
+        },
+        "cached_input_tokens_reported": {
+          "observations": [],
+          "mean": null,
+          "sample_stddev": null
+        },
+        "output_tokens_reported": {
+          "observations": [],
+          "mean": null,
+          "sample_stddev": null
+        },
+        "reasoning_tokens_reported": {
+          "observations": [],
+          "mean": null,
+          "sample_stddev": null
+        }
+      }
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "n_pairs": 2,
+      "pass_fraction_delta": {
+        "observations": [
+          0.0,
+          0.0
+        ],
+        "mean": 0.0,
+        "sample_stddev": 0.0
+      },
+      "seconds_delta": {
+        "observations": [
+          4.670722791997832,
+          7.58219149998331
+        ],
+        "mean": 6.126457145990571,
+        "sample_stddev": 2.0587192666289673
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [
+            26863,
+            70478
+          ],
+          "mean": 48670.5,
+          "sample_stddev": 30840.46226145127
+        },
+        "cached_input_tokens_reported": {
+          "observations": [
+            18432,
+            65792
+          ],
+          "mean": 42112,
+          "sample_stddev": 33488.57715699489
+        },
+        "output_tokens_reported": {
+          "observations": [
+            -89,
+            534
+          ],
+          "mean": 222.5,
+          "sample_stddev": 440.5275246792191
+        },
+        "reasoning_tokens_reported": {
+          "observations": [
+            36,
+            -23
+          ],
+          "mean": 6.5,
+          "sample_stddev": 41.71930009000631
+        }
+      }
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "n_pairs": 1,
+      "pass_fraction_delta": {
+        "observations": [
+          0.3333333333333333
+        ],
+        "mean": 0.3333333333333333,
+        "sample_stddev": null
+      },
+      "seconds_delta": {
+        "observations": [
+          6.157808208008646
+        ],
+        "mean": 6.157808208008646,
+        "sample_stddev": null
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [
+            30154
+          ],
+          "mean": 30154,
+          "sample_stddev": null
+        },
+        "cached_input_tokens_reported": {
+          "observations": [
+            28409
+          ],
+          "mean": 28409,
+          "sample_stddev": null
+        },
+        "output_tokens_reported": {
+          "observations": [
+            230
+          ],
+          "mean": 230,
+          "sample_stddev": null
+        },
+        "reasoning_tokens_reported": {
+          "observations": [
+            -29
+          ],
+          "mean": -29,
+          "sample_stddev": null
+        }
+      }
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "n_pairs": 2,
+      "pass_fraction_delta": {
+        "observations": [
+          -0.2,
+          0.0
+        ],
+        "mean": -0.1,
+        "sample_stddev": 0.1414213562373095
+      },
+      "seconds_delta": {
+        "observations": [
+          -85.9059805010038,
+          -42.466525541996816
+        ],
+        "mean": -64.1862530215003,
+        "sample_stddev": 30.716333172561434
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [
+            -28212,
+            612296
+          ],
+          "mean": 292042,
+          "sample_stddev": 452907.5502042332
+        },
+        "cached_input_tokens_reported": {
+          "observations": [
+            -71808,
+            584320
+          ],
+          "mean": 256256,
+          "sample_stddev": 463952.55812636705
+        },
+        "output_tokens_reported": {
+          "observations": [
+            -2693,
+            -2089
+          ],
+          "mean": -2391,
+          "sample_stddev": 427.0924958366747
+        },
+        "reasoning_tokens_reported": {
+          "observations": [
+            -701,
+            -694
+          ],
+          "mean": -697.5,
+          "sample_stddev": 4.949747468305833
+        }
+      }
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "n_pairs": 2,
+      "pass_fraction_delta": {
+        "observations": [
+          1.0,
+          0.8
+        ],
+        "mean": 0.9,
+        "sample_stddev": 0.14142135623730948
+      },
+      "seconds_delta": {
+        "observations": [
+          204.039584750004,
+          285.95583691599313
+        ],
+        "mean": 244.99771083299856,
+        "sample_stddev": 57.92353739595813
+      },
+      "token_deltas": {
+        "input_tokens_reported": {
+          "observations": [
+            1178328,
+            3227582
+          ],
+          "mean": 2202955,
+          "sample_stddev": 1449041.3997736573
+        },
+        "cached_input_tokens_reported": {
+          "observations": [
+            1147376,
+            3196987
+          ],
+          "mean": 2172181.5,
+          "sample_stddev": 1449293.8368945408
+        },
+        "output_tokens_reported": {
+          "observations": [
+            19995,
+            18226
+          ],
+          "mean": 19110.5,
+          "sample_stddev": 1250.8718959190026
+        },
+        "reasoning_tokens_reported": {
+          "observations": [
+            10035,
+            6765
+          ],
+          "mean": 8400,
+          "sample_stddev": 2312.23917448001
+        }
+      }
+    }
+  ],
+  "cells": [
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[1:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json actions[4]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 1,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 33.51982837500691,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 75863,
+        "cached_input_tokens_reported": 57600,
+        "output_tokens_reported": 1221,
+        "reasoning_tokens_reported": 93,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "fca3dd71-ecf5-49b0-97d3-4309c04ca374",
+      "tool_event_categories": {
+        "shell_command_events": 1,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[1:4]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json actions[3]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 3,
+        "file_change": 0
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 35.33638500000234,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 75971,
+        "cached_input_tokens_reported": 57600,
+        "output_tokens_reported": 1183,
+        "reasoning_tokens_reported": 164,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "884f341f-1716-49b9-b246-8639e5392e91",
+      "tool_event_categories": {
+        "shell_command_events": 3,
+        "read_tool_events": 0,
+        "write_tool_events": 0,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[1:3]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json actions[3:5]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 4,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 44.5711112919962,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 110191,
+        "cached_input_tokens_reported": 87424,
+        "output_tokens_reported": 1500,
+        "reasoning_tokens_reported": 79,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "3db50d6c-f73a-4629-b2b8-7fb375d16d34",
+      "tool_event_categories": {
+        "shell_command_events": 4,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Requests status, completed work, blockers, and an updated ETA by a bounded checkpoint deadline.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "A timely checkpoint leads to confirmation of completion, stopping, or at most one ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[1:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "If an extension is granted, increments the count, records the new deadline, and rearms enforcement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json actions[3]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 2,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 40.45037870800297,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 102957,
+        "cached_input_tokens_reported": 83712,
+        "output_tokens_reported": 1245,
+        "reasoning_tokens_reported": 70,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "4b836ada-3f73-45c0-a338-765aa39468a6",
+      "tool_event_categories": {
+        "shell_command_events": 2,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/codex/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": null,
+      "common_total": null,
+      "output_contract_passed": null,
+      "candidate_only_C6": null,
+      "expectations": [],
+      "delivery": false,
+      "delivery_evidence": "Selected snapshot reads denied or content delivery unproven in native evidence; do not score behavior.",
+      "paired_eligible": false,
+      "status": "excluded: selected skill content unproven",
+      "native_tool_event_counts": {
+        "view": 4,
+        "bash": 1,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 44.12366929199197,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 139706,
+        "cached_input_tokens_reported": 127441,
+        "cache_write_tokens_reported": 12080,
+        "output_tokens_reported": 2152,
+        "reasoning_tokens_reported": 1400,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "88bc349c-641c-40ae-b422-e87b3c245f44",
+      "tool_event_categories": {
+        "shell_command_events": 1,
+        "read_tool_events": 4,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 185
+        },
+        "cache_read": {
+          "tokenCount": 127441
+        },
+        "cache_write": {
+          "tokenCount": 12080
+        },
+        "output": {
+          "tokenCount": 2152
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": null,
+      "common_total": null,
+      "output_contract_passed": null,
+      "candidate_only_C6": null,
+      "expectations": [],
+      "delivery": false,
+      "delivery_evidence": "Selected snapshot reads denied or content delivery unproven in native evidence; do not score behavior.",
+      "paired_eligible": false,
+      "status": "excluded: selected skill content unproven",
+      "native_tool_event_counts": {
+        "view": 2,
+        "bash": 1,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 61.40136312499817,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 96448,
+        "cached_input_tokens_reported": 82966,
+        "cache_write_tokens_reported": 13470,
+        "output_tokens_reported": 3885,
+        "reasoning_tokens_reported": 3403,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "c519cc63-7997-44fd-8324-face77681284",
+      "tool_event_categories": {
+        "shell_command_events": 1,
+        "read_tool_events": 2,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 12
+        },
+        "cache_read": {
+          "tokenCount": 82966
+        },
+        "cache_write": {
+          "tokenCount": 13470
+        },
+        "output": {
+          "tokenCount": 3885
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": null,
+      "common_total": null,
+      "output_contract_passed": null,
+      "candidate_only_C6": null,
+      "expectations": [],
+      "delivery": false,
+      "delivery_evidence": "Selected snapshot reads denied or content delivery unproven in native evidence; do not score behavior.",
+      "paired_eligible": false,
+      "status": "excluded: selected skill content unproven",
+      "native_tool_event_counts": {
+        "view": 2,
+        "bash": 4,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 62.043582124999375,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 144982,
+        "cached_input_tokens_reported": 131353,
+        "cache_write_tokens_reported": 13611,
+        "output_tokens_reported": 3881,
+        "reasoning_tokens_reported": 2984,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "72a833a1-841d-4ace-8c6c-9b1d1df46cca",
+      "tool_event_categories": {
+        "shell_command_events": 4,
+        "read_tool_events": 2,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 18
+        },
+        "cache_read": {
+          "tokenCount": 131353
+        },
+        "cache_write": {
+          "tokenCount": 13611
+        },
+        "output": {
+          "tokenCount": 3881
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "A",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": null,
+      "common_total": null,
+      "output_contract_passed": null,
+      "candidate_only_C6": null,
+      "expectations": [],
+      "delivery": false,
+      "delivery_evidence": "Selected snapshot reads denied or content delivery unproven in native evidence; do not score behavior.",
+      "paired_eligible": false,
+      "status": "excluded: selected skill content unproven",
+      "native_tool_event_counts": {
+        "view": 3,
+        "bash": 1,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 43.822819291992346,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 117224,
+        "cached_input_tokens_reported": 104270,
+        "cache_write_tokens_reported": 12505,
+        "output_tokens_reported": 2769,
+        "reasoning_tokens_reported": 2086,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "309f7196-e2a7-4a76-9196-c79c0cd288a4",
+      "tool_event_categories": {
+        "shell_command_events": 1,
+        "read_tool_events": 3,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 449
+        },
+        "cache_read": {
+          "tokenCount": 104270
+        },
+        "cache_write": {
+          "tokenCount": 12505
+        },
+        "output": {
+          "tokenCount": 2769
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-A/copilot/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[2]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[7]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json actions[3], actions[8]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 4,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 61.15128045799793,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 81085,
+        "cached_input_tokens_reported": 68480,
+        "output_tokens_reported": 2613,
+        "reasoning_tokens_reported": 89,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "e5d579c5-1c97-4367-8a19-298de20f66ff",
+      "tool_event_categories": {
+        "shell_command_events": 4,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[2]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[9]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json actions[3:5], actions[10:12]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 3,
+        "file_change": 0
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 56.4718111250113,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 105472,
+        "cached_input_tokens_reported": 85120,
+        "output_tokens_reported": 1850,
+        "reasoning_tokens_reported": 105,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "99bb48f1-cca6-4287-b6c5-d1c48f682c09",
+      "tool_event_categories": {
+        "shell_command_events": 3,
+        "read_tool_events": 0,
+        "write_tool_events": 0,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[1]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[8]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json actions[2:5], actions[9:12]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 3,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 65.82200324999576,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 107948,
+        "cached_input_tokens_reported": 86912,
+        "output_tokens_reported": 2524,
+        "reasoning_tokens_reported": 125,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "9a3936a5-1f1b-4ea3-9cd3-d295538de371",
+      "tool_event_categories": {
+        "shell_command_events": 3,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[1]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[6]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json actions[2:4], actions[7:9]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 7,
+        "file_change": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 64.05400262499461,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 175950,
+        "cached_input_tokens_reported": 150912,
+        "output_tokens_reported": 2384,
+        "reasoning_tokens_reported": 82,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "b61d80dd-fc52-4997-9cf9-388c0e44288d",
+      "tool_event_categories": {
+        "shell_command_events": 7,
+        "read_tool_events": 0,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/codex/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": 2,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1/repo/outputs/result.json actions[0:2]; Starts another checkpoint after the already missed deadline."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1/repo/outputs/result.json actions[3]; These action records satisfy the asserted behavior."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1/repo/outputs/result.json actions[2], actions[4]; These action records satisfy the asserted behavior."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "stdout.jsonl lines 484 and 494: Python read returned old snapshot after denied direct reads; no matching candidate in this access revision.",
+      "paired_eligible": false,
+      "status": "delivered, unpaired: no candidate with same access revision",
+      "native_tool_event_counts": {
+        "view": 13,
+        "bash": 4,
+        "glob": 1,
+        "rg": 1,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 101.78181575000053,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 342445,
+        "cached_input_tokens_reported": 318703,
+        "cache_write_tokens_reported": 22398,
+        "output_tokens_reported": 8498,
+        "reasoning_tokens_reported": 5719,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "7f560835-8efb-4803-8937-4a45513f7a32",
+      "tool_event_categories": {
+        "shell_command_events": 4,
+        "read_tool_events": 15,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 1344
+        },
+        "cache_read": {
+          "tokenCount": 318703
+        },
+        "cache_write": {
+          "tokenCount": 22398
+        },
+        "output": {
+          "tokenCount": 8498
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": 2,
+      "common_total": 3,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[0:3]; Starts another checkpoint window after an already missed response deadline."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[7:9]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json actions[3:5], actions[9:11]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read. session.skills_loaded line 2 is catalog metadata; later tool start/completion events were inspected and do not show installed/candidate body loaded.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "view": 3,
+        "glob": 1,
+        "apply_patch": 1,
+        "bash": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 75.86398691700015,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 185792,
+        "cached_input_tokens_reported": 167368,
+        "cache_write_tokens_reported": 18403,
+        "output_tokens_reported": 5252,
+        "reasoning_tokens_reported": 3559,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "7d2cbb8c-879c-420f-9794-b79df18bace4",
+      "tool_event_categories": {
+        "shell_command_events": 1,
+        "read_tool_events": 4,
+        "write_tool_events": 1,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 21
+        },
+        "cache_read": {
+          "tokenCount": 167368
+        },
+        "cache_write": {
+          "tokenCount": 18403
+        },
+        "output": {
+          "tokenCount": 5252
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": null,
+      "common_total": null,
+      "output_contract_passed": null,
+      "candidate_only_C6": null,
+      "expectations": [],
+      "delivery": false,
+      "delivery_evidence": "Selected snapshot reads denied or content delivery unproven in native evidence; do not score behavior.",
+      "paired_eligible": false,
+      "status": "excluded: selected skill content unproven",
+      "native_tool_event_counts": {
+        "skill": 1,
+        "view": 4,
+        "bash": 2,
+        "glob": 2,
+        "rg": 1,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 74.01217537499906,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 249790,
+        "cached_input_tokens_reported": 232818,
+        "cache_write_tokens_reported": 16368,
+        "output_tokens_reported": 5391,
+        "reasoning_tokens_reported": 4120,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "cd962d03-12ef-458f-a620-2d89bc23d181",
+      "tool_event_categories": {
+        "shell_command_events": 2,
+        "read_tool_events": 7,
+        "write_tool_events": 1,
+        "other_events": 1
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 604
+        },
+        "cache_read": {
+          "tokenCount": 232818
+        },
+        "cache_write": {
+          "tokenCount": 16368
+        },
+        "output": {
+          "tokenCount": 5391
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "B",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": 3,
+      "common_total": 3,
+      "output_contract_passed": false,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "Stops A when the bounded checkpoint response is absent or late.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[0]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Stops B at its extended deadline without granting a second extension or resetting the count for follow-up messages.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[3:5]; Semantically satisfies this assertion in the cited action records."
+        },
+        {
+          "text": "Confirms both the worker and associated write-producing operations stopped before ownership transfer and a fresh routed replacement.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json actions[1:3], actions[5:7]; Semantically satisfies this assertion in the cited action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "skill": 1,
+        "view": 10,
+        "bash": 2,
+        "apply_patch": 1
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 82.0217951250088,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 215946,
+        "cached_input_tokens_reported": 195777,
+        "cache_write_tokens_reported": 20145,
+        "output_tokens_reported": 5482,
+        "reasoning_tokens_reported": 3530,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/outputs/result.json",
+      "run_id": "a7e240ac-0b52-45d4-9854-d5ded8187fd2",
+      "tool_event_categories": {
+        "shell_command_events": 2,
+        "read_tool_events": 10,
+        "write_tool_events": 1,
+        "other_events": 1
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 24
+        },
+        "cache_read": {
+          "tokenCount": 195777
+        },
+        "cache_write": {
+          "tokenCount": 20145
+        },
+        "output": {
+          "tokenCount": 5482
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-B/copilot/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": 5,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/stdout.jsonl lines 37-65; native command results and final state support this transition."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 27,
+        "file_change": 7
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 176.82300479200785,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 306734,
+        "cached_input_tokens_reported": 289664,
+        "output_tokens_reported": 6091,
+        "reasoning_tokens_reported": 998,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "7e67e564-478e-41f0-841f-52e72ad02d30",
+      "tool_event_categories": {
+        "shell_command_events": 27,
+        "read_tool_events": 0,
+        "write_tool_events": 7,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": 5,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/stdout.jsonl lines 29-55; native command results and final state support this transition."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 23,
+        "file_change": 5
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 161.62394862499787,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 210227,
+        "cached_input_tokens_reported": 166272,
+        "output_tokens_reported": 6191,
+        "reasoning_tokens_reported": 1016,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "6db37099-d812-4030-a659-85ea11a7659d",
+      "tool_event_categories": {
+        "shell_command_events": 23,
+        "read_tool_events": 0,
+        "write_tool_events": 5,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": 4,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": {
+        "passed": true,
+        "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87"
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/stdout.jsonl lines 16-87; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json actions[12:14], final_state and evidence/stdout.jsonl lines 70-79: confirm and transfer CLI return authorization; no separate synthetic parent transfer appears in action records."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 26,
+        "file_change": 20
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 90.91702429100405,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 278522,
+        "cached_input_tokens_reported": 217856,
+        "output_tokens_reported": 3398,
+        "reasoning_tokens_reported": 297,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "d42423f7-9152-489d-a7ca-81954cca9708",
+      "tool_event_categories": {
+        "shell_command_events": 26,
+        "read_tool_events": 0,
+        "write_tool_events": 20,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": {
+        "count": 16,
+        "stdout_line_numbers": [
+          26,
+          30,
+          34,
+          38,
+          42,
+          46,
+          50,
+          54,
+          58,
+          62,
+          66,
+          70,
+          75,
+          79,
+          83,
+          87
+        ],
+        "definition": "Candidate C native command events containing exact snapshot scheduler path, excluding help; events may contain multiple subprocesses."
+      },
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "codex",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": 5,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": {
+        "passed": true,
+        "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69: wrappers invoke exact snapshot with outputs/state.json; result exit statuses retained"
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/stdout.jsonl lines 34-69 (wrapper subprocess events); native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json actions[19:22] records synthetic transfer B to parent after synthetic verification; evidence/stdout.jsonl lines 61,63,67 and repo/outputs/state.json show confirm, transfer authorization, cancel and final state."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "command_execution": 33,
+        "file_change": 0
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 119.15742308300105,
+      "provider_native_tokens": {
+        "model": "gpt-6.1-sol",
+        "input_tokens_reported": 822523,
+        "cached_input_tokens_reported": 750592,
+        "output_tokens_reported": 4102,
+        "reasoning_tokens_reported": 322,
+        "source": "Codex turn.completed event"
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "c72b807d-098d-4523-a5b4-664d9389a105",
+      "tool_event_categories": {
+        "shell_command_events": 33,
+        "read_tool_events": 0,
+        "write_tool_events": 0,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": {
+        "count": 15,
+        "stdout_line_numbers": [
+          34,
+          36,
+          38,
+          40,
+          42,
+          44,
+          46,
+          48,
+          50,
+          52,
+          57,
+          61,
+          63,
+          67,
+          69
+        ],
+        "definition": "Candidate C native command events containing exact snapshot scheduler path, excluding help; events may contain multiple subprocesses."
+      },
+      "copilot_session_token_details": null,
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/codex/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 1,
+      "common_passed": 0,
+      "common_total": 5,
+      "output_contract_passed": false,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/stdout.jsonl: lines 102-105 selected-snapshot read; repeated denied shell events, including 231, 409, 453 and subsequent. No successful required exercise."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read. session.skills_loaded line 2 is catalog metadata; later tool start/completion events were inspected and do not show installed/candidate body loaded.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "view": 2,
+        "bash": 28,
+        "glob": 2
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 133.69415237499925,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 862821,
+        "cached_input_tokens_reported": 842323,
+        "cache_write_tokens_reported": 20408,
+        "output_tokens_reported": 7479,
+        "reasoning_tokens_reported": 5618,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1",
+      "result_source": null,
+      "run_id": "b008baa2-d602-4364-b24a-85db602fa230",
+      "tool_event_categories": {
+        "shell_command_events": 28,
+        "read_tool_events": 4,
+        "write_tool_events": 0,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 90
+        },
+        "cache_read": {
+          "tokenCount": 842323
+        },
+        "cache_write": {
+          "tokenCount": 20408
+        },
+        "output": {
+          "tokenCount": 7479
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "variant": "old_skill",
+      "repeat": 2,
+      "common_passed": 0,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": null,
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/stdout.jsonl: lines 3428-3430 attempted register denied; repo/outputs/result.json actions[0], final_state report no execution. Missing required execution evidence."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read. session.skills_loaded line 2 is catalog metadata; later tool start/completion events were inspected and do not show installed/candidate body loaded.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "view": 4,
+        "bash": 4,
+        "glob": 1,
+        "apply_patch": 4
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 112.08036250001169,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 334353,
+        "cached_input_tokens_reported": 310612,
+        "cache_write_tokens_reported": 23708,
+        "output_tokens_reported": 10867,
+        "reasoning_tokens_reported": 7365,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "d9dd6dc8-8caf-485c-a249-ccf766692ec2",
+      "tool_event_categories": {
+        "shell_command_events": 4,
+        "read_tool_events": 5,
+        "write_tool_events": 4,
+        "other_events": 0
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": null,
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 33
+        },
+        "cache_read": {
+          "tokenCount": 310612
+        },
+        "cache_write": {
+          "tokenCount": 23708
+        },
+        "output": {
+          "tokenCount": 10867
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/old_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 1,
+      "common_passed": 5,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": {
+        "passed": true,
+        "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665"
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/stdout.jsonl lines 799-4665; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/evidence/parent-ownership.json records synthetic transfer B to parent at 133 after verified fixture evidence; repo/outputs/result.json final_state and evidence/stdout.jsonl lines 4487-4665 show confirmation, authorization and cancellation."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "view": 9,
+        "bash": 36,
+        "skill": 2,
+        "apply_patch": 6
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 337.73373712500324,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 2041149,
+        "cached_input_tokens_reported": 1989699,
+        "cache_write_tokens_reported": 46940,
+        "output_tokens_reported": 27474,
+        "reasoning_tokens_reported": 15653,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/repo/outputs/result.json",
+      "run_id": "3e73544c-8b7a-4237-bc5e-8ae278475196",
+      "tool_event_categories": {
+        "shell_command_events": 36,
+        "read_tool_events": 9,
+        "write_tool_events": 6,
+        "other_events": 2
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": {
+        "count": 17,
+        "stdout_line_numbers": [
+          205,
+          799,
+          3107,
+          3210,
+          3380,
+          3468,
+          3551,
+          3639,
+          3731,
+          3822,
+          3910,
+          4002,
+          4089,
+          4203,
+          4487,
+          4575,
+          4665
+        ],
+        "definition": "Candidate C native command events containing exact snapshot scheduler path, excluding help; events may contain multiple subprocesses."
+      },
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 4510
+        },
+        "cache_read": {
+          "tokenCount": 1989699
+        },
+        "cache_write": {
+          "tokenCount": 46940
+        },
+        "output": {
+          "tokenCount": 27474
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-1/evidence/usage.json#/tokenDetails"
+    },
+    {
+      "scenario": "C",
+      "provider": "copilot",
+      "variant": "with_skill",
+      "repeat": 2,
+      "common_passed": 4,
+      "common_total": 5,
+      "output_contract_passed": true,
+      "candidate_only_C6": {
+        "passed": true,
+        "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901"
+      },
+      "expectations": [
+        {
+          "text": "C1: A completes and emits no later reminder.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C2: B requests checkpoint at expiry and receives exactly one timely ETA-based extension.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C3: B stops at extension expiry and second extension fails.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C4: return from interruption checks deadlines, blocks transfer until supplied shutdown evidence, and permits independent C.",
+          "passed": true,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions and final_state; /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/stdout.jsonl lines 1645-5901; native command results and final state support this transition."
+        },
+        {
+          "text": "C5: final state has A closed, B closed/transferred only after confirmation, and C separately active.",
+          "passed": false,
+          "evidence": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json actions[11:15], final_state.worker_control and repo/evidence/candidate/host-events.json: fixture confirmation followed by transfer authorization, expressly no transfer asserted; stdout.jsonl lines 5421-5901 show actual CLI calls."
+        }
+      ],
+      "delivery": true,
+      "delivery_evidence": "Provisional delivery receipt in grading.json; native stdout.jsonl confirms selected snapshot read.",
+      "paired_eligible": true,
+      "status": "eligible",
+      "native_tool_event_counts": {
+        "view": 11,
+        "skill": 2,
+        "bash": 45,
+        "apply_patch": 29
+      },
+      "scheduler_invocations": null,
+      "scheduler_invocations_reason": "No complete provider-independent count; inspect native commands. Provisional parser counts not treated as total.",
+      "elapsed_seconds": 398.0361994160048,
+      "provider_native_tokens": {
+        "model": "gpt-6-luna",
+        "input_tokens_reported": 3561935,
+        "cached_input_tokens_reported": 3507599,
+        "cache_write_tokens_reported": 53613,
+        "output_tokens_reported": 29093,
+        "reasoning_tokens_reported": 14130,
+        "source": "Copilot --usage-output-file modelMetrics. inputTokens and cacheReadTokens retained as distinct reported fields; no summing."
+      },
+      "raw_cell": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2",
+      "result_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/repo/outputs/result.json",
+      "run_id": "507dd211-f157-4a7c-954a-4d0bad093196",
+      "tool_event_categories": {
+        "shell_command_events": 45,
+        "read_tool_events": 11,
+        "write_tool_events": 29,
+        "other_events": 2
+      },
+      "tool_event_categories_note": "Codex shell commands may themselves read or write; Codex read-tool events are not separately exposed. Copilot categories use native tool names. Unknown tools remain other.",
+      "scheduler_command_events": {
+        "count": 17,
+        "stdout_line_numbers": [
+          1645,
+          1745,
+          2190,
+          2440,
+          2671,
+          3046,
+          3524,
+          3798,
+          4038,
+          4274,
+          4551,
+          4897,
+          5157,
+          5421,
+          5663,
+          5901,
+          6208
+        ],
+        "definition": "Candidate C native command events containing exact snapshot scheduler path, excluding help; events may contain multiple subprocesses."
+      },
+      "copilot_session_token_details": {
+        "input": {
+          "tokenCount": 723
+        },
+        "cache_read": {
+          "tokenCount": 3507599
+        },
+        "cache_write": {
+          "tokenCount": 53613
+        },
+        "output": {
+          "tokenCount": 29093
+        }
+      },
+      "copilot_session_token_details_source": "/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/eval-C/copilot/with_skill/repeat-2/evidence/usage.json#/tokenDetails"
+    }
+  ],
+  "notes": [
+    "Common assertion rates exclude output contract and C6, which are reported separately.",
+    "Copilot C baseline attempts were blocked by permission; do not interpret their paired numerical deltas as scheduler effect.",
+    "C synthetic host transfer is recorded in Codex candidate repeat 2 and Copilot candidate repeat 1; other candidate repeats record authorization only.",
+    "Tokens are provider-native, not cost; cached and reasoning counters are subsets or provider-specific and must not be summed."
+  ]
+}

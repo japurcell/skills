@@ -5,7 +5,7 @@ argument-hint: '<fixed-point> [<spec-path>]'
 compatibility: Requires parallel subagent dispatch.
 ---
 
-Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
+Two-axis review of a precisely pinned source range:
 
 - **Standards**: does the code conform to this repo's documented coding standards?
 - **Spec**: does the code faithfully implement the originating issue / spec?
@@ -14,13 +14,13 @@ Both axes run as **parallel sub-agents** so they don't pollute each other's cont
 
 ## Process
 
-### 1. Pin the fixed point
+### 1. Pin the reviewed source
 
-Whatever the user said is the fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it.
+Resolve the user-supplied base and target refs to full commit IDs before review. If no target is supplied, use the current `HEAD` and record its full ID. Record both IDs in the report and use them in every command and sub-agent prompt; do not leave a moving branch name or `HEAD` as the review boundary. If no base is supplied, ask for one.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+For committed work, capture the exact commands and outputs for `git diff <base-id>...<target-id>` (three-dot, against the merge base) and `git log <base-id>..<target-id> --oneline`. Record the resolved merge base too. Give both sub-agents the pinned IDs and captured diff, not instructions to re-read a moving ref.
 
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel sub-agents.
+For uncommitted work, capture one complete source snapshot relative to the recorded target: all changed tracked files and relevant untracked source files, including test/support files needed to assess behavior. Preserve staged state separately only when it matters to the requested review; do not combine `git diff <target-id>` with `git diff --cached <target-id>` because the former already includes staged changes. Record the snapshot path or identifier, included file list, and content hash in the report, and give that same snapshot to both sub-agents. Do not claim review of uncommitted changes from a commit-only diff. Confirm all refs resolve and the selected diff/snapshot is non-empty before dispatch; report an intentionally empty range without dispatching.
 
 ### 2. Identify the spec source
 
@@ -79,6 +79,10 @@ If the spec is missing, skip the Spec sub-agent and note this in the final repor
 Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings, because the two axes are deliberately separate (see _Why two axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
+
+### Evidence and claims
+
+Keep static findings available when execution is unnecessary. For any claimed test failure, reproduce it against the pinned target or captured source snapshot and report the exact command, environment or prerequisite, exit status, and observed failure output. Label older failure reports as historical and do not present them as current reproduction. Report code-inferred ordering or race risks as static hypotheses. When claiming an order or race was observed, cite the exact event sequence and its source (for example, a captured test trace). Clearly distinguish current-source observations from historical context.
 
 ## Why two axes
 

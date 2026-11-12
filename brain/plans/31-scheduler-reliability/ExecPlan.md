@@ -1,0 +1,152 @@
+# Complete scheduler ownership transfers and establish a valid diagnostic pilot
+
+This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill when resuming it. Planning completed 2026-11-11; implementation and evaluation have not started.
+
+## Purpose / Big Picture
+
+A coordinator must distinguish permission to reassign work from a recorded ownership change. After verified worker and write shutdown, the scheduler should authorize transfer, the parent should update its own ownership record, and only an explicit acknowledgment should mark the reassignment complete. Independent assignments must keep progressing while shutdown remains unconfirmed.
+
+The other outcomes are trustworthy evaluation prerequisites, an explanation of observed overhead grounded in retained native traces, and a small matched diagnostic pilot on both Codex and Copilot. These outcomes do not establish autonomous worker termination or general reliability.
+
+## Authorization and current next action
+
+The user authorized deleting the archived redundant review copies, writing this plan, then committing all existing changes, merging into main and deleting the topic branch before stopping. Authoring is complete; the parent owns Git integration. After that integration, the next action is **await a separate user instruction**. Every implementation, deterministic test, model inference, live smoke and pilot below is proposed work, not an instruction to run now. The earlier authorization for 14 remaining calls in the archived experiment does not authorize fresh calls. The authorized Git integration packages existing changes only; no implementation, CI change, aggregate suite or full evaluation is authorized by this document. An instruction to execute this plan approves its proposed public seams: scheduler CLI transitions, scenario-harness CLI preparation/grading, and provider execution evidence. Apply the TDD skill to implementation; seek clarification only if inspection reveals a material unresolved change to those seams.
+
+## Progress
+
+- [x] (2026-11-11) [milestone-0] Read current source and retained conclusions; remove only archived review copies, reconcile current references, and author/index this plan.
+- [ ] [milestone-1] T1: Reproduce authorization-only completion through the public CLI and parent fixture; implement and verify explicit transfer acknowledgment.
+- [ ] [milestone-2] T2: Add a narrow maintained scheduler scenario harness and validate delivery, permissions, output paths and rubrics with fake providers.
+- [ ] [milestone-3] T3: Inspect retained native traces and explain the measured time/token deltas before proposing any optimization.
+- [ ] [milestone-4] T4: Freeze pilot inputs and obtain separate authorization for the exact live call budget.
+- [ ] [milestone-4] T5: Execute the authorized both-provider matched pilot, review every artifact, and report limits without automatic retries or expansion.
+
+## Context and Orientation
+
+Work from `/Users/adam/dev/skills`. `skills/default/delegate-to-subagents/scripts/scheduler.py` is a Python standard-library CLI. `parser()` defines commands; `load()` validates state; `main()` applies locked atomic state transitions; `advance()` and `events()` emit reminders. `scripts/test_scheduler.py` beside it exercises real subprocesses with disposable state and synthetic time. `SKILL.md` tells the parent how to carry out emitted actions; `README.md` documents the state and CLI contract. The scheduler controls no agents or writes.
+
+Current version 2 stores `transferred: bool`. `transfer ID` checks `stop_confirmed`, sets that flag true, and outputs `ownership transfer may now be performed by host`. Thus its flag records authorization only. The existing `test_deadline_checkpoint_extension_and_host_stop_gate` stops after authorization. A parent can misread that as completion. `cancel` currently works without any replacement; retain that behavior. One extension, timely checkpoints, stop-before-transfer, bounded waits, concurrency and atomic persistence remain shared invariants.
+
+`skills/default/delegate-to-subagents/evals/evals.json` contains coordination scenarios; `evals/README.md` limits what they prove. `skills/default/create-skill/scripts/eval_runner.py` is a maintained smoke/contribution/commit runner. Its mandatory contribution-before-commit sequence and Copilot commit-fixture grants do not fit these scheduler scenarios. Do not fake a contribution, relax its checks, or build a generic evaluation platform. Put the narrow scenario harness and its tests in the scheduler skill's `evals/` directory.
+
+Durable guidance: [validation routes](../../codebase/testing.md), [script contracts](../../codebase/scripts-and-installers.md), [script fixtures](../../codebase/script-testing.md), [provider capability boundaries](../../../skills/default/create-skill/references/provider-runs.md), and [evaluation evidence](../../../skills/default/create-skill/references/validation.md). These are reusable guidance; this plan holds the task-specific contract.
+
+## Evidence and interpretation limits
+
+The retained [report](../../archive/plans/31-scheduler-evaluation/report.md), [benchmark](../../archive/plans/31-scheduler-evaluation/benchmark.json), and [embedded static viewer](../../archive/plans/31-scheduler-evaluation/review.html) remain together. The redundant `review-copies/` directory was removed. External raw evidence remains untouched at `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r`, called EVIDENCE below. Resolve per-cell native paths from the benchmark rather than guessing them. The raw matrix is `EVIDENCE/harness/prepared-matrix-t3-attempt-1/iteration-1/`.
+
+There were 24 attempts: 18 cells form nine matched pairs, five lack proven selected-skill delivery, and one delivered baseline is unpaired. Codex A and B each tied at 3/3 for both variants and repetitions. Codex C baseline scored 5/5 twice; current scored 4/5 and 5/5. Copilot B improved 2/3 to 3/3 in one pair but the current output path was wrong. Copilot C baseline shell execution was denied twice; current scored 5/5 and 4/5, so no causal comparison is valid. All four current C runs prove immutable script execution. Two of four current C runs lack a simulated parent ownership change, although transfer authorization was recorded. Copilot main outcomes are one full pass, six evaluated failures including two permission failures, and five invalid setups. Preserve these categories.
+
+Codex current A added a mean 8.1 seconds and 30,657 reported input tokens; B added 6.1 seconds and 48,670.5 input tokens. C has asymmetric tool-call granularity; Copilot C also has permission confounds. Two repetitions support diagnostics only. All worker shutdown and ownership facts in C are synthetic; real CLI execution is not real worker-control evidence. No overall improvement was proven.
+
+## Decision Log
+
+- 2026-11-11: Use a version 3 schema with separate authorization and completion fields. A breaking schema is clearer than silently interpreting historical `transferred=true` as actual ownership change.
+- 2026-11-11: Keep `transfer` as the authorization command and add `confirm-transfer` as a parent attestation. The parent owns the actual ownership record; the CLI stores its evidence pointer and does not claim to control or verify external workers.
+- 2026-11-11: Use a scheduler-specific standard-library harness under `evals/`. Reuse documented evidence conventions, not the incompatible commit-phase workflow.
+- 2026-11-11: Inspect existing traces before optimizing. No speculative polling, prompt, batching or caching changes belong to the initial correctness fix.
+- 2026-11-11: Use the frozen current v2 scheduler as baseline against the proposed v3 fix. Propose one combined scenario per variant/provider, four scored calls plus four unscored smoke calls. Fresh authorization must cover the complete eight-call ceiling; no retries or automatic scale-up.
+
+## Milestone 0: Finish bounded authoring
+Status: done
+Acceptance: met
+
+T0 has no prerequisites. The requested review-copy directory is removed, current archival prose identifies retained evidence accurately, and this plan is linked from `brain/plans/index.md`. No source or evaluation execution is part of T0. Static inspection establishes only authoring completion.
+
+## Milestone 1: Record actual transfer completion explicitly
+Status: open
+Acceptance: not met
+
+### T1: Public CLI and parent integration contract
+
+Prerequisites: separate implementation instruction and agreed public test seams. Ownership: one implementer owns `skills/default/delegate-to-subagents/scripts/scheduler.py`, its `scripts/test_scheduler.py`, `SKILL.md`, and `README.md`; serialize edits to these shared files. Inputs are the current version 2 CLI and the evidence above.
+
+Before any source edit, freeze the current version 2 bundle and its per-file hash manifest in a new private evidence root for T2 and T4. Then begin with an end-user-shaped disposable parent fixture, using real subprocess calls. Register B owned by agent-old at time 0 with deadline 100, checkpoint 300 and grace 5; tick at 100 and 105 to reach stop. Keep independent C active. Before shutdown confirmation, attempt transfer and show exit 2 with unchanged ownership while C can checkpoint/complete. Confirm shutdown at 106, authorize transfer at 107, and inspect both scheduler list and the fixture's parent ownership file. Before the fix, authorization is the last available scheduler transition and the misleading flag is true even while parent owner remains agent-old. Retain that reproducer before implementation. This reproduces the actual integration gap rather than asserting the scheduler controls native workers.
+
+Implement VERSION=3. Replace ambiguous `transferred` with `transfer_authorized: bool` and `transfer_completed: bool`, initially false; an optional `transfer_receipt` is present only on completion. Update `load()` to reject inconsistent fields, a completed transfer without authorization/confirmed stop, and malformed receipts. Preserve every existing timing/locking/output contract.
+
+`transfer ID` still requires verified stop and one new authorization. It writes `transfer_authorized=true` only and emits JSON containing `transfer_authorized: true`, `transfer_completed: false`, and the host action to update parent ownership then acknowledge. Add `confirm-transfer ID --owner OWNER --evidence REFERENCE --confirmation parent-ownership-updated [--now TIMESTAMP]` in `parser()` and `main()`. OWNER and REFERENCE must be nonblank strings. Require confirmed stop and prior authorization. On success persist `transfer_completed=true` and `transfer_receipt={owner, evidence, recorded_at}` with a finite timestamp, and output `transfer_completed: true`. The evidence value is an opaque pointer to an actual parent record; the CLI does not read arbitrary files or mistake a supplied pointer for independent proof. For repeated acknowledgment, the same owner/evidence returns the stored receipt without changing its timestamp; a conflicting owner/evidence fails exit 2 with no mutation. This permits safe recovery after stdout failure.
+
+Keep authorization separate from assignment status: neither transfer command automatically calls `complete` or `cancel`; cancellation without replacement remains valid. Parent flow is stop and verify writes, confirm-stopped, transfer, actually update parent-owned state, confirm-transfer with evidence, then cancel the superseded active assignment if needed. Verified task completion retains `complete` semantics. Require the parent to read the updated owner and receipt before reporting reassignment complete or dispatching overlapping replacement work. Retain a failed/blocked transfer as pending while independent work proceeds. A replacement requires normal routing and fresh registration.
+
+Version 2 files must fail closed with an actionable unsupported-version diagnostic and remain byte-identical. Do not add automatic migration. README instructs the parent to finish with the matching version 2 CLI or create a fresh version 3 session state after reconciling real assignments. Historical `transferred=true` must never manufacture a completion receipt; pending transfers require actual ownership reconciliation first. Preserve original files and use distinct state paths.
+
+Verification is vertical red/green through the public CLI, extending `SchedulerCliTests`. Cover the reproducer, successful parent update/acknowledgment, unauthorized and premature acknowledgment, missing/blank evidence, malformed receipt/state, v2 rejection, duplicate matching acknowledgment, conflicting retry, output failure recovery via list, and cancel with no transfer. Keep existing extension and timing cases. Run from repository root, once authorized: `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`. Expect exit 0; every negative transition returns 2, no traceback, and unchanged state. Update help checks for the new command. Then run the skill definition validator documented in create-skill README. Stop at the correctness contract; no optimization or live evaluation.
+
+## Milestone 2: Make evaluation prerequisites enforceable
+Status: open
+Acceptance: not met
+
+### T2: Narrow scenario preparation and evidence grading
+
+Prerequisites: separate implementation instruction; T1 defines the candidate contract before final freezing. T2 fixture/harness work may begin independently of T1 once seams are agreed, but its integration acceptance depends on T1. One implementer owns new `skills/default/delegate-to-subagents/evals/scheduler_pilot.py`, `evals/test_scheduler_pilot.py`, a `evals/pilot-scenarios.json` manifest, and changes to `evals/README.md` and relevant existing scenarios in `evals/evals.json`. If registering the new deterministic suite in `scripts/test-all.py`, own that file and its registry tests serially with other workers. Registry integration never authorizes running the aggregate suite.
+
+Provide standard-library public commands `prepare --run-root PATH --baseline PATH --candidate PATH --config PATH`, `preflight --manifest PATH --provider codex|copilot`, `run --manifest PATH --cell CELL_ID --phase smoke|scenario`, and `grade --manifest PATH --cell CELL_ID`. Help exits 0 without provider execution; preparation and preflight perform no model calls. Model execution occurs only in explicit run. Reject reused/nonprivate roots, changed hashes/settings, missing prerequisites, output escapes, broad permission bypass flags and malformed manifests. Normal JSON goes to stdout, diagnostics to stderr; invalid setup/invocation exits 2, timeout 124, interruption 130. Grade exits 0 when a valid grading artifact is produced, including behavioral failures; inspect its fields.
+
+Freeze source snapshots, all prompts, rubrics, provider version/help/settings, exact permitted command argv and write roots in a manifest. Freeze current v2 before correctness edits and use that snapshot against v3 consistently. The older prose-only snapshot does not answer whether these proposed fixes help. Each independent scored cell starts a fresh session; smoke and scenario for that provider/variant use identical grants, cwd, snapshot and settings. A smoke approval is not permission to expand them later.
+
+Smoke must prove the selected SKILL.md body was actually delivered, plus an actual disposable write and the exact permitted Python command pattern under the same grants. Capture native successful read/execute events or exact delivered content/hash, not startup catalog metadata. Both variants execute their selected snapshot scheduler with the same neutral register/complete fixture on separate smoke state, without demonstrating the scored deadline or transfer behavior. Both smoke paths must prove writing and reading back `repo/outputs/smoke.json`. Freeze absolute runtime paths in the prompts; never let cwd-dependent path interpretation decide output correctness. Preserve failures instead of retrying them invisibly.
+
+Use one combined controlled scenario: missed checkpoint and single-extension expiry while independent C progresses; parent-transfer completion after supplied shutdown facts; and exact output-path execution with scenario-specific artifacts. Both variants use their prescribed existing CLIs under the same semantic contract, with version-specific commands where necessary. The scenario contract names `repo/outputs/result.json`, allowed evidence paths, and the JSON schema for that case. Transfer output requires `actions` plus `final_state` including old/new owner, stop/write confirmation, authorization and actual parent update evidence; candidate additionally requires scheduler acknowledgment. The missed-checkpoint case scores stop timing, no second extension/reset, exclusive ownership pending shutdown and independent progress. Output-path case requires valid content at the exact expected path; an otherwise correct file elsewhere fails the output contract. Do not apply a prose-summary rubric to execution JSON.
+
+Keep separate fields for `setup_status` (valid/invalid), `behavior_status` (pass/fail/not_evaluated), `output_contract_status`, per-assertion evidence, and `comparison_eligible`. A failed smoke or unproven delivery is invalid setup with no inferred behavior. Denied required commands during a scored cell remain recorded execution/permission failures, and the affected pair is ineligible for causal comparison. Missing expected output after valid setup fails its applicable output/behavior assertion. Candidate-only script/acknowledgment checks are reported separately from common denominators. Semantic review must inspect authored files and native events, not infer transfer from `transfer_authorized=true` or tool-count heuristics.
+
+Before live use, fake-provider public CLI tests prove both providers' argv/grants, exact skill selection, successful and denied execution, wrong/missing/malformed output, symlink escape rejection, scenario-specific rubric selection, unauthorized confirm-transfer, immutable-input drift, timeout, cancellation, missing usage, and preservation of failed evidence. Include wrapped subprocess invocation as valid execution evidence where exact immutable argv and exit results are retained. Run `rtk proxy python3 skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py`; expect exit 0, using no inference. If registering, also run `rtk proxy python3 scripts/tests/runner/test_test_all.py`. Integration checks must grade known-good and known-bad fixtures covering each assertion in the combined scenario through public commands. Stop after offline acceptance; live smoke belongs to milestone 4.
+
+## Milestone 3: Explain overhead from existing traces
+Status: open
+Acceptance: not met
+
+### T3: Retained-trace analysis before optimization
+
+Prerequisites: separate instruction to perform analysis; read-only access to EVIDENCE. Independent of T1/T2. Ownership: `brain/plans/31-scheduler-reliability/overhead-analysis.md` only, with concise status/evidence updates in this plan by the coordinator. Raw evidence and archived benchmark are immutable inputs.
+
+Inspect every eligible Codex A/B pair from the benchmark, then use C and Copilot only to identify confounds. Build a per-cell timeline using native events and subprocess elapsed times: selected-skill reads, repeated context delivery, routing calls, scheduler calls, provider turns, command batching and authored output. Cite event line ranges and paths. Reconcile totals to native counters and paired deltas; distinguish requested from observed model identity. Report input/output separately, cached/reasoning as subsets, unavailable fields as unmeasured. Do not turn tokens into dollars or use output length as tokens.
+
+Acceptance requires explaining which observed events support an overhead mechanism and which time/token portions cannot be attributed with available traces. Native cumulative input can include repeated context; do not equate it with unique skill-body size. Separate setup/smoke/review from scored process time, and report timing granularity/tool-call confounds. If trace coverage is absent, record the exact gap and preserve an inconclusive result. Optimization is not a task in this plan: any proposed change needs measured evidence, a focused acceptance target and separately authorized scope before source edits. Stop after analysis and recommendations; missing traces do not authorize fresh calls.
+
+## Milestone 4: Run a small both-provider matched pilot
+Status: open
+Acceptance: not met
+
+### T4: Freeze the reviewable pilot and its authorization boundary
+
+Prerequisites: T1/T2 offline acceptance and T3 analysis. Ownership: coordinator owns frozen pilot manifest/config/prompts and plan status. Produce a dry-run command list and hashes without model execution. Pin the selected models/effort, provider versions, sandbox grants, absolute paths, 600-second per-call limit and an eight-call total ceiling. The user must separately authorize these exact live calls after seeing the payload. The prior experiment's permission is exhausted.
+
+Budget: one combined scenario x two variants x two providers x one repeat = four scored fresh sessions, plus one unscored smoke per provider/variant = four calls, total at most eight. Non-inference version/help preflight calls are counted separately and launch no models. Run serially for interpretable timing. Each cell has a new run/session identity; successful smoke evidence can gate that provider/variant's cells only under unchanged hashes/settings/grants. Any provider needs unavailable controls or incompatible sessions, stop before inference and report the missing prerequisite. Do not switch provider/model or add calls to compensate.
+
+### T5: Execute and review exactly the authorized pilot
+
+Prerequisites: T4 complete and separate explicit live authorization. Ownership: one operator controls model calls; one coordinator reconciles evidence/report. This plan does not itself authorize delegation. For each provider, require both variant smokes before its scored cells. If smoke or delivery/write/command permissions fail, stop that provider's dependent cells; independent authorized provider work may proceed. A failed or timed-out attempt consumes its budget slot. Preserve it; no retries, replacement cells or second repetition without a new instruction.
+
+Use symmetric semantic/prompt conditions, tool-call granularity, scoped command/write permissions, cwd and result contracts. Both sides execute their prescribed existing CLI; commands naturally differ by version and candidate acknowledgment is reported separately. The common requirement is a recorded actual parent ownership change after confirmation. If equivalent contracts cannot be achieved, label comparison ineligible and stop that comparison rather than optimizing the weaker setup mid-pilot. Scenarios use synthetic worker facts; no real worker shutdown claim is permitted.
+
+For every cell retain exact prompt, snapshot/config hashes, argv/grants, provider version/settings, cwd, session identity, native stdout/stderr/events, authored artifacts, exit/timeout, monotonic duration and native usage. Produce `grading.json` with assertion citations and independent manual review, then `pilot-report.md` and `pilot-benchmark.json` beside this plan. Runtime roots are fresh private external workspaces named in that report; durable conclusions and explicit evidence references are retained in the repository. Store no credentials. Smoke costs are separate from scored costs; report common paired scores, setup/output failures, input/output/cache/reasoning fields, elapsed and tool-call counts. There is one pair per provider (n=1), with no repeat variance estimate or significance claim and no overall-improvement claim from incomplete pairs. A larger matrix or repetition requires a concrete unresolved question and explicit new authorization; it is not automatic plan work.
+
+Acceptance is a fully accounted authorized attempt ledger, valid both-provider prerequisite evidence, and transparent results for all eligible pairs. A behavioral failure is a valid pilot observation, not permission to repair and rerun within this task. Completion may report an inconclusive pilot if prerequisites fail; it must not claim the behavioral objective improved. Stop after the report; scaling, optimization, CI and commits require new scope.
+
+## Concrete Steps
+
+Current action: the parent completes the separately authorized commit/main merge/topic-branch deletion of existing changes, then stops. No implementation or evaluation command is authorized now. On a later authorized implementation turn, first reconcile this plan with source/staging, freeze the version 2 baseline, activate TDD with the approved public seams, and retain the T1 E2E reproducer before changing source. T1 and T2 own separate files but share the frozen candidate contract; serialize any updates to the plan. T3 may run independently only if within the later authorization's scope. T4 depends on all three; T5 depends on T4 and fresh live authorization.
+
+Once T1 is authorized, its CLI reproducer can use a disposable state path and prefix each invocation with `rtk proxy python3 skills/default/delegate-to-subagents/scripts/scheduler.py --state <temporary>/state.json`. Use `register B agent-old task --deadline 100 --checkpoint 300 --grace 5 --now 0`, `tick --now 100`, `tick --now 105`, and the transition sequence specified in T1. Synthetic times avoid sleeping. Record expected versus observed exit codes and state, then run only the focused commands named in each milestone. No automatic aggregate run or provider evaluation follows a passing offline suite.
+
+## Validation and Acceptance
+
+All test outputs and pilot results above are expectations, not observed successes. This authoring session used source inspection and static document/navigation checks only. Milestone 1 requires integrated parent-file plus scheduler acknowledgment evidence and preserved negative gates; a unit test of a boolean is insufficient. Milestone 2 requires offline positive and negative fixtures for delivery checks, permitted disposable execution, precise output locations and correct per-scenario grading. Milestone 3 requires trace-backed attribution or explicitly stated uncertainty. Milestone 4 verifies actual provider prerequisites through authorized live smoke before any scored session, then requires both-provider matching and a complete budget ledger, including invalid and permission-confounded observations.
+
+## Idempotence and Recovery
+
+Preserve existing staging and unrelated edits. Use disposable state and isolated fixture roots; do not reuse the archived evaluation workspace for new runs. Inspect `list` after a failed output write because mutation may already be saved. Matching confirm-transfer retries return the same receipt; conflicting retries fail safely. Parent crash after its ownership update but before acknowledgment requires reading actual parent state and recording the existing evidence, never dispatching a second replacement. Crash before update leaves authorization pending; confirm real shutdown/ownership again before proceeding. Cancellation remains available without replacement.
+
+Keep original v2 state immutable during manual reconciliation and use new paths for v3. Roll back unaccepted source edits narrowly without resetting unrelated changes; keep failing tests and evidence. Fresh inference after failure always needs a newly authorized budget, not an overwritten run. If external raw traces disappear, stop trace-based conclusions and name the missing evidence; benchmark summaries remain historical findings, not a substitute for unavailable native proof.
+
+## Surprises & Discoveries
+
+- Current source explicitly describes transfer as permission, whereas its stored flag is named as completion. The parent integration gap appears in two of four current execution cells.
+- The maintained create-skill runner is real infrastructure but its phase/grant contract is unsuitable here. A narrow maintained scheduler harness is required before claiming valid execution prerequisites.
+- Static source inspection and historical fixture runs cannot prove real worker shutdown; the proposed pilot remains synthetic on that axis.
+
+## Outcomes & Retrospective
+
+The requested cleanup and planning are complete. Reports, benchmark, embedded viewer and external raw evidence remain retained. All implementation, analysis and evaluation milestones remain open with acceptance not met. No source changes, tests, provider calls or CI changes were performed for this bounded authoring task. The parent owns the separately authorized Git integration of existing changes. After it completes, the next action belongs to the user: separately instruct whether to execute any part of this plan. Reusable evaluation guidance remains linked from the existing durable brain notes rather than duplicated as new policy.

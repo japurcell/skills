@@ -6,7 +6,26 @@ Use when authoring evaluation fixtures or graders, running skill benchmarks, or 
 
 Keep one `iteration-N/eval-*/` directory per evaluation, with one `eval_metadata.json` beside configuration/run directories. Use a sibling `<skill-name>-workspace/` or a disposable external workspace. Snapshot the existing skill before editing. Keep baseline snapshots and input fixtures immutable by writing each run's outputs to its own directory in a fresh iteration.
 
-Point live prompts at the exact local SKILL.md or snapshot and instruct the model to ignore installed copies. For live `copilot -p` runs, use `--output-format json` and `--share <transcript.md>`. Retain `response.md`, `timing.json`, and `transcript.md` before grading or aggregation.
+For skill-enabled runs, point live prompts at the exact local SKILL.md or snapshot and instruct the model to ignore installed copies. Preserve the absence of the skill in `without_skill` baselines. Use consistent provider versions/settings and separate roots for paired runs.
+
+## Runner evidence and benchmark artifacts
+
+The runner records execution evidence; it does not grade behavior or create all benchmark artifacts. Preserve its native files before deriving the formats required by the maintained grader and aggregator:
+
+| Native evidence | Contents and use |
+| --- | --- |
+| `manifest.json` | Run identity, snapshot/configuration hashes, provider preflight, settings, session identity, smoke receipt, and turn records. |
+| `evidence/<NN>-<phase>.json` | Captured stdout/stderr, command, cwd, prompt-file path, timestamps, `duration_seconds`, exit code, and timeout status. Keep the referenced prompt files too. |
+| `evidence/<NN>-<phase>-response.txt` | Codex's requested final-response output, when produced; verify its presence before using it. Copilot responses remain in captured provider output. |
+| `evidence/provider-logs/` | Copilot logs, when produced; inspect their coverage before treating them as a transcript. |
+
+When a consumer expects `response.md`, `timing.json`, or `transcript.md`, produce those derived artifacts with an explicit mapping to the selected run and source turn files:
+
+- **Response:** extract the actual assistant response for the scored turn, preserving raw output. Do not substitute a summary of what the agent should have done.
+- **Timing:** populate `total_duration_seconds` from the selected turns' observed `duration_seconds`. Record which turns are included and whether smoke/retry costs are excluded; report excluded costs separately. These durations measure provider subprocess execution, excluding preparation, preflight, and time between turns. Record `total_tokens` only from observed provider usage; mark unavailable metrics as unmeasured rather than zero.
+- **Transcript:** render retained prompts and provider events in order, with source references and explicit coverage gaps. Logs or stdout are not automatically a complete conversation transcript. Missing evidence required by an assertion fails that assertion; do not invent missing messages or tool activity.
+
+For direct Copilot runs through an alternative harness, retain `--output-format json` output and a `--share <transcript.md>` export using that harness's supported CLI options. The bundled runner does not expose `--share` or arbitrary argument passthrough; normalize its captured evidence instead. Preserve scenario-specific authored files, fixture observations, and actual Git results alongside provider records when the grader needs them. Require the consumer's artifacts before grading or aggregation; a successful runner exit alone is insufficient.
 
 ## Assertions and graders
 

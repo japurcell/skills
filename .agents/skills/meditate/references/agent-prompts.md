@@ -1,14 +1,14 @@
 # Agent Prompt Specs
 
-All agents are spawned as `subagent_type: "general-purpose"`. All agents are **read-only** - they return structured markdown reports, no edits.
+Use available general analysis subagents, or bounded local passes if delegation is unavailable. All reviewers are **read-only** - they return structured markdown reports, no edits.
 
 ## Common prompt inclusions
 
 Every agent prompt should include:
 
-- Brain snapshot path: `/tmp/brain-snapshot.md` - Read this one file for all brain content
+- Brain snapshot path: the actual temporary path from the invoking session - Read this one file for all brain content
 - Brain vault path: `brain/`
-- Use Glob/Grep only for **codebase verification**, not for reading brain/skill files
+- Use available search tools only for **codebase verification**, not for reading brain/skill files
 - Return a structured markdown report
 
 ## Auditor
@@ -17,7 +17,7 @@ Every agent prompt should include:
 
 Prompt spec:
 
-- Read `/tmp/brain-snapshot.md` and parse it to build a map of Markdown links resolved relative to each source-file header - no individual brain file reads needed
+- Read the supplied brain snapshot and parse it to build a map of Markdown links resolved relative to each source-file header - no individual brain file reads needed
 - Use the file headers (`=== path ===`) as the on-disk file list for orphan detection
 - Cross-reference each note against the current codebase state (check if referenced files, patterns, tools, or decisions still exist) - the only part that requires Read/Grep/Glob calls
 - Flag notes as:
@@ -34,7 +34,7 @@ Prompt spec:
 
 ## Reviewer
 
-**Inputs:** brain snapshot, skills snapshot (`/tmp/skills-snapshot.md`), auditor report, `brain/principles.md`.
+**Inputs:** actual brain and skills snapshot paths, auditor report, `brain/principles.md`.
 
 Single agent that combines synthesis, distillation, and skill review in one pass. Produces three report sections.
 

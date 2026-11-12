@@ -20,7 +20,7 @@ Track the review in the active plan when one exists; otherwise use the available
    - Friction in skill execution, orchestration, or delegation
    - Repeated manual steps that could be automated or encoded
 2. **Identify lessons** that will matter in a future session. If none qualify, finish here.
-3. **Route each remaining learning** to the appropriate destination below. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover.
+3. **Route and persist each remaining learning** during this reflection. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover; keep reusable guidance in indexed topic notes, skill instructions, or structural enforcement. An existing active plan may link to the saved guidance when useful to its task.
 4. **Reconcile navigation** using the brain skill after a brain write. Hooks own the root inventory.
 
 ## Routing

@@ -1,8 +1,8 @@
 ---
 name: ruminate
 description: Mine past conversations for uncaptured patterns, corrections, and knowledge. Cross-references with existing brain content. Triggers on "ruminate", "mine my history", "what have I been working on", "review past sessions", "extract learnings".
-compatibility: Requires python3
 disable-model-invocation: true
+compatibility: Requires Python 3.12+.
 ---
 
 # Ruminate
@@ -15,11 +15,11 @@ Track each step through the available planning tools or a short checklist.
 
 ### 1. Read the brain
 
-Create one temporary directory with Python's `tempfile.mkdtemp(prefix="ruminate-")`. Retain its exact path for extraction, snapshot, findings, and cleanup. Build the brain snapshot inside it:
+Create one temporary directory with Python's `tempfile.mkdtemp(prefix="ruminate-")`. Retain its exact path for extraction, snapshot, findings, and cleanup. Run the snapshot helper with Python 3.12+:
 
-`sh .agents/skills/meditate/scripts/snapshot.sh brain/ <temporary-directory>/brain-snapshot.md`
+`python <meditate-skill-path>/scripts/snapshot.py brain <temporary-directory>/brain-snapshot.md`
 
-Replace the placeholder with the retained temporary path. Pass the snapshot path to each analysis agent. This avoids loading the full brain into the ruminate orchestrator's context.
+Use the available Python 3.12+ executable (`python`, `python3`, or `py -3.12`). Pass the snapshot path to each analysis agent. This avoids loading the full brain into the ruminate orchestrator's context.
 
 ### 2. Locate conversations
 
@@ -42,7 +42,7 @@ import subprocess
 import sys
 
 subprocess.run([
-    sys.executable, ".agents/skills/ruminate/scripts/extract-conversations.py",
+    sys.executable, "<ruminate-skill-path>/scripts/extract-conversations.py",
     "<temporary-directory>/extracted",
     "--claude-dir", str(Path.home() / ".claude/projects/<project-slug>"),
     "--codex-dir", str(Path.home() / ".codex/sessions"),
@@ -50,7 +50,7 @@ subprocess.run([
 ], check=True)
 ```
 
-Replace placeholders with actual temporary and project paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
+Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
 
 Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
 
@@ -99,7 +99,7 @@ Apply only the changes the user approves. Follow brain writing conventions:
 
 - One topic per file, organized in directories
 - Use file-relative Markdown links to connect related notes
-- Maintain curated indexes through the brain skill and let hooks reconcile the root inventory
+- Activate the `brain` skill to maintain curated indexes and reconcile the root inventory, using manual indexing if hooks are unavailable
 - Default to updating existing notes over creating new ones
 
 ### 7. Clean up

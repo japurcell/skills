@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 import json
+import argparse
 import re
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 
@@ -296,7 +298,30 @@ def eval_validation_workflow(run_dir: Path) -> list[dict]:
         first = validations[0][1]
         last_index, last = validations[-1]
         commit_index, commit = commits[0]
-        scoped_files = all(Path(event["path"]).resolve().is_relative_to(run_dir.resolve()) for _, event in validations)
+        root = run_dir.resolve()
+
+        def contained(path: Path) -> bool:
+            try:
+                path.resolve().relative_to(root)
+                return True
+            except (OSError, ValueError):
+                return False
+
+        def validation_is_scoped(event: dict) -> bool:
+            observed = Path(event["path"])
+            if not contained(observed):
+                return False
+            argv = event.get("argv")
+            if argv is None:
+                return True
+            if not argv:
+                return False
+            argument_path = Path(argv[0])
+            if not argument_path.is_absolute():
+                argument_path = run_dir / "repo" / argument_path
+            return contained(argument_path) and argument_path.resolve() == observed.resolve()
+
+        scoped_files = all(validation_is_scoped(event) for _, event in validations)
         final_message = last.get("message", "")
         expectations = [
             expectation("The initial malformed draft fails validation.",
@@ -365,6 +390,14 @@ def eval_attribution_workflow(run_dir: Path) -> list[dict]:
         if not validations or len(commits) != 1:
             raise ValueError("expected a validator observation and exactly one commit observation")
         repo = run_dir / "repo"
+        run_root = run_dir.resolve()
+
+        def contained(path: Path) -> bool:
+            try:
+                path.resolve().relative_to(run_root)
+                return True
+            except (OSError, ValueError):
+                return False
 
         for _, event in validations:
             path = event.get("path")
@@ -383,7 +416,9 @@ def eval_attribution_workflow(run_dir: Path) -> list[dict]:
             argument_path = Path(argv[0])
             if not argument_path.is_absolute():
                 argument_path = repo / argument_path
-            if argument_path.resolve() != Path(path).resolve():
+            observed_path = Path(path)
+            if (not contained(argument_path) or not contained(observed_path)
+                    or argument_path.resolve() != observed_path.resolve()):
                 raise ValueError("validator argv message path does not match its observed input path")
 
         if any(not isinstance(event.get("message"), str) for _, event in commits):
@@ -468,28 +503,44 @@ def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: python3 skills/default/commit/evals/grade_benchmark.py skills/default/commit-workspace/<iteration-dir>")
-        return 1
-
-    iteration_dir = Path(sys.argv[1])
-    if not iteration_dir.exists():
-        print(f"Iteration directory not found: {iteration_dir}")
-        return 1
-
-    for eval_dir in sorted(iteration_dir.glob("eval-*")):
-        metadata = read_json(eval_dir / "eval_metadata.json")
-        eval_id = metadata.get("eval_id")
-        for config_dir in sorted(path for path in eval_dir.iterdir() if path.is_dir()):
-            run_dirs = sorted(config_dir.glob("run-*"))
-            if not run_dirs:
-                continue
-            for run_dir in run_dirs:
-                expectations = grade_expectations(eval_id, run_dir)
-                grading = build_grading(run_dir, expectations)
-                (run_dir / "grading.json").write_text(json.dumps(grading, indent=2) + "\n")
-
-    print(f"Wrote grading.json files in {iteration_dir}")
+    parser = argparse.ArgumentParser(
+        description="Grade retained commit-skill evaluation artifacts without launching a provider.",
+        allow_abbrev=False,
+        epilog="Reads an iteration from the argument; JSON result on stdout, diagnostics on stderr. Exit 0 when graded (including assertion failures), 2 for invalid input or I/O errors. Example: python3 grade_benchmark.py /path/to/iteration-1",
+    )
+    parser.add_argument("iteration_dir", type=Path, help="existing iteration directory containing eval-* artifacts")
+    args = parser.parse_args()
+    iteration_dir = args.iteration_dir
+    if not iteration_dir.is_dir():
+        parser.error(f"iteration directory not found or not a directory: {iteration_dir}")
+    written = []
+    try:
+        for eval_dir in sorted(iteration_dir.glob("eval-*")):
+            metadata = read_json(eval_dir / "eval_metadata.json")
+            eval_id = metadata.get("eval_id")
+            for config_dir in sorted(path for path in eval_dir.iterdir() if path.is_dir()):
+                for run_dir in sorted(config_dir.glob("run-*")):
+                    expectations = grade_expectations(eval_id, run_dir)
+                    grading = build_grading(run_dir, expectations)
+                    target = run_dir / "grading.json"
+                    target.write_text(json.dumps(grading, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+                    written.append(str(target))
+    except (OSError, UnicodeError) as exc:
+        print(f"grade_benchmark: {exc}", file=sys.stderr)
+        return 2
+    if not written:
+        print(f"grade_benchmark: no runs found in {iteration_dir}", file=sys.stderr)
+        return 2
+    try:
+        print(json.dumps({"iteration_dir": str(iteration_dir.resolve()), "grading_files": written,
+                          "count": len(written)}, ensure_ascii=False), flush=True)
+    except BrokenPipeError:
+        try:
+            sys.stdout.close()
+        except BrokenPipeError:
+            pass
+        sys.stdout = open(os.devnull, "w", encoding="utf-8")
+        return 0
     return 0
 
 

@@ -20,7 +20,7 @@ Track the review in the active plan when one exists; otherwise use the available
    - Friction in skill execution, orchestration, or delegation
    - Repeated manual steps that could be automated or encoded
 2. **Identify lessons** that will matter in a future session. If none qualify, finish here.
-3. **Route each remaining learning** to the appropriate destination below. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover.
+3. **Route and persist each remaining learning** during this reflection. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover; keep reusable guidance in indexed topic notes, skill instructions, or structural enforcement. An existing active plan may link to the saved guidance when useful to its task.
 4. **Reconcile navigation** using the brain skill after a brain write. Hooks own the root inventory.
 
 ## Routing
@@ -33,7 +33,7 @@ Before routing a learning to `brain/`, ask: can this be a lint rule, script, met
 
 ### Brain files (`brain/`)
 
-Codebase knowledge, delegation principles, gotchas - anything that informs future sessions. This is the default destination. Use the `brain` skill for writing conventions.
+Codebase knowledge, delegation principles, gotchas - anything that informs future sessions. This is the default destination. Activate the `brain` skill for writing conventions.
 
 - One topic per file. File name = topic slug.
 - Group in directories with index files using standard Markdown links.
@@ -41,19 +41,19 @@ Codebase knowledge, delegation principles, gotchas - anything that informs futur
 
 ### Skill improvements (`.agents/skills/<skill>/`)
 
-If a learning is about how a specific skill works - its process, prompts, or edge cases - update the skill directly. Use the `skill-creator` skill for guidelines on effective skill content.
+If a learning is about how a specific skill works - its process, prompts, or edge cases - update the skill directly. Activate the `create-skill` or `skill-creator` skill when available; otherwise preserve its invocation controls, keep resources self-contained, and verify the affected procedure directly.
 
 ### Orchestration workflow improvements
 
 If the session revealed systemic orchestration issues, route to:
 
-- **Brain principle** (new delegation heuristic) → `brain/delegation/`
+- **Brain principle** (new delegation heuristic) → `brain/principles/`, linked from `brain/principles.md`
 - **Skill mechanics change** (monitoring loop, review step) → relevant skill file
 - **New skill opportunity** (recurring workflow that could be encoded) → note in summary for the user
 
 ### Backlog items (`brain/todos.md`)
 
-Follow-up work that can't be done during reflection - bugs, non-trivial rewrites, tooling gaps. Use the `todo` skill to file.
+Follow-up work that can't be done during reflection - bugs, non-trivial rewrites, tooling gaps. Activate the `todo` skill to file.
 
 ## Summary
 

@@ -22,7 +22,7 @@
 ## Delegation
 
 - [principles/cost-aware-delegation](principles/cost-aware-delegation.md)
-- [principles/guard-the-context-window](principles/guard-the-context-window.md)
+- [Context budget and guidance placement](principles/guard-the-context-window.md)
 - [principles/never-block-on-the-human](principles/never-block-on-the-human.md)
 
 ## Meta

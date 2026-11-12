@@ -17,6 +17,58 @@ GRADER = SKILL / "evals" / "grade_benchmark.py"
 
 
 class WorkflowGradingTests(unittest.TestCase):
+    def test_preparer_help_and_expected_errors(self):
+        script = Path(__file__).with_name("prepare_validation_workflow.py")
+        help_result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True)
+        self.assertEqual(help_result.returncode, 0)
+        self.assertIn("stderr", help_result.stdout)
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run([sys.executable, str(script), directory, directory], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertNotIn("Traceback", result.stderr)
+
+    def test_empty_iteration_is_input_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = subprocess.run([sys.executable, str(Path(__file__).with_name("grade_benchmark.py")), directory], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("no runs", result.stderr)
+            self.assertEqual(result.stdout, "")
+
+    def test_grader_help_and_invalid_input_use_public_cli_conventions(self):
+        help_result = subprocess.run([sys.executable, str(GRADER), "--help"],
+                                      capture_output=True, text=True, timeout=5)
+        self.assertEqual(help_result.returncode, 0)
+        self.assertIn("without launching a provider", help_result.stdout)
+        self.assertEqual(help_result.stderr, "")
+        invalid = subprocess.run([sys.executable, str(GRADER), "/missing/iteration"],
+                                 capture_output=True, text=True, timeout=5)
+        self.assertEqual(invalid.returncode, 2)
+        self.assertIn("iteration directory not found", invalid.stderr)
+        self.assertEqual(invalid.stdout, "")
+
+    def test_grader_success_emits_machine_readable_json_only(self):
+        iteration, run = self.prepare()
+        self.repair(run)
+        self.commit(run)
+        result = subprocess.run([sys.executable, str(GRADER), str(iteration)],
+                                capture_output=True, text=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        output = json.loads(result.stdout)
+        self.assertEqual(output["count"], 1)
+        self.assertEqual(output["grading_files"], [str(run / "grading.json")])
+
+    def test_grader_handles_closed_stdout_pipe(self):
+        iteration, run = self.prepare()
+        self.repair(run)
+        self.commit(run)
+        process = subprocess.Popen([sys.executable, str(GRADER), str(iteration)],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process.stdout.close()
+        stderr = process.stderr.read()
+        process.stderr.close()
+        self.assertEqual(process.wait(timeout=10), 0, stderr)
+
     def prepare(self, fixture=None):
         temporary = tempfile.TemporaryDirectory(prefix="commit-workflow-")
         self.addCleanup(temporary.cleanup)
@@ -471,6 +523,34 @@ class WorkflowGradingTests(unittest.TestCase):
                 events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
                 grading = self.grade(iteration, run)
                 self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_validator_path_symlink_escape_fails_grading(self):
+        iteration, run = self.make_valid_no_identity_run()
+        outside = run.parent / "outside-message.txt"
+        outside.write_text((run / "message.txt").read_text(), encoding="utf-8")
+        link = run / "escaped-message.txt"
+        link.symlink_to(outside)
+        events_path = run / "events.jsonl"
+        events = [json.loads(line) for line in events_path.read_text().splitlines()]
+        validation = next(event for event in events if event["kind"] == "validation")
+        validation["path"] = str(link)
+        validation["argv"][0] = str(link)
+        events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+        grading = self.grade(iteration, run)
+        self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_validator_path_outside_run_fails_grading(self):
+        iteration, run = self.make_valid_no_identity_run()
+        outside = run.parent / "shared-message.txt"
+        outside.write_text((run / "message.txt").read_text(), encoding="utf-8")
+        events_path = run / "events.jsonl"
+        events = [json.loads(line) for line in events_path.read_text().splitlines()]
+        validation = next(event for event in events if event["kind"] == "validation")
+        validation["path"] = str(outside)
+        validation["argv"][0] = str(outside)
+        events_path.write_text("".join(json.dumps(event) + "\n" for event in events))
+        grading = self.grade(iteration, run)
+        self.assertGreater(grading["summary"]["failed"], 0, grading)
 
 
 if __name__ == "__main__":

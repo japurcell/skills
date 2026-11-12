@@ -1,0 +1,47 @@
+# Delegation scheduler targeted evaluation
+
+The scheduler demonstrates its public CLI transitions in the sampled current runs, but the evidence does not establish an overall improvement. Codex written decisions tied; both baseline execution runs recorded a simulated ownership transfer; current did so in one of two repeats, while the other recorded authorization only. One Copilot B pair favors current on the missed-checkpoint assertion, but its current result failed the requested output location. Copilot C is permission-confounded, so its apparent score advantage cannot be attributed to the scheduler. These are diagnostic observations, not estimates of general reliability.
+
+## Evidence and scope
+
+Reports and review copies are stored beside [the archived plan](ExecPlan.md). Raw provider evidence remains in `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r`.
+
+The frozen design is 3 scenarios x 2 variants x 2 providers x 2 repeats, 24 retained attempts, executed serially. The immutable snapshot hashes and source verification are in [input manifest](/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/snapshots-manifest.json) and [integrity receipt](/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/final-integrity-check.json). Raw cells are in `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/harness/prepared-matrix-t3-attempt-1/iteration-1/`. The redundant normalized `review-copies/` directory was removed at the user's request on 2026-11-11. Per-cell review findings and native evidence references remain in the structured benchmark and the self-contained static viewer; original prompts, outputs and provisional grades remain in the external raw cells. [benchmark.json](benchmark.json) is the structured source of per-cell evidence, native token fields, native event counts, pair observations, means and sample standard deviations. Raw outputs and provisional grades remain unchanged.
+
+The harness classified 15 provisionally eligible, 3 requiring catalog review, and 6 unproven. All three later catalog cases are eligible after inspecting subsequent native events: a startup catalog describes the installed skill but does not supply its body; the old snapshot body was delivered, and no candidate/installed delegation body was observed later. One early Copilot B baseline previously counted unproven actually received the full old snapshot through Python (stdout lines 484, 494); it is delivered but has no candidate under the same access revision. Thus 18 cells form 9 matched pairs, one delivered baseline is unpaired, and five cells remain excluded for unproven selected-skill delivery. Six first Copilot calls experienced denied reads, but denial alone did not prevent the one Python delivery. There is no Copilot A pair and only one Copilot B pair. Access revisions are never mixed.
+
+## Matched common behavior
+
+| Scenario and provider | Repeats | Old common passes | Current common passes | Current minus old | Output and interpretation |
+|---|---:|---|---|---|---|
+| A / codex | 2 | 3/3, 3/3 | 3/3, 3/3 | +0.000, +0.000 | Both output contracts pass. |
+| A / copilot | 0 | none | none | unmeasured | No matched delivery. |
+| B / codex | 2 | 3/3, 3/3 | 3/3, 3/3 | +0.000, +0.000 | Both output contracts pass. |
+| B / copilot | 1 | 2/3 | 3/3 | +0.333 | Current semantic 3/3, but requested output path absent; old restarts a checkpoint window. |
+| C / codex | 2 | 5/5, 5/5 | 4/5, 5/5 | -0.200, +0.000 | Current repeat 1 records authorization only; repeat 2 records a synthetic transfer. |
+| C / copilot | 2 | 0/5, 0/5 | 5/5, 4/5 | +1.000, +0.800 | Old shell executions denied; comparison is permission-confounded. |
+
+Common scores assess A1-A3, B1-B3 and C1-C5 only. The result contract is separate. C requires `actions` and `final_state`; the provisional helper wrongly applies A/B `summary` fields to C and its overall grades are not authoritative. C5 requires modeled ownership transfer after the supplied stop confirmation, not a real worker transfer. Codex current repeat 2 records an explicit synthetic parent transfer in result actions[19:22]; Copilot current repeat 1 records a synthetic transfer in `repo/outputs/evidence/parent-ownership.json`. These pass. Codex current repeat 1 and Copilot current repeat 2 record scheduler authorization only, without a synthetic parent transfer, and fail this assertion. Both Codex baseline results record a replacement owner in simulated parent state. The rubric does not specify a separate host-state file; an action record suffices. The scheduler `transferred=true` flag alone is ambiguous because the CLI says the host may perform transfer. These gaps do not show premature transfer or a real worker safety failure. C4 preserves ownership until the synthetic stop facts. Current C6 is proven in all four current C runs, including Codex repeat 2 wrappers that call the exact immutable script and retain subprocess results. C6 is excluded from common denominators.
+
+Copilot B repeat 2 wrote `../outputs/result.json` relative to the repo (cell-root output), as shown by stdout lines 2029 and 2211. The semantic assertions are scored against that actual file, but the requested `repo/outputs/result.json` does not exist: the output contract fails. For Copilot C baseline repeat 1 shell attempts were repeatedly denied and no result was produced; repeat 2 stdout lines 3428-3430 show the register command denied and its result reports no exercise. Missing required execution evidence fails C1-C5, but the result is a permission limitation and does not measure the skill's execution quality.
+
+## Observed paired costs
+
+The following are current minus old, paired by repeat. They measure provider process time only: setup, approval, orchestration, smoke and review are excluded. C candidate instructions require separate tool calls while baseline may batch, so C timing and tool counts are confounded. Input and output are separate provider-native counters; cached input and reasoning are available in [benchmark.json](benchmark.json) and must not be added to their parent counts. No output-length token substitution is used. Standard deviation is the sample standard deviation of two deltas, not an uncertainty interval.
+
+| Scenario / provider | Time delta seconds, repeats; mean ± sample SD | Input token delta, repeats; mean ± sample SD | Output token delta, repeats; mean ± sample SD |
+|---|---|---|---|
+| A / codex | +11.1, +5.1; +8.1 ± 4.2 | +34328.0, +26986.0; +30657.0 ± 5191.6 | +279.0, +62.0; +170.5 ± 153.4 |
+| A / copilot | unmeasured | unmeasured | unmeasured |
+| B / codex | +4.7, +7.6; +6.1 ± 2.1 | +26863.0, +70478.0; +48670.5 ± 30840.5 | -89.0, +534.0; +222.5 ± 440.5 |
+| B / copilot | +6.2; +6.2 (n=1) | +30154.0; +30154.0 (n=1) | +230.0; +230.0 (n=1) |
+| C / codex | -85.9, -42.5; -64.2 ± 30.7 | -28212.0, +612296.0; +292042.0 ± 452907.6 | -2693.0, -2089.0; -2391.0 ± 427.1 |
+| C / copilot | +204.0, +286.0; +245.0 ± 57.9 | +1178328.0, +3227582.0; +2202955.0 ± 1449041.4 | +19995.0, +18226.0; +19110.5 ± 1250.9 |
+
+The selected Codex request was `gpt-6.1-sol` with medium reasoning; its native transcript does not independently expose the resolved model. Copilot reports `gpt-6-luna` medium. Native selected-model token counters are distinct from session counters; neither is monetary cost. Native command/file-change completed events for Codex and tool-start events by tool name for Copilot are counted per cell in [benchmark.json](benchmark.json). They are provider-specific event counts, not directly comparable tool categories. Candidate C command-event counts containing the exact scheduler path, with stdout line references, appear in each cell; this is not guaranteed to count each subprocess within a batch. Total scheduler subprocess counts remain unmeasured. The provisional parser misses some Codex file-change events and its scheduler count conflates different commands. Copilot session `tokenDetails` are recorded separately from selected-model `modelMetrics` and are not added to them.
+
+## Practical next steps
+
+Treat explicit host transfer after confirmed stop as an integration obligation when using the scheduler, and retain a separate parent-owned record of the resulting ownership. Ensure callers write the requested artifact in the requested working directory. If a future evaluation is authorized, verify each selected skill read and an actual disposable write-capable execution in provider smoke under the same grants, and match both variants under the same revision. Add explicit evidence for the host transfer and consider symmetric execution instructions before comparing time. This review does not change the skill or rerun providers.
+
+The supplementary [bounded wait receipt](/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-eval-09vb9n1r/real-wait-probe/receipt.json) shows a real-clock `wait --max-wait 0.2` return with no events in 0.239714 seconds, exit 0. It does not establish responsiveness under real subagent workloads. All C times, interruptions and worker shutdown facts in the scored exercise are synthetic; CLI processes were real, but the scheduler did not terminate an actual worker or its writes. Two repetitions at most and handpicked scenarios do not support statistical significance, generalized reliability, native routing/dispatch claims, or autonomous enforcement.

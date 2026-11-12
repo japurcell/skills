@@ -13,7 +13,7 @@
 - [installer-testing](installer-testing.md)
 - [powershell-installers](powershell-installers.md)
 - [repository-workflow](repository-workflow.md)
-- [scripts-and-installers](scripts-and-installers.md)
+- [Scripts and installers: design, authoring, review, and execution](scripts-and-installers.md)
 - [script-testing](script-testing.md)
 - [secret-scanner](secret-scanner.md)
 - [secret-scanner-recovery](secret-scanner-recovery.md)

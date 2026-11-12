@@ -80,10 +80,12 @@ The `codex` payload is a manual invocation format; Codex need not be installed. 
 
 Ask: "Would I include this in a prompt for a _different_ task?"
 
-- **Yes** → write to `brain/`. It's durable knowledge.
-- **No, it's plan-specific** → update the plan's phase doc instead.
+- **Yes** → write to an existing indexed brain topic, or create and index a focused topic. It's durable knowledge.
+- **No, it's task-specific status, decisions, or evidence** → update the plan's phase doc instead.
 - **No, it's a skill issue** → update the skill file directly.
 - **No, it needs follow-up work** → file a todo with the `todo` skill.
+
+Plans are temporary and may be deleted, including archived plans. Persist reusable lessons and guidance in their canonical topic notes when identified; a plan may link to those notes. Before archiving or deleting a plan, extract any durable guidance that exists only there and verify its saved content and index links. Keep task-specific outcomes and evidence in the plan.
 
 ## Maintenance
 

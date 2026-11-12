@@ -2,7 +2,7 @@
 name: meditate
 description: Audit and evolve the brain vault - prune outdated content, discover cross-cutting principles, review skills for structural encoding opportunities. Triggers on "meditate", "audit the brain", "prune brain", "review skills", "consolidate notes", "prune notes".
 disable-model-invocation: true
-compatibility: Requires a POSIX-compatible sh shell for the bundled snapshot script.
+compatibility: Requires Python 3.12+ for the bundled snapshot script.
 ---
 
 # Meditate
@@ -22,16 +22,27 @@ Track progress with the available planning tools or a short checklist.
 
 ### 1. Build snapshots
 
-```bash
-sh <skill-path>/scripts/snapshot.sh brain/ /tmp/brain-snapshot.md
-sh <skill-path>/scripts/snapshot.sh .agents/skills/ /tmp/skills-snapshot.md
+Use Python 3.12+ to create a temporary directory and run the bundled helper. Replace `<skill-path>` with this skill's directory:
+
+```python
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+temporary = Path(tempfile.mkdtemp(prefix="meditate-"))
+for directory, name in [("brain", "brain-snapshot.md"),
+                        (".agents/skills", "skills-snapshot.md")]:
+    subprocess.run([sys.executable, "<skill-path>/scripts/snapshot.py",
+                    directory, str(temporary / name)], check=True)
+print(temporary)
 ```
 
-Files are delimited with `=== path/to/file.md ===` headers.
+Files are delimited with `=== path/to/file.md ===` headers. Retain the printed directory path and pass actual snapshot paths to reviewers. Keep it until the review finishes.
 
 ### 2. Auditor (blocking - its report feeds step 3)
 
-Use an available general analysis subagent, or perform a bounded local review when delegation is unavailable. See `references/agent-prompts.md § Auditor` for the full prompt spec. Inputs: brain snapshot, auto-memory path, AGENTS.md path.
+Use an available general analysis subagent, or perform a bounded local review when delegation is unavailable. Read [agent prompts](references/agent-prompts.md) for the auditor and reviewer specifications. Inputs: brain snapshot, auto-memory path when present, AGENTS.md path.
 
 Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-value content, verbosity, and orphans. Returns a categorized report.
 
@@ -39,7 +50,7 @@ Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-va
 
 ### 3. Reviewer (after auditor completes)
 
-Use one available general analysis subagent, or continue locally when delegation is unavailable. See `references/agent-prompts.md § Reviewer` for the full prompt spec. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
+Use one available general analysis subagent, or continue locally when delegation is unavailable. Use the reviewer specification from the agent prompts. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
 
 Combines three concerns in a single pass:
 
@@ -49,7 +60,7 @@ Combines three concerns in a single pass:
 
 ### 4. Review reports
 
-Present the user with a consolidated summary. See `references/agent-prompts.md § Report Template` for the format.
+Present the user with a consolidated summary using the report template from the agent prompts.
 
 ### 5. Route skill-specific learnings
 
@@ -73,7 +84,7 @@ Apply all changes directly. The user reviews the diff.
 
 ### 7. Housekeep
 
-Maintain curated navigation through the brain skill; let hooks reconcile the root inventory.
+Activate the `brain` skill to maintain curated navigation and reconcile the root inventory, using manual indexing if hooks are unavailable. Remove only the temporary directory created in step 1 after all reviewers finish, using `shutil.rmtree` in Python with that exact retained path.
 
 ## Summary
 

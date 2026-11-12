@@ -1,10 +1,16 @@
 # Scripts and installers
 
+Read when reviewing, designing, updating, or creating scripts anywhere in this repository, including hooks and skill-bundled scripts.
+
 ## Authoring and execution
 
-- Keep shell/Python helpers in root `scripts/`, with `#!/usr/bin/env bash` or `#!/usr/bin/env python3`, directly executable and simple. Use [common.sh](../../scripts/common.sh) for shared repo-root helpers requiring `REPO_ROOT`.
-- Prefer the standard library unless an existing script already implies dependencies. Primary/machine output goes to stdout; diagnostics, status, progress, warnings, and errors go to stderr.
-- Reserve `-h`/`--help`; prefer descriptive long flags over mixed positional types. Keep interactive prompts optional.
+- All entrypoint scripts throughout the repository must follow CLI design best practices for agents, including but not limited to the requirements below.
+- Keep repository-level shell/Python helpers in root `scripts/`, with `#!/usr/bin/env bash` or `#!/usr/bin/env python3`, directly executable and simple. Use [common.sh](../../scripts/common.sh) for shared repo-root helpers requiring `REPO_ROOT`.
+- Prefer the standard library unless an existing script already implies dependencies.
+- Provide `--help` with usage, options, input/output formats, and exit statuses, without executing normal work. Reserve `-h`/`--help`; prefer descriptive long flags over mixed positional types.
+- Handle I/O correctly: read stdin only according to the documented interface; send primary/machine results to stdout and diagnostics, status, progress, warnings, and errors to stderr. Preserve machine-readable output and host protocol contracts.
+- Use predictable, documented exit statuses and actionable errors. Support noninteractive execution without unexpected prompts; keep interactive prompts optional.
+- Handle malformed input, EOF, broken pipes, and cancellation predictably, with appropriate cleanup.
 - Register cleanup functions by name, for example `trap cleanup EXIT`; quote the exact `mktemp` path and use `--` for recursive cleanup.
 - Gate decorative color/spinners on TTY detection and respect `TERM=dumb`, `NO_COLOR`, and a direct opt-out flag.
 - Never execute human-only `import-skill-repos.sh` or `pull-skill-repos.sh`. Agents use targeted verification and test scripts.
