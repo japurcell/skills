@@ -1,6 +1,6 @@
 # Complete the scheduler comparison with a focused native harness
 
-This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. Focused implementation is uncommitted in `/private/tmp/skills-scheduler-codex-auth`, branch `scheduler-codex-auth`. Independent [review 1](review-focused-1.md) reports Standards one P2 finding and Spec one P1 plus one P2 finding. The source worker is correcting them. Focused source acceptance remains pending. The user explicitly approved removing the added provider-conformance features so the original scheduler comparison can finish. The active contract below supersedes the preserved historical qualification contracts.
+This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion.
 
 ## Purpose / Big Picture
 
@@ -19,7 +19,7 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - The [complete pre-simplification plan](history-before-simplification-2026-11-12.md) was saved before replacement, byte-for-byte, 183736 bytes, SHA-256 `9f0cfdc3e1969a3bc5714c5be6717f2290c0a1d6f1fdc520cb43a3621a914519`. It retains every earlier unique contract, decision, approval, finding and evidence reference. Its superseded implementation instructions are historical.
 - T1 ownership-transfer implementation and acceptance remain complete. Candidate v3 stores authorization separately from actual parent ownership update and explicit acknowledgment. Stop confirmation precedes transfer. Real parent update/readback and candidate acknowledgment evidence remain required. Commit `a873e2c125d56810328cf8ffb56e3efbfc2242a9` and later accepted scheduler corrections are retained in history.
 - T3 retained-trace overhead analysis is accepted. Its results and limits remain in history. No optimization work is added.
-- Latest accepted offline harness source is `3d5a2b5888adf77a49a000e80557bc655f19d8de`, integrated through `0f416340a39abe2398c86a7b50d94b6eed15e1ee`. All 55 then-maintained tests passed in 200.507 seconds and both [startup review axes](review-startup-1.md) found zero issues. These results describe that historical feature set.
+- Historical accepted offline harness source before simplification was `3d5a2b5888adf77a49a000e80557bc655f19d8de`, integrated through `0f416340a39abe2398c86a7b50d94b6eed15e1ee`. All 55 then-maintained tests passed in 200.507 seconds and both [startup review axes](review-startup-1.md) found zero issues. These results describe that historical feature set.
 - [P02 failed startup](pilot-startup-02.md) and [P03 invalid native smokes](pilot-smoke-03.md) remain immutable reports. P03 has two wrappers, two exclusive attempts, two actual evaluation sessions, zero eligible scored pairs and six gated slots. Both native processes exited 0 while qualification failed under the earlier contract.
 
 ## Progress
@@ -28,12 +28,12 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - [x] (2026-11-11) [milestone-3] T3 retained-trace overhead analysis accepted.
 - [x] (2026-11-12) [milestone-2] Historical startup source and offline review accepted at `3d5a2b58`.
 - [x] (2026-11-12) [milestone-2] Preserve full prior plan and save the user-approved focused contract before source edits.
-- [ ] [milestone-2] F1 implementation reduced the harness from about 1800 to 1070 lines. Initial frozen suite has 35/36 passing with one helper cleanup error. Final corrected-byte verification remains pending.
+- [x] (2026-11-12) [milestone-2] F1 focused implementation and retained-core verification accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`, with 38 final-byte tests passing in 142.819 seconds under scoped process permissions.
 - [x] (2026-11-12) [milestone-2] F2 review 1 captured independently, Standards one P2 and Spec one P1 plus one P2 findings.
-- [ ] [milestone-2] F2-C1 restore retained Copilot status SIGINT/exit-130/descendant coverage. Current serialized source worker is addressing it.
-- [ ] [milestone-2] F2-C2 retain unknown non-authoritative telemetry with non-object data without schema invalidity. Current source worker is addressing it.
-- [ ] [milestone-2] F2-C3 reproduce and bind canonical scenario state independently of result-selected copies. Current source worker is addressing it.
-- [ ] [milestone-2] F2 final corrected-byte verification, independent finding/source acceptance and integration.
+- [x] (2026-11-12) [milestone-2] F2-C1 public Copilot status SIGINT/exit-130/descendant coverage restored and accepted in review 2.
+- [x] (2026-11-12) [milestone-2] F2-C2 unknown non-authoritative non-object telemetry retained without schema invalidity, accepted in review 2.
+- [x] (2026-11-12) [milestone-2] F2-C3 public canonical-state corruption reproduction and independent target/state-chain binding corrected, accepted in review 2.
+- [x] (2026-11-12) [milestone-2] F2 final 38-test verification, independent zero-finding review axes and exact-byte integration complete.
 - [ ] [milestone-4] F3 prepare/verify a fresh six-session payload and execute its two neutral smokes and four scored sessions within gates.
 - [ ] [milestone-4] F4 verify each result independently and retain the paired report and machine-readable results.
 - [ ] [milestone-5] F5 persist durable lessons, reconcile all tasks, clean completed worker resources and archive the completed plan.
@@ -62,8 +62,10 @@ T3 accepted observations remain historical evidence. Further retained-trace anal
 
 ### Milestone 2 - Focused usable harness
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion.
 
 #### F1 - Implement focused native execution and behavioral grading
 
@@ -91,16 +93,18 @@ Depends on F1 exact final bytes. Obtain independent Standards and Spec review ag
 
 ##### F2 correction tasks from focused review 1
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
-All three tasks depend on the [immutable review 1](review-focused-1.md) snapshot rooted at `35c31ab9782c293a8777b2145892c31b8aa0c6ae`. The current serialized source worker owns them in `/private/tmp/skills-scheduler-codex-auth`, branch `scheduler-codex-auth`, within F1's existing file scope. The corrections share source/tests and are serialized. Final acceptance depends on all three corrections and exact final-byte verification, then independent review and integration before F3.
+All three findings are resolved in accepted source and independently confirmed by [review 2](review-focused-2.md). The task descriptions below retain their correction scope.
 
-- F2-C1, Standards P2, is in progress. Restore standalone public Copilot status cancellation coverage from the mixed deleted test. Keep SIGINT, exit 130 and status-child/descendant disappearance assertions for the surviving status path. Retire only obsolete layer checks. The finding is static coverage loss, with no claimed observed cancellation defect. Reconcile the test-disposition inventory with retained coverage.
-- F2-C2, Spec P2, is in progress. The reviewer directly reproduced unknown `future.telemetry` with array-valued data yielding `malformed-native-line:1`. Retain unknown non-authoritative telemetry without imposing the deleted schema gate. Required execution/identity records remain strict. Keep a public retained-core reproduction and correction proof for this contract.
-- F2-C3, Spec P1, is in progress. Start with a public E2E reproduction of detached final-state copy plus later canonical-state mutation. The reviewer identified this statically, without full-session reproduction. Independently bind the fixed `outputs/scenario-state.json` used by required helper commands to the actual final receipt/state chain. An agent-selected copied artifact cannot hide changes to the canonical scheduler state. Preserve parent ownership binding, immutable inputs and the full rubric.
+All three tasks depend on the [immutable review 1](review-focused-1.md) snapshot rooted at `35c31ab9782c293a8777b2145892c31b8aa0c6ae`. The serialized source worker completed them in `/private/tmp/skills-scheduler-codex-auth`, branch `scheduler-codex-auth`, within F1's existing file scope. The corrections shared source/tests and were serialized. All three corrections, exact final-byte verification, independent review and integration are complete before F3.
 
-The first frozen 36-test suite had 35 passing and one helper cleanup success-subcase failure, `[Errno 1] Operation not permitted`, in 136.981 seconds. The isolated same-byte cleanup check passed in 1.123 seconds. No full-suite success or root-cause conclusion follows yet. The current test-disposition inventory reports 37 after cancellation coverage was restored, while the worker continues correcting and verifying source. Treat mutable inventory counts as bookkeeping. Retain final-byte hashes/results before acceptance. No source or native acceptance is established by these preliminary checks.
+- F2-C1, Standards P2, is complete and accepted. Restore standalone public Copilot status cancellation coverage from the mixed deleted test. Keep SIGINT, exit 130 and status-child/descendant disappearance assertions for the surviving status path. Retire only obsolete layer checks. The finding is static coverage loss, with no claimed observed cancellation defect. Reconcile the test-disposition inventory with retained coverage.
+- F2-C2, Spec P2, is complete and accepted. The reviewer directly reproduced unknown `future.telemetry` with array-valued data yielding `malformed-native-line:1`. Retain unknown non-authoritative telemetry without imposing the deleted schema gate. Required execution/identity records remain strict. Keep a public retained-core reproduction and correction proof for this contract.
+- F2-C3, Spec P1, is complete and accepted. Start with a public E2E reproduction of detached final-state copy plus later canonical-state mutation. The reviewer identified this statically, without full-session reproduction. Independently bind the fixed `outputs/scenario-state.json` used by required helper commands to the actual final receipt/state chain. An agent-selected copied artifact cannot hide changes to the canonical scheduler state. Preserve parent ownership binding, immutable inputs and the full rubric.
+
+The first frozen 36-test suite had 35 passing and one helper cleanup success-subcase failure, `[Errno 1] Operation not permitted`, in 136.981 seconds. The isolated same-byte cleanup check passed in 1.123 seconds. At that checkpoint no full-suite success or root-cause conclusion followed. The current test-disposition inventory reports 37 after cancellation coverage was restored, during the earlier correction checkpoint. Treat mutable inventory counts as bookkeeping. Final 38-test proof and exact hashes are now retained in [review 2](review-focused-2.md). The preliminary checks themselves establish no acceptance.
 
 ### Milestone 4 - Fresh paired pilot and report
 
@@ -128,11 +132,11 @@ F5 depends on F4 and resolution of all remaining plan tasks. Keep reusable behav
 
 ## Concrete Steps
 
-The current source worker finishes F2-C1/C2/C3 with retained public reproduction evidence and unchanged core invariants, then records final corrected-byte checks and hashes. Parent obtains independent finding/source acceptance and integrates only accepted bytes. Review 1 and the preliminary suite chronology remain linked in [review-focused-1.md](review-focused-1.md). No fresh payload or live dispatch precedes F2 acceptance. The remaining six-session budget and F3/F4/F5 dependencies stay unchanged.
+Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion. Parent now prepares and verifies the fresh F3 payload, preserving P02/P03 history and the six-session ledger. Native helper permission acceptance is the first smoke obligation. No new planning gate or approval question is added under the current task-specific authorization. Actual tool-policy decisions still apply at dispatch.
 
 ## Validation and Acceptance
 
-T1 and T3 acceptance stay met. M2 requires focused core tests, independent review and accepted bytes. M4 requires the bounded six-slot attempt accounting, native helper smoke proof and transparent paired behavioral results/report with independent state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
+T1 and T3 acceptance stay met. M2 now has focused core tests, independent review and accepted integrated bytes. M4 requires the bounded six-slot attempt accounting, native helper smoke proof and transparent paired behavioral results/report with independent state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
 
 ## Idempotence and Recovery
 
@@ -146,6 +150,8 @@ P03 provider processes exited 0 while added conformance checks made both smokes 
 
 ## Decision Log
 
+- 2026-11-12. Accept focused source after zero remaining findings on both review-2 axes and the final unchanged-byte 38-test run with scoped process permissions. Preserve sandbox failures and unchanged cleanup assertions. Proceed directly to F3 under the existing six-session budget.
+
 - 2026-11-12. User approved removing the added provider-conformance features and finishing the original scheduler task. Preserve real execution, identity, immutable inputs and independent state/rubric evidence.
 - 2026-11-12. Preserve the complete prior plan byte-for-byte before simplifying the active plan, with historical reports and exact external evidence reachable.
 - 2026-11-12. Use six remaining sessions, one baseline-cell neutral smoke per provider and four fresh scored sessions. Existing task-specific equivalent-path authorization applies. No automatic retries or budget expansion.
@@ -153,6 +159,6 @@ P03 provider processes exited 0 while added conformance checks made both smokes 
 
 ## Outcomes & Retrospective
 
-Focused F1 work is uncommitted and F2 corrections are active. Three findings and preliminary test results are retained without an accepted-source claim. No native calls occurred in this documentation checkpoint.
+Focused F1/F2 work is accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Review-1 findings and failed preliminary runs remain historical alongside the successful unchanged-byte final proof. Native execution remains pending. No native calls occurred in this integration checkpoint.
 
-Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. The focused harness, its new source acceptance, fresh paired pilot/report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F1 owns structural encoding of the new focused invariants. No general model preference or new generic framework is added.
+Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. Focused harness source acceptance is complete. The fresh paired pilot/report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F1 owns structural encoding of the new focused invariants. No general model preference or new generic framework is added.
