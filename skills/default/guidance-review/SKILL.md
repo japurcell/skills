@@ -1,8 +1,7 @@
 ---
 name: guidance-review
-description: Review guidance for contradictions, ambiguity, duplication, omissions, and opportunities for concise wording.
+description: Use when creating or editing skills, or modifying AGENTS.md, CLAUDE.md, copilot-instructions.md, GEMINI.md, or brain principles.
 argument-hint: "[guidance text or path/to/file.md]"
-disable-model-invocation: true
 ---
 
 Resolve `guidance_corpus` as follows:
