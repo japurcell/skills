@@ -955,6 +955,8 @@ def grade(manifest, cell_id):
     if result["usage_status"] == "unavailable" and (directory / "scenario").exists():
         write(directory / "scenario/usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
     denied = any("denied" in str(call["output"]).lower() or "permission" in str(call["output"]).lower() for call in events["calls"] if call["exit_code"] != 0)
+    required_denial = "unexpected-permission-denial" in scenario_validation["invalid_reasons"]
+    result["permission_denial_observed"] = denied
     def artifact(relative):
         if not isinstance(relative, str):
             raise ValueError("artifact path must be a string")
@@ -1114,8 +1116,8 @@ def grade(manifest, cell_id):
         if ack and not acknowledgment_bound:
             checks["parent_transfer"]["passed"] = False
         result["candidate_only"]["candidate_acknowledgment"] = {"passed": bool(ack and chronological and acknowledgment_bound and parent_records and parent_records[0]["line"] < ack["line"] and state_at(ack,"B","after").get("transfer_completed") is True and receipt.get("owner") == "agent-new" and receipt.get("recorded_at") == 205), "evidence": "real acknowledgment receipt resolves to the same current parent target and final native readback"}
-    passed = all(c["passed"] for c in checks.values()) and all(c["passed"] for c in result["candidate_only"].values()) and chronological and not denied and run_record.get("exit_code") == 0
-    result.update({"assertions": checks, "behavior_status": "pass" if passed else "fail", "output_contract_status": "pass" if schema_ok else "fail", "comparison_eligible": not denied and run_record.get("exit_code") == 0, "execution_status": "permission_failure" if denied else ("success" if run_record.get("exit_code") == 0 else "failure")})
+    passed = all(c["passed"] for c in checks.values()) and all(c["passed"] for c in result["candidate_only"].values()) and chronological and run_record.get("exit_code") == 0
+    result.update({"assertions": checks, "behavior_status": "pass" if passed else "fail", "output_contract_status": "pass" if schema_ok else "fail", "comparison_eligible": run_record.get("exit_code") == 0, "execution_status": "permission_failure" if required_denial else ("success" if run_record.get("exit_code") == 0 else "failure")})
     if not qualified:
         result.update({"setup_status": "invalid", "behavior_status": "not_evaluated", "comparison_eligible": False, "assertions_are_diagnostic": True})
     if set(checks) != set(rubric["assertions"]):

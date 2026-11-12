@@ -441,6 +441,11 @@ print(json.dumps(start))
 for name in ('session.extensions_loaded','session.tools_updated','session.mcp_servers_loaded','session.usage_checkpoint'):
  if name in samples:print(json.dumps(samples[name]))
 
+if mode=='incidental-denial':
+ start=samples['tool.execution_start'];start['data']['toolCallId']='incidental-denial';start['data']['arguments']['command']='python3 -c '+shlex.quote('from pathlib import Path; print(Path('+repr(cell['helper_prefix'][0])+').read_text())')
+ complete=samples['tool.execution_complete'];complete['data']['toolCallId']='incidental-denial'
+ print(json.dumps(start));print(json.dumps(complete))
+
 def write_artifact(relative,value):
  text=('{"neutral_patch":true}' if relative=='outputs/smoke-patch.json' else json.dumps(value))+'\n'
  path=repo/relative
@@ -468,8 +473,11 @@ if phase=='scenario':
   command=shlex.join(argv)
   key='scenario-'+str(number);number+=1
   print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'bash','turnId':'0','arguments':{'command':command}}}))
-  child=subprocess.run(argv,capture_output=True,text=True)
-  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'shellExecution':{'exitCode':0 if mode=='wrong-native-exit' else child.returncode},'result':{'content':child.stdout+'\n<shellId: '+key+' completed with exit code '+str(child.returncode)+'>','structuredContent':{'shellId':'wrong' if mode=='wrong-shell-id' else key}}}}))
+  child=subprocess.CompletedProcess(argv,1,'','') if mode=='actual-denied' else subprocess.run(argv,capture_output=True,text=True)
+  if mode=='actual-denied':
+   complete=samples['tool.execution_complete'];complete['data']['toolCallId']=key
+   print(json.dumps(complete))
+  else:print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'shellExecution':{'exitCode':0 if mode=='wrong-native-exit' else child.returncode},'result':{'content':child.stdout+'\n<shellId: '+key+' completed with exit code '+str(child.returncode)+'>','structuredContent':{'shellId':'wrong' if mode=='wrong-shell-id' else key}}}}))
   if label:
    relative='outputs/'+label+'-'+str(at)+'.json'
    write_artifact(relative,{'command':command,'exit_code':child.returncode})
@@ -557,6 +565,13 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
         self.assertFalse(record["smoke_valid"])
         repo = Path(self.data["cells"]["copilot-baseline"]["repo"])
         self.assertFalse((repo / "outputs/smoke-state.json").exists())
+        scenario = self.provider_call("run", "--manifest", self.manifest,
+                                      "--cell", "copilot-candidate", "--phase", "scenario")
+        self.assertEqual(scenario.returncode, 2, scenario.stdout)
+        report = self.grade("copilot-candidate")
+        self.assert_invalid_diagnostics(report)
+        self.assertTrue(report["permission_denial_observed"], report)
+        self.assertEqual(report["execution_status"], "permission_failure", report)
 
     def test_public_native_shell_exit_and_benign_help_preserve_real_scenario_proof(self):
         for mode, expected in (("normal", 0), ("help-inspection", 0), ("wrong-native-exit", 2), ("wrong-shell-id", 2)):
@@ -689,7 +704,7 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
 
 
     def test_public_copilot_scenario_replay_bindings_and_raw_regrading(self):
-        self.copilot_setup()
+        self.copilot_setup(mode="incidental-denial")
         for variant in ('baseline','candidate'):
             scenario=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','scenario')
             self.assertEqual(scenario.returncode,0,scenario.stderr+scenario.stdout)
@@ -697,6 +712,8 @@ if cell.get('authentication',{}).get('mode')=='native-existing-login' and mode!=
             self.assertEqual(report['setup_status'],'valid',report)
             self.assertEqual(report['behavior_status'],'pass',report)
             self.assertTrue(report['comparison_eligible'],report)
+            self.assertTrue(report['permission_denial_observed'],report)
+            self.assertEqual(report['execution_status'],'success',report)
             self.assertTrue(all(claim['passed'] for claim in report['assertions'].values()),report)
         directory=self.run/'cells/copilot-candidate/evidence/scenario'
         record=json.loads((directory/'run.json').read_text())
