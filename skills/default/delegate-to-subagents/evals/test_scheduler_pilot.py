@@ -671,6 +671,127 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
         (directory/'run.json').write_text(json.dumps(data))
         self.assertIn('phase-bindings-drift',self.grade('copilot-candidate')['invalid_reasons'])
 
+    def test_public_codex_native_mode_requires_metadata(self):
+        config=json.loads(self.config.read_text())
+        config['providers']['codex']['authentication']={'mode':'native-existing-login'}
+        self.config.write_text(json.dumps(config))
+        baseline=self.root/'v2'
+        (baseline/'scripts').mkdir(parents=True)
+        shutil.copyfile(SOURCE/'SKILL.md',baseline/'SKILL.md')
+        shutil.copyfile(CLI.parent/'fixtures/v2-scheduler.py',baseline/'scripts/scheduler.py')
+        result=self.call('prepare','--run-root',self.run,'--baseline',baseline,'--candidate',SOURCE,'--config',self.config)
+        self.assertEqual(result.returncode,2)
+        self.assertNotIn('authentication mode',result.stderr)
+        self.assertIn('unsupported native Codex version',result.stderr)
+
+    def native_codex_setup(self, mode="normal"):
+        (self.root/"native-mode").write_text(mode)
+        fake=self.root/'native-codex'
+        fake.write_text('#!'+sys.executable+'\n'+r'''
+import json,sys,tomllib,pathlib,os
+with (pathlib.Path.cwd().parents[3]/'native-pids').open('a') as log:log.write(str(os.getpid())+'\n')
+if '--version' in sys.argv:print('codex-cli 0.167.1');raise SystemExit
+if '--help' in sys.argv:print('--json --model --sandbox --cd --add-dir --output-last-message --enable');raise SystemExit
+if sys.argv[1:]==['login','status']:print('Logged in using ChatGPT');raise SystemExit
+mode=(pathlib.Path.cwd().parents[3]/'native-mode').read_text()
+config={'mcp_servers':{'fixture':{'enabled':True,'required':True,'env':{'TOKEN':'fixture-sensitive'}}},'plugins':{'fixture@bundle':{'enabled':True}},'features':{}}
+def merge(target,source):
+ for key,value in source.items():
+  if isinstance(value,dict):merge(target.setdefault(key,{}),value)
+  else:target[key]=value
+for i,arg in enumerate(sys.argv):
+ if arg=='-c':
+  key,value=sys.argv[i+1].split('=',1)
+  merge(config,tomllib.loads('.'.join(json.dumps(part) for part in key.split('.'))+'='+value))
+for line in sys.stdin:
+ q=json.loads(line);method=q['method']
+ if method=='initialized':continue
+ result={}
+ if method=='config/read':result={'config':config,'layers':[{'name':{'type':'user','file':str(pathlib.Path.home()/'.codex/config.toml')}},{'name':{'type':'project','dotCodexFolder':str(pathlib.Path.cwd()/'.codex')},'disabledReason':None if mode=='trusted' else 'untrusted project'}]}
+ if method=='skills/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'skills':[{'path':'/fixture/SKILL.md','scope':'user','enabled':not bool(config.get('skills',{}).get('config'))}]}]}
+ if method=='hooks/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'warnings':[],'hooks':[{'source':'user','sourcePath':'/fixture/hooks.json','key':'disabled','eventName':'sessionStart','handlerType':'command','enabled':False,'currentHash':'sha256:fixture','trustStatus':'trusted'}]}]}
+ if method=='model/list':result={'data':[{'id':'gpt-6.1-sol','supportedReasoningEfforts':[{'reasoningEffort':'medium'}]}]}
+ if method=='hooks/list' and mode=='trusted':
+  path=pathlib.Path.cwd()/'.codex/hooks.json';hook=json.loads(path.read_text())['hooks']['PreToolUse'][0]['hooks'][0]
+  result['data'][0]['hooks'].append(dict(source='project',sourcePath=str(path),key=str(path)+':pre_tool_use:0:0',eventName='preToolUse',handlerType='command',enabled=True,currentHash='sha256:project-fixture',trustStatus='trusted',command=hook['command'],timeoutSec=3,**{'async':False}))
+ if method=='config/read' and mode=='enabled-mcp':result['config']['mcp_servers']['fixture']['enabled']=True
+ if method=='config/read' and mode=='new-plugin':result['config']['plugins']['extra@bundle']={'enabled':False}
+ if method=='config/read' and mode=='wrong-sandbox':result['config']['sandbox_mode']='danger-full-access'
+ if method=='config/read' and mode=='wrong-approval':result['config']['approval_policy']='on-request'
+ if method=='config/read' and mode=='unknown-key':result['config']['unknown_instructions']='unsafe'
+ if method=='skills/list' and mode=='skill-drift':result['data'][0]['skills'][0]['path']='/changed/SKILL.md'
+ if method=='hooks/list' and mode=='hook-hash':result['data'][0]['hooks'][0]['currentHash']='sha256:changed'
+ if method=='config/read' and mode=='new-mcp':result['config']['mcp_servers']['extra']={'enabled':False}
+ if method=='config/read' and mode=='unsafe-instructions':result['config']['instructions']='unsafe'
+ if method=='config/read' and mode=='unknown-layer':result['layers'].append({'name':{'type':'unknown'}})
+ if method=='config/read' and mode=='wrong-provider':result['config']['model_provider']='other'
+ if method=='hooks/list' and mode=='active-user-hook':result['data'][0]['hooks'][0]['enabled']=True
+ print(json.dumps({'id':q['id'],'result':result}),flush=True)
+''')
+        fake.chmod(0o700)
+        config=json.loads(self.config.read_text())
+        config['providers']['codex'].update(executable=str(fake),authentication={'mode':'native-existing-login'})
+        self.config.write_text(json.dumps(config))
+        self.prepare()
+
+    def test_public_codex_native_freezes_disabled_components_and_blocks_untrusted_policy(self):
+        self.native_codex_setup()
+        for variant in ('baseline','candidate'):
+            cell=self.data['cells']['codex-'+variant]
+            self.assertEqual(cell['environment']['HOME'],str(Path.home().resolve()))
+            self.assertEqual(cell['native_inventory']['mcp_servers'],['fixture'])
+            self.assertFalse(cell['safe_config']['mcp_servers']['fixture']['enabled'])
+            self.assertFalse(cell['safe_config']['plugins']['fixture@bundle']['enabled'])
+            shell=Path(cell['shell_home'])
+            self.assertEqual(list(shell.iterdir()),[])
+            self.assertFalse(shell.stat().st_mode & 0o222)
+            self.assertEqual(cell['safe_config']['shell_environment_policy']['set']['HOME'],str(shell))
+            self.assertNotIn('fixture-sensitive',self.manifest.read_text())
+            self.assertFalse(cell['native_preparation']['setup_ready'])
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,2,result.stdout)
+        self.assertIn('hook',result.stderr)
+        shell=Path(self.data['cells']['codex-candidate']['shell_home'])
+        shell.chmod(0o700)
+        (shell/'.zshenv').write_text('unsafe')
+        drift=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertIn('shell startup directory drift',drift.stderr)
+
+    def test_public_codex_native_ready_metadata_and_drift_fail_closed(self):
+        self.native_codex_setup()
+        (self.root/'native-mode').write_text('trusted')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,0,result.stderr)
+        receipt=json.loads(result.stdout)
+        self.assertTrue(receipt['setup_ready'])
+        self.assertFalse(receipt['scenario_ready'])
+        for mode in ('new-mcp','enabled-mcp','new-plugin','wrong-sandbox','wrong-approval','unknown-key','skill-drift','hook-hash','unsafe-instructions','unknown-layer','wrong-provider','active-user-hook'):
+            with self.subTest(mode=mode):
+                (self.root/'native-mode').write_text(mode)
+                result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+                self.assertEqual(result.returncode,2,result.stdout)
+        for pid in (self.root/'native-pids').read_text().splitlines():
+            with self.assertRaises(ProcessLookupError):
+                os.kill(int(pid),0)
+
+    def test_public_codex_native_tmp_root_disables_implicit_sandbox_grants(self):
+        temporary=tempfile.TemporaryDirectory(dir='/private/tmp')
+        self.addCleanup(temporary.cleanup)
+        config=json.loads(self.config.read_text())
+        self.root=Path(temporary.name)
+        self.config=self.root/'config.json'
+        self.config.write_text(json.dumps(config))
+        self.run=self.root/'run'
+        self.manifest=self.run/'manifest.json'
+        self.native_codex_setup()
+        for cell_id in ('codex-baseline','codex-candidate'):
+            cell=self.data['cells'][cell_id]
+            sandbox=cell['safe_config']['sandbox_workspace_write']
+            self.assertTrue(sandbox['exclude_slash_tmp'])
+            self.assertTrue(sandbox['exclude_tmpdir_env_var'])
+            self.assertEqual(sandbox['writable_roots'],cell['write_roots'])
+            self.assertFalse(any(Path(cell['shell_home']).is_relative_to(root) for root in cell['write_roots']))
+
     def codex_setup(self, mode="normal"):
         (self.root / "discovery-mode").write_text(mode)
         fake = self.root / "fake-codex"

@@ -201,3 +201,38 @@ Native preparation freezes repo hook/plugin/skill suppression, manual permission
 Native prompt argv limits available tools to bash/apply_patch, retains exact existing helper/write grants, disables built-in MCPs, custom instructions, updates and remote session sync, and adds ephemeral --trust-folder for each new session. Headless status omits this incompatible prompt-only flag. Native mode omits --no-bash-env because it persists a preference and instead validates absent/false inherited bashEnv plus a fixed child environment without BASH_ENV. The process-token route retains its private-home behavior.
 
 Existing-login runs may update normal provider session indexes, session-state/<explicit-id>, caches and recent model/account bookkeeping. Scheduler repositories, state/output files, prompts, per-phase logs/share/usage artifacts and fresh session IDs stay disposable and pinned. These permitted provider bookkeeping effects must appear in the exact approval payload. No native execution or login/global trust mutation is performed by offline verification.
+
+### Codex existing native login
+
+Codex accepts optional `authentication` with mode `private` (the default) or
+`native-existing-login`. Native mode requires CLI 0.167.1 and exact
+`gpt-6.1-sol`/`medium`. Preparation performs bounded metadata discovery, freezes
+component/skill identities and disabled user hooks, and derives one ordered
+runtime override vector shared by app-server and exec. Native authentication
+uses the invoking standard HOME/CODEX_HOME. Global configuration and credential
+files are never copied or hashed. Safe native metadata provides the binding.
+
+Every inherited MCP/plugin entry and user skill path receives an explicit
+disable rule. Component inventory, native layers, feature state, disabled user
+hook identity and interpreter/auth paths are rechecked. Unknown component names,
+unsafe provider/tool configuration and enabled inherited hooks fail preparation.
+Only the exact prepared project policy can become the active trusted hook.
+Read-only preparation may record an untrusted-project configuration warning and
+incomplete readiness. Preflight and execution reject that warning.
+
+The controller retains standard HOME for provider-owned login. Shell children
+receive an empty read-only `control/shell-home` as HOME and ZDOTDIR, inherit no
+environment, and use the pinned interpreter PATH. BASH_ENV/ENV are excluded.
+Prompts require `login=false` and `tty=false`. A modified shell-home invalidates
+the preparation. Native metadata checks launch no sessions or turns. Existing
+native indexes/cache bookkeeping remains provider-owned. Native context,
+command/audit binding and qualification remain a dependent implementation task.
+
+Preparation retains configuration warnings as sanitized, unclassified incomplete
+setup evidence. Every warning blocks preflight/execution. Project layer identity
+is pinned separately from its trust-dependent disabled status, allowing the
+scoped project policy to become trusted while other layer drift still fails.
+
+Native mode disables implicit `/tmp` and TMPDIR sandbox grants. Its prepared
+repo/tmp roots remain explicit, keeping control/shell-home outside writable
+locations even when the disposable run root is under `/private/tmp`.
