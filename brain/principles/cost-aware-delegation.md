@@ -6,10 +6,6 @@
 
 Agent turns, CI minutes, and API dollars are finite. Without explicit budgets, work expands to fill the available resources - CI runs time out, agents spend 5 turns rediscovering context you already had, and coordination overhead eats the margin.
 
-## User model preference
-
-- Use Sol (`gpt-6.1-sol`) with explicit `medium` reasoning for implementation and review subagents, per the user on 2026-11-11. Apply this through dispatch controls, including reused agents; a differently configured agent does not satisfy this preference. Later explicit user instructions take precedence.
-
 ## Pattern
 
 - **Budget before delegating.** Count turns per phase: setup (2-3), read context (1-2), implement (2-5), verify + fix (2-4), git ops (2-3). If total > budget - 7, the scope is too large.
