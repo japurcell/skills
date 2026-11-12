@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: Reflect on the conversation and update the brain. Use when a mistake is made, a failure occurs, a user corrects you, a user points out a mistake, a user provides steering, negative code review results are provided, a workaround is discovered, a code review reveals a gap in understanding, or when wrapping up. Review may conclude no write is needed. Use when the user says "reflect", "remember this".
+description: Reflect on the conversation and update the brain. Use immediately after mistakes, failures, user corrections, user steering, negative reviews, discovered workarounds, understanding gaps, and at session wrap-up. Review may conclude no write is needed. Use when the user says "reflect", "remember this".
 ---
 
 # Reflect
