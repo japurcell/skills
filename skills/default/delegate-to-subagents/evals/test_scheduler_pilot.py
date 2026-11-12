@@ -406,10 +406,13 @@ def write_artifact(relative,value):
  text=json.dumps(value)+'\n'
  path=repo/relative
  patch='*** Begin Patch\n*** Add File: '+relative+'\n'+''.join('+'+line+'\n' for line in text.splitlines())+'*** End Patch\n'
+ if mode=='traversal': patch=patch.replace('*** Add File: outputs/','*** Add File: outputs/../outputs/',1)
+ if mode=='absolute-patch': patch=patch.replace('*** Add File: '+relative,'*** Add File: '+str(path),1)
+ if mode=='nonoutputs-patch': patch=patch.replace('*** Add File: outputs/','*** Add File: ./outputs/',1)
  key='patch-'+relative
  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'apply_patch','turnId':'0','arguments':patch}}))
  path.write_text(text)
- print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'fileEdits':[{'path':str(path),'kind':'create'}],'result':{'content':'Patch applied'}}}))
+ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'fileEdits':[{'path':str(repo/relative.replace('outputs/','outputs/../outputs/',1)) if mode=='traversal' else str(path),'kind':'create'}],'result':{'content':'Patch applied'}}}))
 if phase=='scenario':
  state=str(repo/'outputs/scenario-state.json')
  actions=[]
@@ -503,6 +506,24 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
                 self.assertEqual(blocked.returncode,2)
                 self.assertIn('remaining provider calls stopped',blocked.stderr)
                 self.assertFalse((self.run/'cells/copilot-baseline/evidence/smoke').exists())
+
+    def test_public_copilot_patch_lexical_traversal_invalidates_qualification(self):
+        for mode in ('traversal','absolute-patch','nonoutputs-patch'):
+            with self.subTest(mode=mode):
+                self.run=self.root/('patch-'+mode)
+                self.manifest=self.run/'manifest.json'
+                self.copilot_setup(mode)
+                for variant in ('baseline','candidate'):
+                    smoke=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','smoke')
+                    self.assertEqual(smoke.returncode,0,smoke.stderr)
+                scenario=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','scenario')
+                self.assertEqual(scenario.returncode,2,scenario.stdout+scenario.stderr)
+                record=json.loads(scenario.stdout)
+                self.assertTrue(any('lexical' in reason for reason in record['invalid_reasons']),record)
+                report=self.grade('copilot-candidate')
+                self.assert_invalid_diagnostics(report)
+                self.assertTrue(all(claim['passed'] for claim in report['assertions'].values()),report)
+                self.assertTrue(all(claim['passed'] for claim in report['candidate_only'].values()),report)
 
     def test_public_copilot_both_smokes_replay_bindings_and_raw_regrading(self):
         self.copilot_setup()

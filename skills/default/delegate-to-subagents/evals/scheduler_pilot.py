@@ -693,7 +693,10 @@ def validate_phase(manifest, cell_id, phase):
                 if len(patch) < 3 or patch[0] != "*** Begin Patch" or patch[-1] != "*** End Patch" or not patch[1].startswith("*** Add File: ") or any(not line.startswith("+") for line in patch[2:-1]):
                     errors.append("unsupported-native-patch-form")
                     continue
-                target = Path(patch[1].removeprefix("*** Add File: "))
+                target_text = patch[1].removeprefix("*** Add File: ")
+                target = Path(target_text)
+                if not target_text.startswith("outputs/") or ".." in target.parts:
+                    raise ValueError("unsupported lexical native patch target")
                 if not target.is_absolute():
                     target = Path(cell["repo"]) / target
                 target = inside(target, Path(cell["repo"]) / "outputs")
