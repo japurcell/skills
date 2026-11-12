@@ -1,11 +1,10 @@
 # Native readiness and approved qualification scope
 
-## Current approved simplification
+## Current independent scored-phase correction
 
-The user approved removing the added provider-conformance features and finishing the original scheduler comparison under the [active focused contract](ExecPlan.md). The earlier detailed qualification/control requirements below describe historical payloads and are superseded for new source/payloads. Keep ordinary native sandbox/approval controls, provider-owned login, disposable repos and real child/state/rubric proof. Six sessions remain, one neutral baseline-cell harness smoke per provider and four fresh baseline/candidate scored sessions, Sol/medium, 600 seconds each, serial, without automatic retries or expansion. Equivalent temporary setup paths for this plan purpose are already authorized.
+P04 consumed two native smoke sessions and neither automated qualification passed. The initial PATH mismatch stopped before attempt/session creation. Four scored sessions remain, baseline/candidate for both providers, Sol/medium, 600 seconds each, serial, with no additional smoke or retry. The approved [F2-D contract](ExecPlan.md#f2-d---independent-scored-phases-and-narrow-helper-invocation) removes redundant smoke/prior-phase-success prerequisites. Every scored phase independently supplies frozen input/session/selector identity, actual helper execution, canonical readbacks/state and full rubric.
 
-F1 implementation, 38-test final verification and independent source review are complete at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Fresh-payload verification precedes further live calls. Source 3d5a2b58 remains historical. P03 remains immutable with two invalid evaluation sessions and six gated old slots. Its exhaustive event/config/hook/probe qualification is not the new acceptance bar. Both native diagnoses are complete, but their maximal schema/journal repair proposals are superseded by the approved focused direction. Native permission acceptance for the directly executable helper still needs the one provider smoke. No new approval proposal is pending. M2/T4/T5 and archive remain incomplete.
-
+The narrow correction generates extensionless executable `invoke-scheduler` from the unchanged maintained helper source, preserving pinned shebang/mode and literal executable-only Copilot grant. Prompt rendering says not to prepend Python. Codex may recognize only the known pinned interpreter prefix under frozen PATH with exact helper/scheduler argv and actual receipts. Normal permissions and required core evidence remain. Focused tests, final affected suite, minimal independent delta review and exact fresh payload verification precede the four scored sessions. No new approval question is required. [P04 report](pilot-smoke-04.md). Historical b0eae21c source acceptance remains intact, while this correction acceptance and paired results are pending.
 
 ## Historical provider qualification checkpoints
 

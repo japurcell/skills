@@ -1,6 +1,6 @@
 # Complete the scheduler comparison with a focused native harness
 
-This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion.
+This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. Source `b0eae21c26605a4edc7d9ee64524658c9f061196` retains historical 38-test and zero-finding review acceptance. P04 consumed two native smoke sessions and neither passed automated qualification. Four scored sessions remain. The approved narrow correction below removes redundant cross-phase gates while retaining full current-phase execution, identity and behavioral proof. Correction acceptance and the paired report remain pending.
 
 ## Purpose / Big Picture
 
@@ -10,7 +10,7 @@ Compare frozen scheduler v2 with candidate v3 on the common deadline, extension,
 
 The user said “I agree with your recommendation. Remove these scope crept features so we can finish this task without unnecessary churn.” This approves implementation of this focused contract and continuing to completion. Existing provider login and ordinary supported native CLI sandbox/approval controls remain. Equivalent temporary project/setup paths for this plan purpose are already authorized. No repeated setup question is needed within these bounds.
 
-P03 consumed two actual evaluation sessions from the approved eight-session budget. Copilot's seven model turns are recorded separately and establish no backend API-call count for the budget. Six sessions remain in total, serial, `gpt-6.1-sol` with `medium`, at most 600 seconds each. Allocate one neutral harness smoke per provider followed by four fresh scored sessions, baseline and candidate for each provider. Use each provider's baseline cell for its single neutral smoke. Candidate smoke slots are omitted in the fresh payload. A provider's one valid neutral smoke gates both of its scored sessions. No additional retries or expansion are authorized. Failed frozen P02/P03 artifacts stay unchanged. No live call runs until corrected source passes focused checks, independent review and fresh-payload verification. Parent owns final integration and live dispatch subject to actual tool policy.
+P03 consumed two actual evaluation sessions and P04 consumed two further smoke sessions from the approved eight-session budget. Four fresh scored sessions remain, baseline/candidate for each provider, serial, `gpt-6.1-sol`/`medium`, at most 600 seconds each. No additional smoke or retry sessions and no expansion are authorized. The user's latest steering is “Focus on removing roadblocks while maintaining safety to get the goal completed.” Under the approved removal direction, remove separate neutral-smoke and prior-phase-success prerequisites from scored runs. Each scored phase independently proves its frozen inputs, requested model/effort/session, real helper execution, canonical state/readbacks and full rubric. The four scored slots do not depend on success of another phase. Prepare a new exact payload after corrected source passes focused checks, the final affected suite and minimal independent delta review. No new approval question is needed within the existing task-specific scope. Existing frozen P02/P03/P04 evidence stays unchanged. Parent owns final integration and live dispatch subject to actual tool policy.
 
 Ordinary controls exclude all-tools/all-paths permission bypasses. Existing global Guardian, authentication and unrelated settings are outside the change. Remove harness-specific pinned hooks and forbidden probes. Retain source/prompt/session identity and the behavior evidence below. The requested outcome is a bounded diagnostic comparison. Claims of universal mediation, provider security conformance, general reliability or statistical significance are outside its evidence.
 
@@ -34,7 +34,9 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - [x] (2026-11-12) [milestone-2] F2-C2 unknown non-authoritative non-object telemetry retained without schema invalidity, accepted in review 2.
 - [x] (2026-11-12) [milestone-2] F2-C3 public canonical-state corruption reproduction and independent target/state-chain binding corrected, accepted in review 2.
 - [x] (2026-11-12) [milestone-2] F2 final 38-test verification, independent zero-finding review axes and exact-byte integration complete.
-- [ ] [milestone-4] F3 prepare/verify a fresh six-session payload and execute its two neutral smokes and four scored sessions within gates.
+- [x] (2026-11-12) [milestone-4] F3 P04 prepared and two native smokes consumed. Both automated qualifications failed, with no scored attempts. Preserve the report and source acceptance history.
+- [ ] [milestone-2] F2-D narrow helper invocation and independent scored-phase correction, focused/final verification and minimal delta review.
+- [ ] [milestone-4] F3 prepare/verify a fresh four-scored-session payload and execute all four independently validated scored slots.
 - [ ] [milestone-4] F4 verify each result independently and retain the paired report and machine-readable results.
 - [ ] [milestone-5] F5 persist durable lessons, reconcile all tasks, clean completed worker resources and archive the completed plan.
 
@@ -62,12 +64,13 @@ T3 accepted observations remain historical evidence. Further retained-trace anal
 
 ### Milestone 2 - Focused usable harness
 
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
 
-Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion.
+The accepted `b0eae21c` checkpoint remains historical, with 38 tests in 142.819 seconds and both [review axes](review-focused-2.md) reporting zero findings. F1/F2 and their three original corrections stay accepted at those bytes. F2-D is the narrow additional correction required before the remaining four scored sessions.
+#### F1 - Completed focused native execution and behavioral grading
 
-#### F1 - Implement focused native execution and behavioral grading
+The retained implementation contract below describes accepted b0eae21c work. F2-D supersedes its separate-smoke requirement for new payloads.
 
 Prerequisites are this saved contract, accepted source `3d5a2b58` and the actual P03 evidence. One serialized implementer owns the harness, its tests and eval README, plus directly required small native fixture files and helper changes. No parallel source ownership. Activate TDD. Start with the public prepare/preflight/run/grade flow using actual retained native shapes and real helper children to reproduce retained-core failures. The provider diagnoses identify facts. Their maximal provider-schema and journal-repair proposals do not define this task.
 
@@ -75,7 +78,7 @@ Remove exhaustive provider event/protocol-schema validation, literal/effective p
 
 Keep ordinary supported native sandbox and approval settings, disposable physical repos and provider-owned existing login. Freeze the actual chosen launch inputs symmetrically for baseline/candidate. Do not inventory and compare entire provider configuration or sandbox profile schemas. Keep controls that directly bind execution inputs and source/results.
 
-For Copilot, the actual helper commands were denied because native shell command identity was `python3`, while the frozen rule included Python plus helper path. Implement the narrow candidate of a directly executable frozen helper with a pinned absolute interpreter shebang and literal helper-path command grant. Freeze executable mode and bytes before manifest hashes. Render prompt commands and helper execution from one prefix. Preserve helper resolved output/state scope validation and exact child receipts. Do not grant unrestricted Python or construct a general permission framework. Actual native neutral smoke must prove permission acceptance and real helper operations. Offline fixture acceptance is insufficient for this permission result.
+For Copilot, the actual helper commands were denied because native shell command identity was `python3`, while the frozen rule included Python plus helper path. Implement the narrow candidate of a directly executable frozen helper with a pinned absolute interpreter shebang and literal helper-path command grant. Freeze executable mode and bytes before manifest hashes. Render prompt commands and helper execution from one prefix. Preserve helper resolved output/state scope validation and exact child receipts. Do not grant unrestricted Python or construct a general permission framework. Actual scored-phase evidence must prove permission acceptance and real helper operations. A separate neutral smoke is no longer required. Offline fixture acceptance is insufficient for this permission result.
 
 For Codex, stdout completed helper commands and results supply authoritative execution evidence. Use only the exact session's raw rollout for required model/effort/session/cwd proof. Normalize cwd semantically across an absolute filesystem path and a local file URI. Keep missing or contradictory required identity invalid. Full sandbox/permission profile equality and inventories are removed. Use the minimal grounded actual native shapes. Do not reconstruct permission journals, streaming parent chains or accounting streams.
 
@@ -106,22 +109,37 @@ All three tasks depend on the [immutable review 1](review-focused-1.md) snapshot
 
 The first frozen 36-test suite had 35 passing and one helper cleanup success-subcase failure, `[Errno 1] Operation not permitted`, in 136.981 seconds. The isolated same-byte cleanup check passed in 1.123 seconds. At that checkpoint no full-suite success or root-cause conclusion followed. The current test-disposition inventory reports 37 after cancellation coverage was restored, during the earlier correction checkpoint. Treat mutable inventory counts as bookkeeping. Final 38-test proof and exact hashes are now retained in [review 2](review-focused-2.md). The preliminary checks themselves establish no acceptance.
 
+#### F2-D - Independent scored phases and narrow helper invocation
+
+Status: open
+Acceptance: not met
+
+Depends on accepted source `b0eae21c` and retained P04 raw samples. Worker `focused_harness_impl` owns only the existing harness/test/eval README source scope and directly needed small fixture changes. This contract is saved before source edits. Activate TDD and start with public process-boundary reproductions using actual raw sample shapes and real helper children. No new provider calls or modification of frozen P04 evidence are part of this correction.
+
+Remove redundant separate neutral-smoke and prior-phase-success prerequisites from scored launches and grading. A scored phase stands on its own frozen input/manifest/session/model/effort proof, real helper receipts, exact scheduler command/argv, canonical state chain/readbacks and full rubric. Remove only obsolete cross-phase-gate tests with the authorized feature deletion. Preserve current-phase source/identity/execution/state/replay/rubric negatives, normal permissions and no-retry evidence immutability. A prior failed phase does not invalidate an otherwise fully evidenced fresh scored phase.
+
+Generate the frozen executable helper as extensionless `invoke-scheduler`, keeping maintained source `invoke_scheduler.py` unchanged. Preserve the same pinned absolute shebang, executable mode, narrow literal helper-path grant and shared prompt prefix. This avoids the `.py` filename inviting an interpreter prefix. Clarify every rendered prompt that the frozen helper is directly executable and must be invoked as printed, without prepending Python. This is essential for Copilot's executable-helper-only grant. Keep the pinned absolute interpreter/shebang and executable helper path grant. Unrestricted Python, all-tools/all-paths bypass and harness hooks remain excluded.
+
+Recognize the Codex observed known Python prefix only when it resolves through the frozen shell PATH to the known pinned interpreter and precedes the exact frozen helper path. Preserve the raw command and require exact remaining scheduler/helper argv and actual child receipts. Arbitrary interpreter names/paths, wrappers or changed commands/argv are not accepted by this normalization. Direct helper invocation remains supported. Keep outputs/state confinement and exact source identities. Do not add a general shell or native permission framework.
+
+Use public reproductions for the actual known-prefix receipt mismatch and missing direct-helper prompt instruction, then focused checks and one final maintained affected suite on exact final bytes. Add tests for retained/new core semantics, including a scored phase with no smoke/prior success, pinned-prefix acceptance, wrong interpreter/argv rejection and independent full state/rubric checks. Retain logs/hashes and a minimal independent delta review. No whole-project redesign or new conformance gates. Stop at accepted corrected source, then parent prepares a fresh four-slot payload and verifies it before live dispatch.
+
 ### Milestone 4 - Fresh paired pilot and report
 
 Status: open
 Acceptance: not met
 
-#### F3 - Fresh six-session payload and execution
+#### F3 - Fresh four-scored-session payload and execution
 
-Depends on F2. Parent prepares a new explicitly identified source archive/manifest with disposable repos, exact skill/prompt bytes, real helper paths/grants, session IDs, requested Sol/medium, timeouts and ordinary native controls. Retain and verify the fresh payload before launch. Equivalent temporary setup paths for this plan purpose already have authorization. Do not backfill P03 or silently reuse its failed receipts.
+Depends on accepted F2-D final bytes. Parent prepares a fresh exact source archive/manifest, disposable repos, frozen skill/prompt bytes, helper paths/grants, fresh session IDs, Sol/medium, 600-second limits and ordinary native controls. Verify the payload before dispatch. Invoke the harness under its exact prepared PATH and environment. Equivalent temporary setup paths for this plan purpose already have authorization. Do not backfill P04 or reuse its failed receipts.
 
-Execute exactly one neutral baseline-cell harness smoke per provider. It must prove login/session/selector identity and required helper write/readback execution under the ordinary native controls. No harness hook, forbidden probe or exhaustive telemetry inventory is required. A provider's failed smoke gates its two scored sessions without retry. After valid smokes, run four fresh scored sessions, baseline/candidate for each provider, serially. Deliver each selected skill body verbatim with equivalent synthetic facts, control conditions, command granularity and output requirements. Record all authorized slots and any gated remainder. Six remaining sessions total is the ceiling.
+Run exactly four scored sessions, baseline/candidate for each provider, serially. No extra neutral smoke or retry is authorized. Each phase independently supplies required native execution/session/selector proof, real child receipts, canonical readbacks/state chain and the full rubric. A prior smoke or scored result is not a readiness prerequisite. Deliver each selected skill body verbatim with equivalent synthetic facts and control conditions. Preserve each result and invalidity honestly, with no efficacy claim from an incomplete pair.
 
 #### F4 - Independent behavioral results and report
 
 Depends on available F3 evidence. Independently inspect each state chain and rubric assertion, including deadline/checkpoint handling, one extension, valid second-extension rejection, stop-before-transfer, real parent ownership change and independent C progress. Candidate explicit acknowledgment is reported separately. Compare common behavioral assertions per eligible pair. Retain invalid/missing-output/setup results transparently, raw usage availability and timing with their meanings. One pair per provider supplies diagnostic evidence with no variance/significance claim. A behavioral failure is a result and grants no retry. No efficacy claim follows from incomplete pairs.
 
-Write `pilot-report.md` and `pilot-benchmark.json` beside this plan with source/manifest/session identities, complete six-slot ledger, assertion citations, provider/version/selectors, raw evidence links/hashes, optional native usage and independent review. Preserve [P02](pilot-startup-02.md) and [P03](pilot-smoke-03.md) reports separately as immutable history.
+Write `pilot-report.md` and `pilot-benchmark.json` beside this plan with source/manifest/session identities, complete four-scored-slot ledger plus prior consumed-session history, assertion citations, provider/version/selectors, raw evidence links/hashes, optional native usage and independent review. Preserve [P02](pilot-startup-02.md) and [P03](pilot-smoke-03.md) reports separately as immutable history.
 
 ### Milestone 5 - Durable closeout, cleanup and archive
 
@@ -132,11 +150,11 @@ F5 depends on F4 and resolution of all remaining plan tasks. Keep reusable behav
 
 ## Concrete Steps
 
-Focused harness source `b0eae21c26605a4edc7d9ee64524658c9f061196` is accepted and integrated. The unchanged final-byte maintained suite passed all 38 tests in 142.819 seconds with scoped process permissions, and independent [review 2](review-focused-2.md) has zero remaining findings on both axes. All five reviewed source hashes match the tested record, clean worker commit and integrated bytes. F1/F2 and M2 are complete. F3 fresh six-session payload preparation/verification is next. Native helper permission acceptance and the paired live comparison remain unproved. Six sessions remain with the approved controls and no automatic retries or expansion. Parent now prepares and verifies the fresh F3 payload, preserving P02/P03 history and the six-session ledger. Native helper permission acceptance is the first smoke obligation. No new planning gate or approval question is added under the current task-specific authorization. Actual tool-policy decisions still apply at dispatch.
+Worker `focused_harness_impl` begins F2-D under the saved contract, using P04 public reproductions without provider calls. Parent accepts only exact tested/reviewed correction bytes, then prepares and verifies a fresh four-scored-slot payload. Run four sessions independently under normal narrow permissions and the current-phase evidence contract. Preserve all P04 outcomes. No additional smoke/retry or repeat approval question is added.
 
 ## Validation and Acceptance
 
-T1 and T3 acceptance stay met. M2 now has focused core tests, independent review and accepted integrated bytes. M4 requires the bounded six-slot attempt accounting, native helper smoke proof and transparent paired behavioral results/report with independent state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
+T1 and T3 acceptance stay met. M2 retains accepted b0eae21c evidence historically, while F2-D correction acceptance is pending. M4 requires accounting for all consumed sessions plus the remaining four scored slots, independent native helper/identity proof in every scored phase, and transparent paired results/report with full state/rubric checks. M5 requires durable lessons, verified cleanup and archive with no incomplete tasks. The user goal of a meaningful both-provider baseline/candidate comparison stays explicit. If required execution or state proof fails, record it and diagnose within authorized work, preserving the no-retry ceiling. Never substitute a schema-conformance project for scheduler behavior evidence.
 
 ## Idempotence and Recovery
 
@@ -144,21 +162,25 @@ Read current manifests, receipts and the live ledger before dispatch. Never retr
 
 ## Surprises & Discoveries
 
+P04 initial prelaunch PATH-order mismatch stopped before attempt/session creation. Invoking the exact prepared PATH allowed two smokes. Codex executed all three real helper operations but prepended the known Python interpreter, which literal helper-prefix matching rejected. Copilot prepended Python and its narrow helper-only permissions denied execution. Neither automated smoke passed. [P04 report](pilot-smoke-04.md).
+
 Focused review 1 found retained cancellation coverage removed with an obsolete layer test, a remaining unknown-telemetry schema gate and a canonical-state binding gap. The initial full-suite cleanup error and isolated same-byte pass do not establish a diagnosis or accepted suite result. [Review and verification chronology](review-focused-1.md).
 
 P03 provider processes exited 0 while added conformance checks made both smokes invalid. Copilot's actual command identifier explains helper permission denial. Codex's actual context includes a file URI cwd and semantically different sandbox representation. The complete [Codex diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-codex/findings.md) and [Copilot diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-copilot/findings.md) are evidence inputs for minimal parsing and the narrow helper candidate. Their broader proposed schema/journal repair designs are superseded by this approved scope. Optional telemetry and usage do not establish scheduler behavior.
 
 ## Decision Log
 
-- 2026-11-12. Accept focused source after zero remaining findings on both review-2 axes and the final unchanged-byte 38-test run with scoped process permissions. Preserve sandbox failures and unchanged cleanup assertions. Proceed directly to F3 under the existing six-session budget.
+- 2026-11-12. Apply approved roadblock removal by deleting separate neutral-smoke and prior-phase-success gates. Four remaining scored phases must each independently prove full required identity, execution and state/rubric evidence. Recognize only the known pinned Codex interpreter prefix, clarify direct helper invocation and preserve narrow Copilot permissions.
+
+- 2026-11-12. Accept focused source after zero remaining findings on both review-2 axes and the final unchanged-byte 38-test run with scoped process permissions. Preserve sandbox failures and unchanged cleanup assertions. This historical checkpoint preceded P04. F2-D now precedes the four remaining scored sessions.
 
 - 2026-11-12. User approved removing the added provider-conformance features and finishing the original scheduler task. Preserve real execution, identity, immutable inputs and independent state/rubric evidence.
 - 2026-11-12. Preserve the complete prior plan byte-for-byte before simplifying the active plan, with historical reports and exact external evidence reachable.
-- 2026-11-12. Use six remaining sessions, one baseline-cell neutral smoke per provider and four fresh scored sessions. Existing task-specific equivalent-path authorization applies. No automatic retries or budget expansion.
-- 2026-11-12. Keep direct executable helper permissions narrow and require native smoke proof, without constructing a provider permission framework.
+- 2026-11-12. The earlier six-session allocation consumed two P04 smokes. Four scored sessions remain. The approved narrow correction removes separate smoke/prior-success gates and keeps complete independent evidence per scored phase. Existing equivalent-path authorization applies. No additional smoke, retry or budget expansion.
+- 2026-11-12. Keep direct executable helper permissions narrow and require actual current-phase execution proof, without constructing a provider permission framework.
 
 ## Outcomes & Retrospective
 
-Focused F1/F2 work is accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Review-1 findings and failed preliminary runs remain historical alongside the successful unchanged-byte final proof. Native execution remains pending. No native calls occurred in this integration checkpoint.
+Focused F1/F2 work is accepted at `b0eae21c26605a4edc7d9ee64524658c9f061196`. Review-1 findings and failed preliminary runs remain historical alongside the successful unchanged-byte final proof. The subsequent P04 native smokes remain invalid under that checkpoint. F2-D acceptance and four fresh scored sessions remain pending.
 
-Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. Focused harness source acceptance is complete. The fresh paired pilot/report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F1 owns structural encoding of the new focused invariants. No general model preference or new generic framework is added.
+Original scheduler implementation and retained-trace analysis are accepted. Historical startup fixes have offline acceptance. Focused b0eae21c source acceptance remains historical. F2-D correction acceptance, four scored sessions, paired report and closeout remain unfinished. Reusable native-login, fixture-authority and input/evidence lessons already have maintained locations in [eval README](../../../skills/default/delegate-to-subagents/evals/README.md), [live provider checks](../../codebase/live-hook-testing.md) and [script testing](../../codebase/script-testing.md). F2-D owns structural encoding of the narrow current correction. No general model preference or new generic framework is added.
