@@ -15,9 +15,9 @@ The user authorized T1/T2 implementation and focused deterministic verification,
 ## Progress
 
 - [x] (2026-11-11) [milestone-0] Read current source and retained conclusions; remove only archived review copies, reconcile current references, and author/index this plan.
-- [ ] [milestone-1] T1: Reproduce authorization-only completion through the public CLI and parent fixture; implement and verify explicit transfer acknowledgment.
-- [ ] [milestone-2] T2: Add a narrow maintained scheduler scenario harness and validate delivery, permissions, output paths and rubrics with fake providers.
-- [ ] [milestone-3] T3: Inspect retained native traces and explain the measured time/token deltas before proposing any optimization.
+- [x] (2026-11-11) [milestone-1] T1: Reproduce authorization-only completion through the public CLI and parent fixture; implement and verify explicit transfer acknowledgment.
+- [ ] [milestone-2] (in progress) T2: Add a narrow maintained scheduler scenario harness and validate delivery, permissions, output paths and rubrics with fake providers.
+- [ ] [milestone-3] (in progress) T3: Inspect retained native traces and explain the measured time/token deltas before proposing any optimization.
 - [ ] [milestone-4] T4: Freeze pilot inputs and obtain separate authorization for the exact live call budget.
 - [ ] [milestone-4] T5: Execute the authorized both-provider matched pilot, review every artifact, and report limits without automatic retries or expansion.
 
@@ -25,7 +25,7 @@ The user authorized T1/T2 implementation and focused deterministic verification,
 
 Work from `/Users/adam/dev/skills`. `skills/default/delegate-to-subagents/scripts/scheduler.py` is a Python standard-library CLI. `parser()` defines commands; `load()` validates state; `main()` applies locked atomic state transitions; `advance()` and `events()` emit reminders. `scripts/test_scheduler.py` beside it exercises real subprocesses with disposable state and synthetic time. `SKILL.md` tells the parent how to carry out emitted actions; `README.md` documents the state and CLI contract. The scheduler controls no agents or writes.
 
-Current version 2 stores `transferred: bool`. `transfer ID` checks `stop_confirmed`, sets that flag true, and outputs `ownership transfer may now be performed by host`. Thus its flag records authorization only. The existing `test_deadline_checkpoint_extension_and_host_stop_gate` stops after authorization. A parent can misread that as completion. `cancel` currently works without any replacement; retain that behavior. One extension, timely checkpoints, stop-before-transfer, bounded waits, concurrency and atomic persistence remain shared invariants.
+The frozen version 2 baseline stores `transferred: bool`. `transfer ID` checks `stop_confirmed`, sets that flag true, and outputs `ownership transfer may now be performed by host`. Thus its flag records authorization only. The existing `test_deadline_checkpoint_extension_and_host_stop_gate` stops after authorization. A parent can misread that as completion. The integrated candidate is now version 3 with separate authorization and completion; preserve `cancel` without replacement. One extension, timely checkpoints, stop-before-transfer, bounded waits, concurrency and atomic persistence remain shared invariants.
 
 `skills/default/delegate-to-subagents/evals/evals.json` contains coordination scenarios; `evals/README.md` limits what they prove. `skills/default/create-skill/scripts/eval_runner.py` is a maintained smoke/contribution/commit runner. Its mandatory contribution-before-commit sequence and Copilot commit-fixture grants do not fit these scheduler scenarios. Do not fake a contribution, relax its checks, or build a generic evaluation platform. Put the narrow scenario harness and its tests in the scheduler skill's `evals/` directory.
 
@@ -54,14 +54,16 @@ Acceptance: met
 T0 has no prerequisites. The requested review-copy directory is removed, current archival prose identifies retained evidence accurately, and this plan is linked from `brain/plans/index.md`. No source or evaluation execution is part of T0. Static inspection establishes only authoring completion.
 
 ## Milestone 1: Record actual transfer completion explicitly
-Status: open
-Acceptance: not met
+Status: complete
+Acceptance: met (2026-11-11)
 
 ### T1: Public CLI and parent integration contract
 
 Prerequisites: authorized by the current plan instruction; public test seams are agreed above. Ownership: one implementer owns `skills/default/delegate-to-subagents/scripts/scheduler.py`, its `scripts/test_scheduler.py`, `SKILL.md`, and `README.md`; serialize edits to these shared files. Inputs are the frozen version 2 bundle and evidence above.
 
 Before any source edit, verify the frozen version 2 bundle and its per-file hash manifest in the private evidence root identified above. Then begin with an end-user-shaped disposable parent fixture, using real subprocess calls. Register B owned by agent-old at time 0 with deadline 100, checkpoint 300 and grace 5; tick at 100 and 105 to reach stop. Keep independent C active. Before shutdown confirmation, attempt transfer and show exit 2 with unchanged ownership while C can checkpoint/complete. Confirm shutdown at 106, authorize transfer at 107, and inspect both scheduler list and the fixture's parent ownership file. Before the fix, authorization is the last available scheduler transition and the misleading flag is true even while parent owner remains agent-old. Retain that reproducer before implementation. This reproduces the actual integration gap rather than asserting the scheduler controls native workers.
+
+**Completion evidence:** Worker commit `a873e2c125d56810328cf8ffb56e3efbfc2242a9` was fast-forwarded from `scheduler-transfer` onto `scheduler-reliability` (base `dfbe29cde62ba5c802d71bc6f4569876cd68beec`). The retained red-green and parent-file evidence is `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T1/red-green-evidence.md`, with pre-fix reproduction, post-fix parent/state and validation captures beside it. It shows the original authorization-only state and unchanged parent owner, then an actual fixture update, explicit acknowledgment, matching receipt, independent C progress, and fail-closed negative cases. The integrated focused run `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py` passed all 14 tests; `rtk proxy python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/delegate-to-subagents` reported `Skill is valid!`; `rtk git diff --check` passed. Worker shutdown facts are synthetic; this proves the CLI and parent fixture contract only.
 
 Implement VERSION=3. Replace ambiguous `transferred` with `transfer_authorized: bool` and `transfer_completed: bool`, initially false; an optional `transfer_receipt` is present only on completion. Update `load()` to reject inconsistent fields, a completed transfer without authorization/confirmed stop, and malformed receipts. Preserve every existing timing/locking/output contract.
 
@@ -74,7 +76,7 @@ Version 2 files must fail closed with an actionable unsupported-version diagnost
 Verification is vertical red/green through the public CLI, extending `SchedulerCliTests`. Cover the reproducer, successful parent update/acknowledgment, unauthorized and premature acknowledgment, missing/blank evidence, malformed receipt/state, v2 rejection, duplicate matching acknowledgment, conflicting retry, output failure recovery via list, and cancel with no transfer. Keep existing extension and timing cases. Run from repository root, once authorized: `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`. Expect exit 0; every negative transition returns 2, no traceback, and unchanged state. Update help checks for the new command. Then run the skill definition validator documented in create-skill README. Stop at the correctness contract; no optimization or live evaluation.
 
 ## Milestone 2: Make evaluation prerequisites enforceable
-Status: open
+Status: in progress
 Acceptance: not met
 
 ### T2: Narrow scenario preparation and evidence grading
@@ -94,7 +96,7 @@ Keep separate fields for `setup_status` (valid/invalid), `behavior_status` (pass
 Before live use, fake-provider public CLI tests prove both providers' argv/grants, exact skill selection, successful and denied execution, wrong/missing/malformed output, symlink escape rejection, scenario-specific rubric selection, unauthorized confirm-transfer, immutable-input drift, timeout, cancellation, missing usage, and preservation of failed evidence. Include wrapped subprocess invocation as valid execution evidence where exact immutable argv and exit results are retained. Run `rtk proxy python3 skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py`; expect exit 0, using no inference. If registering, also run `rtk proxy python3 scripts/tests/runner/test_test_all.py`. Integration checks must grade known-good and known-bad fixtures covering each assertion in the combined scenario through public commands. Stop after offline acceptance; live smoke belongs to milestone 4.
 
 ## Milestone 3: Explain overhead from existing traces
-Status: open
+Status: in progress
 Acceptance: not met
 
 ### T3: Retained-trace analysis before optimization
@@ -127,13 +129,13 @@ Acceptance is a fully accounted authorized attempt ledger, valid both-provider p
 
 ## Concrete Steps
 
-Current action: complete T1/T2 implementation and focused offline verification, and T3 retained-trace analysis, using the already frozen baseline and preserving unrelated staging and edits. Prepare the T4 dry-run payload only after its prerequisites pass. Show the exact payload for review and wait for explicit approval before any T5 live model call. T1 and T2 own separate files but share the frozen candidate contract; serialize plan updates. T4 depends on all three; T5 depends on T4 plus separate approval of the reviewed payload.
+Current action: T1 is complete and integrated. Continue T2 implementation and focused offline verification, alongside T3 retained-trace analysis, using the already frozen baseline and preserving unrelated staging and edits. Prepare the T4 dry-run payload only after its prerequisites pass. Show the exact payload for review and wait for explicit approval before any T5 live model call. T1 and T2 own separate files but share the frozen candidate contract; serialize plan updates. T4 depends on all three; T5 depends on T4 plus separate approval of the reviewed payload.
 
 Once T1 is authorized, its CLI reproducer can use a disposable state path and prefix each invocation with `rtk proxy python3 skills/default/delegate-to-subagents/scripts/scheduler.py --state <temporary>/state.json`. Use `register B agent-old task --deadline 100 --checkpoint 300 --grace 5 --now 0`, `tick --now 100`, `tick --now 105`, and the transition sequence specified in T1. Synthetic times avoid sleeping. Record expected versus observed exit codes and state, then run only the focused commands named in each milestone. No automatic aggregate run or provider evaluation follows a passing offline suite.
 
 ## Validation and Acceptance
 
-All test outputs and pilot results above are expectations, not observed successes. This authoring session used source inspection and static document/navigation checks only. Milestone 1 requires integrated parent-file plus scheduler acknowledgment evidence and preserved negative gates; a unit test of a boolean is insufficient. Milestone 2 requires offline positive and negative fixtures for delivery checks, permitted disposable execution, precise output locations and correct per-scenario grading. Milestone 3 requires trace-backed attribution or explicitly stated uncertainty. Milestone 4 verifies actual provider prerequisites through authorized live smoke before any scored session, then requires both-provider matching and a complete budget ledger, including invalid and permission-confounded observations.
+Milestone 1 passed through integrated parent-file plus scheduler acknowledgment evidence and preserved negative gates; see its completion evidence above. Milestone 2 still requires offline positive and negative fixtures for delivery checks, permitted disposable execution, precise output locations and correct per-scenario grading. Milestone 3 still requires trace-backed attribution or explicitly stated uncertainty. Milestone 4 verifies actual provider prerequisites through authorized live smoke before any scored session, then requires both-provider matching and a complete budget ledger, including invalid and permission-confounded observations.
 
 ## Idempotence and Recovery
 
@@ -149,4 +151,4 @@ Keep original v2 state immutable during manual reconciliation and use new paths 
 
 ## Outcomes & Retrospective
 
-The requested cleanup and planning are complete. Reports, benchmark, embedded viewer and external raw evidence remain retained. All implementation, analysis and evaluation milestones remain open with acceptance not met. No source changes, tests, or provider calls were performed during this plan reconciliation. T1/T2/T3 and T4 preparation are authorized; T5 live calls remain gated on explicit approval of their concrete payload. The integration coordinator owns plan state and integration commits on `scheduler-reliability`; no main merge or push is authorized. Reusable evaluation guidance remains linked from the existing durable brain notes rather than duplicated as new policy.
+The requested cleanup and planning are complete. Reports, benchmark, embedded viewer and external raw evidence remain retained. T1 is complete with acceptance met; T2 and T3 are in progress; T4 and T5 remain open. T1's offline tests and skill validation passed after integration; no provider calls were performed. T1/T2/T3 and T4 preparation are authorized; T5 live calls remain gated on explicit approval of their concrete payload. The integration coordinator owns plan state and integration commits on `scheduler-reliability`; no main merge or push is authorized. Reusable evaluation guidance remains linked from the existing durable brain notes rather than duplicated as new policy.
