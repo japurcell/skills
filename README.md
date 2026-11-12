@@ -92,6 +92,12 @@ CLI, and Git gates are no longer maintained or installed. Provider refresh remov
 exactly owned retired registrations and unchanged retired hook assets. Modified
 files, unrelated handlers, and runtime logs are preserved for manual review.
 
+Provider refresh does not uninstall a separately installed scanner CLI bundle or
+discover repository-local Git gates. If a repository gate is active, uninstall it
+with the legacy CLI before removing its scanner bundle. Follow the
+[one-time scanner retirement guide](docs/retiring-scan-secrets.md) for the safe,
+ownership-checked procedure and platform limits.
+
 The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers retire only known, exactly owned registrations; other retired scripts and registrations still require manual review.
 
 ### Old Markdown Health installations

@@ -8,6 +8,12 @@ Use `python3 scripts/test-all.py --list` to inspect the maintained suite list an
 
 Public entrypoints: `scripts/install.sh`, `scripts/install.ps1`, `scripts/install-codex-hooks.py`, and `scripts/install-codex-agents.py`.
 
+Provider refresh removes owned retired provider hooks, but it does not find or
+uninstall separately installed scanner CLI bundles or repository-local Git gates.
+For one-time retirement of an older scanner installation, follow the
+[scanner retirement guide](../docs/retiring-scan-secrets.md); uninstall active
+repository gates before removing their scanner bundle.
+
 `hooks/manifest.py` lists the checked-in runtime files rendered from canonical family sources under `hooks/`. For those declared targets, regenerate with `python3 scripts/generate-hooks.py --write` and verify freshness with `python3 scripts/generate-hooks.py --check`. This ownership rule applies only to manifest targets, not every provider hook file.
 
 Focused installer evidence: `bash scripts/tests/installers/test-install.sh`, `pwsh scripts/tests/installers/test-install.ps1`, `python3 scripts/tests/installers/test-install-codex-hooks.py`, and `python3 scripts/tests/installers/test-codex-agents.py`. Installer test fixtures and private shared helpers stay in `scripts/tests/`.

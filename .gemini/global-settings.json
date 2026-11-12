@@ -19,9 +19,7 @@
     "enabled": true
   },
   "mcp": {
-    "allowed": [
-      "google-developer-knowledge"
-    ]
+    "allowed": ["google-developer-knowledge"]
   },
   "mcpServers": {
     "google-developer-knowledge": {
@@ -29,9 +27,7 @@
       "type": "http",
       "authProviderType": "google_credentials",
       "oauth": {
-        "scopes": [
-          "https://www.googleapis.com/auth/userinfo.email"
-        ]
+        "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
       },
       "headers": {
         "x-goog-user-project": "usfs-code-assist"
