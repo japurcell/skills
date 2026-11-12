@@ -13,6 +13,8 @@ import uuid
 import time
 from invoke_scheduler import capture
 import sys
+import selectors
+import signal
 
 
 def parser():
@@ -75,8 +77,8 @@ def config_check(config):
         raise ValueError("config requires only providers and timeout_seconds")
     if set(config["providers"]) != {"codex", "copilot"}:
         raise ValueError("both providers are required")
-    if type(config["timeout_seconds"]) not in (int, float) or not 0 < config["timeout_seconds"] <= 1800:
-        raise ValueError("timeout_seconds must be in (0, 1800]")
+    if type(config["timeout_seconds"]) not in (int, float) or not 0 < config["timeout_seconds"] <= 600:
+        raise ValueError("timeout_seconds must be in (0, 600]")
     for settings in config["providers"].values():
         if not isinstance(settings, dict):
             raise ValueError("provider settings must be an object")
@@ -88,6 +90,12 @@ def config_check(config):
         executable = Path(settings["executable"])
         if not executable.is_absolute() or not executable.is_file() or not os.access(executable, os.X_OK):
             raise ValueError("provider executable must be an absolute executable file")
+
+
+def source_identity(path):
+    path = Path(path).resolve()
+    code, stdout, stderr = capture(["git", "-C", str(path if path.is_dir() else path.parent), "rev-parse", "HEAD"], 3)
+    return {"path": str(path), "revision": stdout.strip() if code == 0 else None}
 
 
 def prepare(args):
@@ -117,7 +125,11 @@ def prepare(args):
         scenario_source = Path(__file__).with_name("pilot-scenarios.json")
         shutil.copyfile(scenario_source, root / "rubric.json")
         manifest = {"version": 3, "root": str(root), "config": str(root / "config.json"),
-                    "rubric": str(root / "rubric.json"), "cells": {}, "hashes": {}}
+                    "rubric": str(root / "rubric.json"), "cells": {}, "hashes": {},
+                    "qualification_contract": "observed-run-pending",
+                    "caller_identity": source_identity(__file__),
+                    "selected_sources": {name: source_identity(source) for name, source in sources.items()},
+                    "caller_sources": {str(Path(__file__).resolve()): digest(__file__), str(Path(__file__).with_name("invoke_scheduler.py").resolve()): digest(Path(__file__).with_name("invoke_scheduler.py"))}}
         for variant, source in sources.items():
             snapshot = root / "snapshots" / variant
             shutil.copytree(source, snapshot, ignore=shutil.ignore_patterns("__pycache__", ".git"))
@@ -130,6 +142,7 @@ def prepare(args):
                 write(repo / "outputs/ownership.json", {"previous_owner": "agent-old", "owner": "agent-old", "updated_at": 0})
                 private_home = cell_root / "provider-home"
                 (private_home / "copilot").mkdir(parents=True)
+                (private_home / ".codex").mkdir(mode=0o700)
                 write(private_home / "copilot/settings.json", {"disableAllHooks": True, "enabledPlugins": {}, "defaultPermissionMode": "manual", "permissions": {"disableBypassPermissionsMode": "disable"}})
                 script = snapshot / "scripts/scheduler.py"
                 helper_path = snapshot / "receipt-adapters" / provider / "invoke_scheduler.py"
@@ -137,9 +150,15 @@ def prepare(args):
                 shutil.copyfile(Path(__file__).with_name("invoke_scheduler.py"), helper_path)
                 write(helper_path.with_name("invocation.json"), {"repo": str(repo), "scheduler": str(script), "timeout_seconds": min(10, config["timeout_seconds"])})
                 cell = {"provider": provider, "variant": variant, "repo": str(repo),
-                        "snapshot": str(snapshot), "requested_settings": config["providers"][provider], "environment": {"HOME": str(private_home), "PATH": os.environ.get("PATH", os.defpath), "COPILOT_HOME": str(private_home / "copilot"), "COPILOT_CACHE_HOME": str(private_home / "cache"), "COPILOT_PLUGIN_DIR_ONLY": "true", "COPILOT_AUTO_UPDATE": "false", "COPILOT_DISABLE_LOGIN_SHELL_ENV": "1", "TMPDIR": str(cell_root / "tmp")}, "prompts": {}, "session_ids": {phase: str(uuid.uuid4()) for phase in ("smoke", "scenario")},
+                        "snapshot": str(snapshot), "requested_settings": config["providers"][provider], "environment": {"HOME": str(private_home), "CODEX_HOME": str(private_home / ".codex"), "PATH": os.environ.get("PATH", os.defpath), "COPILOT_HOME": str(private_home / "copilot"), "COPILOT_CACHE_HOME": str(private_home / "cache"), "COPILOT_PLUGIN_DIR_ONLY": "true", "COPILOT_AUTO_UPDATE": "false", "COPILOT_DISABLE_LOGIN_SHELL_ENV": "1", "TMPDIR": str(cell_root / "tmp")}, "prompts": {}, "session_ids": {phase: str(uuid.uuid4()) for phase in ("smoke", "scenario")},
                         "write_roots": [str(repo), str(cell_root / "tmp")],
                         "command_prefix": ["python3", str(script)], "helper_prefix": ["python3", str(helper_path)], "io_command": ["python3", str(helper_path), "smoke-write"]}
+                executable = Path(config["providers"][provider]["executable"]).resolve()
+                python = Path(shutil.which("python3", path=cell["environment"]["PATH"])).resolve()
+                cell["executable_identity"] = {"path": str(executable), "sha256": digest(executable)}
+                cell["python_identity"] = {"path": str(python), "sha256": digest(python)}
+                cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "sandbox_workspace_write": {"writable_roots": cell["write_roots"]}, "features": {"hooks": True}, "mcp_servers": {}, "plugins": {}}
+                cell["tool_restrictions"] = {"enumeration": "unavailable", "qualification": "requires observed native phase evidence"}
                 denied_probe = shlex.join(["python3", "-c", "from pathlib import Path; Path(" + repr(str(repo / "outputs/control-forbidden.json")) + ").write_text('denial failed')"])
                 hook_dir = repo / ".codex"
                 hook_dir.mkdir()
@@ -195,7 +214,20 @@ def load_manifest(path):
     config_check(read(manifest["config"]))
     if read(root / "provider-context.json") != provider_context():
         raise ValueError("provider settings/environment drift; prepare a fresh run")
+    for source, expected in manifest.get("caller_sources", {}).items():
+        if not Path(source).is_file() or digest(source) != expected:
+            raise ValueError("caller source drift")
     for cell in manifest["cells"].values():
+        if "executable_identity" in cell:
+            executable = Path(cell["requested_settings"]["executable"]).resolve()
+            if cell["executable_identity"] != {"path": str(executable), "sha256": digest(executable)}:
+                raise ValueError("provider executable drift")
+            python = Path(shutil.which("python3", path=cell["environment"]["PATH"])).resolve()
+            if cell["python_identity"] != {"path": str(python), "sha256": digest(python)}:
+                raise ValueError("python interpreter drift")
+            private = Path(cell["environment"]["HOME"]) / ".codex"
+            if cell["environment"].get("CODEX_HOME") != str(private) or not inside(private, root).is_dir():
+                raise ValueError("private CODEX_HOME required")
         for location in (cell["repo"], cell["snapshot"], *cell["prompts"].values(), *cell["write_roots"]):
             inside(location, root)
         for output in ("smoke.json", "result.json"):
@@ -203,24 +235,130 @@ def load_manifest(path):
     return manifest
 
 
+def codex_config_args(cell):
+    config = cell["safe_config"]
+    return ["-c", "model=" + json.dumps(config["model"]),
+            "-c", "model_reasoning_effort=" + json.dumps(config["model_reasoning_effort"]),
+            "-c", 'sandbox_mode="workspace-write"',
+            "-c", "sandbox_workspace_write.writable_roots=" + json.dumps(cell["write_roots"])]
+
+
+def discover_codex(cell):
+    """No-inference, bounded JSON RPC handshake against the frozen private setup."""
+    argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", "--ignore-rules", *codex_config_args(cell)]
+    requests = [{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "scheduler_hook_discovery", "version": "1.0"}}},
+                {"method": "initialized", "params": {}},
+                {"id": 2, "method": "hooks/list", "params": {"cwds": [cell["repo"]]}},
+                {"id": 3, "method": "config/read", "params": {"cwd": cell["repo"], "includeLayers": True}}]
+    child = subprocess.Popen(argv, cwd=cell["repo"], env=cell["environment"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+    responses = []
+    selector = selectors.DefaultSelector()
+    selector.register(child.stdout, selectors.EVENT_READ)
+    pending = b""
+    deadline = time.monotonic() + 3
+    def exchange(request):
+        nonlocal pending
+        child.stdin.write((json.dumps(request) + "\n").encode())
+        child.stdin.flush()
+        if "id" not in request:
+            return
+        while time.monotonic() < deadline:
+            if b"\n" not in pending:
+                if not selector.select(max(0, deadline - time.monotonic())):
+                    break
+                chunk = os.read(child.stdout.fileno(), 65536)
+                if not chunk:
+                    raise ValueError("discovery EOF")
+                pending += chunk
+                if len(pending) > 1048576:
+                    raise ValueError("discovery response too large")
+                continue
+            line, pending = pending.split(b"\n", 1)
+            row = json.loads(line)
+            if not isinstance(row, dict) or row.get("id") != request["id"] or "error" in row or "result" not in row:
+                raise ValueError("unsupported discovery response")
+            responses.append(row)
+            return
+        raise ValueError("discovery handshake timeout")
+    try:
+        for request in requests:
+            exchange(request)
+    finally:
+        selector.close()
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            child.poll()
+            try:
+                os.killpg(child.pid, sig)
+            except ProcessLookupError:
+                pass
+            if sig == signal.SIGTERM:
+                time.sleep(.05)
+        child.communicate(timeout=2)
+    data = responses[1]["result"]["data"]
+    if len(data) != 1 or data[0].get("cwd") != cell["repo"] or data[0].get("errors") != [] or data[0].get("warnings") != [] or len(data[0].get("hooks", [])) != 1:
+        raise ValueError("private-hook discovery must contain exactly one clean project hook")
+    hook = data[0]["hooks"][0]
+    control = cell["control"]
+    expected_command = read(control["hook_config"])["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+    expected = {"source": "project", "sourcePath": control["hook_config"], "key": control["hook_config"] + ":pre_tool_use:0:0", "eventName": "preToolUse", "handlerType": "command", "command": expected_command, "timeoutSec": 3, "enabled": True, "async": False, "trustStatus": "trusted"}
+    if any(hook.get(key) != value for key, value in expected.items()) or not isinstance(hook.get("currentHash"), str) or not hook["currentHash"].startswith("sha256:"):
+        raise ValueError("private-hook identity or trust mismatch")
+    config_response = responses[2]["result"]
+    actual = config_response["config"]
+    if any(actual.get(key) != value for key, value in cell["safe_config"].items()):
+        raise ValueError("private effective config mismatch or unsupported tool configuration")
+    # Native config may contain authentication-adjacent fields. Retain only this allowlisted projection.
+    for key in ("tools", "apps", "skills", "model_provider", "model_providers"):
+        if actual.get(key):
+            raise ValueError("unexpected effective tool/provider configuration")
+    layers = config_response.get("layers")
+    if not isinstance(layers, list):
+        raise ValueError("effective config layers unavailable")
+    for layer in layers:
+        source = layer.get("name", {})
+        if not isinstance(source, dict) or source.get("type") not in ("sessionFlags", "project", "user"):
+            raise ValueError("unsupported external config layer")
+        path = source.get("dotCodexFolder") or source.get("file")
+        if path and not Path(path).resolve().is_relative_to(Path(cell["environment"]["HOME"]).parent):
+            raise ValueError("external config layer")
+    safe_hook = {key: hook[key] for key in (*expected, "currentHash")}
+    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
+
+
 def preflight(manifest, provider):
     root = Path(manifest["root"])
     settings = read(manifest["config"])["providers"][provider]
+    cells = {key: cell for key, cell in manifest["cells"].items() if cell["provider"] == provider}
     probes = []
+    first = next(iter(cells.values()))
     for flag in ("--version", "--help"):
         argv = [settings["executable"]] + (["exec", flag] if provider == "codex" and flag == "--help" else [flag])
-        code, stdout, stderr = capture(argv, 15)
+        code, stdout, stderr = capture(argv, 3, cwd=first["repo"], env=first["environment"])
         probes.append({"argv": argv, "stdout": stdout, "stderr": stderr, "exit_code": code})
-    required = ("--json", "--model", "--sandbox", "--cd", "--add-dir", "--output-last-message", "--ignore-user-config", "--ignore-rules") if provider == "codex" else ("--output-format", "--allow-tool", "--session-id", "--add-dir", "--model", "--reasoning-effort", "--share", "--usage-output-file", "--log-dir", "--no-auto-update", "--no-custom-instructions", "--prompt", "--disallow-temp-dir", "--disable-builtin-mcps", "--no-bash-env", "--secret-env-vars")
-    valid = all(p["exit_code"] == 0 for p in probes) and all(flag in probes[1]["stdout"] for flag in required)
+    required = ("--json", "--model", "--sandbox", "--cd", "--add-dir", "--output-last-message", "--ignore-rules", "--enable") if provider == "codex" else ("--output-format", "--allow-tool", "--session-id", "--add-dir", "--model", "--reasoning-effort", "--share", "--usage-output-file", "--log-dir", "--no-auto-update", "--no-custom-instructions", "--prompt", "--disallow-temp-dir", "--disable-builtin-mcps", "--no-bash-env", "--secret-env-vars")
+    syntax = all(p["exit_code"] == 0 for p in probes) and all(flag in probes[1]["stdout"] for flag in required)
+    blockers, discovery = [], {}
+    if not syntax:
+        blockers.append("provider-required-help-controls-missing")
+    if provider == "codex":
+        for cell_id, cell in cells.items():
+            try:
+                if not syntax:
+                    raise ValueError("syntax unavailable")
+                discovery[cell_id] = discover_codex(cell)
+                code, stdout, stderr = capture([settings["executable"], "login", "status"], 3, cwd=cell["repo"], env=cell["environment"])
+                # Auth output is intentionally never retained.
+                authenticated = code == 0 and (stdout + stderr).strip() in ("Logged in using ChatGPT", "Logged in using an API key")
+                discovery[cell_id]["authentication"] = {"present": authenticated, "source": "exact private CODEX_HOME login status"}
+                if not authenticated:
+                    blockers.append(cell_id + ":private-authentication-unavailable")
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                blockers.append(cell_id + ":private-hook-discovery-invalid:" + str(error))
+    elif not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
+        blockers.append("copilot-isolated-home-auth-token-unavailable")
+    receipt = {"schema_version": 1, "provider": provider, "manifest_sha256": digest(root / "manifest.json"), "cells": discovery, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending separately authorized smoke"}, "probes": probes, "valid": not blockers, "syntax_supported": syntax, "setup_ready": not blockers, "smoke_ready": not blockers, "scenario_ready": False, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
     directory = root / "preflight"
     directory.mkdir(exist_ok=True)
-    blockers = ["codex-private-hook-trust-load-failure-and-enabled-tool-coverage-unverified"] if provider == "codex" else []
-    if provider == "copilot" and not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
-        blockers.append("copilot-isolated-home-auth-token-unavailable")
-    if not valid:
-        blockers.append("provider-required-help-controls-missing")
-    receipt = {"provider": provider, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending separately authorized smoke"}, "probes": probes, "valid": not blockers, "syntax_supported": valid, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
     previous = directory / (provider + ".json")
     if previous.exists() and read(previous) != receipt:
         raise ValueError("provider version/help/settings drift; prepare a fresh run")
@@ -237,8 +375,8 @@ def argv_for(manifest, cell, phase):
     argv = [settings["executable"]]
     if cell["provider"] == "codex":
         argv += ["exec", "--json", "--cd", cell["repo"], "--add-dir", cell["write_roots"][1],
-                 "--skip-git-repo-check", "--enable", "hooks", "--ignore-user-config", "--ignore-rules", "--model", settings["model"], "--sandbox", "workspace-write",
-                 "-c", 'model_reasoning_effort="' + settings["effort"] + '"',
+                 "--skip-git-repo-check", "--enable", "hooks", "--ignore-rules", "--model", settings["model"], "--sandbox", "workspace-write",
+                 *codex_config_args(cell),
                  "--output-last-message", str(evidence / "response.md"), "-"]
     else:
         argv += ["--model", settings["model"], "--reasoning-effort", settings["effort"],
@@ -383,6 +521,8 @@ def smoke_check(cell, events):
 
 def run(manifest, cell_id, phase):
     cell = manifest["cells"][cell_id]
+    if phase == "scenario" and manifest.get("qualification_contract") == "observed-run-pending":
+        raise ValueError("observed-run qualification pending Q1-B; scenario launch disabled")
     if phase == "scenario":
         for variant in ("baseline", "candidate"):
             sibling = manifest["cells"][cell["provider"] + "-" + variant]
@@ -395,15 +535,18 @@ def run(manifest, cell_id, phase):
                 valid = False
             if not valid:
                 raise ValueError("provider-wide two-smoke gate is not met")
-    if cell["provider"] == "codex":
-        raise ValueError("provider prerequisite: codex-native-command-allowlist-unavailable")
     config = read(manifest["config"])
     settings = config["providers"][cell["provider"]]
-    receipt = read(Path(manifest["root"]) / "preflight/copilot.json")
-    if not receipt.get("valid") or receipt.get("executable_sha256") != digest(settings["executable"]):
+    receipt = read(Path(manifest["root"]) / ("preflight/" + cell["provider"] + ".json"))
+    if receipt.get("provider") != cell["provider"] or receipt.get("manifest_sha256") != digest(Path(manifest["root"]) / "manifest.json") or not receipt.get("smoke_ready") or receipt.get("executable_sha256") != digest(settings["executable"]):
         raise ValueError("valid immutable-provider preflight required")
-    auth = {key: os.environ[key] for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN") if os.environ.get(key)}
-    if not auth:
+    if cell["provider"] == "codex":
+        if discover_codex(cell) != {key: value for key, value in receipt["cells"][cell_id].items() if key != "authentication"}:
+            raise ValueError("private discovery drift")
+        if not receipt["cells"][cell_id]["authentication"]["present"]:
+            raise ValueError("private authentication unavailable")
+    auth = {key: os.environ[key] for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN") if os.environ.get(key)} if cell["provider"] == "copilot" else {}
+    if cell["provider"] == "copilot" and not auth:
         raise ValueError("copilot-isolated-home-auth-token-unavailable")
     directory = Path(cell["repo"]).parent / "evidence" / phase
     if directory.exists():
@@ -412,11 +555,11 @@ def run(manifest, cell_id, phase):
     if argv != argv_for(manifest, cell, phase):
         raise ValueError("frozen argv drift")
     directory.mkdir()
-    record = {"argv": argv, "cwd": cell["repo"], "phase": phase, "session_id": cell["session_ids"][phase], "delivered_prompt_sha256": digest(cell["prompts"][phase]), "skill_delivery": "exact frozen body in prompt", "auth_environment_names": sorted(auth), "requested_model": settings["model"], "requested_effort": settings["effort"]}
+    record = {"argv": argv, "cwd": cell["repo"], "phase": phase, "session_id": cell["session_ids"][phase], "delivered_prompt_sha256": digest(cell["prompts"][phase]), "qualification_status": "pending-Q1-B", "skill_delivery": "exact frozen body in prompt", "auth_environment_names": sorted(auth), "requested_model": settings["model"], "requested_effort": settings["effort"]}
     write(directory / "run.json", record)
     started = time.monotonic()
     try:
-        code, stdout, stderr = capture(argv, config["timeout_seconds"], cwd=cell["repo"], env={**cell["environment"], **auth})
+        code, stdout, stderr = capture(argv, config["timeout_seconds"], cwd=cell["repo"], env={**cell["environment"], **auth}, text_input=Path(cell["prompts"][phase]).read_text() if cell["provider"] == "codex" else None)
     except OSError as error:
         code, stdout, stderr = 2, "", str(error)
     (directory / "stdout.jsonl").write_text(stdout)
@@ -426,6 +569,8 @@ def run(manifest, cell_id, phase):
     if not (directory / "usage.json").exists():
         write(directory / "usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
     checks = smoke_check(cell, events) if phase == "smoke" else {}
+    if manifest.get("qualification_contract") == "observed-run-pending":
+        checks["observed_run_qualification_pending"] = False
     record.update({"exit_code": code, "elapsed_seconds": time.monotonic() - started, "smoke_checks": checks, "smoke_valid": phase == "smoke" and code == 0 and all(checks.values()), "observed_model": events.get("observed_model"), "observed_effort": events.get("observed_effort")})
     write(directory / "run.json", record)
     return record, code if code in (124,130) else (0 if code == 0 and (phase != "smoke" or record["smoke_valid"]) else 2)
@@ -444,7 +589,7 @@ def grade(manifest, cell_id):
         return native_events(cell["provider"], (directory / phase / "stdout.jsonl").read_text())
     try:
         smoke = read(directory / "smoke/run.json")
-        setup = smoke.get("exit_code") == 0 and smoke.get("delivered_prompt_sha256") == digest(cell["prompts"]["smoke"]) and all(smoke_check(cell, native("smoke")).values())
+        setup = smoke.get("qualification_status") != "pending-Q1-B" and smoke.get("exit_code") == 0 and smoke.get("delivered_prompt_sha256") == digest(cell["prompts"]["smoke"]) and all(smoke_check(cell, native("smoke")).values())
     except (OSError, ValueError, TypeError, AttributeError):
         setup = False
     if not setup:

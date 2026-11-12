@@ -177,3 +177,11 @@ write/readback follows completion. Wrong state, changed argv, missing/reordered
 steps or a disconnected state chain invalidate setup rather than being scored as
 a scenario failure. These checks do not add provider calls or change native
 readiness gates.
+
+### Observed-run setup implementation checkpoint
+
+Fresh version 3 preparations pin the executing harness and imported helper separately from the selected scheduler snapshots, resolve provider and python3 executable hashes, and freeze a safe configuration projection. Codex discovery and smoke use the exact private HOME and CODEX_HOME with shared configuration overrides. Discovery performs initialize, initialized, hooks/list and config/read only. It requires one synchronous trusted project hook and rejects unavailable or unexpected configuration evidence. Authentication receipts retain status only. Copilot continues to use supported process tokens in memory.
+
+Preflight `valid` denotes setup readiness. The explicit `syntax_supported`, `setup_ready`, `smoke_ready` and `scenario_ready` fields distinguish setup from observed execution qualification. Discovery and login status establish setup only. Tool enumeration remains unavailable. Codex smoke receives its immutable prompt on stdin.
+
+At the Q1-A checkpoint every launched smoke records `qualification_status=pending-Q1-B` and fails qualification, while scenario launches remain closed. Q1-B must add raw per-phase evidence validation, audit correlation, replay protection and both-smoke gating before those paths can qualify. Offline fake-provider tests execute real frozen scheduler/helper children and provide no native provider qualification. Private owner authentication/trust actions and separate exact-payload approval still precede live calls. The ceiling remains four smokes plus four scenarios, at most 600 seconds each, with fresh sessions and no retries.

@@ -226,7 +226,7 @@ class PilotTests(unittest.TestCase):
         cell,_=self.fixture()
         result=self.call("run","--manifest",self.manifest,"--cell",cell,"--phase","scenario")
         self.assertEqual(result.returncode,2)
-        self.assertIn("two-smoke",result.stderr)
+        self.assertIn("qualification",result.stderr)
         path=Path(self.data["cells"][cell]["prompts"]["smoke"])
         path.chmod(0o600);path.write_text("drift")
         result=self.call("grade","--manifest",self.manifest,"--cell",cell)
@@ -331,7 +331,8 @@ class PilotTests(unittest.TestCase):
         argv=self.data["cells"]["copilot-candidate"]["argv"]["scenario"]
         self.assertIn("--allow-tool=write("+self.data["cells"]["copilot-candidate"]["repo"]+"/**)",argv)
         self.assertIn("--disallow-temp-dir",argv)
-        self.assertIn("--ignore-user-config",self.data["cells"]["codex-candidate"]["argv"]["scenario"])
+        self.assertNotIn("--ignore-user-config",self.data["cells"]["codex-candidate"]["argv"]["scenario"])
+        self.assertEqual(self.data["cells"]["codex-candidate"]["environment"]["CODEX_HOME"],str(Path(self.data["cells"]["codex-candidate"]["environment"]["HOME"])/".codex"))
         result=subprocess.run([sys.executable,str(CLI),"grade","--manifest",str(self.manifest),"--cell","codex-candidate"],env={**os.environ,"COPILOT_ALLOW_ALL":"true"},capture_output=True,text=True)
         self.assertEqual(result.returncode,2)
         self.assertIn("environment drift",result.stderr)
@@ -397,9 +398,11 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
         result=call("preflight","--manifest",self.manifest,"--provider","copilot")
         self.assertEqual(result.returncode,0,result.stderr)
         result=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
-        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(result.returncode,2,result.stderr)
         record=json.loads(result.stdout)
-        self.assertTrue(record["smoke_valid"],record)
+        self.assertFalse(record["smoke_valid"],record)
+        self.assertEqual(record["qualification_status"],"pending-Q1-B")
+        self.assertEqual(json.loads((self.run / "cells/copilot-candidate/repo/outputs/smoke.json").read_text()),{"smoke":True})
         self.assertNotIn("offline-fixture-token",result.stdout)
         directory=self.run / "cells/copilot-candidate/evidence/smoke"
         self.assertTrue((directory / "usage-missing.json").exists())
@@ -407,6 +410,104 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
         retry=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
         self.assertEqual(retry.returncode,2)
         self.assertEqual((directory / "run.json").read_bytes(),original)
+
+    def codex_setup(self, mode="normal"):
+        (self.root / "discovery-mode").write_text(mode)
+        fake = self.root / "fake-codex"
+        fake.write_text("#!" + sys.executable + "\n" + r"""
+import json,os,pathlib,shlex,subprocess,sys
+if '--version' in sys.argv:
+ print('offline-codex 1'); raise SystemExit
+if '--help' in sys.argv:
+ print('--json --model --sandbox --cd --add-dir --output-last-message --ignore-user-config --ignore-rules --enable'); raise SystemExit
+repo=pathlib.Path.cwd()
+manifest=json.loads((repo.parents[2]/'manifest.json').read_text())
+cell=manifest['cells'][repo.parent.name]
+mode=(repo.parents[3]/'discovery-mode').read_text()
+if 'app-server' in sys.argv:
+ for line in sys.stdin:
+  request=json.loads(line); method=request['method']
+  if method=='initialized': continue
+  result={}
+  if mode=='eof': raise SystemExit
+  if mode=='timeout':
+   import time,signal
+   child=subprocess.Popen([sys.executable,'-c','import signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);time.sleep(30)'])
+   (repo/'outputs/discovery-child.pid').write_text(str(child.pid))
+   time.sleep(30)
+  if mode=='malformed': print('{',flush=True);continue
+  if mode=='rpc-error': print(json.dumps({'id':request['id'],'error':{'code':-1,'message':'offline'}}),flush=True);continue
+  if method=='hooks/list':
+   hook=json.loads(pathlib.Path(cell['control']['hook_config']).read_text())['hooks']['PreToolUse'][0]['hooks'][0]
+   result={'data':[{'cwd':str(repo),'errors':[],'warnings':[],'hooks':[dict(handlerType='command',command=hook['command'],timeoutSec=3,enabled=True,eventName='preToolUse',source='project',sourcePath=cell['control']['hook_config'],currentHash='sha256:offline-native-definition',trustStatus='trusted',key=cell['control']['hook_config']+':pre_tool_use:0:0',**{'async':False})]}]}
+  if method=='config/read':
+   result={'config':{'model':'gpt-6.1-sol','model_reasoning_effort':'medium','sandbox_mode':'workspace-write','sandbox_workspace_write':{'writable_roots':cell['write_roots']},'features':{'hooks':True},'mcp_servers':{},'plugins':{}},'layers':[],'origins':{}}
+  if method=='hooks/list':
+   h=result['data'][0]['hooks'][0]
+   if mode in ('untrusted','modified'): h['trustStatus']=mode
+   if mode=='disabled': h['enabled']=False
+   if mode=='unexpected': result['data'][0]['hooks'].append(dict(h))
+   if mode=='wrong-source': h['sourcePath']='/outside/hooks.json'
+  if method=='config/read' and mode=='wrong-model': result['config']['model']='wrong'
+  print(json.dumps({'id':request['id'],'result':result}),flush=True)
+ raise SystemExit
+if sys.argv[1:]==['login','status']:
+ print('Logged in using ChatGPT');raise SystemExit
+prompt=sys.stdin.read()
+(repo/'outputs/launch.json').write_text(json.dumps({'stdin':prompt,'env':dict(os.environ),'argv':sys.argv}))
+state=str(repo/'outputs/smoke-state.json')
+for args in (['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write']):
+ argv=cell['helper_prefix']+args
+ child=subprocess.run(argv,capture_output=True,text=True)
+ print(json.dumps({'type':'item.completed','item':{'type':'command_execution','command':shlex.join(argv),'exit_code':child.returncode,'aggregated_output':child.stdout}}))
+""")
+        fake.chmod(0o700)
+        config=json.loads(self.config.read_text())
+        config['providers']['codex']['executable']=str(fake)
+        self.config.write_text(json.dumps(config))
+        self.prepare()
+
+    def test_public_codex_setup_opens_only_unqualified_smoke_with_frozen_stdin(self):
+        self.codex_setup()
+        preflight=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        launch=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+        self.assertEqual(preflight.returncode,0,preflight.stderr + launch.stderr)
+        receipt=json.loads(preflight.stdout)
+        self.assertTrue(receipt['setup_ready'])
+        self.assertTrue(receipt['smoke_ready'])
+        self.assertFalse(receipt['scenario_ready'])
+        cell=self.data['cells']['codex-candidate']
+        delivered=json.loads((Path(cell['repo'])/'outputs/launch.json').read_text())
+        self.assertEqual(delivered['stdin'],Path(cell['prompts']['smoke']).read_text())
+        self.assertEqual(delivered['env']['CODEX_HOME'],str(Path(cell['environment']['HOME'])/'.codex'))
+        self.assertFalse(set(delivered['env']) & {'GH_TOKEN','GITHUB_TOKEN','COPILOT_GITHUB_TOKEN'})
+        record=json.loads(launch.stdout)
+        self.assertFalse(record['smoke_valid'])
+        self.assertEqual(launch.returncode,2)
+        self.assertEqual(json.loads((Path(cell['repo'])/'outputs/smoke.json').read_text()),{'smoke':True})
+        scenario=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','scenario')
+        self.assertEqual(scenario.returncode,2)
+        self.assertIn('qualification',scenario.stderr)
+
+    def test_public_codex_discovery_rejects_incomplete_untrusted_and_unexpected_setup(self):
+        for mode in ('eof','malformed','rpc-error','untrusted','modified','disabled','unexpected','wrong-source','wrong-model','timeout'):
+            with self.subTest(mode=mode):
+                self.run=self.root / ('run-' + mode)
+                self.manifest=self.run / 'manifest.json'
+                self.codex_setup(mode)
+                result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+                self.assertEqual(result.returncode,2,result.stdout)
+                receipt=json.loads((self.run/'preflight/codex.json').read_text())
+                self.assertFalse(receipt['smoke_ready'])
+                self.assertFalse(receipt['scenario_ready'])
+                launch=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+                self.assertEqual(launch.returncode,2)
+                self.assertFalse((self.run/'cells/codex-candidate/repo/outputs/launch.json').exists())
+                if mode=='timeout':
+                    for variant in ('baseline','candidate'):
+                        pid=int((self.run/('cells/codex-'+variant+'/repo/outputs/discovery-child.pid')).read_text())
+                        with self.assertRaises(ProcessLookupError):
+                            os.kill(pid,0)
 
     def test_trusted_snapshot_configuration_is_rejected(self):
         source=self.root / "injected"
