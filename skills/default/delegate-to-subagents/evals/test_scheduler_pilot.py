@@ -46,8 +46,12 @@ class PilotTests(unittest.TestCase):
         rows = []
         def invoke(args):
             argv = cell["helper_prefix"] + args
-            child = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True)
             command = shlex.join(argv)
+            if provider == "codex":
+                event={"hook_event_name":"PreToolUse","tool_use_id":"offline-"+str(len(rows)),"cwd":cell["repo"],"tool_name":"Bash","tool_input":{"command":command}}
+                verdict=subprocess.run([sys.executable,cell["control"]["script"],"--manifest",str(self.manifest),"--cell",cell_id],input=json.dumps(event),capture_output=True,text=True)
+                self.assertEqual(verdict.returncode,0,verdict.stderr)
+            child = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True)
             if provider == "codex":
                 rows.append({"type":"item.completed", "item":{"type":"command_execution", "command":command, "exit_code":child.returncode, "aggregated_output":child.stdout}})
             else:
@@ -66,6 +70,14 @@ class PilotTests(unittest.TestCase):
         invoke(["--state",smoke_state,"register","smoke","smoke-agent","neutral","--deadline","100","--checkpoint","300","--now","0"])
         invoke(["--state",smoke_state,"complete","smoke","--now","1"])
         invoke(["smoke-write"])
+        denied_command=cell["control"]["denied_probe"]
+        if provider=="codex":
+            event={"hook_event_name":"PreToolUse","tool_use_id":"offline-denied","cwd":cell["repo"],"tool_name":"Bash","tool_input":{"command":denied_command}}
+            verdict=subprocess.run([sys.executable,cell["control"]["script"],"--manifest",str(self.manifest),"--cell",cell_id],input=json.dumps(event),capture_output=True,text=True)
+            self.assertEqual(verdict.returncode,2)
+            rows.append({"type":"item.completed","item":{"type":"command_execution","command":denied_command,"exit_code":2,"aggregated_output":verdict.stdout}})
+        else:
+            rows.extend([{"type":"tool.execution_start","data":{"toolCallId":"denied","arguments":{"command":denied_command}}},{"type":"tool.execution_complete","data":{"toolCallId":"denied","success":False,"result":{"content":"Permission denied by frozen native grant fixture"}}}])
         save("smoke")
         state = str(repo / "outputs/scenario-state.json")
         actions = []
@@ -327,6 +339,8 @@ for number,args in enumerate(operations):
  child=subprocess.run(argv,capture_output=True,text=True)
  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'arguments':{'command':shlex.join(argv)}}}))
  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'success':child.returncode==0,'result':{'content':child.stdout}}}))
+print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':'denied','arguments':{'command':cell['control']['denied_probe']}}}))
+print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied','success':False,'result':{'content':'Permission denied by native grant fixture'}}}))
 """)
         fake.chmod(0o700)
         config=json.loads(self.config.read_text());config["providers"]["copilot"]["executable"]=str(fake)
@@ -360,12 +374,64 @@ for number,args in enumerate(operations):
         self.assertEqual(result.returncode,2)
         self.assertIn("trusted provider configuration",result.stderr)
 
+    def hook(self, cell, tool="Bash", command=None, extra=None):
+        data=self.data["cells"][cell]
+        event={"hook_event_name":"PreToolUse","tool_use_id":"offline-call","cwd":data["repo"],"tool_name":tool,"tool_input":{"command":command or shlex.join(data["helper_prefix"]+["smoke-write"])}}
+        if extra: event["tool_input"].update(extra)
+        return subprocess.run([sys.executable,str(CLI.parent / "policy_hook.py"),"--manifest",str(self.manifest),"--cell",cell],input=json.dumps(event),capture_output=True,text=True)
+
+    def test_private_hook_default_denies_compounds_wrappers_unknown_and_paths(self):
+        self.prepare()
+        result=self.hook("codex-candidate")
+        self.assertEqual(result.returncode,0,result.stderr)
+        prefix=shlex.join(self.data["cells"]["codex-candidate"]["helper_prefix"])
+        for command in (prefix+" smoke-write; echo unsafe",prefix+" smoke-write && true",prefix+" $(echo smoke-write)","python3 -c 'print(1)'","bash -c true",prefix+" --state /tmp/escape.json tick --now 0"):
+            with self.subTest(command=command):
+                result=self.hook("codex-candidate",command=command)
+                self.assertEqual(result.returncode,2,result.stdout)
+                self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"],"deny")
+        for tool in ("write_stdin","spawn_agent","functions.exec","unknown","mcp__arbitrary"):
+            self.assertEqual(self.hook("codex-candidate",tool=tool).returncode,2)
+        self.assertEqual(self.hook("codex-candidate",extra={"tty":True}).returncode,2)
+
+    def test_private_policy_confined_patch_and_malformed_load_fail_closed(self):
+        self.prepare()
+        cell="codex-candidate"
+        patch="*** Begin Patch\n*** Add File: outputs/neutral.json\n+{}\n*** End Patch"
+        result=self.hook(cell,tool="apply_patch",command=patch)
+        self.assertEqual(result.returncode,0,result.stderr)
+        for replacement in ("../outside.json", "outputs/../outside.json", "/tmp/outside.json", ".codex/hooks.json"):
+            result=self.hook(cell,tool="apply_patch",command=patch.replace("outputs/neutral.json",replacement))
+            self.assertEqual(result.returncode,2)
+        for command in ("*** Begin Patch\n*** Delete File: outputs/result.json\n*** End Patch", "*** Begin Patch\n*** Update File: outputs/result.json\n*** Move to: /tmp/outside\n*** End Patch"):
+            self.assertEqual(self.hook(cell,tool="apply_patch",command=command).returncode,2)
+        result=subprocess.run([sys.executable,str(CLI.parent / "policy_hook.py"),"--manifest",str(self.manifest),"--cell",cell],input="{",capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertIn('"permissionDecision": "deny"',result.stdout)
+        self.assertNotIn("Traceback",result.stderr)
+        config=Path(self.data["cells"][cell]["control"]["hook_config"])
+        config.chmod(0o600);config.write_text('{}')
+        result=self.hook(cell)
+        self.assertEqual(result.returncode,2)
+        self.assertIn("drift",result.stderr)
+
+    def test_missing_control_denial_or_audit_invalidates_smoke(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        audit=Path(self.data["cells"][cell]["control"]["audit"])
+        original=audit.read_text()
+        audit.write_text("\n".join(line for line in original.splitlines() if json.loads(line)["decision"]!="deny"))
+        self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+        audit.write_text(original)
+        (repo / "outputs/control-forbidden.json").write_text("unexpected execution")
+        self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+
     def test_native_provider_command_boundary_fails_before_inference(self):
         result = self.call("prepare", "--run-root", self.run, "--baseline", SOURCE, "--candidate", SOURCE, "--config", self.config)
         self.assertEqual(result.returncode, 0, result.stderr)
         result = self.call("preflight", "--manifest", self.manifest, "--provider", "codex")
         self.assertEqual(result.returncode, 2)
-        self.assertIn("command-allowlist", result.stderr)
+        self.assertIn("private-hook", result.stderr)
 
     def test_help(self):
         self.assertEqual(self.call("--help").returncode, 0)

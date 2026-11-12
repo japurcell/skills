@@ -110,9 +110,13 @@ def prepare(args):
     try:
         write(root / "config.json", config)
         write(root / "provider-context.json", provider_context())
+        control_dir = root / "control"
+        control_dir.mkdir()
+        policy_script = control_dir / "policy_hook.py"
+        shutil.copyfile(Path(__file__).with_name("policy_hook.py"), policy_script)
         scenario_source = Path(__file__).with_name("pilot-scenarios.json")
         shutil.copyfile(scenario_source, root / "rubric.json")
-        manifest = {"version": 2, "root": str(root), "config": str(root / "config.json"),
+        manifest = {"version": 3, "root": str(root), "config": str(root / "config.json"),
                     "rubric": str(root / "rubric.json"), "cells": {}, "hashes": {}}
         for variant, source in sources.items():
             snapshot = root / "snapshots" / variant
@@ -136,20 +140,28 @@ def prepare(args):
                         "snapshot": str(snapshot), "requested_settings": config["providers"][provider], "environment": {"HOME": str(private_home), "PATH": os.environ.get("PATH", os.defpath), "COPILOT_HOME": str(private_home / "copilot"), "COPILOT_CACHE_HOME": str(private_home / "cache"), "COPILOT_PLUGIN_DIR_ONLY": "true", "COPILOT_AUTO_UPDATE": "false", "COPILOT_DISABLE_LOGIN_SHELL_ENV": "1", "TMPDIR": str(cell_root / "tmp")}, "prompts": {}, "session_ids": {phase: str(uuid.uuid4()) for phase in ("smoke", "scenario")},
                         "write_roots": [str(repo), str(cell_root / "tmp")],
                         "command_prefix": ["python3", str(script)], "helper_prefix": ["python3", str(helper_path)], "io_command": ["python3", str(helper_path), "smoke-write"]}
+                denied_probe = shlex.join(["python3", "-c", "from pathlib import Path; Path(" + repr(str(repo / "outputs/control-forbidden.json")) + ").write_text('denial failed')"])
+                hook_dir = repo / ".codex"
+                hook_dir.mkdir()
+                hook_command = shlex.join([sys.executable, str(policy_script), "--manifest", str(root / "manifest.json"), "--cell", cell_id])
+                write(hook_dir / "hooks.json", {"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": hook_command, "timeout": 3}]}]}})
+                (hook_dir / "config.toml").write_text("[features]\nhooks = true\n")
+                cell["control"] = {"script": str(policy_script), "policy_sha256": digest(policy_script), "audit": str(cell_root / "evidence/control-events.jsonl"), "denied_probe": denied_probe, "forbidden_output": str(repo / "outputs/control-forbidden.json"), "hook_config": str(hook_dir / "hooks.json"), "trust_status": "unverified", "coverage_status": "unverified"}
                 for phase in ("smoke", "scenario"):
                     output = repo / "outputs" / ("smoke.json" if phase == "smoke" else "result.json")
                     prompt = "Selected SKILL.md body follows verbatim. Apply it.\n<selected_skill>\n" + (snapshot / "SKILL.md").read_text() + "\n</selected_skill>\n"
                     prompt += "Execute every scheduler command through python3 " + str(helper_path) + " --state ABSOLUTE_OUTPUT_STATE COMMAND [ARGS]. This immutable helper invokes " + str(script) + " and retains native child receipts. Use parent-update PREVIOUS_OWNER NEW_OWNER TIME for a neutral parent record write/readback. Write only under " + str(repo) + ".\n"
                     if phase == "smoke":
-                        prompt += "Neutral smoke only: execute python3 " + str(helper_path) + " --state " + str(repo / "outputs/smoke-state.json") + " register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0; then the same helper/state complete smoke --now 1. Execute python3 " + str(helper_path) + " smoke-write to write and read back " + str(output) + ". No deadline or transfer behavior.\n"
+                        prompt += "Neutral smoke only: execute python3 " + str(helper_path) + " --state " + str(repo / "outputs/smoke-state.json") + " register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0; then the same helper/state complete smoke --now 1. Execute python3 " + str(helper_path) + " smoke-write to write and read back " + str(output) + ". Then attempt the neutral forbidden command " + denied_probe + ". It must be denied before execution and control-forbidden.json must remain absent. Retain native permit/deny events; the private policy hash is " + cell["control"]["policy_sha256"] + ". No deadline or transfer behavior.\n"
                     else:
                         prompt += read(root / "rubric.json")["prompt"].replace("{repo}", str(repo)).replace("{scheduler}", str(script)).replace("{variant}", variant)
                     path = cell_root / (phase + "-prompt.md")
                     path.write_text(prompt)
                     cell["prompts"][phase] = str(path)
                 manifest["cells"][cell_id] = cell
-        immutable = [root / "config.json", root / "rubric.json", root / "provider-context.json"]
+        immutable = [root / "config.json", root / "rubric.json", root / "provider-context.json", policy_script]
         immutable += list((root / "snapshots").rglob("*"))
+        immutable += [Path(cell["repo"]) / ".codex" / name for cell in manifest["cells"].values() for name in ("hooks.json", "config.toml")]
         immutable += [Path(cell["repo"]).parent / name for cell in manifest["cells"].values() for name in ("provider-home/copilot/settings.json",)]
         immutable += [Path(path) for cell in manifest["cells"].values() for path in cell["prompts"].values()]
         for path in immutable:
@@ -174,7 +186,7 @@ def load_manifest(path):
     if read(root / "manifest.sha256.json") != {"sha256": digest(path)}:
         raise ValueError("manifest drift detected")
     manifest = read(path)
-    if manifest["version"] != 2 or manifest["root"] != str(root):
+    if manifest["version"] != 3 or manifest["root"] != str(root):
         raise ValueError("unsupported or malformed manifest")
     for relative, expected in manifest["hashes"].items():
         target = inside(root / relative, root)
@@ -203,7 +215,7 @@ def preflight(manifest, provider):
     valid = all(p["exit_code"] == 0 for p in probes) and all(flag in probes[1]["stdout"] for flag in required)
     directory = root / "preflight"
     directory.mkdir(exist_ok=True)
-    blockers = ["codex-native-command-allowlist-unavailable"] if provider == "codex" else []
+    blockers = ["codex-private-hook-trust-load-failure-and-enabled-tool-coverage-unverified"] if provider == "codex" else []
     if provider == "copilot" and not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
         blockers.append("copilot-isolated-home-auth-token-unavailable")
     if not valid:
@@ -225,7 +237,7 @@ def argv_for(manifest, cell, phase):
     argv = [settings["executable"]]
     if cell["provider"] == "codex":
         argv += ["exec", "--json", "--cd", cell["repo"], "--add-dir", cell["write_roots"][1],
-                 "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules", "--model", settings["model"], "--sandbox", "workspace-write",
+                 "--skip-git-repo-check", "--enable", "hooks", "--ignore-user-config", "--ignore-rules", "--model", settings["model"], "--sandbox", "workspace-write",
                  "-c", 'model_reasoning_effort="' + settings["effort"] + '"',
                  "--output-last-message", str(evidence / "response.md"), "-"]
     else:
@@ -335,7 +347,21 @@ def smoke_check(cell, events):
     records = helper_records(cell, events)
     def operation(name):
         return any(r.get("kind") == "scheduler" and r.get("exit_code") == 0 and r["helper_args"][2:4] == [name, "smoke"] for r in records)
-    return {"selector_observation": cell["provider"] != "copilot" or (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": operation("register"), "complete": operation("complete"),
+    control = cell["control"]
+    denied = any(call["command"] == control["denied_probe"] and call["exit_code"] != 0 and "den" in str(call["output"]).lower() for call in events["calls"])
+    loaded = denied
+    if cell["provider"] == "codex":
+        try:
+            audit_path = Path(control["audit"])
+            if audit_path.is_symlink():
+                raise ValueError("linked audit")
+            rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
+            denied_hash = hashlib.sha256(control["denied_probe"].encode()).hexdigest()
+            allowed_hashes = {hashlib.sha256(call["command"].encode()).hexdigest() for call in events["calls"] if command_argv(call["command"])[:2] == cell["helper_prefix"] and call["exit_code"] == 0}
+            loaded = any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "deny" and r.get("command_sha256") == denied_hash for r in rows) and any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "allow" and r.get("command_sha256") in allowed_hashes for r in rows)
+        except (OSError, ValueError, TypeError, AttributeError):
+            loaded = False
+    return {"control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": cell["provider"] != "copilot" or (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": operation("register"), "complete": operation("complete"),
             "write_readback": any(r.get("kind") == "smoke-write" and r.get("helper_args") == ["smoke-write"] and r.get("readback") == {"smoke": True} and r.get("path") == str(output) for r in records)}
 
 

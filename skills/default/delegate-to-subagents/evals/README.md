@@ -5,8 +5,9 @@ The scenarios in `evals.json` assess orchestration decisions from the supplied s
 ## Maintained diagnostic pilot
 
 `scheduler_pilot.py` is an offline stdlib preparation and grading harness. Its
-Codex `run` fails closed because workspace-write lacks the required native
-exact command allowlist. Copilot uses the documented isolation controls below;
+Codex `run` fails closed pending verification of private hook trust/loading,
+host hook-failure semantics and enabled-tool coverage. A native PreToolUse hook
+can deny supported commands; workspace-write alone remains a filesystem sandbox. Copilot uses the documented isolation controls below;
 its static preflight requires supported flags and an auth token for the isolated
 home. Exact requested Sol/medium resolution remains pending a separately
 authorized smoke, rather than being treated as known incompatibility. The
@@ -110,3 +111,46 @@ cell's `outputs/`, with traversal/symlinks rejected. Missing/wrong/malformed out
 after valid smoke fails its contract. Missing usage is explicit and not estimated.
 Every grade still requires semantic review. All shutdown facts are synthetic;
 this harness does not establish real worker termination or general reliability.
+
+## Private Codex control policy
+
+`prepare` freezes `control/policy_hook.py`, each cell's `.codex/hooks.json` and
+feature config, and their hashes in manifest version3. This registers only a
+private per-cell draft. It does not install or enable the owner-disabled global
+Guardian, modify user configuration or alter a trust store. The hook CLI reads a
+bounded native PreToolUse JSON object on stdin and emits documented native JSON.
+Exit0 permits normal processing; exit2 explicitly denies. Unknown tools and input
+shapes, shell compounds/substitutions, interpreter wrappers, interactive forms,
+nonmatching helper argv and escaped/linked paths are denied by default. Neutral
+apply_patch add/update operations are confined to the cell's outputs directory;
+move/delete and writes to control/config/snapshots are denied. Audit records
+outside agent-writable outputs contain decision, command hash and policy hash.
+
+The documented loading mechanism is project `.codex/hooks.json` with hooks
+feature enabled. Non-managed hook definitions require review/trust of their exact
+hash through `/hooks`, including project-layer trust. No undocumented trust-file
+write or `--dangerously-bypass-hook-trust` is used. A configuration file existing
+on disk does not prove it loaded. The operator must review the exact private
+cell paths through the documented UI before separately authorized native smoke.
+There is no automated trust assertion in this harness.
+
+The existing four smoke prompts now add a harmless forbidden-write attempt.
+Smoke requires successful neutral helper execution, native denial of the exact
+probe and absence of its marker. Codex additionally requires the frozen hook's
+allow/deny audit records to agree with native command hashes and policy hash.
+Copilot checks observed native permission denial under its frozen argv. Offline
+fixtures simulate those native provider envelopes explicitly; their hook/child
+subprocesses are real, but they do not establish live provider loading or trust.
+No extra provider call or scored scenario behavior is added.
+
+The [official hook reference](https://learn.chatgpt.com/docs/hooks) documents
+pre-tool interception and private hook discovery/trust. It also limits tool
+coverage and describes failure paths that can continue execution. Therefore a
+valid policy's own deny JSON is not a complete host fail-closed guarantee:
+missing/untrusted scripts, host errors/timeouts, specialized opt-out tools and
+write_stdin transport still need native verification or a supported restriction.
+`preflight`/`run` retain the exact
+`codex-private-hook-trust-load-failure-and-enabled-tool-coverage-unverified`
+prerequisite. They make no categorical platform-impossibility claim and cannot
+be enabled by changing an authored receipt. If the installed host cannot satisfy
+those controls, preserve that blocker and keep the live pilot incomplete.
