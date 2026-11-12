@@ -9,16 +9,16 @@ The user authorized this cleanup after learning that the renderer remained share
 ## Progress
 
 - [x] (2026-11-11) [milestone-1] T1: Identify remaining capture consumers and agree removal/preservation boundaries.
-- [ ] [milestone-1] T2: Remove capture implementation and exclusive dependencies, update existing fixtures and documentation, regenerate, and verify retained behavior in an isolated worktree. Depends on T1 and the committed plan.
-- [ ] [milestone-2] T3: Integrate T2 and verify the integrated result with no concurrent repository writes during generator tests. Depends on T2.
-- [ ] [milestone-2] T4: Run independent Standards and Spec review, resolve findings through one isolated implementer, and repeat at most three review iterations. Depends on T3.
+- [x] (2026-11-12) [milestone-1] T2: Remove capture implementation and exclusive dependencies, update existing fixtures and documentation, regenerate, and verify retained behavior in an isolated worktree. Depends on T1 and the committed plan.
+- [x] (2026-11-12) [milestone-2] T3: Integrate T2 and verify the integrated result with no concurrent repository writes during generator tests. Depends on T2.
+- [ ] [milestone-2] T4: Run independent Standards and Spec review of the integrated source, resolve findings through one isolated implementer, and repeat at most three review iterations. Depends on T3.
 - [ ] [milestone-2] T5: Reflect, archive the completed plan, and remove the merged implementer worktree/branch. Depends on clean T4 or a clearly reported iteration-limit outcome.
 
 ## Surprises & Discoveries
 
 - `hooks/families/common.py` injects optional capture calls into JSON input/output; `hooks/families/rtk.py` imports and calls capture directly. Both integrations must disappear before removing generated helpers.
 - `hooks/providers.py` has an observability-only environment-prefix field, while `runtime_home_name` remains used by ordinary audit logging.
-- The existing helper and generator suites contain observability-only cases. Their removal is authorized feature deletion; assertions covering retained parsing, UTF-8, forwarding, and installer safety must remain.
+- Before T2, helper and generator suites contained capture-only cases. T2 removed those deletion-specific cases while retaining assertions for input parsing, UTF-8, forwarding, startup behavior, and installer safety.
 
 ## Decision Log
 
@@ -31,35 +31,55 @@ The user authorized this cleanup after learning that the renderer remained share
 
 `hooks/manifest.py` declares generated ownership. Canonical renderers live in `hooks/families/`; generated copies live under `.copilot/hooks/scripts/` and `.gemini/hooks/scripts/`. `scripts/generate-hooks.py` renders owned files and checks freshness. `hooks/registrations.py` holds exact retirement receipts used by provider installers. `hooks/providers.py` provides renderer metadata. `scripts/tests/hooks/test-generate-hooks.py`, `scripts/tests/tooling/test_helpers.py`, and `scripts/tests/support/test-common.sh` contain remaining trace-specific assertions and environment setup.
 
-Current guidance appears in `brain/codebase/hook-observability.md`, related brain indexes/testing guidance, and the historical `docs/adr/0003-sqlite-backed-hook-observability.md`. Audit current references across the repository, distinguish unrelated uses of the word observability in published skills, and preserve clearly historical evidence while repairing links affected by retirement.
+Before T2, current guidance appeared in `brain/codebase/hook-observability.md`, related brain indexes/testing guidance, and `docs/adr/0003-sqlite-backed-hook-observability.md`. T2 removed obsolete active guidance and marked the ADR historical. T4 should review the integrated references while distinguishing unrelated uses of “observability” in published skills and preserving historical evidence.
 
 ## Plan of Work
 
 ### Milestone 1: Remove capture while retaining hook behavior
+Status: done
+Acceptance: met
+
+T2 is complete in worker commit `6876a6559487bbbf41caebd47ef1093de64087a1`. The worker removed the canonical renderer, both generated helper files and manifest targets, capture calls/metadata, exclusive environment settings, capture-only tests, and obsolete active brain guidance. It retained common/audit helpers, ordinary audit logging, RTK forwarding and validation, and required-skill startup behavior. Exact Copilot/Gemini generated-helper hashes were added to retirement receipts. No unrelated skills or live installations were changed. The worker used an isolated worktree and added no regression tests for the deleted feature.
+
+Observed T2 checks: generation produced 14 targets and was current on a second check; the generator suite passed 12 tests; helper suite passed 8 tests; both RTK suites, both startup suites, Bash installer suite, and PowerShell installer suite exited 0. The PowerShell junction case was skipped because the macOS host cannot create that junction; this is not native Windows evidence. Disposable legacy asset retirement removed unchanged owned helpers, preserved modified helpers, historical NDJSON logs, and unrelated files, and was stable on repeat. The worker made no live-home changes.
+
+### Milestone 2: Integrate and independently review
 Status: in progress
 Acceptance: not met
 
-T2 is one bounded implementation task because the renderer, imports, generated outputs, and fixture inventory form one coupled deletion. Remove the observability renderer and its two generated helper files, both manifest entries, capture-only fields/constants/calls, and now-unused trace-specific helper/test code. Simplify newly unused capture plumbing without changing input validation or forwarding bytes. Keep common/audit helpers and their independent settings. Record both pre-removal generated helper hashes for safe retirement through existing ownership checks. Update affected current documentation, mark the ADR historical, reconcile brain navigation, and preserve prior plan evidence. Do not edit unrelated skills.
+T3 is complete. The integration branch fast-forwarded to worker commit `6876a6559487bbbf41caebd47ef1093de64087a1`, whose parent is the plan baseline `9291b24a2b98b9cd14c77f874a0146ee51f56f81`; integrated `HEAD` equals the exact tested worker commit. Integrated generation freshness reports 14 current files and `rtk git diff --check` passes. No retained suites were rerun because the integrated source exactly matches the tested worker commit.
 
-The implementer creates a worktree outside the repository, starts from the integration branch, and merges the latest integration tip before finishing. It activates the TDD skill but follows the explicit no-deletion-regression-tests rule. It activates the commit skill and validates the message before any commit. Acceptance requires generated freshness and affected retained protocol/installer tests to pass, plus a disposable retirement check proving exact helpers are removed, modified helpers and logs preserved, and repeated refresh converges.
-
-### Milestone 2: Integrate and independently review
-Status: open
-Acceptance: not met
-
-T3 fast-forwards or merges the scoped implementer commit through the coordinator. Verify the integrated source and retain exact command/results, avoiding redundant full reruns when worker checks ran on the exact merged content. T4 pins the base and integrated target and runs separate Standards and Spec reviewers against the same source. Record all findings as frontier tasks, fix actionable findings through the isolated implementer, and review again for at most three iterations. Reconcile plan state before freezing each review candidate. T5 records final acceptance and reflection, archives the plan and reports, and removes only the clean merged worker worktree and branch.
+T4 is next: freeze the integrated source against base `9291b24a2b98b9cd14c77f874a0146ee51f56f81`, run separate independent Standards and Spec reviews against the same target, and record findings as frontier tasks. Resolve actionable findings through one isolated implementer and repeat at most three review iterations. Reconcile plan status before freezing each candidate. T5 records final acceptance and reflection, archives the plan and reports, and removes only the clean merged worker worktree and branch.
 
 ## Concrete Steps
 
-Next, the coordinator commits this plan and confirms the integration baseline. The parent dispatches T2 to a single isolated implementer; no source edits occur before the plan exists. Commands run from the selected worktree root and are prefixed with `rtk`. The integration branch stays `codex/remove-hooks`; use `codex/retire-observability-work` for the implementer and `/private/tmp/retire-observability/worktree` for its checkout.
+T2 and T3 are complete. The integrated target is `6876a6559487bbbf41caebd47ef1093de64087a1` on `codex/remove-hooks`. Next, the parent freezes this target and dispatches independent Standards and Spec reviews (T4). Record review findings, if any, as bounded frontier tasks for a single isolated implementer. Commands run from the selected worktree root and are prefixed with `rtk`. The completed worker checkout is `/private/tmp/retire-observability/worktree`; do not remove it until T5.
 
 ## Validation and Acceptance
 
-Run `rtk proxy python3 scripts/generate-hooks.py --write`, then `--check`, then `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py`. Expect 14 generated targets after removing the two observability helpers; record actual test counts. No concurrent writes during generator tests.
+### T2 worker verification
 
-Run `rtk proxy python3 scripts/tests/tooling/test_helpers.py`, both `rtk proxy bash scripts/tests/hooks/test-hooks-rtk.sh` and `test-gemini-hooks-rtk.sh`, and both `rtk proxy bash scripts/tests/hooks/test-hooks-startup.sh` and `test-gemini-hooks-startup.sh`. Existing cases must establish preserved JSON envelopes, UTF-8, retained stdin/trailing-data handling, forwarding/fallback, and startup behavior. Run `rtk proxy bash scripts/tests/installers/test-install.sh` and `rtk proxy pwsh -NoProfile -File scripts/tests/installers/test-install.ps1` for changed generated assets and retirement receipts. Run generator freshness after affected suites and `rtk proxy git diff --check`. Platform-specific skips do not establish native Windows verification.
+All commands below ran from `/private/tmp/retire-observability/worktree` before the worker commit; integrated `HEAD` is exactly that commit, so the results apply to the integrated source. No implementation suites were redundantly rerun during integration.
 
-In disposable provider destinations, seed the old helper bytes from the base commit and refresh through existing installer/merger paths. Observe that unchanged owned helpers disappear, changed helpers remain, unrelated files and runtime logs remain, and a repeated refresh is stable. Keep this one-off evidence outside source tests. Search active hook code, configuration, and maintained tests for capture imports/env keys: only exact migration ownership records should remain where needed. Check changed Markdown links. All results here are expectations until recorded as observed evidence.
+- `rtk proxy python3 scripts/generate-hooks.py --write`: generated 14 targets.
+- `rtk proxy python3 scripts/generate-hooks.py --check`: current, 14 files; repeated after suites with the same result.
+- `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py`: 12 tests passed.
+- `rtk proxy python3 scripts/tests/tooling/test_helpers.py`: 8 tests passed.
+- `rtk proxy bash scripts/tests/hooks/test-hooks-rtk.sh`, `test-gemini-hooks-rtk.sh`, `test-hooks-startup.sh`, and `test-gemini-hooks-startup.sh`: all exited 0. The expected missing-required-skill fixture emitted its hard-stop diagnostic.
+- `rtk proxy bash scripts/tests/installers/test-install.sh`: exited 0.
+- `rtk proxy pwsh -NoProfile -File scripts/tests/installers/test-install.ps1`: passed; the junction case was skipped because the macOS host cannot create junctions. No native Windows claim is made.
+- Disposable legacy asset retirement: unchanged owned helpers were removed; modified helpers, historical NDJSON logs, and unrelated files were preserved; repeat refresh was stable. This was a disposable retirement check, not a claim that a live installation was refreshed.
+- `rtk proxy git diff --check`: passed.
+
+### T3 integration verification
+
+- Confirmed integration `HEAD` equals tested worker commit `6876a6559487bbbf41caebd47ef1093de64087a1`, with parent `9291b24a2b98b9cd14c77f874a0146ee51f56f81`.
+- `rtk proxy python3 scripts/generate-hooks.py --check`: current, 14 files.
+- `rtk proxy git diff --check`: passed.
+
+### T4 acceptance
+
+T4 acceptance requires separate independent Standards and Spec reviews of the same frozen source target, with evidence and frontier tasks recorded in this plan. Any fixes must preserve the user-authorized behavior: remove trace capture, generated helpers, metadata/settings and dedicated tests, while retaining RTK forwarding, startup behavior, input validation/fallbacks, and ordinary audit logging. If issues require changes, use one isolated implementer; allow at most three review iterations. Historical reviewer reports must state clearly that reviewers did not execute tests.
 
 ## Idempotence and Recovery
 
@@ -67,4 +87,4 @@ Regeneration and provider refresh are repeatable. Never hand-edit generated outp
 
 ## Outcomes & Retrospective
 
-The dependency inventory and scope are complete. Implementation, integrated verification, and independent review remain pending. Existing common/audit helpers are retained; observability capture and exclusive assets are the authorized removal. No live installations have been changed.
+The capture removal is implemented and integrated. Canonical and generated trace helpers, capture metadata and settings, capture-only test cases, and obsolete current guidance were removed. RTK forwarding and required-skill startup checks passed; common/audit helpers, ordinary audit logging, validation and fallback behavior remain. Generated freshness and the retained suites passed on the exact integrated commit. The macOS PowerShell junction case was skipped, so no native Windows claim is made. A disposable retirement check confirmed unchanged helper removal, preservation of modified helpers/logs/unrelated files, and stable repeat refresh. No live installations were changed. Independent T4 Standards and Spec review remains pending; milestone 2 acceptance is not yet met.
