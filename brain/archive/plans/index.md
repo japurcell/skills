@@ -16,3 +16,4 @@
 - [Scheduler evaluation](31-scheduler-evaluation/ExecPlan.md)
 - [Scheduler evaluation report](31-scheduler-evaluation/report.md)
 - [Scanner, Guardian, and event-emitter hook retirement](2026-11-11-retire-hooks/ExecPlan.md)
+- [Hook observability retirement](2026-11-11-retire-observability/ExecPlan.md)
