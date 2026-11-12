@@ -386,7 +386,7 @@
           "assessment": "not a baseline capability"
         },
         "automated_grade_replaced": false,
-        "programmatic_corrected_grader_status": "F2-E source correction/review pending"
+        "programmatic_corrected_grader_status": "not required; independently audited semantic assessment accepted"
       },
       "substantiated_command_counts": {
         "scheduler_scoring_receipts": 15,
@@ -566,7 +566,7 @@
           "native_citation": "stdout3299 after parent write3111; final readback13266; owner agent-new recorded_at205"
         },
         "automated_grade_replaced": false,
-        "programmatic_corrected_grader_status": "F2-E source correction/review pending",
+        "programmatic_corrected_grader_status": "not required; independently audited semantic assessment accepted",
         "batch_interpretation": {
           "original_implementation": "global receipt reuse rejects 3 extra request-checkpoint rows from one tick",
           "approved_contract": "required8 actions uniquely matched; three extra rows map to distinct A/B/C actual batch events",
@@ -660,8 +660,7 @@
     "No native rerun, output repair or original grade replacement"
   ],
   "correction_status": {
-    "F2-E": "pending accepted source/review",
-    "programmatic_corrected_grader_commit": null,
+    "F2-E": "source correction awaiting remaining Spec P2 permission-gate fix and reviewer acceptance",
     "independent_audit_provenance": {
       "codex-baseline": {
         "retained_report": "pilot-audit-codex-baseline.md",
@@ -699,6 +698,15 @@
         "external_sha256": "e717708764147107fafb1386bcbea77fd986dec98947976cdb6d74bce07f9cb6",
         "retained_sha256": "9a2618a0edc98dd0e97e705e4a94b5d5fe12336040ed9c66407e9663393a0548"
       }
+    },
+    "programmatic_regrade_required": false,
+    "final_parser_provenance": {
+      "status": "pending accepted correction integration",
+      "candidate_commit": "ade005b8735cd72cd5da96c4fe2e067bd1d0e9ef",
+      "candidate_harness_sha256": "8761dc45e36f5e1589885d52ff19357cbbb969ee2b887c53bc65cdf7f5f4ec2e",
+      "candidate_suite_tests": 42,
+      "candidate_suite_seconds": 151.453,
+      "remaining_review_finding": "Spec P2 incidental-permission gate"
     }
   },
   "historical_boundaries": {
@@ -721,5 +729,13 @@
     "parent_verification": "2a9bc2ea959376b6042421c2e274bf8ca6a5173d3ff35b57e0776632d2d98328",
     "manifest": "012f1c7591c55130f24a62de379f508abe0f8a1ba37ece57a2066811e6ce4f9d",
     "wrapper_format_original": "888d7ea22a8352e634e5a649c509086158fd5fa0c68a33e01e688c39aaa4206a"
+  },
+  "report_acceptance": {
+    "status": "accepted by parent after independent audit",
+    "audited_report_commit": "aaf9bb1c788bd49c1bd7172852190bdd61acc4a4",
+    "audit": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05/review/report-audit.md",
+    "audit_sha256": "2f62029e350fbcab0d305822b061d614c925301d318f0ef02801a14b121838ec",
+    "findings": 0,
+    "note": "Audit binds original semantic report bytes; subsequent workflow metadata removes an unnecessary regrade requirement without changing observations."
   }
 }
