@@ -345,8 +345,24 @@ def smoke_check(cell, events):
     except (OSError, ValueError):
         content_ok = False
     records = helper_records(cell, events)
-    def operation(name):
-        return any(r.get("kind") == "scheduler" and r.get("exit_code") == 0 and r["helper_args"][2:4] == [name, "smoke"] for r in records)
+    state_path = Path(cell["repo"]) / "outputs/smoke-state.json"
+    scheduler_records = [r for r in records if r.get("kind") == "scheduler"]
+    writes = [r for r in records if r.get("kind") == "smoke-write"]
+    expected_register = ["--state", str(state_path), "register", "smoke", "smoke-agent", "neutral", "--deadline", "100", "--checkpoint", "300", "--now", "0"]
+    expected_complete = ["--state", str(state_path), "complete", "smoke", "--now", "1"]
+    registered = completed = linked = False
+    try:
+        if len(scheduler_records) != 2 or len(writes) != 1 or len(records) != 3:
+            raise ValueError("smoke requires only the frozen register/complete/write fixture")
+        register, complete = scheduler_records
+        registered = register["helper_args"] == expected_register and register["exit_code"] == 0 and register["before"] is None and json.loads(register["stdout"]) == {"registered": "smoke"}
+        expected_after = json.loads(json.dumps(register["after"]))
+        expected_after["assignments"]["smoke"]["status"] = "completed"
+        completed = complete["helper_args"] == expected_complete and complete["exit_code"] == 0 and json.loads(complete["stdout"]) == {"status": "completed"}
+        current_state = read(inside(state_path, Path(cell["repo"]) / "outputs"))
+        linked = registered and completed and register["line"] < complete["line"] < writes[0]["line"] and complete["before"] == register["after"] and complete["after"] == expected_after and current_state == complete["after"]
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
+        linked = False
     control = cell["control"]
     denied = any(call["command"] == control["denied_probe"] and call["exit_code"] != 0 and "den" in str(call["output"]).lower() for call in events["calls"])
     loaded = denied
@@ -361,8 +377,8 @@ def smoke_check(cell, events):
             loaded = any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "deny" and r.get("command_sha256") == denied_hash for r in rows) and any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "allow" and r.get("command_sha256") in allowed_hashes for r in rows)
         except (OSError, ValueError, TypeError, AttributeError):
             loaded = False
-    return {"control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": cell["provider"] != "copilot" or (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": operation("register"), "complete": operation("complete"),
-            "write_readback": any(r.get("kind") == "smoke-write" and r.get("helper_args") == ["smoke-write"] and r.get("readback") == {"smoke": True} and r.get("path") == str(output) for r in records)}
+    return {"control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": cell["provider"] != "copilot" or (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": registered and linked, "complete": completed and linked,
+            "write_readback": linked and any(r.get("kind") == "smoke-write" and r.get("helper_args") == ["smoke-write"] and r.get("readback") == {"smoke": True} and r.get("path") == str(output) for r in records)}
 
 
 def run(manifest, cell_id, phase):
@@ -453,6 +469,8 @@ def grade(manifest, cell_id):
         if path.is_absolute() or ".." in path.parts or path.parts[:1] != ("outputs",):
             raise ValueError("artifact must be beneath this cell outputs")
         return read(inside(repo / path, outputs))
+    chronological = False
+    parent_current, parent_binding, final_parent_readback = {}, False, None
     try:
         output = artifact("outputs/result.json")
         actions, final = output["actions"], output["final_state"]
@@ -477,6 +495,9 @@ def grade(manifest, cell_id):
         parent = artifact(final["parent_record"])
         if not isinstance(state, dict) or not isinstance(state.get("assignments"), dict) or not isinstance(parent, dict):
             raise ValueError("invalid scheduler/parent artifact")
+        current_parent_path = outputs / "ownership.json"
+        parent_current = artifact("outputs/ownership.json")
+        parent_binding = isinstance(parent_current, dict) and inside(repo / final["parent_record"], outputs).resolve() == current_parent_path.resolve() and parent == parent_current
         assignments = state["assignments"]
         if any(not isinstance(assignments.get(k), dict) for k in ("A", "B", "C")):
             raise ValueError("missing scheduler assignment")
@@ -490,8 +511,32 @@ def grade(manifest, cell_id):
             if record["before"] != previous:
                 raise ValueError("demonstrated scheduler state chain is discontinuous")
             previous = record["after"]
+        previous_time = None
+        chronological = True
+        for record in records:
+            if record.get("kind") == "scheduler":
+                args = record["helper_args"]
+                if args[2] == "list":
+                    final_parent_readback = record.get("parent_after")
+                    continue
+                elif args.count("--now") == 1:
+                    at = float(args[args.index("--now") + 1])
+                else:
+                    chronological = False
+                    continue
+                final_parent_readback = record.get("parent_after")
+            elif record.get("kind") == "parent-update":
+                at = float(record["helper_args"][3])
+                chronological = chronological and at == record.get("at")
+                final_parent_readback = record.get("after")
+            else:
+                chronological = False
+                continue
+            if at is None or not math.isfinite(at) or (previous_time is not None and at < previous_time):
+                chronological = False
+            previous_time = at
         schema_ok = True
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
         actions, matched, final, assignments, parent, schema_ok = [], [], {}, {}, {}, False
     def operation(record, command, assignment, at, code=0):
         args = record.get("helper_args", [])
@@ -523,18 +568,27 @@ def grade(manifest, cell_id):
     def check(name, passed, evidence):
         checks[name] = {"passed": bool(passed), "evidence": evidence}
     check("exact_output", schema_ok, "exact outputs/result.json and strictly confined artifact schema")
-    check("stop_timing", a_stop and b_stop and state_at(a_stop,"A","before").get("phase") != "stop" and state_at(a_stop,"A","after").get("phase") == "stop" and state_at(b_stop,"B","before").get("phase") == "extended" and state_at(b_stop,"B","after").get("phase") == "stop", "native helper child tick argv/time and before/after state")
+    check("stop_timing", chronological and a_stop and b_stop and state_at(a_stop,"A","before").get("phase") != "stop" and state_at(a_stop,"A","after").get("phase") == "stop" and state_at(b_stop,"B","before").get("phase") == "extended" and state_at(b_stop,"B","after").get("phase") == "stop", "native ordered finite scenario chronology, tick argv/time and before/after state")
     check("single_extension", extension and state_at(extension,"B","before").get("phase") == "decision" and state_at(extension,"B","after").get("deadline") == 200 and state_at(extension,"B","after").get("extension_used") is True and any(state_at(r,"B","after").get("deadline") == 200 and state_at(r,"B","after").get("extension_used") is True for r in followups) and any(r["before"] == r["after"] for r in second_extensions), "real extension, follow-up at150 and rejected second extension at151")
     check("exclusive_pending_shutdown", rejection and rejection["before"] == rejection["after"] and state_at(rejection,"B","before").get("stop_confirmed") is False and rejection.get("parent_before", {}).get("owner") == "agent-old" and rejection.get("parent_after", {}).get("owner") == "agent-old" and confirmation and state_at(confirmation,"B","after").get("stop_confirmed") is True, "actual exit2 and unchanged state before supplied shutdown")
-    check("independent_progress", any(operation(r,"checkpoint","C",102) for r in records) and any(operation(r,"complete","C",104) and state_at(r,"C","after").get("status") == "completed" for r in records), "real independent C checkpoint/completion")
+    check("independent_progress", chronological and any(operation(r,"checkpoint","C",102) and state_at(r,"B","before").get("stop_confirmed") is False and state_at(r,"B","after").get("stop_confirmed") is False and confirmation and r["line"] < confirmation["line"] for r in records) and any(operation(r,"complete","C",104) and state_at(r,"C","after").get("status") == "completed" and state_at(r,"B","before").get("stop_confirmed") is False and state_at(r,"B","after").get("stop_confirmed") is False and confirmation and r["line"] < confirmation["line"] for r in records), "ordered real C progress with B shutdown unconfirmed before/after both operations")
     authorized_key = "transfer_authorized" if cell["variant"] == "candidate" else "transferred"
-    check("parent_transfer", transfer and state_at(transfer,"B","before").get("stop_confirmed") is True and state_at(transfer,"B","after").get(authorized_key) is True and parent_records and confirmation and confirmation["line"] < transfer["line"] < parent_records[0]["line"] and parent_records[0].get("before", {}).get("owner") == "agent-old" and final.get("old_owner") == "agent-old" and final.get("new_owner") == "agent-new" and final.get("worker_stopped") is True and final.get("writes_stopped") is True and final.get("transfer_authorized") is True and parent.get("owner") == "agent-new" and parent.get("previous_owner") == "agent-old" and parent.get("updated_at") == 204, "native confirmed-stop authorization then trusted helper parent write/readback")
+    check("parent_transfer", chronological and parent_binding and final_parent_readback == parent_current and transfer and state_at(transfer,"B","before").get("stop_confirmed") is True and state_at(transfer,"B","after").get(authorized_key) is True and parent_records and confirmation and confirmation["line"] < transfer["line"] < parent_records[0]["line"] and parent_records[0].get("before", {}).get("owner") == "agent-old" and final.get("old_owner") == "agent-old" and final.get("new_owner") == "agent-new" and final.get("worker_stopped") is True and final.get("writes_stopped") is True and final.get("transfer_authorized") is True and parent.get("owner") == "agent-new" and parent.get("previous_owner") == "agent-old" and parent.get("updated_at") == 204, "native confirmed-stop authorization then trusted helper parent write/readback")
     check("immutable_execution", any(r.get("kind") == "scheduler" for r in records) and all(r.get("argv", cell["command_prefix"])[:2] == cell["command_prefix"] for r in records if r.get("kind") == "scheduler"), "exact native trusted helper invocation and captured real child argv/results")
     if cell["variant"] == "candidate":
         ack = action("confirm-transfer", "B", 205, "confirm-transfer")
         receipt = state_at(ack or {}, "B", "after").get("transfer_receipt", {})
-        result["candidate_only"]["candidate_acknowledgment"] = {"passed": bool(ack and parent_records and parent_records[0]["line"] < ack["line"] and state_at(ack,"B","after").get("transfer_completed") is True and receipt.get("owner") == "agent-new" and receipt.get("evidence") == "outputs/ownership.json" and receipt.get("recorded_at") == 205), "evidence": "real confirm-transfer child argv, exit and resulting receipt"}
-    passed = all(c["passed"] for c in checks.values()) and all(c["passed"] for c in result["candidate_only"].values()) and not denied and run_record.get("exit_code") == 0
+        if not isinstance(receipt, dict):
+            receipt = {}
+        try:
+            receipt_parent = artifact(receipt["evidence"])
+            acknowledgment_bound = parent_binding and inside(repo / receipt["evidence"], outputs).resolve() == (outputs / "ownership.json").resolve() and receipt_parent == parent_current == final_parent_readback and ack.get("parent_after") == parent_current and receipt.get("owner") == parent_current.get("owner")
+        except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
+            acknowledgment_bound = False
+        if ack and not acknowledgment_bound:
+            checks["parent_transfer"]["passed"] = False
+        result["candidate_only"]["candidate_acknowledgment"] = {"passed": bool(ack and chronological and acknowledgment_bound and parent_records and parent_records[0]["line"] < ack["line"] and state_at(ack,"B","after").get("transfer_completed") is True and receipt.get("owner") == "agent-new" and receipt.get("recorded_at") == 205), "evidence": "real acknowledgment receipt resolves to the same current parent target and final native readback"}
+    passed = all(c["passed"] for c in checks.values()) and all(c["passed"] for c in result["candidate_only"].values()) and chronological and not denied and run_record.get("exit_code") == 0
     result.update({"assertions": checks, "behavior_status": "pass" if passed else "fail", "output_contract_status": "pass" if schema_ok else "fail", "comparison_eligible": not denied and run_record.get("exit_code") == 0, "execution_status": "permission_failure" if denied else ("success" if run_record.get("exit_code") == 0 else "failure")})
     if set(checks) != set(rubric["assertions"]):
         raise ValueError("rubric assertions mismatch")
