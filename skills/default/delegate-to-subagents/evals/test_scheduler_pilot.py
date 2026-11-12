@@ -38,7 +38,7 @@ class PilotTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.data = json.loads(self.manifest.read_text())
 
-    def fixture(self, provider="codex", variant="candidate", omit=None):
+    def fixture(self, provider="codex", variant="candidate", omit=None, ordering="normal", smoke_case="normal", smoke_only=False, ack_reference="outputs/ownership.json"):
         cell_id = provider + "-" + variant
         cell = self.data["cells"][cell_id]
         repo = Path(cell["repo"])
@@ -66,9 +66,15 @@ class PilotTests(unittest.TestCase):
             (directory / "stdout.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
             (directory / "run.json").write_text(json.dumps({"exit_code":0,"smoke_valid":phase=="smoke", "delivered_prompt_sha256":hashlib.sha256(Path(cell["prompts"][phase]).read_bytes()).hexdigest()}))
             rows.clear()
-        smoke_state = str(repo / "outputs/smoke-state.json")
-        invoke(["--state",smoke_state,"register","smoke","smoke-agent","neutral","--deadline","100","--checkpoint","300","--now","0"])
-        invoke(["--state",smoke_state,"complete","smoke","--now","1"])
+        smoke_state = str(repo / ("outputs/scenario-state.json" if smoke_case == "wrong-state" else "outputs/smoke-state.json"))
+        if smoke_case == "complete-first":
+            invoke(["--state",smoke_state,"complete","smoke","--now","1"])
+        invoke(["--state",smoke_state,"register","smoke","smoke-agent","neutral","--deadline","101" if smoke_case == "wrong-argv" else "100","--checkpoint","300","--now","0"])
+        if smoke_case == "disconnected":
+            contents=json.loads(Path(smoke_state).read_text());contents["unlinked_change"]=True
+            Path(smoke_state).write_text(json.dumps(contents))
+        if smoke_case not in ("complete-first","missing-complete"):
+            invoke(["--state",smoke_state,"complete","smoke","--now","1"])
         invoke(["smoke-write"])
         denied_command=cell["control"]["denied_probe"]
         if provider=="codex":
@@ -79,6 +85,8 @@ class PilotTests(unittest.TestCase):
         else:
             rows.extend([{"type":"tool.execution_start","data":{"toolCallId":"denied","arguments":{"command":denied_command}}},{"type":"tool.execution_complete","data":{"toolCallId":"denied","success":False,"result":{"content":"Permission denied by frozen native grant fixture"}}}])
         save("smoke")
+        if smoke_only:
+            return cell_id, repo
         state = str(repo / "outputs/scenario-state.json")
         actions = []
         def op(command, assignment=None, at=0, extra=(), label=None, expected=0):
@@ -92,24 +100,40 @@ class PilotTests(unittest.TestCase):
                 (repo/path).write_text(json.dumps(record))
                 actions.append({"action":label,"assignment":assignment or ("A" if at==105 else "B"),"at":at,"evidence":path})
         for assignment, agent in (("A","agent-a"),("B","agent-old"),("C","agent-c")):
+            if ordering == "late-c" and assignment == "C":
+                continue
             op("register",assignment,extra=[agent,"task","--deadline","100","--checkpoint","300","--grace","5"])
         op("tick",at=100)
+        if ordering == "swap-equal":
+            op("checkpoint","C",102)
         op("checkpoint","B",102,["--eta","200"])
-        op("checkpoint","C",102)
+        if ordering not in ("late-c","swap-equal"):
+            op("checkpoint","C",102)
         op("extend","B",103,["--eta","200"],"extend")
-        op("complete","C",104)
+        if ordering not in ("late-c","late-complete"):
+            op("complete","C",104)
         op("tick",at=105,label="stop")
         op("checkpoint","B",150)
-        op("extend","B",151,["--eta","250"],expected=2)
+        op("extend","B",149 if ordering == "backdated-followup" else 151,["--eta","250"],expected=2)
         op("tick",at=200,label="stop")
         op("transfer","B",201,label="transfer-rejected",expected=2)
         op("confirm-stopped","B",202,["--confirmation","worker-and-writes-stopped"],"confirm-stopped")
+        if ordering == "late-c":
+            op("register","C",extra=["agent-c","task","--deadline","100","--checkpoint","300","--grace","5"])
+            op("tick",at=100)
+            op("checkpoint","C",102)
+        if ordering in ("late-c","late-complete"):
+            op("complete","C",104)
         op("transfer","B",203,label="transfer")
+        if ordering == "ack-first" and variant == "candidate":
+            op("confirm-transfer","B",205,["--owner","agent-new","--evidence",ack_reference,"--confirmation","parent-ownership-updated"],"confirm-transfer")
         record,_ = invoke(["parent-update","agent-old","agent-new","204"])
         (repo / "outputs/parent.json").write_text(json.dumps(record))
         actions.append({"action":"parent-update","assignment":"B","at":204,"evidence":"outputs/parent.json"})
-        if variant == "candidate":
-            op("confirm-transfer","B",205,["--owner","agent-new","--evidence","outputs/ownership.json","--confirmation","parent-ownership-updated"],"confirm-transfer")
+        if variant == "candidate" and ordering != "ack-first":
+            if ack_reference == "outputs/detached-ack.json":
+                shutil.copyfile(repo / "outputs/ownership.json",repo / ack_reference)
+            op("confirm-transfer","B",205,["--owner","agent-new","--evidence",ack_reference,"--confirmation","parent-ownership-updated"],"confirm-transfer")
         output={"actions":actions,"final_state":{"old_owner":"agent-old","new_owner":"agent-new","worker_stopped":True,"writes_stopped":True,"transfer_authorized":True,"parent_record":"outputs/ownership.json","scheduler_state":"outputs/scenario-state.json"}}
         (repo / "outputs/result.json").write_text(json.dumps(output))
         save("scenario")
@@ -425,6 +449,71 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
         audit.write_text(original)
         (repo / "outputs/control-forbidden.json").write_text("unexpected execution")
         self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+
+    def matrix_root(self, label, provider, variant):
+        self.run=self.root / (label+"-"+provider+"-"+variant)
+        self.manifest=self.run / "manifest.json"
+        self.prepare()
+
+    def test_r2_native_chronology_and_unconfirmed_independent_progress(self):
+        for provider in ("codex","copilot"):
+            for variant in ("baseline","candidate"):
+                for ordering in ("late-c","late-complete","backdated-followup","swap-equal"):
+                    with self.subTest(provider=provider,variant=variant,ordering=ordering):
+                        self.matrix_root(ordering,provider,variant)
+                        cell,_=self.fixture(provider,variant,ordering=ordering)
+                        report=self.grade(cell)
+                        self.assertEqual(report["setup_status"],"valid",report)
+                        expected=ordering=="swap-equal"
+                        self.assertEqual(report["assertions"]["independent_progress"]["passed"],expected,report)
+                        self.assertEqual(report["behavior_status"],"pass" if expected else "fail",report)
+                        self.assertTrue(report["comparison_eligible"],report)
+
+    def test_r2_current_parent_target_cannot_be_hidden_by_detached_copy(self):
+        for provider in ("codex","copilot"):
+            for variant in ("baseline","candidate"):
+                with self.subTest(provider=provider,variant=variant):
+                    self.matrix_root("detached",provider,variant)
+                    cell,repo=self.fixture(provider,variant)
+                    actual=repo / "outputs/ownership.json"
+                    detached=repo / "outputs/detached.json"
+                    detached.write_bytes(actual.read_bytes())
+                    actual.write_text(json.dumps({"owner":"agent-old","previous_owner":"agent-new","updated_at":206}))
+                    output=repo / "outputs/result.json"
+                    data=json.loads(output.read_text());data["final_state"]["parent_record"]="outputs/detached.json"
+                    output.write_text(json.dumps(data))
+                    report=self.grade(cell)
+                    self.assertEqual(report["setup_status"],"valid")
+                    self.assertEqual(report["behavior_status"],"fail",report)
+                    self.assertFalse(report["assertions"]["parent_transfer"]["passed"],report)
+                    if variant=="candidate":
+                        self.assertFalse(report["candidate_only"]["candidate_acknowledgment"]["passed"],report)
+                    self.assertTrue(report["comparison_eligible"])
+
+    def test_r2_acknowledgment_reads_same_target_in_causal_order(self):
+        for provider in ("codex","copilot"):
+            for label, ordering, reference, expected in (("early-ack","ack-first","outputs/ownership.json",False),("detached-ack","normal","outputs/detached-ack.json",False),("same-target-alias","normal","outputs/./ownership.json",True)):
+                with self.subTest(provider=provider,case=label):
+                    self.matrix_root(label,provider,"candidate")
+                    cell,_=self.fixture(provider,"candidate",ordering=ordering,ack_reference=reference)
+                    report=self.grade(cell)
+                    self.assertEqual(report["setup_status"],"valid")
+                    self.assertEqual(report["candidate_only"]["candidate_acknowledgment"]["passed"],expected,report)
+                    self.assertEqual(report["assertions"]["parent_transfer"]["passed"],expected,report)
+                    self.assertEqual(report["behavior_status"],"pass" if expected else "fail",report)
+                    self.assertTrue(report["comparison_eligible"])
+
+    def test_r2_exact_smoke_state_argv_order_and_linked_results(self):
+        for provider in ("codex","copilot"):
+            for variant in ("baseline","candidate"):
+                for case in ("wrong-state","wrong-argv","complete-first","missing-complete","disconnected"):
+                    with self.subTest(provider=provider,variant=variant,case=case):
+                        self.matrix_root(case,provider,variant)
+                        cell,_=self.fixture(provider,variant,smoke_case=case,smoke_only=True)
+                        report=self.grade(cell)
+                        self.assertEqual(report["setup_status"],"invalid",report)
+                        self.assertEqual(report["behavior_status"],"not_evaluated",report)
+                        self.assertFalse(report["comparison_eligible"])
 
     def test_native_provider_command_boundary_fails_before_inference(self):
         result = self.call("prepare", "--run-root", self.run, "--baseline", SOURCE, "--candidate", SOURCE, "--config", self.config)

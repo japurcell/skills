@@ -154,3 +154,26 @@ write_stdin transport still need native verification or a supported restriction.
 prerequisite. They make no categorical platform-impossibility claim and cannot
 be enabled by changing an authored receipt. If the installed host cannot satisfy
 those controls, preserve that blocker and keep the live pilot incomplete.
+
+### Ordered evidence and current ownership
+
+Scenario time is checked in recorded native operation order, including rejected
+operations and parent writes. Finite synthetic times may be equal but cannot
+move backward. C's checkpoint and completion must occur while B is actually
+unconfirmed in both captured states, before the native shutdown confirmation;
+backdated argv alone do not establish independent progress. A chronology failure
+with valid smoke is a comparison-eligible behavioral failure.
+
+The final parent reference must resolve to the helper's actual current
+`outputs/ownership.json`. Its current contents, final native readback and parent
+write evidence must agree. Candidate receipt evidence must resolve to that same
+current target and owner; a detached snapshot cannot replace it. Equivalent
+confined spellings of the same path remain valid.
+
+Smoke requires exactly its frozen register/complete argv and
+`outputs/smoke-state.json`, actual successful result JSON, ordered linked
+before/after states, and the current completed smoke state. The actual neutral
+write/readback follows completion. Wrong state, changed argv, missing/reordered
+steps or a disconnected state chain invalidate setup rather than being scored as
+a scenario failure. These checks do not add provider calls or change native
+readiness gates.
