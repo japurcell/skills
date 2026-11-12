@@ -1,6 +1,17 @@
 # Native readiness and approved qualification scope
 
-## Current native outcome
+## Current approved simplification
+
+The user approved removing the added provider-conformance features and finishing the original scheduler comparison under the [active focused contract](ExecPlan.md). The earlier detailed qualification/control requirements below describe historical payloads and are superseded for new source/payloads. Keep ordinary native sandbox/approval controls, provider-owned login, disposable repos and real child/state/rubric proof. Six sessions remain, one neutral baseline-cell harness smoke per provider and four fresh baseline/candidate scored sessions, Sol/medium, 600 seconds each, serial, without automatic retries or expansion. Equivalent temporary setup paths for this plan purpose are already authorized.
+
+F1 implementation and focused checks, independent source review and fresh-payload verification precede further live calls. Source 3d5a2b58 remains the latest historical offline acceptance. P03 remains immutable with two invalid evaluation sessions and six gated old slots. Its exhaustive event/config/hook/probe qualification is not the new acceptance bar. Both native diagnoses are complete, but their maximal schema/journal repair proposals are superseded by the approved focused direction. Native permission acceptance for the directly executable helper still needs the one provider smoke. No new approval proposal is pending. M2/T4/T5 and archive remain incomplete.
+
+
+## Historical provider qualification checkpoints
+
+The retained sections below describe prior payloads under the superseded qualification contract. The current approved contract is above.
+
+### Historical native outcome
 
 Current native checkpoint 2026-11-12. P03 has two completed baseline evaluation sessions, both native exit 0 and invalid qualification. Two wrapper dispatches and two exclusive phase attempts yielded zero eligible scored pairs. Six remaining slots are gated without retries. Copilot recorded seven model turns, so the two session count does not establish backend API-call count. Current source acceptance remains offline evidence. Read-only diagnosis of actual Copilot permission/event contracts and Codex context mismatch is next, with no new correction contract or assumed replacement-call approval. M2/T4/T5 and plan closure remain incomplete. [Smoke report 03](pilot-smoke-03.md) and [JSON evidence summary](pilot-smoke-03.json).
 
@@ -36,7 +47,7 @@ Historical exact-approval checkpoint. The latest user goal requests the live bas
 
 Checkpoint date: 2026-11-12, America/Los_Angeles. Original native observations date from 2026-11-11. Native observations were captured against source `df54c117e8b8bccc46420d87ae6e3671c6c14ae1`. Workspace is `/Users/adam/.codex/worktrees/48fd/skills`, on `scheduler-reliability`; Q1-A setup/launch and Q1-B evidence validation are now integrated through `f79e560b39778ac96b236a8e1858d3348c048586`, with R1 lexical grammar implementation integrated at `0f93342fffb4b66eeaad8a4d50b677df8064c8da` and pass-2 review accepted with zero findings on each axis. Subsequent R2 startup-notification implementation is integrated at `49a4ee2dc1b8d95b8c9a2d177b77bdd3b660c2a7`; third broad review is complete with zero Standards findings and one P2 Spec EOF finding. R3 correction is integrated at `2470dac6`; limited exact-finding closure is complete and resolved. The earlier automatic approval rejection blocked dispatch with no live call. Current attempts must be read from the live ledger as parent-owned execution proceeds.
 
-## Current user decisions
+### Historical user decisions
 
 - Trust only the two run-01 Codex pilot projects and their pinned hooks in private Codex state. The exact projects are `/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-current-payload/run-01/cells/codex-baseline/repo` and `/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-current-payload/run-01/cells/codex-candidate/repo`, each using its sibling `provider-home/.codex`. Fresh preparation paths need a new exact setup review before trust changes. Global Guardian and global trust remain unchanged.
 - The user confirms native-terminal Copilot is authenticated and approved investigation of reusing that existing login under isolation, with a bounded source fix/review if supported. The earlier process-token-only choice is historical. Provider-owned existing keychain auth/status reads are allowed. No credential extraction, copying, hashing/logging, login/logout or global configuration mutation is authorized.
@@ -132,12 +143,12 @@ T4-STARTUP source correction is complete and accepted at `3d5a2b5888adf77a49a000
 
 [Final suite](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/final-suite.json), [worker outcome](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/worker-outcome.json) and [final parser binding](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-startup-fix/final-rendered-parser-binding.json) retain exact verification. Original static review reports preserve their then-pending suite wording, with completed-suite evidence recorded separately.
 
-## P03 approval clarification
+### Historical P03 approval clarification
 
 The user approved P03 replacement setup in `call_4e6d9ea4f9ad404ab64faa3059e92106:0`, answering “Approve this exact replacement setup”. In response to the exact eight-call question, `call_4e6d9ea4f9ad404ab64faa3059e92106:1` answered “Approve this setup for this and any ither paths for the same reason for this plan”. Parent interpreted and communicated this as approval of the current replacement eight-call pilot and equivalent temporary project/hook setup paths for the same purpose within this scheduler plan. Requested `gpt-6.1-sol`/`medium`, existing controls, eight-call ceiling, four smokes/four scenarios, 600 seconds each and no automatic retries or expansion remain. Equivalent temporary setup paths within those controls require no repeated setup permission. This task-specific scope is recorded here and in [authorization status](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/authorization-status.json). The exact [payload review](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/payload-review.md) and manifest `39ae5cd8042fe280f086a7d3fa95f62aabf9af01a974b8072ce79b4446bfc889` remain the current execution inputs.
 
 Parent owns supported setup, final Codex preflight and execution. At that earlier approval checkpoint the external record showed zero trust changes, exclusive phase attempts and model calls. Those no-inference observations are historical. Current records now show four setup changes, successful Codex preflight and two invalid baseline evaluation sessions. Read later receipts and the live ledger before reporting readiness or attempt counts. P02 remains failed immutable history. M2/T4/T5 remain open until qualified results and reporting.
 
-## Actual native smoke outcome
+### Historical actual native smoke outcome
 
 Current native checkpoint 2026-11-12. P03 has two completed baseline evaluation sessions, both native exit 0 and invalid qualification. Two wrapper dispatches and two exclusive phase attempts yielded zero eligible scored pairs. Six remaining slots are gated without retries. Copilot recorded seven model turns, so the two session count does not establish backend API-call count. Current source acceptance remains offline evidence. Read-only diagnosis of actual Copilot permission/event contracts and Codex context mismatch is next, with no new correction contract or assumed replacement-call approval. M2/T4/T5 and plan closure remain incomplete. [Smoke report 03](pilot-smoke-03.md) and [JSON evidence summary](pilot-smoke-03.json).
