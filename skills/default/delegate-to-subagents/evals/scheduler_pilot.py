@@ -244,6 +244,13 @@ def codex_config_args(cell):
             "-c", "sandbox_workspace_write.writable_roots=" + json.dumps(cell["write_roots"])]
 
 
+class DiscoveryError(ValueError):
+    """A discovery failure carrying only sanitized notification observations."""
+    def __init__(self, message, notifications):
+        super().__init__(message)
+        self.notifications = list(notifications)
+
+
 def discover_codex(cell):
     """No-inference, bounded JSON RPC handshake against the frozen private setup."""
     argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", *codex_config_args(cell)]
@@ -252,13 +259,29 @@ def discover_codex(cell):
                 {"id": 2, "method": "hooks/list", "params": {"cwds": [cell["repo"]]}},
                 {"id": 3, "method": "config/read", "params": {"cwd": cell["repo"], "includeLayers": True}}]
     child = subprocess.Popen(argv, cwd=cell["repo"], env=cell["environment"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
-    responses = []
+    responses, notifications, reply_ids = [], [], set()
+    received_bytes = 0
     selector = selectors.DefaultSelector()
     selector.register(child.stdout, selectors.EVENT_READ)
     pending = b""
     deadline = time.monotonic() + 3
+    def notification(row):
+        if set(row) - {"method", "params", "emittedAtMs", "jsonrpc"} or row.get("jsonrpc", "2.0") != "2.0" or not isinstance(row.get("params"), dict):
+            raise DiscoveryError("malformed discovery notification", notifications)
+        if "emittedAtMs" in row and (type(row["emittedAtMs"]) not in (int, float) or not math.isfinite(row["emittedAtMs"])):
+            raise DiscoveryError("malformed discovery notification timestamp", notifications)
+        method, params = row["method"], row["params"]
+        if method == "configWarning":
+            notifications.append({"method": method, "classification": "configuration-warning", "summary_present": "summary" in params, "details_present": "details" in params})
+            raise DiscoveryError("configuration-warning", notifications)
+        if method != "remoteControl/status/changed":
+            raise DiscoveryError("unknown discovery notification", notifications)
+        if set(params) - {"status", "serverName", "installationId", "environmentId"} or params.get("status") != "disabled" or any(value is not None and not isinstance(value, str) for key, value in params.items() if key != "status"):
+            raise DiscoveryError("unsupported or malformed remote-control status", notifications)
+        notifications.append({"method": method, "status": "disabled"})
+
     def exchange(request):
-        nonlocal pending
+        nonlocal pending, received_bytes
         child.stdin.write((json.dumps(request) + "\n").encode())
         child.stdin.flush()
         if "id" not in request:
@@ -269,21 +292,52 @@ def discover_codex(cell):
                     break
                 chunk = os.read(child.stdout.fileno(), 65536)
                 if not chunk:
-                    raise ValueError("discovery EOF")
+                    raise DiscoveryError("discovery EOF", notifications)
+                received_bytes += len(chunk)
                 pending += chunk
-                if len(pending) > 1048576:
-                    raise ValueError("discovery response too large")
+                if received_bytes > 1048576:
+                    raise DiscoveryError("discovery response too large", notifications)
                 continue
             line, pending = pending.split(b"\n", 1)
             row = json.loads(line)
-            if not isinstance(row, dict) or row.get("id") != request["id"] or "error" in row or "result" not in row:
-                raise ValueError("unsupported discovery response")
+            if isinstance(row, dict) and "method" in row and "id" not in row:
+                notification(row)
+                continue
+            if not isinstance(row, dict) or type(row.get("id")) is not int or row["id"] != request["id"] or row["id"] in reply_ids or "method" in row:
+                raise DiscoveryError("mismatched or duplicate discovery reply", notifications)
+            if "error" in row:
+                raise DiscoveryError("discovery RPC error", notifications)
+            if "result" not in row:
+                raise DiscoveryError("malformed discovery reply", notifications)
+            reply_ids.add(row["id"])
             responses.append(row)
             return
-        raise ValueError("discovery handshake timeout")
+        raise DiscoveryError("discovery handshake timeout", notifications)
     try:
         for request in requests:
             exchange(request)
+        # Consume already-observed trailing rows without introducing a new deadline.
+        while time.monotonic() < deadline:
+            if b"\n" in pending:
+                line, pending = pending.split(b"\n", 1)
+                row = json.loads(line)
+                if not isinstance(row, dict) or "method" not in row or "id" in row:
+                    raise DiscoveryError("unexpected or duplicate discovery reply", notifications)
+                notification(row)
+                continue
+            if not selector.select(0):
+                if pending:
+                    raise DiscoveryError("truncated trailing discovery notification", notifications)
+                break
+            chunk = os.read(child.stdout.fileno(), 65536)
+            if not chunk:
+                break
+            received_bytes += len(chunk)
+            pending += chunk
+            if received_bytes > 1048576:
+                raise DiscoveryError("discovery response too large", notifications)
+        else:
+            raise DiscoveryError("discovery handshake timeout", notifications)
     finally:
         selector.close()
         for sig in (signal.SIGTERM, signal.SIGKILL):
@@ -297,43 +351,43 @@ def discover_codex(cell):
         child.communicate(timeout=2)
     data = responses[1]["result"]["data"]
     if len(data) != 1 or data[0].get("cwd") != cell["repo"] or data[0].get("errors") != [] or data[0].get("warnings") != [] or len(data[0].get("hooks", [])) != 1:
-        raise ValueError("private-hook discovery must contain exactly one clean project hook")
+        raise DiscoveryError("private-hook discovery must contain exactly one clean project hook", notifications)
     hook = data[0]["hooks"][0]
     control = cell["control"]
     expected_command = read(control["hook_config"])["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
     expected = {"source": "project", "sourcePath": control["hook_config"], "key": control["hook_config"] + ":pre_tool_use:0:0", "eventName": "preToolUse", "handlerType": "command", "command": expected_command, "timeoutSec": 3, "enabled": True, "async": False, "trustStatus": "trusted"}
     if any(hook.get(key) != value for key, value in expected.items()) or not isinstance(hook.get("currentHash"), str) or not hook["currentHash"].startswith("sha256:"):
-        raise ValueError("private-hook identity or trust mismatch")
+        raise DiscoveryError("private-hook identity or trust mismatch", notifications)
     config_response = responses[2]["result"]
     actual = config_response["config"]
     if any(actual.get(key) != value for key, value in cell["safe_config"].items()):
-        raise ValueError("private effective config mismatch or unsupported tool configuration")
+        raise DiscoveryError("private effective config mismatch or unsupported tool configuration", notifications)
     # Native config may contain authentication-adjacent fields. Retain only this allowlisted projection.
     for key in ("tools", "apps", "skills", "model_provider", "model_providers"):
         if actual.get(key):
-            raise ValueError("unexpected effective tool/provider configuration")
+            raise DiscoveryError("unexpected effective tool/provider configuration", notifications)
     layers = config_response.get("layers")
     if not isinstance(layers, list):
-        raise ValueError("effective config layers unavailable")
+        raise DiscoveryError("effective config layers unavailable", notifications)
     safe_layers = []
     for layer in layers:
         source = layer.get("name", {})
         if isinstance(source, dict) and source.get("type") == "system":
             if source.get("file") != "/etc/codex/config.toml" or Path(source["file"]).exists() or layer.get("config") != {} or layer.get("disabledReason"):
-                raise ValueError("unexpected external system config")
+                raise DiscoveryError("unexpected external system config", notifications)
             safe_layers.append({"name": source, "empty": True})
             continue
         if not isinstance(source, dict) or source.get("type") not in ("sessionFlags", "project", "user"):
-            raise ValueError("unsupported external config layer")
+            raise DiscoveryError("unsupported external config layer", notifications)
         expected_path = {"project": str(Path(cell["repo"]) / ".codex"), "user": str(Path(cell["environment"]["CODEX_HOME"]) / "config.toml")}.get(source["type"])
         path = source.get("dotCodexFolder") or source.get("file")
         if path != expected_path or source.get("profile"):
-            raise ValueError("unexpected private config source or profile")
+            raise DiscoveryError("unexpected private config source or profile", notifications)
         safe_layers.append({"name": source})
         if path and not Path(path).resolve().is_relative_to(Path(cell["environment"]["HOME"]).parent):
-            raise ValueError("external config layer")
+            raise DiscoveryError("external config layer", notifications)
     safe_hook = {key: hook[key] for key in (*expected, "currentHash")}
-    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_layers": safe_layers, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
+    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_layers": safe_layers, "notifications": notifications, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
 
 
 def preflight(manifest, provider):
@@ -364,6 +418,8 @@ def preflight(manifest, provider):
                 if not authenticated:
                     blockers.append(cell_id + ":private-authentication-unavailable")
             except (OSError, ValueError, KeyError, TypeError) as error:
+                if isinstance(error, DiscoveryError):
+                    discovery[cell_id] = {"notifications": error.notifications, "setup_ready": False}
                 blockers.append(cell_id + ":private-hook-discovery-invalid:" + str(error))
     elif not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
         blockers.append("copilot-isolated-home-auth-token-unavailable")

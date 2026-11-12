@@ -580,13 +580,21 @@ if 'app-server' in sys.argv:
   if method=='initialized': continue
   result={}
   if mode=='eof': raise SystemExit
-  if mode=='timeout':
+  if mode=='timeout' or (mode=='notification-timeout' and method=='hooks/list'):
+   if mode=='notification-timeout': print(json.dumps({'method':'remoteControl/status/changed','params':{'status':'disabled'}}),flush=True)
    import time,signal
    child=subprocess.Popen([sys.executable,'-c','import signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);time.sleep(30)'])
    (repo/'outputs/discovery-child.pid').write_text(str(child.pid))
    time.sleep(30)
   if mode=='malformed': print('{',flush=True);continue
   if mode=='rpc-error': print(json.dumps({'id':request['id'],'error':{'code':-1,'message':'offline'}}),flush=True);continue
+  if method=='hooks/list' and mode in ('notification-active','notification-unknown','notification-malformed','notification-bad-timestamp','wrong-reply','duplicate-reply'):
+   if mode=='wrong-reply': print(json.dumps({'id':99,'result':{}}),flush=True)
+   elif mode=='duplicate-reply': print(json.dumps({'id':1,'result':{}}),flush=True)
+   else: print(json.dumps({'method':'unknown/native/event' if mode=='notification-unknown' else 'remoteControl/status/changed','params':[] if mode=='notification-malformed' else {'status':'enabled' if mode=='notification-active' else 'disabled'},'emittedAtMs':{} if mode=='notification-bad-timestamp' else 0}),flush=True)
+  if method=='hooks/list' and mode in ('notification-disabled','configuration-warning'):
+   if mode=='configuration-warning': print(json.dumps({'method':'configWarning','params':{'summary':'offline-auth-adjacent-sensitive-summary','details':None},'emittedAtMs':0}),flush=True)
+   print(json.dumps({'method':'remoteControl/status/changed','params':{'status':'disabled','serverName':None,'installationId':None,'environmentId':None},'emittedAtMs':0}),flush=True)
   if method=='hooks/list':
    hook=json.loads(pathlib.Path(cell['control']['hook_config']).read_text())['hooks']['PreToolUse'][0]['hooks'][0]
    result={'data':[{'cwd':str(repo),'errors':[],'warnings':[],'hooks':[dict(handlerType='command',command=hook['command'],timeoutSec=3,enabled=True,eventName='preToolUse',source='project',sourcePath=cell['control']['hook_config'],currentHash='sha256:offline-native-definition',trustStatus='trusted',key=cell['control']['hook_config']+':pre_tool_use:0:0',**{'async':False})]}]}
@@ -601,6 +609,7 @@ if 'app-server' in sys.argv:
    if mode=='changed-hash': h['currentHash']='sha256:changed-native-definition'
   if method=='config/read' and mode=='wrong-model': result['config']['model']='wrong'
   print(json.dumps({'id':request['id'],'result':result}),flush=True)
+  if method=='config/read' and mode=='duplicate-final': print(json.dumps({'id':request['id'],'result':result}),flush=True)
  raise SystemExit
 if sys.argv[1:]==['login','status']:
  print('Logged in using ChatGPT');raise SystemExit
@@ -651,6 +660,52 @@ print(json.dumps({'type':'item.completed','item':dict(item,exit_code=verdict.ret
         scenario=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','scenario')
         self.assertEqual(scenario.returncode,2)
         self.assertIn('qualification',scenario.stderr)
+
+    def test_public_codex_disabled_startup_notification_preserves_reply_correlation(self):
+        self.codex_setup('notification-disabled')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,0,result.stderr)
+        receipt=json.loads(result.stdout)
+        self.assertTrue(receipt['setup_ready'])
+        self.assertFalse(receipt['scenario_ready'])
+        for variant in ('baseline','candidate'):
+            discovery=receipt['cells']['codex-'+variant]
+            self.assertEqual(discovery['notifications'],[{'method':'remoteControl/status/changed','status':'disabled'}])
+            self.assertEqual([row['id'] for row in discovery['safe_responses']],[1,2,3])
+
+    def test_public_codex_startup_notification_failures_are_safe_and_closed(self):
+        for mode in ('configuration-warning','notification-active','notification-unknown','notification-malformed','notification-bad-timestamp','wrong-reply','duplicate-reply','duplicate-final','rpc-error','notification-timeout'):
+            with self.subTest(mode=mode):
+                self.run=self.root/('startup-'+mode)
+                self.manifest=self.run/'manifest.json'
+                self.codex_setup(mode)
+                result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+                self.assertEqual(result.returncode,2,result.stdout)
+                receipt=json.loads((self.run/'preflight/codex.json').read_text())
+                self.assertFalse(receipt['setup_ready'])
+                self.assertFalse(receipt['smoke_ready'])
+                self.assertFalse(receipt['scenario_ready'])
+                self.assertNotIn('offline-auth-adjacent-sensitive-summary',result.stderr+(self.run/'preflight/codex.json').read_text())
+                if mode=='configuration-warning':
+                    self.assertIn('configuration-warning',result.stderr)
+                    self.assertEqual(receipt['cells']['codex-baseline']['notifications'],[{'method':'configWarning','classification':'configuration-warning','summary_present':True,'details_present':True}])
+                if mode=='notification-timeout':
+                    for variant in ('baseline','candidate'):
+                        pid=int((self.run/('cells/codex-'+variant+'/repo/outputs/discovery-child.pid')).read_text())
+                        with self.assertRaises(ProcessLookupError): os.kill(pid,0)
+
+    def test_public_codex_notification_wait_interruption_reaps_descendant(self):
+        self.codex_setup('notification-timeout')
+        process=subprocess.Popen([sys.executable,str(CLI),'preflight','--manifest',str(self.manifest),'--provider','codex'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        pid_file=self.run/'cells/codex-baseline/repo/outputs/discovery-child.pid'
+        for _ in range(200):
+            if pid_file.exists(): break
+            time.sleep(.01)
+        self.assertTrue(pid_file.exists())
+        process.send_signal(signal.SIGINT)
+        stdout,stderr=process.communicate(timeout=5)
+        self.assertEqual(process.returncode,130,stderr)
+        with self.assertRaises(ProcessLookupError): os.kill(int(pid_file.read_text()),0)
 
     def test_public_codex_discovery_rejects_incomplete_untrusted_and_unexpected_setup(self):
         for mode in ('eof','malformed','rpc-error','untrusted','modified','disabled','unexpected','wrong-source','wrong-model','timeout'):
