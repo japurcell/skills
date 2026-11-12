@@ -218,7 +218,7 @@ JSON_HELPERS = """def read_json_input(*, max_bytes: int = INPUT_MAX_BYTES, max_m
     if not isinstance(payload, dict):
         raise ValueError("Invalid hook input: expected a JSON object")
 
-{begin_capture}    return payload
+    return payload
 
 
 def emit_json(payload: dict) -> None:
@@ -234,26 +234,9 @@ def emit_json(payload: dict) -> None:
         sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
         sys.stdout.write("\\n")
         sys.stdout.flush()
-{complete_capture}
-"""
-
-BEGIN_CAPTURE = """    try:
-        from .observability import begin_hook_capture
-
-        begin_hook_capture(payload)
-    except Exception:
-        pass
 
 """
 
-COMPLETE_CAPTURE = """
-    try:
-        from .observability import complete_hook_capture
-
-        complete_hook_capture(payload)
-    except Exception:
-        pass
-"""
 
 COMMON_HELPERS = """def sanitize_log_field(value: object) -> str:
     return str(value or "").translate({ord("\\r"): " ", ord("\\n"): " ", ord("\\t"): " "})
@@ -509,8 +492,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     parts = [
         STANDARD_IMPORTS,
         INPUT_READER,
-        JSON_HELPERS.format(begin_capture="" if github else BEGIN_CAPTURE,
-                            complete_capture="" if github else COMPLETE_CAPTURE),
+        JSON_HELPERS,
         COMMON_HELPERS,
         WINDOWS_PATH,
         TAIL,

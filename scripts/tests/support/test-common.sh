@@ -58,27 +58,12 @@ test_home_for_workdir() {
 }
 
 clear_hook_test_path_overrides() {
-  unset COPILOT_OBSERVABILITY_LOG_PATH
-  unset GEMINI_OBSERVABILITY_LOG_PATH
-  unset OBSERVABILITY_LOG_PATH
   unset AUDIT_LOG
   unset AUDIT_LOCK
   unset AUDIT_PASSIVE_LOG_SHADOW_LOG
   unset GEMINI_PASSIVE_SHADOW_LOG
 }
 
-clear_observability_test_overrides() {
-  clear_hook_test_path_overrides
-
-  local name
-  while IFS= read -r name; do
-    case "$name" in
-      COPILOT_OBSERVABILITY_*|GEMINI_OBSERVABILITY_*|OBSERVABILITY_*)
-        unset "$name"
-        ;;
-    esac
-  done < <(compgen -e)
-}
 
 with_hook_test_environment() (
   local home="$1"

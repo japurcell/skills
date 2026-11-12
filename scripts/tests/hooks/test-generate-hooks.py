@@ -26,27 +26,6 @@ TARGETS = (
     ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
 RTK_TARGETS = TARGETS
-OBSERVABILITY_TARGETS = (
-    ".copilot/hooks/scripts/helpers/observability.py",
-    ".gemini/hooks/scripts/helpers/observability.py",
-)
-OBSERVABILITY_ALLOWED_DIFFERENCES = (
-    ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
-    ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
-     '_truthy_env("GEMINI_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")'),
-    ('_truthy_env("OBSERVABILITY_CAPTURE_EVENT", "COPILOT_OBSERVABILITY_CAPTURE_EVENT")',
-     '_truthy_env("OBSERVABILITY_CAPTURE_EVENT", "GEMINI_OBSERVABILITY_CAPTURE_EVENT")'),
-    ('_truthy_env("OBSERVABILITY_INCLUDE_TRANSCRIPT", "COPILOT_OBSERVABILITY_INCLUDE_TRANSCRIPT")',
-     '_truthy_env("OBSERVABILITY_INCLUDE_TRANSCRIPT", "GEMINI_OBSERVABILITY_INCLUDE_TRANSCRIPT")'),
-    ('os.environ.get("COPILOT_OBSERVABILITY_LOG_PATH")',
-     'os.environ.get("GEMINI_OBSERVABILITY_LOG_PATH")'),
-    ('Path.home() / ".copilot" / "hooks" / "logs"',
-     'Path.home() / ".gemini" / "hooks" / "logs"'),
-    ('os.environ.get("COPILOT_OBSERVABILITY_LOCK_WAIT_MS")',
-     'os.environ.get("GEMINI_OBSERVABILITY_LOCK_WAIT_MS")'),
-    ('os.environ.get("COPILOT_OBSERVABILITY_SOURCE_EVENT_NAME")',
-     'os.environ.get("GEMINI_OBSERVABILITY_SOURCE_EVENT_NAME")'),
-)
 BRAIN_BUNDLE_TARGETS = (
     "skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py",
     "skills/default/brain-install/assets/hooks/inject-brain.py",
@@ -117,7 +96,6 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertIn('[rtk_bin, "hook", RTK_PROVIDER]', source)
                 self.assertIn("from helpers.audit import audit_log_event", source)
                 self.assertIn("from helpers.common import emit_json, sanitize_log_field", source)
-                self.assertIn("from helpers.observability import begin_hook_capture", source)
                 self.assertNotIn(".copilot.hooks", source)
                 self.assertNotIn(".gemini.hooks", source)
                 sections = re.split(
@@ -184,7 +162,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (16 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (14 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -242,7 +220,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (16 files).\n")
+        self.assertEqual(result.stdout, "Generated hooks are current (14 files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -267,25 +245,12 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (16 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (14 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
             self.assertTrue(content.startswith("#!/usr/bin/env python3\n" + OWNERSHIP))
             self.assertEqual(stat.S_IMODE((ROOT / target_path).stat().st_mode), 0o755)
-
-    def test_observability_renderings_have_only_named_provider_differences(self) -> None:
-        rendered = self.rendered_text_outputs()
-        copilot = rendered[OBSERVABILITY_TARGETS[0]]
-        gemini = rendered[OBSERVABILITY_TARGETS[1]]
-        self.assertTrue(copilot.startswith("#!/usr/bin/env python3\n"))
-        self.assertTrue(gemini.startswith("#!/usr/bin/env python3\n"))
-        normalized = copilot
-        for copilot_value, gemini_value in OBSERVABILITY_ALLOWED_DIFFERENCES:
-            self.assertEqual(copilot.count(copilot_value), 1)
-            self.assertEqual(gemini.count(gemini_value), 1)
-            normalized = normalized.replace(copilot_value, gemini_value)
-        self.assertEqual(normalized, gemini, "Observability outputs diverged outside their named provider differences.")
 
     def test_rendering_rejects_unsafe_paths_and_invalid_python_before_writing(self) -> None:
         generator = load_generator()

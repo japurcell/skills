@@ -17,7 +17,6 @@
 
 - [codebase/agents-installation](<codebase/agents-installation.md>)
 - [codebase/brain-hooks](<codebase/brain-hooks.md>)
-- [codebase/hook-observability](<codebase/hook-observability.md>)
 - [codebase/hook-testing](<codebase/hook-testing.md>)
 - [codebase/hooks-codex](<codebase/hooks-codex.md>)
 - [codebase/hooks-copilot](<codebase/hooks-copilot.md>)

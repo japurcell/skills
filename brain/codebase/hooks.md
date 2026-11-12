@@ -7,7 +7,7 @@
 - Windows pipe readiness before Python 3.12 needs `PeekNamedPipe`; do not assume POSIX nonblocking flags work.
 - Python entrypoints use standard-library operations and argument-list subprocesses, never `shell=True`.
 - For local startup and turn-end operational hooks, emit one concise hook-name/outcome and safe count where useful. Report every Stop attempt. Independent validator retries follow their own bounded contract; informational End Turn status never requests one.
-- Ordinary pass messages must contain no path, command, document content, or secret. Keep high-rate tool passes, observability-only hooks, SessionEnd success, and the completion bell silent; do not add per-call RTK audit records merely to prove a pass. Put blocks in native denial fields without duplicate display messages.
+- Ordinary pass messages must contain no path, command, document content, or secret. Keep high-rate tool passes, SessionEnd success, and the completion bell silent; do not add per-call RTK audit records merely to prove a pass. Put blocks in native denial fields without duplicate display messages.
 - Normalize Windows drive-letter payload paths before absolute-path checks. Resolve extensionless commands with `shutil.which()` on Windows; keep provider helper copies synchronized with canonical sources.
 - Installers check generated freshness without write mode. Preserve destination runtime logs and unrelated configuration.
 - Brain hooks register at repository scope. Copilot uses `.github/hooks`, not user-level `.copilot/hooks`. Global templates intentionally omit brain registrations. Retirement ownership must match the complete launch, including arguments. See [brain hook contracts](brain-hooks.md).
@@ -16,6 +16,6 @@
 
 Evidence: [generator](../../scripts/generate-hooks.py), [common renderer](../../hooks/families/common.py), checked 2026-10-20. Recheck input, generation, or deployment changes. Provider contracts: [hooks-codex](hooks-codex.md), [hooks-copilot](hooks-copilot.md), [hooks-gemini](hooks-gemini.md).
 
-For runtime or registration changes, read [hook testing](hook-testing.md); for shared trace lifecycle changes, read [observability](hook-observability.md).
+For runtime or registration changes, read [hook testing](hook-testing.md).
 
-- Retained Copilot/Gemini RTK and startup hooks share common, audit, and observability helpers. Codex startup and brain scripts are self-contained. Provider refresh retains exact retired registration identities and file hashes so it can remove owned historical assets while preserving modified files. Older standalone scanner bundles and repository-local gates require explicit operator-led retirement; follow the [scanner retirement guide](../../docs/retiring-scan-secrets.md).
+- Retained Copilot/Gemini RTK and startup hooks share common and audit helpers. Provider refresh retains exact retired registration identities and file hashes so it can remove owned historical assets while preserving modified files. Older standalone scanner bundles and repository-local gates require explicit operator-led retirement; follow the [scanner retirement guide](../../docs/retiring-scan-secrets.md).

@@ -308,6 +308,7 @@ RETIRED_ASSETS = {
     },
     'gemini': {
         **SHARED_RETIRED_ASSETS,
+        'helpers/observability.py': 'ef1af39de4b1034fdbab7cdfd5c0b73a7ed187df1be3e4ed606c1cbe1b6858b7',
         'auto-ingest.py': 'd46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b',
         'inject-auto-ingest-context.py': '8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed',
         'lint-okf.py': '2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6',
@@ -322,6 +323,7 @@ RETIRED_ASSETS = {
     },
     'copilot': {
         **SHARED_RETIRED_ASSETS,
+        'helpers/observability.py': 'f29c765db0b6ae70b62865e3a7f265ba733d0338092bd4544ac9bf90b54fc7a6',
         'send-event.py': '22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351',
         'tool-guard.py': 'b7b4b415e986bf43b8725508f6d748e7063b7601eef4a1cd51fba4634e3b249a',
         'hooks-diagnostics.py': 'cf8a38f73e5286e07fe84c04a9430b9df6b988ee1c9197012d618bf052ca9c3a',

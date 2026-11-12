@@ -3,7 +3,7 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
-clear_observability_test_overrides
+clear_hook_test_path_overrides
 
 assert_caveman_context_shape() {
   local context="$1"

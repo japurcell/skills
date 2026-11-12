@@ -12,7 +12,7 @@
 | Changed area | Guidance |
 | --- | --- |
 | Shared hook runtime/registration | [Hook source checks](hook-testing.md) |
-| Shared traces, transcripts, audit/log maintenance | [Hook observability](hook-observability.md) and [hook tests](hook-testing.md) |
+| Hook input/output, forwarding, and diagnostic audit behavior | [Hook tests](hook-testing.md) |
 | Installed provider event delivery/visible messages | [Live-hook evidence](live-hook-testing.md) |
 | Skills, graders, evaluation artifacts | [Repository validation commands](../../skills/default/create-skill/README.md#evaluation-and-validation-workflow) and [evaluation evidence](../../skills/default/create-skill/references/validation.md) |
 | Shell/Python helper scripts | [Script validation and fixtures](script-testing.md) |

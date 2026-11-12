@@ -2,7 +2,6 @@
 
 - [agents-installation](agents-installation.md)
 - [Brain hooks](brain-hooks.md)
-- [hook-observability](hook-observability.md)
 - [hook-testing](hook-testing.md)
 - [hooks](hooks.md)
 - [hooks-codex](hooks-codex.md)
