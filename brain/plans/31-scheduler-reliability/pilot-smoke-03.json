@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "report_kind": "historical_invalid_native_smokes",
+  "checkpoint_date": "2026-11-12",
+  "source_commit": "3d5a2b5888adf77a49a000e80557bc655f19d8de",
+  "harness_sha256": "b5944cfdac2c5a2b7b611d8183c60e787b2256688ded5ff36f23e26c04b221a9",
+  "manifest_sha256": "39ae5cd8042fe280f086a7d3fa95f62aabf9af01a974b8072ce79b4446bfc889",
+  "requested_model": "gpt-6.1-sol",
+  "requested_effort": "medium",
+  "counts": {
+    "intended_slots": 8,
+    "wrapper_dispatches": 2,
+    "exclusive_phase_attempts": 2,
+    "actual_evaluation_sessions": 2,
+    "invalid_smokes": 2,
+    "eligible_scored_pairs": 0,
+    "remaining_gated_slots": 6,
+    "backend_api_call_count": null
+  },
+  "count_semantics": "authorization live_model_calls=2 counts evaluation sessions here. Copilot raw modelMetrics records seven model turns. Backend API-call count is not inferred.",
+  "setup": {
+    "trust_changes": 4,
+    "projects": 2,
+    "hook_definitions": 2,
+    "codex_preflight_exit_code": 0,
+    "codex_preflight_seconds": 1.4253490419941954
+  },
+  "slots": [
+    {
+      "cell": "codex-baseline",
+      "phase": "smoke",
+      "status": "invalid_smoke"
+    },
+    {
+      "cell": "codex-baseline",
+      "phase": "scenario",
+      "status": "gated"
+    },
+    {
+      "cell": "codex-candidate",
+      "phase": "smoke",
+      "status": "gated"
+    },
+    {
+      "cell": "codex-candidate",
+      "phase": "scenario",
+      "status": "gated"
+    },
+    {
+      "cell": "copilot-baseline",
+      "phase": "smoke",
+      "status": "invalid_smoke"
+    },
+    {
+      "cell": "copilot-baseline",
+      "phase": "scenario",
+      "status": "gated"
+    },
+    {
+      "cell": "copilot-candidate",
+      "phase": "smoke",
+      "status": "gated"
+    },
+    {
+      "cell": "copilot-candidate",
+      "phase": "scenario",
+      "status": "gated"
+    }
+  ],
+  "cells": {
+    "copilot-baseline": {
+      "session_id": "7fe88737-5ebc-4a55-bd19-9cb7e36457fe",
+      "wrapper_exit_code": 2,
+      "wrapper_wall_seconds": 25.195180892944336,
+      "native_exit_code": 0,
+      "provider_execution_and_evidence_elapsed_seconds": 17.730956207989948,
+      "qualification_status": "invalid",
+      "smoke_valid": false,
+      "adapter_observed_model": "gpt-6.1-sol",
+      "adapter_observed_effort": "medium",
+      "invalid_reasons": [
+        "missing-real-child-receipt",
+        "smoke:complete",
+        "smoke:exact_output",
+        "smoke:register",
+        "smoke:write_readback",
+        "unexpected-exact-tool-command",
+        "unexpected-permission-denial",
+        "unsupported-native-event:assistant.idle",
+        "unsupported-native-event:assistant.message_start",
+        "unsupported-native-event:assistant.tool_call_delta",
+        "unsupported-native-event:instruction.update",
+        "unsupported-native-event:model.call_final_result",
+        "unsupported-native-event:model.call_finished",
+        "unsupported-native-event:model.call_start",
+        "unsupported-native-event:result",
+        "unsupported-native-event:session.background_tasks_changed",
+        "unsupported-native-event:session.extensions_loaded",
+        "unsupported-native-event:session.mcp_servers_loaded",
+        "unsupported-native-event:session.tools_updated",
+        "unsupported-native-event:session.usage_checkpoint",
+        "unsupported-native-event:tool.execution_partial_result",
+        "unsupported-native-event:tool.shell_output"
+      ],
+      "native_invalid_reasons": [
+        "unsupported-native-event:assistant.idle",
+        "unsupported-native-event:assistant.message_start",
+        "unsupported-native-event:assistant.tool_call_delta",
+        "unsupported-native-event:instruction.update",
+        "unsupported-native-event:model.call_final_result",
+        "unsupported-native-event:model.call_finished",
+        "unsupported-native-event:model.call_start",
+        "unsupported-native-event:result",
+        "unsupported-native-event:session.background_tasks_changed",
+        "unsupported-native-event:session.extensions_loaded",
+        "unsupported-native-event:session.mcp_servers_loaded",
+        "unsupported-native-event:session.tools_updated",
+        "unsupported-native-event:session.usage_checkpoint",
+        "unsupported-native-event:tool.execution_partial_result",
+        "unsupported-native-event:tool.shell_output"
+      ],
+      "smoke_checks": {
+        "neutral_patch": true,
+        "control_denial": true,
+        "control_loaded": true,
+        "forbidden_write_absent": true,
+        "selector_observation": true,
+        "exact_output": false,
+        "register": false,
+        "complete": false,
+        "write_readback": false
+      },
+      "adapter_usage": null,
+      "raw_usage": {
+        "tokenDetails": {
+          "input": {
+            "tokenCount": 21
+          },
+          "cache_read": {
+            "tokenCount": 42910
+          },
+          "cache_write": {
+            "tokenCount": 7640
+          },
+          "output": {
+            "tokenCount": 735
+          }
+        },
+        "modelMetrics": {
+          "requests": {
+            "count": 7,
+            "cost": 1
+          },
+          "usage": {
+            "inputTokens": 50571,
+            "outputTokens": 735,
+            "cacheReadTokens": 42910,
+            "cacheWriteTokens": 7640,
+            "reasoningTokens": 28
+          },
+          "cacheExpiresAt": "2026-11-12T14:51:25.502Z",
+          "totalNanoAiu": 3078300000,
+          "aiCreditsStatus": "complete",
+          "tokenDetails": {
+            "input": {
+              "tokenCount": 21
+            },
+            "cache_read": {
+              "tokenCount": 42910
+            },
+            "cache_write": {
+              "tokenCount": 7640
+            },
+            "output": {
+              "tokenCount": 735
+            }
+          }
+        },
+        "totalApiDurationMs": 13833,
+        "totalPremiumRequestCost": 1,
+        "totalUserRequests": 1
+      },
+      "model_turns_observed": 7,
+      "raw_observations": {
+        "three_exact_helper_commands": "denied despite frozen grants",
+        "forbidden_probe": "denied",
+        "neutral_patch": "valid",
+        "additional_unlisted_shell_command": "test ! -e outputs/control-forbidden.json && cat outputs/smoke-patch.json",
+        "unsupported_event_type_count": 15
+      }
+    },
+    "codex-baseline": {
+      "session_id": "01a1d023-4d76-7e83-8a23-8f1fbaf3cffb",
+      "wrapper_exit_code": 2,
+      "wrapper_wall_seconds": 29.738781929016113,
+      "native_exit_code": 0,
+      "provider_execution_and_evidence_elapsed_seconds": 27.78693408401159,
+      "qualification_status": "invalid",
+      "smoke_valid": false,
+      "adapter_observed_model": null,
+      "adapter_observed_effort": null,
+      "invalid_reasons": [
+        "phase-evidence-unavailable:[Errno 2] No such file or directory: '/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/codex-context.json'"
+      ],
+      "native_invalid_reasons": [
+        "Codex-context-invalid:Codex rollout turn context mismatch",
+        "native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory"
+      ],
+      "smoke_checks": {},
+      "adapter_usage": {
+        "input_tokens": 72904,
+        "cached_input_tokens": 55040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 659,
+        "reasoning_output_tokens": 0
+      },
+      "raw_usage": {
+        "input_tokens": 72904,
+        "cached_input_tokens": 55040,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 659,
+        "reasoning_output_tokens": 0
+      },
+      "raw_observations": {
+        "helper_register_complete_write": "executed",
+        "neutral_patch": "executed",
+        "forbidden_probe": "denied",
+        "context_failure": "Codex-context-invalid:Codex rollout turn context mismatch",
+        "run_receipt_secondary_error": "missing codex-context.json masks original context error",
+        "qualified_selector": null
+      }
+    }
+  },
+  "usage_policy": "Raw observed provider usage is retained separately from adapter availability. No estimates, zero substitution, or cross-provider normalization.",
+  "scoring": {
+    "score": null,
+    "scheduler_efficacy_conclusion": null
+  },
+  "disposition": "Both baseline smokes invalid. All six remaining slots gated. No retries or expansion. Read-only diagnosis next, with no new fix contract or assumed replacement-call approval. M2/T4/T5 and plan closure remain incomplete.",
+  "evidence": {
+    "manifest": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/manifest.json",
+    "authorization": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/authorization-status.json",
+    "ledger": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/live-ledger.json",
+    "source_binding": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/source-binding.json",
+    "payload_review": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/payload-review.md",
+    "codex_preflight": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/codex-preflight-receipt.json",
+    "copilot_preflight": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/copilot-preflight-receipt.json",
+    "copilot-baseline_run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/run.json",
+    "copilot-baseline_attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/attempt.json",
+    "copilot-baseline_native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/native-events.json",
+    "copilot-baseline_stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/stdout.jsonl",
+    "copilot-baseline_stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/stderr.txt",
+    "copilot_raw_usage": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/usage.json",
+    "copilot_adapter_usage_missing": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/copilot-baseline/evidence/smoke/usage-missing.json",
+    "codex-baseline_run.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/run.json",
+    "codex-baseline_attempt.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/attempt.json",
+    "codex-baseline_native-events.json": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/native-events.json",
+    "codex-baseline_stdout.jsonl": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/stdout.jsonl",
+    "codex-baseline_stderr.txt": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-pilot-03/run-01/cells/codex-baseline/evidence/smoke/stderr.txt"
+  },
+  "evidence_sha256": {
+    "manifest": "39ae5cd8042fe280f086a7d3fa95f62aabf9af01a974b8072ce79b4446bfc889",
+    "authorization": "1e797024e77e7f70c35dbd566ea2dd399ca1105edb411017d5e4d351254f56ef",
+    "ledger": "eb9efee3e6e1efe69b4114032c2c560ca8694a35056870ca017dd968a1f8bb15",
+    "source_binding": "6ffddd2b4fdef1f22fd283e0307fe04c57a1f3164e69d4c0c7d084453490ed06",
+    "payload_review": "34ea319582168d8fadcd38e3e510f52fabb26637b5ae78a1e7fdc8eae17e7368",
+    "codex_preflight": "9539f98a034f6f4b5e346fd0fcbce652c5412c189329869d462319ff6e364c0d",
+    "copilot_preflight": "905f24e62f8f907f1c86c400fdf7750c150e6e51e824e44eca55ee03eb1332cf",
+    "copilot-baseline_run.json": "c5399b7a4827ef7546290ef5b26ecaa07cf28a06df8797b5f60992060434f421",
+    "copilot-baseline_attempt.json": "940033e3ff43929cc319ed567e8c755dfc90c2f95089fa3a294eaa783a1077cb",
+    "copilot-baseline_native-events.json": "c736b9c70117975ffa37a0861b0cfb155aaffc116116a2243064df574e0a02dc",
+    "copilot-baseline_stdout.jsonl": "e4eb657b13106b5b332c06f480529e61761f51fc8a6b187fd56be3287520ffc0",
+    "copilot-baseline_stderr.txt": "67d5324500f77d0b2005ba19248d63cb51525c9978e0328b056f73a140005339",
+    "copilot_raw_usage": "7e039200c1f55dc17b1fa77764995c64b9207e98501f29f96fcab7453de7801c",
+    "copilot_adapter_usage_missing": "798424d89aea88ddcfc6587facdf0877cb7823f55cd29a90971e195dd1786dd4",
+    "codex-baseline_run.json": "106c1242a0707c4755d473504dc2f1fce6021f609eba35f2cccc625ad01bab8f",
+    "codex-baseline_attempt.json": "c1b44fa4f55c2f4f999939b0ac9d1ad0642a340fd5c50005cbf8e566056ec6cb",
+    "codex-baseline_native-events.json": "440eeabe0c6c42cc3781dcc45e7f54d0ddccb5ae38ad926f10d854426d58b589",
+    "codex-baseline_stdout.jsonl": "cd6cc287f7bebe31a2775bbcdd5c64689b47575b266b4f293d3ae5e76580f6f9",
+    "codex-baseline_stderr.txt": "f25ec0077140d993e0a3075fb41e6e985b3a47f79836ac9b1309a2f01fd5a21e"
+  },
+  "authorization": {
+    "setup_question_id": "call_4e6d9ea4f9ad404ab64faa3059e92106:0",
+    "pilot_question_id": "call_4e6d9ea4f9ad404ab64faa3059e92106:1",
+    "scope": "current replacement eight-call pilot and equivalent temporary project/hook setup paths for same purpose within this plan",
+    "smoke_slots": 4,
+    "scenario_slots": 4,
+    "max_seconds_per_call": 600,
+    "automatic_retries": false,
+    "expansion": false
+  }
+}
