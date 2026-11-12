@@ -4,18 +4,17 @@ The scenarios in `evals.json` assess orchestration decisions from the supplied s
 
 ## Maintained diagnostic pilot
 
-`scheduler_pilot.py` is an offline stdlib preparation and grading harness. Its
-Codex `run` fails closed pending verification of private hook trust/loading,
-host hook-failure semantics and enabled-tool coverage. A native PreToolUse hook
-can deny supported commands; workspace-write alone remains a filesystem sandbox. Copilot uses the documented isolation controls below;
-its static preflight requires supported flags and an auth token for the isolated
-home. Exact requested Sol/medium resolution remains pending a separately
-authorized smoke, rather than being treated as known incompatibility. The
-current operator environment has no supported token, so native Copilot remains
-unrun. A successful help/version capture is syntax evidence, not execution
-readiness. Codex requires a separately reviewed command-boundary solution.
-Copilot smoke requires separate approval of its exact frozen payload. Editing a
-receipt cannot bypass the Codex capability check or Copilot auth/environment checks.
+`scheduler_pilot.py` prepares frozen payloads and grades observed native evidence.
+Both providers support explicit `native-existing-login` configuration alongside
+their default isolated modes. Native login remains provider-owned. Preflight
+checks metadata, exact selectors, configuration and the trusted project policy.
+Live smoke/scenario execution requires separate approval of the exact payload.
+Successful metadata or offline fixtures establish their own prerequisites only.
+Each accepted phase requires observed selectors, real helper child receipts,
+scoped outputs and matched command/permission evidence. The harness makes no
+universal tool-coverage claim. Missing proof invalidates qualification. Native Codex scenario qualification remains
+incomplete pending grounded `apply_patch`/`file_change` mapping and a complete
+real-child scenario fixture. Current context fixtures qualify neutral smokes.
 
 The public commands are `prepare`, `preflight`, `run` and `grade`; each has `--help`.
 Stdin is unused. JSON results go to stdout, diagnostics to stderr. Exit 0 means
@@ -67,22 +66,20 @@ then freezes source snapshots, helper/spec files, exact prompts/rubric/argv,
 settings and relevant nonsecret environment/config fingerprints in a fresh 0700
 root. Hash, settings or environment drift fails closed. No secret values are
 copied. The fingerprint is evidence of observed configuration, not proof that all
-provider configuration sources are isolated. Provider preflight captures native version/help/executable hash. It records
-Codex's unsupported boundary, or Copilot's missing auth as applicable, separately
-from requested-vs-observed model status. Copilot exact signed-in account support
-for Sol/medium remains unverified and can be established by an authorized smoke;
-selectors are requested without substitution. Codex exposes
-`--ignore-user-config`/`--ignore-rules`; draft argv uses those controls, but
-workspace-write is a workspace sandbox and not a command allowlist.
+provider configuration sources are isolated. Provider preflight captures native version/help/executable identity and checks
+provider-owned authentication and exact model/effort catalog support. Executing
+selector evidence comes from the approved phase. Codex shares one frozen runtime
+override vector between metadata and exec. Copilot native status validates its
+exact headless RPC invocation, including controls omitted from public help.
 
-Draft Copilot argv scopes recursive `write(ABSOLUTE_REPO/**)`, the exact frozen
+Copilot argv scopes recursive `write(ABSOLUTE_REPO/**)`, the exact frozen
 helper Python prefix, repo/snapshot path access, disables automatic temp access,
-built-in MCPs and BASH_ENV. The draft uses a fresh HOME/COPILOT_HOME/COPILOT_CACHE_HOME, disables automatic
+built-in MCPs and BASH_ENV. The default process-token mode uses a fresh HOME/COPILOT_HOME/COPILOT_CACHE_HOME, disables automatic
 plugin discovery and login-shell environment loading, and freezes manual
 permission mode, hook disabling and bypass-mode disabling. Only the explicitly
 listed nonsecret environment is included; auth tokens must be supplied separately
 in memory and marked secret for shell/MCP environments, never copied to evidence.
-This draft has not been exercised with live Copilot.
+Actual execution qualification requires the approved observed smoke.
 `COPILOT_ALLOW_ALL`, assisted approval and persisted permission grants cannot be
 silently treated as covered by the narrow command flags. Copilot `run` uses only that frozen nonsecret environment plus supported auth
 variables supplied in memory; the native smoke must observe the exact requested
@@ -132,7 +129,7 @@ hash through `/hooks`, including project-layer trust. No undocumented trust-file
 write or `--dangerously-bypass-hook-trust` is used. A configuration file existing
 on disk does not prove it loaded. The operator must review the exact private
 cell paths through the documented UI before separately authorized native smoke.
-There is no automated trust assertion in this harness.
+Discovery reads native trust metadata. Trust setup remains owner-controlled.
 
 The existing four smoke prompts now add a harmless forbidden-write attempt.
 Smoke requires successful neutral helper execution, native denial of the exact
@@ -143,17 +140,12 @@ fixtures simulate those native provider envelopes explicitly; their hook/child
 subprocesses are real, but they do not establish live provider loading or trust.
 No extra provider call or scored scenario behavior is added.
 
-The [official hook reference](https://learn.chatgpt.com/docs/hooks) documents
-pre-tool interception and private hook discovery/trust. It also limits tool
-coverage and describes failure paths that can continue execution. Therefore a
-valid policy's own deny JSON is not a complete host fail-closed guarantee:
-missing/untrusted scripts, host errors/timeouts, specialized opt-out tools and
-write_stdin transport still need native verification or a supported restriction.
-`preflight`/`run` retain the exact
-`codex-private-hook-trust-load-failure-and-enabled-tool-coverage-unverified`
-prerequisite. They make no categorical platform-impossibility claim and cannot
-be enabled by changing an authored receipt. If the installed host cannot satisfy
-those controls, preserve that blocker and keep the live pilot incomplete.
+The official hook reference documents pre-tool interception and project trust.
+Native discovery must identify the exact enabled, synchronous, trusted policy.
+Every observed helper command and the denied probe need their ordered policy
+audit row. Missing discovery, hook warnings/errors, extra commands or unmatched
+audit records invalidate setup. These observations establish the exercised paths.
+[Official hook reference](https://learn.chatgpt.com/docs/hooks).
 
 ### Ordered evidence and current ownership
 
@@ -180,7 +172,7 @@ readiness gates.
 
 ### Observed-run qualification
 
-Fresh version 3 preparations pin the executing harness/import hashes separately from selected scheduler snapshots, resolve provider and interpreter identities, and freeze the private environment and safe configuration. Codex discovery and exec share supported overrides and exact private HOME/CODEX_HOME. Discovery performs initialize, initialized, hooks/list and config/read only, requiring one synchronous trusted project hook. Its supported configuration projection includes the inspected Codex 0.167.1 defaults and accepts the absent, empty `/etc/codex/config.toml` layer. Unexpected configuration, hooks or external populated layers fail setup. Authentication receipts contain status or supported token names only.
+Fresh version 3 preparations pin the executing harness/import hashes separately from selected scheduler snapshots, resolve provider and interpreter identities, and freeze the private environment and safe configuration. Codex discovery and exec share supported overrides and the selected authentication paths. Native discovery additionally reads skills/model metadata and accepts only schema-validated sanitized account-status notifications. Discovery requires the exact synchronous trusted project hook before readiness. Its supported configuration projection includes the inspected Codex 0.167.1 defaults and accepts the absent, empty `/etc/codex/config.toml` layer. Unexpected configuration, hooks or external populated layers fail setup. Authentication receipts contain status or supported token names only.
 
 Preflight `valid` denotes setup readiness. Explicit `syntax_supported`, `setup_ready`, `smoke_ready` and `scenario_ready` distinguish setup from qualification. Each phase creates an exclusive attempt before spawning. A failed or partial attempt blocks replay and remaining calls for its provider. Cell/provider locks serialize execution. Receipts bind the manifest and preflight payload digest, source/interpreter/provider identities, exact command/cwd/environment, safe config, delivered prompt hash, requested/observed selectors, actual session/turn identities, raw/parsed evidence hashes and audit byte intervals. Final receipt replacement is atomic. Codex receives its prompt on stdin, while Copilot retains its frozen prompt argument.
 
@@ -188,7 +180,26 @@ Run and grade re-read raw evidence and current bindings. Both provider smokes mu
 
 The supported Copilot 1.0.109 envelope pairs toolCallId and turnId, requires session.start selectors/session/cwd, validates supplied tool model fields, and supports exact helper bash calls plus single confined Add File apply_patch calls. Patch arguments remain raw strings, completion fileEdits must identify the exact created file, and current bytes must match the patch. Native boolean success stays distinct from captured scheduler child exit status. Update, delete, move and unrecognized write forms invalidate this bounded adapter.
 
-Inspected Codex exec evidence supplies thread/item identity but lacks executing-selector, complete tool inventory and hook tool-use correlation. Codex qualification remains `native-evidence-unsupported`. Grade preserves individual real-child rubric observations as diagnostic assertions with setup invalid, behavior not_evaluated and comparison eligibility false. Synthetic transport fixtures never establish native provider qualification. Copilot fixtures exercise both variants through real helper/scheduler subprocesses and filesystem writes.
+Codex native mode binds exec stdout's fresh thread ID through read-only
+`thread/read`, then verifies that exact physical provider rollout. The thread,
+session metadata and one accounted turn must agree on source, CLI version, cwd,
+Sol/medium, OpenAI provider, approval and actual sandbox. Raw rollout references,
+hashes and safe context are pinned and recomputed during grade. Missing companion
+proof preserves the earlier invalid diagnostic outcome.
+
+Codex `apply_patch` scenario writes and stdout `file_change` mapping remain
+pending a dependent bounded implementation. Until that mapping is verified,
+observed patch events invalidate qualification.
+
+Raw native shell text stays retained. Only one canonical logical command through
+a grounded `/bin/bash -c` or `/bin/zsh -c` envelope is decoded. Rollout input must
+show one `text(await tools.exec_command({...}));` call with explicit `login=false`
+and `tty=false`. Bare and JSON-quoted argument keys are supported without JS
+evaluation. Batched calls, compounds, substitutions, unknown tools and `-lc`
+wrappers fail qualification. Historical login-wrapper semantics require new
+native evidence before support. The logical command sequence matches audit
+command digests, exact decisions, policy hash and tool identity one-to-one.
+Native item IDs and hook IDs remain separate namespaces.
 
 Private owner authentication/trust actions and separate exact-payload approval still precede live calls. The ceiling remains four smokes plus four scenarios, at most 600 seconds each, with fresh sessions and no retries.
 
@@ -225,8 +236,8 @@ receive an empty read-only `control/shell-home` as HOME and ZDOTDIR, inherit no
 environment, and use the pinned interpreter PATH. BASH_ENV/ENV are excluded.
 Prompts require `login=false` and `tty=false`. A modified shell-home invalidates
 the preparation. Native metadata checks launch no sessions or turns. Existing
-native indexes/cache bookkeeping remains provider-owned. Native context,
-command/audit binding and qualification remain a dependent implementation task.
+native indexes/cache bookkeeping remains provider-owned. Qualification requires
+the companion context and ordered command/audit evidence described above.
 
 Preparation retains configuration warnings as sanitized, unclassified incomplete
 setup evidence. Every warning blocks preflight/execution. Project layer identity
@@ -236,3 +247,11 @@ scoped project policy to become trusted while other layer drift still fails.
 Native mode disables implicit `/tmp` and TMPDIR sandbox grants. Its prepared
 repo/tmp roots remain explicit, keeping control/shell-home outside writable
 locations even when the disposable run root is under `/private/tmp`.
+
+The Codex 0.167.1 full flattened configuration shape is validated separately from
+its safe behavior projection. Known null-only settings must remain null. Active
+provider overrides and unknown keys fail with safe key-name diagnostics. Native
+notification commands are suppressed with `notify=[]`, and `allow_login_shell`
+is false. Desktop/UI/provider-owned collections receive shape checks and their
+values stay outside saved evidence. Behavior flags and source identities remain
+pinned. Existing configuration fixtures retain the full sanitized native shape.

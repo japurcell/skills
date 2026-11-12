@@ -5,6 +5,7 @@ import json
 import hashlib
 import math
 import re
+import datetime
 import os
 from pathlib import Path
 import shutil
@@ -445,7 +446,7 @@ class DiscoveryError(ValueError):
         self.notifications = list(notifications)
 
 
-def discover_codex(cell, preparation=False, inventory=False):
+def discover_codex(cell, preparation=False, inventory=False, thread_id=None):
     """No-inference, bounded JSON RPC handshake against the frozen private setup."""
     argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", *codex_config_args(cell)]
     requests = [{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "scheduler_hook_discovery", "version": "1.0"}}},
@@ -455,6 +456,8 @@ def discover_codex(cell, preparation=False, inventory=False):
     if native_auth(cell["requested_settings"]):
         requests += [{"id": 4, "method": "skills/list", "params": {"cwds": [cell["repo"]], "forceReload": True}},
                      {"id": 5, "method": "model/list", "params": {"limit": 100, "includeHidden": True}}]
+    if thread_id is not None:
+        requests.append({"id": 6, "method": "thread/read", "params": {"threadId": thread_id, "includeTurns": False}})
     child = subprocess.Popen(argv, cwd=cell["repo"], env=cell["environment"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
     responses, notifications, reply_ids = [], [], set()
     received_bytes = 0
@@ -472,6 +475,13 @@ def discover_codex(cell, preparation=False, inventory=False):
             notifications.append({"method": method, "classification": "configuration-warning", "summary_present": "summary" in params, "details_present": "details" in params})
             if not preparation:
                 raise DiscoveryError("configuration-warning", notifications)
+            return
+        if method == "account/updated" and native_auth(cell["requested_settings"]):
+            auth_modes = {None, "apikey", "chatgpt", "chatgptAuthTokens", "headers", "agentIdentity", "personalAccessToken", "bedrockApiKey", "bedrockAccessKeys"}
+            plan_types = {None, "free", "go", "plus", "pro", "prolite", "promax", "team", "self_serve_business_prolite", "self_serve_business_usage_based", "business", "ent26", "enterprise_cbp_automation", "enterprise_cbp_usage_based", "enterprise", "edu", "edu_plus", "edu_pro", "sci", "sci_plus", "unknown"}
+            if set(params) - {"authMode", "planType"} or any(value is not None and not isinstance(value, str) for value in params.values()) or params.get("authMode") not in auth_modes or params.get("planType") not in plan_types:
+                raise DiscoveryError("malformed native account status notification", notifications)
+            notifications.append({"method": method, "classification": "native-account-status", "auth_present": params.get("authMode") is not None, "plan_present": params.get("planType") is not None})
             return
         if method != "remoteControl/status/changed":
             raise DiscoveryError("unknown discovery notification", notifications)
@@ -551,7 +561,11 @@ def discover_codex(cell, preparation=False, inventory=False):
                 time.sleep(.05)
         child.communicate(timeout=2)
     if native_auth(cell["requested_settings"]):
-        return codex_native_projection(cell, responses, notifications, preparation, inventory)
+        projection = codex_native_projection(cell, responses, notifications, preparation, inventory)
+        if thread_id is not None:
+            thread = responses[5]["result"]["thread"]
+            projection["thread"] = {key: thread.get(key) for key in ("id", "sessionId", "cwd", "path", "model", "reasoningEffort", "modelProvider", "source", "cliVersion")}
+        return projection
     data = responses[1]["result"]["data"]
     if len(data) != 1 or data[0].get("cwd") != cell["repo"] or data[0].get("errors") != [] or data[0].get("warnings") != [] or len(data[0].get("hooks", [])) != 1:
         raise DiscoveryError("private-hook discovery must contain exactly one clean project hook", notifications)
@@ -596,12 +610,33 @@ def discover_codex(cell, preparation=False, inventory=False):
 def codex_native_projection(cell, responses, notifications, preparation, inventory):
     """Discard transport/auth values before freezing any native metadata."""
     actual = responses[2]["result"]["config"]
-    known_config = {"analytics", "approval_policy", "approvals_reviewer", "browser_use", "compact_prompt", "computer_use", "desktop", "developer_instructions", "forced_chatgpt_workspace_id", "forced_login_method", "instructions", "model", "model_auto_compact_token_limit", "model_auto_compact_token_limit_scope", "model_context_window", "model_provider", "model_reasoning_effort", "model_reasoning_summary", "model_verbosity", "review_model", "sandbox_mode", "sandbox_workspace_write", "service_tier", "tools", "web_search", "features", "apps", "skills", "mcp_servers", "plugins", "hooks", "model_providers", "project_doc_max_bytes", "project_doc_fallback_filenames", "shell_environment_policy"}
+    # Codex 0.167.1 returns flattened config fields beyond the typed core schema.
+    # Credentials, provider endpoints and desktop/UI values are never persisted.
+    known_config = set('agents allow_login_shell allow_symlinked_codex_home analytics approval_policy approvals_reviewer apps apps_mcp_product_sku audio auto_review background_terminal_max_timeout browser_use chatgpt_base_url check_for_update_on_startup cli_auth_credentials_store cloud compact_prompt computer_use daybreak default_permissions desktop developer_instructions disable_paste_burst experimental_compact_prompt_file experimental_realtime_start_instructions experimental_realtime_webrtc_call_base_url experimental_realtime_ws_backend_prompt experimental_realtime_ws_base_url experimental_realtime_ws_model experimental_realtime_ws_startup_context experimental_thread_store experimental_thread_store_endpoint experimental_use_unified_exec_tool features feedback file_opener forced_chatgpt_workspace_id forced_login_method ghost_snapshot goals hide_agent_reasoning history hooks include_apps_instructions include_collaboration_mode_instructions include_environment_context include_environment_context_time include_permissions_instructions instructions js_repl_node_module_dirs js_repl_node_path log_dir marketplaces mcp_enterprise_managed_auth mcp_oauth_callback_port mcp_oauth_callback_url mcp_oauth_credentials_store mcp_optional_startup_grace_ms mcp_servers memories model model_auto_compact_token_limit model_auto_compact_token_limit_scope model_catalog_json model_context_window model_instructions_file model_post_turn_compact_threshold_percent model_provider model_providers model_reasoning_effort model_reasoning_summary model_verbosity notice notify openai_base_url orchestrator oss_provider otel permissions personality plan_mode_reasoning_effort plugins profile profiles project_doc_fallback_filenames project_doc_max_bytes project_root_markers projects realtime responses_api_metadata review_model sandbox_mode sandbox_workspace_write service_tier shell_environment_policy show_raw_agent_reasoning skills sqlite_home suppress_unstable_features_warning thread_unload_delay_secs tool_output_token_limit tool_suggest tools tui web_search windows'.split())
+    null_only = set('agents allow_symlinked_codex_home analytics apps_mcp_product_sku audio auto_review browser_use check_for_update_on_startup cloud compact_prompt computer_use daybreak default_permissions disable_paste_burst experimental_compact_prompt_file experimental_realtime_start_instructions experimental_realtime_webrtc_call_base_url experimental_realtime_ws_backend_prompt experimental_realtime_ws_base_url experimental_realtime_ws_model experimental_realtime_ws_startup_context experimental_thread_store experimental_thread_store_endpoint experimental_use_unified_exec_tool feedback forced_chatgpt_workspace_id forced_login_method ghost_snapshot goals js_repl_node_module_dirs js_repl_node_path log_dir mcp_enterprise_managed_auth mcp_oauth_callback_port mcp_oauth_callback_url mcp_optional_startup_grace_ms memories model_auto_compact_token_limit model_auto_compact_token_limit_scope model_catalog_json model_context_window model_instructions_file model_post_turn_compact_threshold_percent model_reasoning_summary model_verbosity openai_base_url orchestrator oss_provider otel permissions personality plan_mode_reasoning_effort profile realtime responses_api_metadata review_model show_raw_agent_reasoning sqlite_home suppress_unstable_features_warning thread_unload_delay_secs tool_output_token_limit tool_suggest windows'.split())
     if set(actual) - known_config:
-        raise ValueError("unknown native Codex configuration key")
-    for key in ("tools", "model_providers", "compact_prompt", "browser_use", "computer_use", "desktop"):
-        if actual.get(key):
-            raise ValueError("unsupported native Codex behavior or provider configuration")
+        raise ValueError("unknown native Codex configuration keys: " + ", ".join(sorted(set(actual) - known_config)))
+    unsafe_nulls = [key for key in null_only if actual.get(key) is not None]
+    if unsafe_nulls:
+        raise ValueError("unsupported populated native Codex settings: " + ", ".join(sorted(unsafe_nulls)))
+    if actual.get("tools") or actual.get("model_providers"):
+        raise ValueError("unsupported native Codex tools or provider override")
+    if actual.get("chatgpt_base_url") not in (None, "https://chatgpt.com/backend-api/"):
+        raise ValueError("unsupported native Codex authentication endpoint")
+    desktop_types = {'preventSleepWhileRunning': 'bool', 'conversationDetailMode': 'str', 'keepRemoteControlAwakeWhilePluggedIn': 'bool', 'open-in-target-preferences': 'dict', 'show-context-window-usage': 'bool', 'followUpQueueMode': 'str', 'worktree-keep-count': 'int', 'enabled-reasoning-efforts': 'list', 'appearanceDarkChromeTheme': 'dict', 'worktree-upstream-refresh-mode': 'str'}
+    desktop = actual.get("desktop") or {}
+    types = {"str": str, "bool": bool, "int": int, "dict": dict, "list": list}
+    if not isinstance(desktop, dict) or set(desktop) - set(desktop_types) or any(type(value) is not types[desktop_types[key]] for key, value in desktop.items()):
+        raise ValueError("unknown native Codex desktop setting")
+    for key in ('history', 'marketplaces', 'notice', 'profiles', 'projects', 'tui'):
+        if actual.get(key) is not None and not isinstance(actual[key], dict):
+            raise ValueError("unsupported native Codex provider/UI collection: " + key)
+    for key, allowed in {'cli_auth_credentials_store': ['file', 'keyring', 'auto', 'ephemeral'], 'mcp_oauth_credentials_store': ['file', 'keyring', 'auto']}.items():
+        if actual.get(key) is not None and actual[key] not in allowed:
+            raise ValueError("unsupported native Codex auth storage mode: " + key)
+    for key, expected_type in (("file_opener", str), ("hide_agent_reasoning", bool)):
+        if actual.get(key) is not None and type(actual[key]) is not expected_type:
+            raise ValueError("unsupported native Codex UI value: " + key)
     components = {}
     for kind in ("mcp_servers", "plugins"):
         entries = actual.get(kind) or {}
@@ -679,12 +714,21 @@ def codex_native_projection(cell, responses, notifications, preparation, invento
         if value is not None and (type(value) is not int or value <= 0):
             raise ValueError("unsafe native Codex context limit")
         behavior[key] = value
-    for key, allowed in {"model_auto_compact_token_limit_scope": (None, "per_thread", "per_turn"), "model_reasoning_summary": (None, "auto", "concise", "detailed", "none"), "model_verbosity": (None, "low", "medium", "high"), "service_tier": (None, "fast", "flex")}.items():
+    for key, allowed in {"model_auto_compact_token_limit_scope": (None, "per_thread", "per_turn"), "model_reasoning_summary": (None, "auto", "concise", "detailed", "none"), "model_verbosity": (None, "low", "medium", "high"), "service_tier": (None, "default", "fast", "flex")}.items():
         if actual.get(key) not in allowed:
             raise ValueError("unsupported native Codex behavior setting")
         behavior[key] = actual.get(key)
     if any(actual.get(key) for key in ("forced_chatgpt_workspace_id", "forced_login_method", "review_model")):
         raise ValueError("unsupported native Codex login or review override")
+    for key in ("include_apps_instructions", "include_collaboration_mode_instructions", "include_environment_context", "include_environment_context_time", "include_permissions_instructions"):
+        value = actual.get(key)
+        if value is not None and type(value) is not bool:
+            raise ValueError("unsupported native Codex instruction flag: " + key)
+        behavior[key] = value
+    if actual.get("project_root_markers") not in (None, [".git"]) or actual.get("background_terminal_max_timeout") not in (None, 300000):
+        raise ValueError("unsupported native Codex project or background shell setting")
+    behavior["project_root_markers"] = actual.get("project_root_markers")
+    behavior["background_terminal_max_timeout"] = actual.get("background_terminal_max_timeout")
     behavior["config_keys"] = sorted(actual)
     if "native_behavior" in cell and behavior != cell["native_behavior"]:
         raise ValueError("Codex native behavior drift")
@@ -735,6 +779,7 @@ def codex_native_prepare(cell):
     cell["native_layers"] = inherited["layers"]
     features = {key: False for key in ("apps", "plugins", "remote_plugin", "memories", "multi_agent", "browser_use", "computer_use", "image_generation", "skill_search", "skill_mcp_dependency_install")}
     config = {"model": settings["model"], "model_reasoning_effort": settings["effort"], "model_provider": "openai", "sandbox_mode": "workspace-write", "approval_policy": "never", "approvals_reviewer": "user", "apps": {"_default": {"enabled": False, "destructive_enabled": False, "open_world_enabled": False}}, "skills": {"bundled": {"enabled": False}, "include_instructions": False, "config": [{"path": row["path"], "enabled": False} for row in cell["native_inventory"]["skills"]]}, "instructions": "", "developer_instructions": "", "project_doc_max_bytes": 0, "project_doc_fallback_filenames": [], "web_search": "disabled", "features": features, "shell_environment_policy": {"inherit": "none", "set": {"PATH": str(Path(cell["python_identity"]["path"]).parent) + ":/usr/bin:/bin", "HOME": str(shell), "ZDOTDIR": str(shell)}, "exclude": ["BASH_ENV", "ENV", "ZDOTDIR"]}, "sandbox_workspace_write": cell["safe_config"]["sandbox_workspace_write"]}
+    config.update({"notify": [], "allow_login_shell": False})
     config["sandbox_workspace_write"] = {**config["sandbox_workspace_write"], "exclude_tmpdir_env_var": True, "exclude_slash_tmp": True}
     # TOML inline tables retain inherited components, so disable their leaves explicitly.
     def toml(value):
@@ -799,7 +844,7 @@ def preflight(manifest, provider):
                 blockers.append(cell_id + ":native-existing-login-preflight:" + str(error))
     elif not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
         blockers.append("copilot-isolated-home-auth-token-unavailable")
-    if provider == "copilot" and native_auth(settings) and not all(flag in probes[1]["stdout"] for flag in ("--headless", "--stdio", "--available-tools", "--sync-session", "--trust-folder")):
+    if provider == "copilot" and native_auth(settings) and not all(flag in probes[1]["stdout"] for flag in ("--available-tools", "--sync-session", "--trust-folder")):
         blockers.append("native-Copilot-required-controls-missing")
     receipt = {"schema_version": 1, "provider": provider, "manifest_sha256": digest(root / "manifest.json"), "cells": discovery, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending separately authorized smoke"}, "probes": probes, "valid": not blockers, "syntax_supported": syntax, "setup_ready": not blockers, "smoke_ready": not blockers, "scenario_ready": False, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
     directory = root / "preflight"
@@ -858,6 +903,8 @@ def native_events(provider, stdout):
                     errors.append("session-identity-missing")
                 continue
             if provider == "codex" and kind == "thread.started":
+                if session is not None or not isinstance(row.get("thread_id"), str) or not row["thread_id"]:
+                    errors.append("duplicate-or-missing-thread")
                 session = row.get("thread_id")
                 continue
             if provider == "copilot" and kind in ("tool.execution_start", "tool.execution_complete") and data.get("model") is not None and data["model"] != model:
@@ -915,6 +962,177 @@ def native_events(provider, stdout):
     if provider == "codex":
         errors.append("native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory")
     return {"calls": calls, "usage": usage, "observed_model": model, "observed_effort": effort, "session_id": session, "session_cwd": session_cwd, "normalized": normalized, "invalid_reasons": errors}
+
+
+def codex_logical_command(raw):
+    """Decode only the inspected single-command non-login shell envelope."""
+    if not isinstance(raw, str) or any(value in raw for value in ("\n", "\r", "\x00", "$", "`")):
+        raise ValueError("unsupported Codex shell command")
+    argv = shlex.split(raw)
+    if argv and argv[0] in ("/bin/zsh", "/bin/bash"):
+        if len(argv) != 3 or argv[1] != "-c":
+            raise ValueError("unsupported Codex shell wrapper or login semantics")
+        raw = argv[2]
+        argv = shlex.split(raw)
+    if shlex.join(argv) != raw:
+        raise ValueError("noncanonical Codex logical command")
+    lexer = shlex.shlex(raw, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    if any(token in (";", "&&", "||", "|", "&", ">", "<", ">>", "<<", "(", ")") for token in lexer):
+        raise ValueError("compound Codex logical command")
+    return raw
+
+
+def codex_tool_input(payload):
+    """Parse the grounded single exec orchestration grammar without evaluating JS."""
+    if payload.get("type") != "custom_tool_call" or payload.get("name") != "exec":
+        raise ValueError("unsupported Codex rollout tool")
+    match = re.fullmatch(r"\s*text\(await tools\.exec_command\((\{.*\})\)\);?\s*", payload.get("input", ""), re.DOTALL)
+    if not match:
+        raise ValueError("unsupported Codex rollout tool input")
+    source, offset, result = match[1], 1, {}
+    decoder = json.JSONDecoder()
+    while offset < len(source) - 1:
+        key = re.match(r'\s*(?:"([A-Za-z_][A-Za-z_0-9]*)"|([A-Za-z_][A-Za-z_0-9]*))\s*:\s*', source[offset:])
+        if not key:
+            raise ValueError("unsupported Codex tool argument key")
+        name = key[1] or key[2]
+        offset += key.end()
+        value, size = decoder.raw_decode(source[offset:])
+        offset += size
+        if name in result or isinstance(value, (dict, list)):
+            raise ValueError("duplicate or complex Codex tool argument")
+        result[name] = value
+        delimiter = re.match(r"\s*([,}])\s*", source[offset:])
+        if not delimiter:
+            raise ValueError("unsupported Codex tool argument delimiter")
+        offset += delimiter.end()
+        if delimiter[1] == "}":
+            if offset != len(source):
+                raise ValueError("trailing Codex tool arguments")
+            break
+    allowed = {"cmd", "workdir", "login", "tty", "yield_time_ms", "max_output_tokens"}
+    if set(result) - allowed or result.get("login") is not False or result.get("tty") is not False:
+        raise ValueError("Codex tool requires explicit login=false and tty=false")
+    return result
+
+
+def codex_companion(cell, events, thread, started_at):
+    """Verify the physical provider rollout and return a safe context projection."""
+    session = events.get("session_id")
+    expected = {"id": session, "sessionId": session, "cwd": cell["repo"], "model": cell["requested_settings"]["model"], "reasoningEffort": cell["requested_settings"]["effort"], "modelProvider": "openai", "source": "exec", "cliVersion": "0.167.1"}
+    if not session or any(thread.get(key) != value for key, value in expected.items()):
+        raise ValueError("Codex thread identity or selector mismatch")
+    path = Path(thread["path"])
+    provider_root = Path(cell["environment"]["CODEX_HOME"]) / "sessions"
+    if not path.is_absolute() or path.resolve() != path or not path.is_relative_to(provider_root.resolve()) or path.is_symlink() or path.stat().st_nlink != 1 or path.stat().st_size > 8388608:
+        raise ValueError("Codex rollout must be a bounded physical provider session file")
+    raw = path.read_bytes()
+    if len(raw) > 8388608 or not raw or not raw.endswith(b"\n"):
+        raise ValueError("truncated Codex rollout")
+    rows = [json.loads(line) for line in raw.splitlines()]
+    metadata = [row for row in rows if row.get("type") == "session_meta"]
+    contexts = [row["payload"] for row in rows if row.get("type") == "turn_context"]
+    if len(metadata) != 1 or rows[0] != metadata[0] or len(contexts) != 1:
+        raise ValueError("Codex rollout requires one fresh session and accounted turn")
+    meta = metadata[0]["payload"]
+    if any(meta.get(key) != value for key, value in {"id": session, "cwd": cell["repo"], "originator": "codex_exec", "cli_version": "0.167.1", "model_provider": "openai"}.items()):
+        raise ValueError("Codex rollout session metadata mismatch")
+    instant = datetime.datetime.fromisoformat(metadata[0]["timestamp"].replace("Z", "+00:00"))
+    if instant.tzinfo is None:
+        raise ValueError("Codex rollout timestamp lacks timezone")
+    timestamp = instant.timestamp()
+    if not started_at - 2 <= timestamp <= time.time() + 2:
+        raise ValueError("stale Codex rollout session")
+    context = contexts[0]
+    expected_context = {"cwd": cell["repo"], "approval_policy": "never", "sandbox_policy": {"type": "workspace-write", **cell["safe_config"]["sandbox_workspace_write"]}, "model": expected["model"], "effort": expected["reasoningEffort"]}
+    if any(context.get(key) != value for key, value in expected_context.items()) or not isinstance(context.get("turn_id"), str) or not context["turn_id"]:
+        raise ValueError("Codex rollout turn context mismatch")
+    tools, outputs, seen, native_commands = [], [], set(), []
+    active_call = None
+    lifecycle = set()
+    for row in rows:
+        if row.get("type") == "event_msg":
+            event = row.get("payload", {})
+            if event.get("turn_id", context["turn_id"]) != context["turn_id"] or event.get("thread_id", session) != session:
+                raise ValueError("Codex rollout event session or turn mismatch")
+            if event.get("type") in ("task_started", "task_complete"):
+                if event["type"] in lifecycle:
+                    raise ValueError("duplicate Codex rollout turn lifecycle event")
+                lifecycle.add(event["type"])
+            if event.get("type") == "item_completed":
+                item = event.get("item", {})
+                if item.get("type") not in ("UserMessage", "AgentMessage", "Reasoning", "CommandExecution"):
+                    raise ValueError("unknown Codex rollout completed tool")
+                if item["type"] == "CommandExecution":
+                    command = item.get("command")
+                    if not isinstance(command, list) or any(not isinstance(part, str) for part in command) or item.get("cwd") != cell["repo"]:
+                        raise ValueError("malformed Codex rollout command item")
+                    native_commands.append(codex_logical_command(shlex.join(command)))
+        if row.get("type") == "event_msg" and row.get("payload", {}).get("type") not in ("task_started", "task_complete", "item_completed", "token_count", "thread_settings_applied"):
+            raise ValueError("unknown Codex rollout event or hook warning")
+        if row.get("type") not in ("session_meta", "turn_context", "response_item", "event_msg", "token_usage_record", "world_state"):
+            raise ValueError("unknown Codex rollout record")
+        if row.get("type") != "response_item":
+            continue
+        payload = row.get("payload", {})
+        kind = payload.get("type")
+        if kind in ("custom_tool_call", "function_call", "local_shell_call"):
+            arguments = codex_tool_input(payload)
+            key = payload.get("call_id")
+            if not isinstance(key, str) or not key or key in seen or payload.get("internal_chat_message_metadata_passthrough", {}).get("turn_id") != context["turn_id"]:
+                raise ValueError("Codex rollout tool identity or turn mismatch")
+            if arguments.get("workdir", cell["repo"]) != cell["repo"]:
+                raise ValueError("Codex rollout tool cwd mismatch")
+            if active_call is not None:
+                raise ValueError("overlapping Codex rollout tool calls")
+            active_call = key
+            seen.add(key)
+            tools.append({"call_id": key, "command": codex_logical_command(arguments.get("cmd")), "login": False, "tty": False})
+        elif kind in ("custom_tool_call_output", "function_call_output"):
+            if payload.get("call_id") != active_call or active_call is None:
+                raise ValueError("unmatched Codex rollout tool output")
+            active_call = None
+            outputs.append(payload.get("call_id"))
+        elif kind not in ("message", "reasoning", "additional_tools"):
+            raise ValueError("unknown observed Codex rollout item")
+    if [tool["call_id"] for tool in tools] != outputs or len(tools) != len(events["calls"]):
+        raise ValueError("Codex rollout tool count or output order mismatch")
+    if native_commands and native_commands != [tool["command"] for tool in tools]:
+        raise ValueError("Codex completed command sequence mismatch")
+    for tool, call in zip(tools, events["calls"]):
+        if tool["command"] != codex_logical_command(call["command"]):
+            raise ValueError("Codex rollout/native logical command mismatch")
+    return {"thread": thread, "rollout": str(path), "rollout_sha256": hashlib.sha256(raw).hexdigest(), "turn": {**expected_context, "turn_id": context["turn_id"]}, "tools": tools}
+
+
+def phase_events(manifest, cell_id, phase, collect=False):
+    cell = manifest["cells"][cell_id]
+    directory = Path(cell["repo"]).parent / "evidence" / phase
+    events = native_events(cell["provider"], (directory / "stdout.jsonl").read_text())
+    if cell["provider"] != "codex" or not native_auth(cell["requested_settings"]):
+        return events
+    attempt = read(directory / "attempt.json")
+    path = directory / "codex-context.json"
+    if collect:
+        thread = discover_codex(cell, thread_id=events.get("session_id"))["thread"]
+    else:
+        thread = read(path)["thread"]
+    projection = codex_companion(cell, events, thread, attempt["started_at"])
+    for sibling in manifest["cells"].values():
+        for other_phase in ("smoke", "scenario"):
+            other = Path(sibling["repo"]).parent / "evidence" / other_phase / "run.json"
+            if sibling["provider"] == "codex" and other.exists() and other != directory / "run.json" and read(other).get("session_id") == events["session_id"]:
+                raise ValueError("Codex session replay across phases")
+    if collect:
+        write(path, projection)
+    elif read(path) != projection:
+        raise ValueError("Codex context evidence drift")
+    events["invalid_reasons"] = [error for error in events["invalid_reasons"] if error != "native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory"]
+    events.update(observed_model=thread["model"], observed_effort=thread["reasoningEffort"], session_cwd=thread["cwd"])
+    for call, tool in zip(events["calls"], projection["tools"]):
+        call.update(raw_command=call["command"], command=tool["command"], turn_id=projection["turn"]["turn_id"], rollout_call_id=tool["call_id"])
+    return events
 
 
 def command_argv(command):
@@ -1068,6 +1286,8 @@ def validate_phase(manifest, cell_id, phase):
         bindings = phase_bindings(manifest, cell_id, phase)
         if any(record.get(key) != value or attempt.get(key) != value for key, value in bindings.items()):
             errors.append("phase-bindings-drift")
+        if record.get("started_at") != attempt.get("started_at"):
+            errors.append("attempt-time-drift")
         if not record.get("attempt_id") or record.get("attempt_id") != attempt.get("attempt_id"):
             errors.append("attempt-identity-mismatch")
         raw_path = inside(directory / "stdout.jsonl", root)
@@ -1076,7 +1296,9 @@ def validate_phase(manifest, cell_id, phase):
             errors.append("raw-evidence-reference-mismatch")
         if record.get("raw_stdout_sha256") != digest(raw_path) or record.get("raw_stderr_sha256") != digest(stderr_path):
             errors.append("raw-evidence-drift")
-        events = native_events(cell["provider"], raw_path.read_text())
+        events = phase_events(manifest, cell_id, phase)
+        if cell["provider"] == "codex" and native_auth(cell["requested_settings"]) and record.get("codex_context_sha256") != digest(directory / "codex-context.json"):
+            errors.append("Codex-context-receipt-drift")
         if record.get("native_events_sha256") != digest(inside(directory / "native-events.json", root)) or read(directory / "native-events.json") != events:
             errors.append("parsed-evidence-drift")
         errors.extend(events["invalid_reasons"])
@@ -1120,10 +1342,12 @@ def validate_phase(manifest, cell_id, phase):
             if audit[start:end] and not audit[start:end].endswith(b"\n"):
                 errors.append("truncated-audit-record")
             expected = [hashlib.sha256(call["command"].encode()).hexdigest() for call in events["calls"]]
-            if len(rows) != len(expected) or sorted(row.get("command_sha256", "") for row in rows) != sorted(expected):
+            if len(rows) != len(expected) or [row.get("command_sha256", "") for row in rows] != expected:
                 errors.append("audit-command-count-mismatch")
-            if any(row.get("policy_sha256") != cell["control"]["policy_sha256"] or row.get("decision") not in ("allow", "deny") for row in rows):
+            if any(row.get("policy_sha256") != cell["control"]["policy_sha256"] or row.get("decision") != ("deny" if call["command"] == cell["control"]["denied_probe"] else "allow") or row.get("tool_name") != "Bash" or not isinstance(row.get("tool_use_id"), str) or not row["tool_use_id"] for row, call in zip(rows, events["calls"])):
                 errors.append("audit-policy-or-decision-mismatch")
+            if len({row.get("tool_use_id") for row in rows}) != len(rows):
+                errors.append("ambiguous-audit-tool-identity")
         elif start != end:
             errors.append("unexpected-copilot-policy-audit")
         for call in events["calls"]:
@@ -1215,7 +1439,7 @@ def run(manifest, cell_id, phase):
     descriptor = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     os.close(descriptor)
     audit = audit_bytes(manifest, cell)
-    record = {**bindings, "attempt_id": str(uuid.uuid4()), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" or native_auth(cell["requested_settings"]) else "private-CODEX_HOME-status"}
+    record = {**bindings, "attempt_id": str(uuid.uuid4()), "started_at": time.time(), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" or native_auth(cell["requested_settings"]) else "private-CODEX_HOME-status"}
     atomic_receipt(directory / "attempt.json", record)
     started = time.monotonic()
     config = read(manifest["config"])
@@ -1227,6 +1451,12 @@ def run(manifest, cell_id, phase):
         (directory / "stdout.jsonl").write_text(stdout)
         (directory / "stderr.txt").write_text(stderr)
         events = native_events(cell["provider"], stdout)
+        if cell["provider"] == "codex" and native_auth(cell["requested_settings"]):
+            try:
+                events = phase_events(manifest, cell_id, phase, collect=True)
+                record["codex_context_sha256"] = digest(directory / "codex-context.json")
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                events["invalid_reasons"].append("Codex-context-invalid:" + str(error))
         write(directory / "native-events.json", events)
         if events.get("usage") is None:
             write(directory / "usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
@@ -1252,7 +1482,7 @@ def grade(manifest, cell_id):
               "comparison_eligible": False, "assertions": {}, "candidate_only": {}, "semantic_review_required": True,
               "limits": "Synthetic shutdown facts; native provider readiness remains a separate prerequisite."}
     def native(phase):
-        return native_events(cell["provider"], (directory / phase / "stdout.jsonl").read_text())
+        return phase_events(manifest, cell_id, phase)
     smoke_validation = validate_phase(manifest, cell_id, "smoke")
     scenario_validation = validate_phase(manifest, cell_id, "scenario")
     qualified = smoke_validation["valid"] and scenario_validation["valid"]

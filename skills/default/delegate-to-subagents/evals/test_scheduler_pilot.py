@@ -27,7 +27,7 @@ class PilotTests(unittest.TestCase):
         self.manifest = self.run / "manifest.json"
 
     def call(self, *args):
-        return subprocess.run([sys.executable, str(CLI), *map(str,args)], capture_output=True, text=True)
+        return subprocess.run([sys.executable, str(CLI), *map(str,args)], capture_output=True, text=True, env={**os.environ, **getattr(self,"child_env",{})})
 
     def prepare(self):
         baseline = self.root / "v2"
@@ -391,7 +391,7 @@ import json,pathlib,shlex,subprocess,sys
 if '--version' in sys.argv:
  print('GitHub Copilot CLI 1.0.109.');raise SystemExit
 if '--help' in sys.argv:
- print('--headless --stdio --available-tools --sync-session --trust-folder --output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
+ print('--available-tools --sync-session --trust-folder --output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
  raise SystemExit
 repo=pathlib.Path.cwd()
 mode=(repo.parents[3]/'copilot-mode').read_text()
@@ -695,6 +695,474 @@ if '--help' in sys.argv:print('--json --model --sandbox --cd --add-dir --output-
 if sys.argv[1:]==['login','status']:print('Logged in using ChatGPT');raise SystemExit
 mode=(pathlib.Path.cwd().parents[3]/'native-mode').read_text()
 config={'mcp_servers':{'fixture':{'enabled':True,'required':True,'env':{'TOKEN':'fixture-sensitive'}}},'plugins':{'fixture@bundle':{'enabled':True}},'features':{}}
+# Complete native 0.167.1 shape, with opaque UI/provider values redacted.
+for key,value in json.loads(r"""{
+  "cloud": null,
+  "web_search": "disabled",
+  "windows": null,
+  "apps": {
+    "_default": {
+      "enabled": false,
+      "approvals_reviewer": null,
+      "destructive_enabled": false,
+      "open_world_enabled": false,
+      "default_tools_approval_mode": null
+    }
+  },
+  "background_terminal_max_timeout": 300000,
+  "instructions": "",
+  "features": {
+    "network_proxy": null,
+    "apps": false,
+    "browser_use": false,
+    "computer_use": false,
+    "image_generation": false,
+    "memories": false,
+    "multi_agent": false,
+    "plugins": false,
+    "prevent_idle_sleep": true,
+    "remote_plugin": false,
+    "skill_mcp_dependency_install": false,
+    "skill_search": false,
+    "api_key_cyber_access_programs": true,
+    "api_key_model_discovery": true,
+    "auth_elicitation": true,
+    "background_paginated_rollout_migration": false,
+    "codex_apps_mcp_2026_07_28": false,
+    "mcp_2026_07_28": false,
+    "mcp_connection_sharing": false,
+    "mentions_v2": true,
+    "remote_control": false,
+    "tool_suggest": true,
+    "windows_sandbox_service": false
+  },
+  "mcp_oauth_credentials_store": "auto",
+  "tool_output_token_limit": null,
+  "model_providers": null,
+  "thread_unload_delay_secs": null,
+  "shell_environment_policy": {
+    "inherit": "none",
+    "ignore_default_excludes": null,
+    "exclude": [
+      "BASH_ENV",
+      "ENV",
+      "ZDOTDIR"
+    ],
+    "set": {
+      "ZDOTDIR": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-codex-config-schema/control/shell-home",
+      "PATH": "/Users/adam/.pyenv/versions/3.14.6/bin:/usr/bin:/bin",
+      "HOME": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-codex-config-schema/control/shell-home"
+    },
+    "include_only": null,
+    "filters": null,
+    "experimental_use_profile": null
+  },
+  "model_context_window": null,
+  "experimental_realtime_start_instructions": null,
+  "desktop": {
+    "preventSleepWhileRunning": true,
+    "conversationDetailMode": "",
+    "keepRemoteControlAwakeWhilePluggedIn": true,
+    "open-in-target-preferences": {},
+    "show-context-window-usage": true,
+    "followUpQueueMode": "",
+    "worktree-keep-count": 30,
+    "enabled-reasoning-efforts": [],
+    "appearanceDarkChromeTheme": {},
+    "worktree-upstream-refresh-mode": ""
+  },
+  "hide_agent_reasoning": false,
+  "history": {
+    "persistence": "save-all",
+    "max_bytes": null
+  },
+  "model_post_turn_compact_threshold_percent": null,
+  "experimental_compact_prompt_file": null,
+  "experimental_realtime_ws_base_url": null,
+  "compact_prompt": null,
+  "audio": null,
+  "plugins": {
+    "unified-computer-use@openai-bundled": {
+      "enabled": false
+    },
+    "presentations@openai-primary-runtime": {
+      "enabled": false
+    },
+    "spreadsheets@openai-primary-runtime": {
+      "enabled": false
+    },
+    "template-creator@openai-primary-runtime": {
+      "enabled": false
+    },
+    "browser@openai-bundled": {
+      "enabled": false
+    },
+    "pdf@openai-primary-runtime": {
+      "enabled": false
+    },
+    "codex-app-tools@openai-bundled": {
+      "enabled": false
+    },
+    "visualize@openai-bundled": {
+      "enabled": false
+    },
+    "computer-use@openai-bundled": {
+      "enabled": false
+    },
+    "documents@openai-primary-runtime": {
+      "enabled": false
+    }
+  },
+  "sqlite_home": null,
+  "approvals_reviewer": "user",
+  "model_reasoning_effort": "medium",
+  "orchestrator": null,
+  "cli_auth_credentials_store": "file",
+  "hooks": {},
+  "profile": null,
+  "skills": {
+    "bundled": {
+      "enabled": false
+    },
+    "include_instructions": false,
+    "config": [
+      {
+        "path": "/Users/adam/.agents/skills/addy-code-review-and-quality/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/addy-code-simplification/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/addy-performance-optimization/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/addy-security-and-hardening/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/adversarial-review/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/agents-md-install/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/architecture-design-contest/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/brain/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/meditate/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/reflect/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/ruminate/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/todo-refine/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/brain-install/assets/skills/todo/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/caveman/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/code-modernization/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/code-review-biaxis/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/code-review/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/code-simplify/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/codebase-design/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/commit/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/create-skill/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/delegate-to-subagents/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/dotnet-ui-app/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/dotnet-upgrade/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/dotnet/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/execplan-implement/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/explain-your-thinking/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/fixing-accessibility/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/frontend-design/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/gh-cli/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/grilling/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/guidance-review/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/handoff/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/improve-codebase-architecture/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/improve-repo-harness/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/improve-skill/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/official-sources/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/pr/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/prd-ralph-loop/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/prd-ralph/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/prd/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/prototype/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/research/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/retro/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/saga/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/show-me/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/skill-creator/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/spec-create/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/spec-to-tasks/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/subagent-model-router/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/tdd/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/teach/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/techdebt/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/to-issues/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/wayfinder/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/web-accessibility/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/web-best-practices/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/web-performance/SKILL.md",
+        "enabled": false
+      },
+      {
+        "path": "/Users/adam/.agents/skills/writing-for-agents/SKILL.md",
+        "enabled": false
+      }
+    ]
+  },
+  "agents": null,
+  "personality": null,
+  "file_opener": "vscode",
+  "projects": {},
+  "mcp_servers": {
+    "node_repl": {
+      "enabled": false,
+      "required": false
+    },
+    "computer-use": {
+      "enabled": false,
+      "required": false
+    }
+  },
+  "feedback": null,
+  "project_root_markers": [
+    ".git"
+  ],
+  "experimental_realtime_ws_model": null,
+  "default_permissions": null,
+  "sandbox_workspace_write": {
+    "writable_roots": [
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-accepted-payload/run-01/cells/codex-candidate/repo",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-accepted-payload/run-01/cells/codex-candidate/tmp"
+    ],
+    "network_access": false,
+    "exclude_tmpdir_env_var": false,
+    "exclude_slash_tmp": false
+  },
+  "experimental_thread_store": null,
+  "experimental_thread_store_endpoint": null,
+  "show_raw_agent_reasoning": null,
+  "marketplaces": {},
+  "approval_policy": "never",
+  "ghost_snapshot": null,
+  "model": "gpt-6.1-sol",
+  "developer_instructions": "",
+  "notice": {},
+  "responses_api_metadata": null,
+  "js_repl_node_path": null,
+  "check_for_update_on_startup": null,
+  "model_verbosity": null,
+  "include_environment_context": true,
+  "review_model": null,
+  "mcp_oauth_callback_url": null,
+  "memories": null,
+  "plan_mode_reasoning_effort": null,
+  "mcp_oauth_callback_port": null,
+  "project_doc_max_bytes": 0,
+  "profiles": {},
+  "allow_login_shell": false,
+  "realtime": null,
+  "experimental_realtime_webrtc_call_base_url": null,
+  "log_dir": null,
+  "notify": [],
+  "suppress_unstable_features_warning": null,
+  "apps_mcp_product_sku": null,
+  "forced_login_method": null,
+  "include_collaboration_mode_instructions": true,
+  "browser_use": null,
+  "tui": {},
+  "js_repl_node_module_dirs": null,
+  "otel": null,
+  "forced_chatgpt_workspace_id": null,
+  "include_environment_context_time": true,
+  "experimental_realtime_ws_startup_context": null,
+  "chatgpt_base_url": "https://chatgpt.com/backend-api/",
+  "model_auto_compact_token_limit_scope": null,
+  "model_instructions_file": null,
+  "goals": null,
+  "analytics": null,
+  "service_tier": "default",
+  "openai_base_url": null,
+  "experimental_use_unified_exec_tool": null,
+  "model_catalog_json": null,
+  "include_permissions_instructions": true,
+  "include_apps_instructions": true,
+  "mcp_enterprise_managed_auth": null,
+  "allow_symlinked_codex_home": null,
+  "daybreak": null,
+  "model_auto_compact_token_limit": null,
+  "model_reasoning_summary": null,
+  "permissions": null,
+  "tools": null,
+  "auto_review": null,
+  "model_provider": "openai",
+  "disable_paste_burst": null,
+  "project_doc_fallback_filenames": [],
+  "sandbox_mode": "workspace-write",
+  "oss_provider": null,
+  "tool_suggest": null,
+  "mcp_optional_startup_grace_ms": null,
+  "experimental_realtime_ws_backend_prompt": null,
+  "computer_use": null
+}""").items():config.setdefault(key,value)
 def merge(target,source):
  for key,value in source.items():
   if isinstance(value,dict):merge(target.setdefault(key,{}),value)
@@ -703,15 +1171,40 @@ for i,arg in enumerate(sys.argv):
  if arg=='-c':
   key,value=sys.argv[i+1].split('=',1)
   merge(config,tomllib.loads('.'.join(json.dumps(part) for part in key.split('.'))+'='+value))
+if 'app-server' not in sys.argv:
+ import datetime,shlex,subprocess
+ repo=pathlib.Path.cwd();manifest=json.loads((repo.parents[2]/'manifest.json').read_text());cell=manifest['cells'][repo.parent.name]
+ prompt=sys.stdin.read();session=cell['session_ids']['smoke'];turn='turn-'+session
+ rollout=pathlib.Path(os.environ['CODEX_HOME'])/'sessions'/('rollout-'+session+'.jsonl');rollout.parent.mkdir(parents=True,exist_ok=True)
+ rows=[{'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'type':'session_meta','payload':{'id':session,'cwd':str(repo),'originator':'codex_exec','cli_version':'0.167.1','model_provider':'openai'}},{'type':'turn_context','payload':{'turn_id':turn,'cwd':str(repo),'approval_policy':'never','sandbox_policy':dict(type='workspace-write',**cell['safe_config']['sandbox_workspace_write']),'model':'gpt-6.1-sol','effort':'medium'}}]
+ print(json.dumps({'type':'thread.started','thread_id':session}))
+ state=str(repo/'outputs/smoke-state.json')
+ actions=[cell['helper_prefix']+a for a in (['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write'])]
+ commands=[shlex.join(a) for a in actions]+[cell['control']['denied_probe']]
+ for number,command in enumerate(commands):
+  call='call_'+str(number);item='item_'+str(number)
+  event={'hook_event_name':'PreToolUse','tool_use_id':call,'cwd':str(repo),'tool_name':'Bash','tool_input':{'command':command,'login':False,'tty':False}}
+  verdict=subprocess.run([sys.executable,cell['control']['script'],'--manifest',manifest['root']+'/manifest.json','--cell',repo.parent.name],input=json.dumps(event),capture_output=True,text=True)
+  child=subprocess.run(actions[number],capture_output=True,text=True) if number<len(actions) else verdict
+  display=shlex.join(['/bin/zsh','-c',command])
+  print(json.dumps({'type':'item.started','item':{'id':item,'type':'command_execution','command':display}}))
+  print(json.dumps({'type':'item.completed','item':{'id':item,'type':'command_execution','command':display,'exit_code':child.returncode,'aggregated_output':child.stdout}}))
+  rows.append({'type':'response_item','payload':{'type':'custom_tool_call','call_id':call,'name':'exec','input':'text(await tools.exec_command({cmd:'+json.dumps(command)+',login:false,tty:false}));','internal_chat_message_metadata_passthrough':{'turn_id':turn}}})
+  rows.append({'type':'response_item','payload':{'type':'custom_tool_call_output','call_id':call,'output':child.stdout}})
+ rollout.write_text(''.join(json.dumps(r)+'\n' for r in rows))
+ raise SystemExit
 for line in sys.stdin:
  q=json.loads(line);method=q['method']
  if method=='initialized':continue
  result={}
- if method=='config/read':result={'config':config,'layers':[{'name':{'type':'user','file':str(pathlib.Path.home()/'.codex/config.toml')}},{'name':{'type':'project','dotCodexFolder':str(pathlib.Path.cwd()/'.codex')},'disabledReason':None if mode=='trusted' else 'untrusted project'}]}
+ if method=='config/read':result={'config':config,'layers':[{'name':{'type':'user','file':str(pathlib.Path(os.environ.get('CODEX_HOME',str(pathlib.Path.home()/'.codex')))/'config.toml')}},{'name':{'type':'project','dotCodexFolder':str(pathlib.Path.cwd()/'.codex')},'disabledReason':None if mode in ('trusted','proof') else 'untrusted project'}]}
  if method=='skills/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'skills':[{'path':'/fixture/SKILL.md','scope':'user','enabled':not bool(config.get('skills',{}).get('config'))}]}]}
  if method=='hooks/list':result={'data':[{'cwd':str(pathlib.Path.cwd()),'errors':[],'warnings':[],'hooks':[{'source':'user','sourcePath':'/fixture/hooks.json','key':'disabled','eventName':'sessionStart','handlerType':'command','enabled':False,'currentHash':'sha256:fixture','trustStatus':'trusted'}]}]}
+ if method=='model/list':print(json.dumps({'method':'account/updated','params':{'authMode':{'bad':True} if mode=='bad-account' else 'chatgpt','planType':'pro'}}),flush=True)
  if method=='model/list':result={'data':[{'id':'gpt-6.1-sol','supportedReasoningEfforts':[{'reasoningEffort':'medium'}]}]}
- if method=='hooks/list' and mode=='trusted':
+ if method=='thread/read':
+  repo=pathlib.Path.cwd();session=q['params']['threadId'];result={'thread':{'id':session,'sessionId':session,'cwd':str(repo),'path':str(pathlib.Path(os.environ['CODEX_HOME'])/'sessions'/('rollout-'+session+'.jsonl')),'model':'gpt-6.1-sol','reasoningEffort':'medium','modelProvider':'openai','source':'exec','cliVersion':'0.167.1'}}
+ if method=='hooks/list' and mode in ('trusted','proof'):
   path=pathlib.Path.cwd()/'.codex/hooks.json';hook=json.loads(path.read_text())['hooks']['PreToolUse'][0]['hooks'][0]
   result['data'][0]['hooks'].append(dict(source='project',sourcePath=str(path),key=str(path)+':pre_tool_use:0:0',eventName='preToolUse',handlerType='command',enabled=True,currentHash='sha256:project-fixture',trustStatus='trusted',command=hook['command'],timeoutSec=3,**{'async':False}))
  if method=='config/read' and mode=='enabled-mcp':result['config']['mcp_servers']['fixture']['enabled']=True
@@ -721,6 +1214,8 @@ for line in sys.stdin:
  if method=='config/read' and mode=='unknown-key':result['config']['unknown_instructions']='unsafe'
  if method=='skills/list' and mode=='skill-drift':result['data'][0]['skills'][0]['path']='/changed/SKILL.md'
  if method=='hooks/list' and mode=='hook-hash':result['data'][0]['hooks'][0]['currentHash']='sha256:changed'
+ if method=='config/read' and mode=='notify-command':result['config']['notify']=['unsafe-command']
+ if method=='config/read' and mode=='login-shell':result['config']['allow_login_shell']=True
  if method=='config/read' and mode=='new-mcp':result['config']['mcp_servers']['extra']={'enabled':False}
  if method=='config/read' and mode=='unsafe-instructions':result['config']['instructions']='unsafe'
  if method=='config/read' and mode=='unknown-layer':result['layers'].append({'name':{'type':'unknown'}})
@@ -765,7 +1260,7 @@ for line in sys.stdin:
         receipt=json.loads(result.stdout)
         self.assertTrue(receipt['setup_ready'])
         self.assertFalse(receipt['scenario_ready'])
-        for mode in ('new-mcp','enabled-mcp','new-plugin','wrong-sandbox','wrong-approval','unknown-key','skill-drift','hook-hash','unsafe-instructions','unknown-layer','wrong-provider','active-user-hook'):
+        for mode in ('notify-command','login-shell','new-mcp','enabled-mcp','new-plugin','wrong-sandbox','wrong-approval','unknown-key','skill-drift','hook-hash','unsafe-instructions','unknown-layer','wrong-provider','active-user-hook'):
             with self.subTest(mode=mode):
                 (self.root/'native-mode').write_text(mode)
                 result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
@@ -791,6 +1286,87 @@ for line in sys.stdin:
             self.assertTrue(sandbox['exclude_tmpdir_env_var'])
             self.assertEqual(sandbox['writable_roots'],cell['write_roots'])
             self.assertFalse(any(Path(cell['shell_home']).is_relative_to(root) for root in cell['write_roots']))
+
+    def test_public_codex_companion_context_qualifies_real_helper_smokes(self):
+        self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+        self.native_codex_setup('proof')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,0,result.stderr)
+        for variant in ('baseline','candidate'):
+            result=self.call('run','--manifest',self.manifest,'--cell','codex-'+variant,'--phase','smoke')
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            record=json.loads(result.stdout)
+            self.assertTrue(record['smoke_valid'],record)
+
+    def test_public_codex_context_and_ordered_audit_regrading_fail_closed(self):
+        self.child_env={'CODEX_HOME':str(self.root/'standard-codex')}
+        self.native_codex_setup('proof')
+        self.assertEqual(self.call('preflight','--manifest',self.manifest,'--provider','codex').returncode,0)
+        result=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+        self.assertEqual(result.returncode,0,result.stderr)
+        cell=self.data['cells']['codex-candidate']
+        directory=Path(cell['repo']).parent/'evidence/smoke'
+        context=json.loads((directory/'codex-context.json').read_text())
+        rollout=Path(context['rollout'])
+        original=rollout.read_text()
+        rows=[json.loads(line) for line in original.splitlines()]
+        cases=('session','stale','provider','cwd','model','effort','sandbox','approval','extra-turn','missing-output','login','missing-login','tty','wrapper','unknown-tool','truncated','changed-bytes')
+        for mode in cases:
+            with self.subTest(mode=mode):
+                changed=json.loads(json.dumps(rows))
+                if mode=='session':changed[0]['payload']['id']='stale-session'
+                if mode=='stale':changed[0]['timestamp']='2000-01-01T00:00:00+00:00'
+                if mode=='provider':changed[0]['payload']['model_provider']='other'
+                if mode=='cwd':changed[1]['payload']['cwd']='/wrong'
+                if mode=='model':changed[1]['payload']['model']='wrong'
+                if mode=='effort':changed[1]['payload']['effort']='high'
+                if mode=='sandbox':changed[1]['payload']['sandbox_policy']['network_access']=True
+                if mode=='approval':changed[1]['payload']['approval_policy']='on-request'
+                if mode=='extra-turn':changed.insert(2,dict(changed[1]))
+                if mode=='missing-output':changed.pop()
+                if mode=='login':changed[2]['payload']['input']=changed[2]['payload']['input'].replace('login:false','login:true')
+                if mode=='missing-login':changed[2]['payload']['input']=changed[2]['payload']['input'].replace(',login:false','')
+                if mode=='tty':changed[2]['payload']['input']=changed[2]['payload']['input'].replace('tty:false','tty:true')
+                if mode=='wrapper':changed[2]['payload']['input']='text(await tools.exec_command({cmd:"echo extra; true",login:false,tty:false}));'
+                if mode=='unknown-tool':changed[2]['payload']['name']='unknown'
+                if mode=='changed-bytes':changed.append({'type':'event_msg','payload':{'type':'diagnostic'}})
+                rollout.write_text(''.join(json.dumps(row)+'\n' for row in changed).rstrip('\n') if mode=='truncated' else ''.join(json.dumps(row)+'\n' for row in changed))
+                report=self.grade('codex-candidate')
+                self.assert_invalid_diagnostics(report)
+                self.assertTrue(any('Codex' in reason for reason in report['invalid_reasons']),report)
+        rollout.write_text(original)
+        audit=Path(cell['control']['audit']);audit_original=audit.read_text()
+        audit_rows=[json.loads(line) for line in audit_original.splitlines()]
+        for mode in ('reordered','decision','tool','duplicate','policy'):
+            with self.subTest(audit=mode):
+                changed=json.loads(json.dumps(audit_rows))
+                if mode=='reordered':changed[0],changed[1]=changed[1],changed[0]
+                if mode=='decision':changed[0]['decision']='deny!'
+                if mode=='tool':changed[0]['tool_name']='Nope'
+                if mode=='duplicate':changed[1]['tool_use_id']=changed[0]['tool_use_id']
+                if mode=='policy':changed[0]['policy_sha256']='0'*64
+                audit.write_text(''.join(json.dumps(row)+'\n' for row in changed))
+                report=self.grade('codex-candidate')
+                expected='audit-command-count-mismatch' if mode=='reordered' else ('ambiguous-audit-tool-identity' if mode=='duplicate' else 'audit-policy-or-decision-mismatch')
+                self.assertIn(expected,report['invalid_reasons'],report)
+        audit.write_text(audit_original)
+        companion=directory/'codex-context.json';companion_original=companion.read_text()
+        tampered=json.loads(companion_original);tampered['thread']['sessionId']='cross-session'
+        companion.write_text(json.dumps(tampered))
+        self.assertTrue(any('thread identity' in reason for reason in self.grade('codex-candidate')['invalid_reasons']))
+        companion.write_text(companion_original)
+        raw=directory/'stdout.jsonl';raw_original=raw.read_text()
+        raw.write_text(raw_original.replace(" -c "," -lc "))
+        self.assertTrue(any('wrapper' in reason for reason in self.grade('codex-candidate')['invalid_reasons']))
+
+    def test_public_codex_account_notification_is_sanitized_and_strict(self):
+        self.native_codex_setup('proof')
+        receipt=self.data['cells']['codex-candidate']['native_preparation']
+        status=[row for row in receipt['notifications'] if row['method']=='account/updated']
+        self.assertEqual(status,[{'method':'account/updated','classification':'native-account-status','auth_present':True,'plan_present':True}])
+        (self.root/'native-mode').write_text('bad-account')
+        result=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(result.returncode,2)
 
     def codex_setup(self, mode="normal"):
         (self.root / "discovery-mode").write_text(mode)
