@@ -3,7 +3,7 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
-clear_observability_test_overrides
+clear_hook_test_path_overrides
 
 assert_caveman_context_shape() {
   local context="$1"
@@ -205,33 +205,12 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
 }
 
 test_hooks_json_registers_cli_and_vscode_start_events() {
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
-    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py first for sessionStart."
-  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
-    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py PowerShell command for sessionStart."
-
   assert_equals '$HOME/.copilot/hooks/scripts/load-required-skills.py' \
-    "$(jq -r '.hooks.sessionStart[1].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register load-required-skills.py after send-event.py for sessionStart."
+    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register load-required-skills.py for sessionStart."
   assert_equals 'python "$HOME/.copilot/hooks/scripts/load-required-skills.py"' \
-    "$(jq -r '.hooks.sessionStart[1].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register load-required-skills.py PowerShell command for sessionStart."
-
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
-    "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py first for subagentStart."
-  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
-    "$(jq -r '.hooks.subagentStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py PowerShell command for subagentStart."
-
-  assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
-    "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py first for userPromptTransformed."
-  assert_equals 'python "$HOME/.copilot/hooks/scripts/send-event.py"' \
-    "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register send-event.py PowerShell command for userPromptTransformed."
+    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
+    "Expected hooks.json to register the PowerShell load-required-skills.py command."
 
 }
 

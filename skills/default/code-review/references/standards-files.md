@@ -11,6 +11,7 @@ Common files:
 - `CONTEXT*.md`
 - `STYLE*.md`
 - `STANDARDS.md`
+- `brain/principles.md` - including all of its linked files.
 - `.github/*.md`
 - `.gemini/*.md`
 - `~/.copilot/copilot-instructions.md`

@@ -46,7 +46,7 @@ class TestTestAll(unittest.TestCase):
         bin_dir.mkdir()
         (bin_dir / "bash").symlink_to(shutil.which("bash"))
         (bin_dir / "python3").symlink_to(sys.executable)
-        for tool in ("git", "jq", "flock", "sqlite3"):
+        for tool in ("git", "jq"):
             path = bin_dir / tool
             path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             path.chmod(0o755)
@@ -97,14 +97,14 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(result.stderr, "")
         commands = [shlex.split(line) for line in result.stdout.splitlines()]
         # Discover maintained suites by their domain-owned test files, not by
-        # importing or copying the runner's explicit command registry. Capture
-        # and native RTK scripts are invoked as helpers by other suites.
+        # importing or copying the runner's explicit command registry. Native
+        # RTK scripts are invoked as helpers by retained provider suites.
         expected = {
             str(path.relative_to(REPO_ROOT))
-            for domain in ("scanner", "guardian", "hooks", "installers", "tooling", "runner")
+            for domain in ("hooks", "installers", "tooling", "runner")
             for pattern in ("test-*.sh", "test-*.ps1", "test-*.py", "test_*.py")
             for path in (REPO_ROOT / "scripts/tests" / domain).glob(pattern)
-            if path.name not in ("test-scan-secrets-capture.py", "test-rtk-stable-windows.ps1")
+            if path.name != "test-rtk-stable-windows.ps1"
         }
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
@@ -119,22 +119,15 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))
         self.assertIn(["python3", "scripts/tests/installers/test-codex-agents.py"], commands)
-        for suite in (
-            "test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py",
-            "test-scan-secrets-lfs.py", "test-scan-secrets-status.py",
-            "test-scan-secrets-lifecycle.py", "test-install-scan-secrets.py",
-            "test-install-repo-gates.py",
-        ):
-            self.assertIn(["python3", "scripts/tests/scanner/" + suite], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
         root, env = self.fixture()
-        for tool in ("jq", "flock", "sqlite3", "pwsh"):
+        for tool in ("jq", "pwsh"):
             (Path(env["PATH"]) / tool).unlink()
         result = self.run_fixture(root, env)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertEqual(result.stdout, "")
-        for tool in ("jq", "flock", "sqlite3", "pwsh"):
+        for tool in ("jq", "pwsh"):
             self.assertIn(tool, result.stderr)
         self.assertIn("Install", result.stderr)
 

@@ -165,9 +165,6 @@ function New-FixtureRepo {
     }
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
-    foreach ($name in @('install-scan-secrets.py', 'scan-secrets.py', 'scan_install_windows.py')) {
-        Copy-Item -LiteralPath (Join-Path $RepoRoot "scripts/$name") -Destination (Join-Path $Repo "scripts/$name") -Force
-    }
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/file_io.py') -Destination (Join-Path $Repo 'scripts/file_io.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/trusted_hook_launch.py') -Destination (Join-Path $Repo 'scripts/trusted_hook_launch.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
@@ -223,7 +220,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.copilot/copilot-instructions.md') -Destination (Join-Path $Repo '.copilot/copilot-instructions.md') -Force
     Write-FixtureFile (Join-Path $Repo '.copilot/lsp-config.json') @('{}')
     Write-FixtureFile (Join-Path $Repo '.copilot/hooks/test-hook.sh') @('#!/bin/bash', 'echo hook')
-    Write-FixtureFile (Join-Path $Repo '.copilot/hooks/hooks.json') @('{"version":1,"hooks":{"preToolUse":[{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"}]}}')
+    Write-FixtureFile (Join-Path $Repo '.copilot/hooks/hooks.json') @('{"version":1,"hooks":{}}')
     Write-FixtureFile (Join-Path $Repo '.gemini/global-settings.json') @('{"global":"settings"}')
     Write-FixtureFile (Join-Path $Repo '.gemini/settings.json') @('{"local":"settings"}')
     Write-FixtureFile (Join-Path $Repo '.gemini/hooks/scripts/test-hook.py') @('print("hook")')
@@ -421,10 +418,6 @@ function Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode {
         Assert-NoBytecodeCache $repo
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.copilot/hooks/scripts/rtk-hook-copilot.py') -PathType Leaf) -Message 'Expected fresh generated Copilot RTK output to be installed.'
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.gemini/hooks/scripts/rtk-hook-gemini.py') -PathType Leaf) -Message 'Expected fresh generated Gemini RTK output to be installed.'
-        foreach ($relative in @('.codex/hooks/hooks-diagnostics.py', '.copilot/hooks/scripts/hooks-diagnostics.py', '.gemini/hooks/scripts/hooks-diagnostics.py')) {
-            Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir $relative) -PathType Leaf) -Message "Expected diagnostics asset: $relative"
-            Assert-True -Condition ((Get-FileHash -LiteralPath (Join-Path $repo $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $homeDir $relative)).Hash) -Message "Expected exact diagnostics asset bytes: $relative"
-        }
     }
     finally {
         Remove-Workdir $workdir
@@ -470,7 +463,7 @@ function Test-GeneratorFailureStopsBeforeDestinationMutation {
         New-FixtureRepo $repo
         $manifestPath = Join-Path $repo 'hooks/manifest.py'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw
-        Set-Content -LiteralPath $manifestPath -Value $manifest.Replace('GeneratedTarget("send_event", "copilot"', 'GeneratedTarget("send_event", "unknown"') -Encoding utf8NoBOM -NoNewline
+        Set-Content -LiteralPath $manifestPath -Value $manifest.Replace('GeneratedTarget("rtk", "copilot"', 'GeneratedTarget("rtk", "unknown"') -Encoding utf8NoBOM -NoNewline
         Write-FixtureFile (Join-Path $homeDir 'preserved/sentinel.txt') @('do not change')
         Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
         $before = Get-TreeFingerprint $homeDir
@@ -1274,13 +1267,13 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         $homeDir = Join-Path $workdir 'home with spaces'
         New-FixtureRepo $repo
         Set-PostRetirementFixture $repo
-        Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}')
+        Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{}}')
         $python = Get-PythonForFixture
         & $python.Path @($python.Arguments) -B (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
         if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh changed provider template metadata.' }
         $copilotPath = Join-Path $homeDir '.copilot/hooks/hooks.json'
         $geminiPath = Join-Path $homeDir '.gemini/settings.json'
-        Write-FixtureFile $copilotPath @('{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}')
+        Write-FixtureFile $copilotPath @('{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}')
         Write-FixtureFile $geminiPath @('{"general":{"enableAutoUpdate":true,"custom":42},"userSetting":{"keep":true},"hooks":{"BeforeTool":[{"matcher":"legacy","hooks":[{"name":"repository-state","type":"command","command":"python \"$HOME/.gemini/hooks/scripts/repository-state.py\"","timeout":17000},{"command":"echo custom"}]}],"AfterAgent":[{"hooks":[{"name":"markdown-health","command":"python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}}]}]}}')
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
@@ -1295,33 +1288,6 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         Assert-True -Condition $copilot['userSetting']['keep'] -Message 'Expected unrelated Copilot settings to survive refresh.'
         Assert-Equals -Expected 17 -Actual $copilot['hooks']['preToolUse'][0]['timeoutSec'] -Message 'Expected the exact old Copilot repository-state registration.'
         Assert-Equals -Expected 'echo custom' -Actual $copilot['hooks']['preToolUse'][1]['bash'] -Message 'Expected custom Copilot hook to survive.'
-        $expectedGuardScript = [System.IO.Path]::GetFullPath((Join-Path $homeDir '.copilot/hooks/scripts/tool-guard.py'))
-        $guardHandlers = @($copilot['hooks']['preToolUse'] | Where-Object {
-            $_['bash'] -is [string] -and
-            $_['bash'].IndexOf($expectedGuardScript, [System.StringComparison]::Ordinal) -ge 0
-        })
-        Assert-Equals -Expected 1 -Actual $guardHandlers.Count -Message 'Expected one maintained Copilot handler.'
-        Assert-True -Condition (Test-Path -LiteralPath $expectedGuardScript -PathType Leaf) -Message 'Expected the maintained Copilot handler to target the installed tool-guard.py script.'
-        $python = Get-PythonForFixture
-        $verifyGuardCommand = @'
-import os
-import shlex
-import sys
-
-command, expected_script = sys.argv[1:]
-try:
-    arguments = shlex.split(command)
-except ValueError as exc:
-    raise SystemExit(f"Copilot handler command is not valid shell syntax: {exc}")
-if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
-    raise SystemExit("Copilot handler must use an isolated Python launch")
-if not os.path.isabs(arguments[0]):
-    raise SystemExit("Copilot handler interpreter must be an absolute path")
-if os.path.normcase(os.path.abspath(arguments[4])) != os.path.normcase(os.path.abspath(expected_script)):
-    raise SystemExit("Copilot handler must target the installed tool-guard.py script")
-'@
-        & $python.Path @($python.Arguments) -c $verifyGuardCommand $guardHandlers[0]['bash'] $expectedGuardScript
-        if ($LASTEXITCODE -ne 0) { Fail 'Expected maintained Copilot handler to use the isolated interpreter and installed script.' }
         Assert-Equals -Expected 'final' -Actual $copilot['hooks']['agentStop'][0]['env']['MARKDOWN_HEALTH_EVENT'] -Message 'Expected old Copilot Markdown Health registration.'
         Assert-Equals -Expected 'echo unrelated' -Actual $copilot['hooks']['agentStop'][1]['bash'] -Message 'Expected unrelated Copilot stop handler.'
         Assert-Equals -Expected $false -Actual $gemini['general']['enableAutoUpdate'] -Message 'Expected maintained Gemini setting to update.'
@@ -1532,7 +1498,7 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
         Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
-        foreach ($relative in @('auto-index-brain.py', 'inject-brain.py', 'scan-secrets.py', 'scan-status.py', 'tool-guard.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py', 'helpers/scan_types.py', 'helpers/scan_reporting.py', 'helpers/scan_allowlist.py', 'helpers/scan_stream.py', 'helpers/scan_git.py', 'helpers/scan_native_file.py', 'helpers/scan_native_process.py', 'helpers/scan_audit.py', 'helpers/scan_engine.py')) {
+        foreach ($relative in @('auto-index-brain.py', 'inject-brain.py', 'load-required-skills.py')) {
             $installed = Join-Path (Join-Path $homeDir '.codex/hooks') $relative
             Assert-True -Condition (Test-Path -LiteralPath $installed -PathType Leaf) -Message "Expected Codex hook file $relative to be installed."
             Assert-Equals -Expected (Read-FileContent (Join-Path $repo ".codex/hooks/$relative")) -Actual (Read-FileContent $installed) -Message "Expected Codex hook file $relative to match source."
@@ -1544,9 +1510,6 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $handler = $config['hooks']['SessionStart'][0]['hooks'][0]
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
-        $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-status.py').Count -eq 1) -Message 'Expected Stop to report historical scan status.'
-        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-status.py' }).Count -eq 1) -Message 'Expected exactly one historical-status registration.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {
@@ -2031,48 +1994,6 @@ function Test-HelperFailuresAreInstallerErrors {
     finally { Remove-Workdir $workdir }
 }
 
-function Test-NativeScannerRejectsUnsafeAncestorGrants {
-    if (-not $IsWindows) {
-        Write-Host 'Skipping: Windows DACL assertions require native Windows.'
-        return
-    }
-    $workdir = New-TestWorkdir
-    try {
-        $repo = Join-Path $workdir 'repo'
-        New-FixtureRepo $repo
-        foreach ($scenario in @('effective', 'inherit-only')) {
-            $homeDir = Join-Path $workdir "home-$scenario"
-            Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
-            $parent = Join-Path $homeDir 'AppData/Local'
-            New-Item -ItemType Directory -Path $parent -Force | Out-Null
-            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
-            $acl = Get-Acl -LiteralPath $parent
-            $inheritance = [System.Security.AccessControl.InheritanceFlags]::None
-            $propagation = [System.Security.AccessControl.PropagationFlags]::None
-            if ($scenario -ceq 'inherit-only') {
-                $inheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
-                $propagation = [System.Security.AccessControl.PropagationFlags]::InheritOnly
-            }
-            $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
-                [System.Security.Principal.SecurityIdentifier]::new('S-1-1-0'),
-                [System.Security.AccessControl.FileSystemRights]::WriteData,
-                $inheritance, $propagation, [System.Security.AccessControl.AccessControlType]::Allow)
-            $acl.AddAccessRule($rule)
-            Set-Acl -LiteralPath $parent -AclObject $acl
-            $beforeAcl = (Get-Acl -LiteralPath $parent).Sddl
-            $before = Get-TreeFingerprint $homeDir
-            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
-            Assert-Equals 1 $result.ExitCode "Expected unsafe native $scenario grant to stop the real installer."
-            Assert-True (($result.Stderr -join "`n").Contains('Standalone scanner preflight exited with code 2.')) "Expected native scanner preflight to reject $scenario grant."
-            Assert-Equals '' ($result.Stdout -join "`n") 'Expected unsafe native ancestry to produce no stdout.'
-            Assert-Equals $before (Get-TreeFingerprint $homeDir) "Expected native $scenario refusal not to mutate home."
-            Assert-Equals $beforeAcl (Get-Acl -LiteralPath $parent).Sddl "Expected native $scenario refusal not to change the DACL."
-        }
-        Write-Host 'Native scanner ACL controls: effective and inherit-only ordinary-user write grants rejected without mutation.'
-    }
-    finally { Remove-Workdir $workdir }
-}
-
 function Test-EmptyCategoriesMarkersAndExclusions {
     $workdir = New-TestWorkdir
     try {
@@ -2262,7 +2183,6 @@ Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade
 Test-SkillCopyPreservesExternalDestinationTargets
 Test-ChildProfileEnvironmentIsIsolated
 Test-HelperFailuresAreInstallerErrors
-Test-NativeScannerRejectsUnsafeAncestorGrants
 Test-EmptyCategoriesMarkersAndExclusions
 Test-SourcePreflightIsImmutable
 Test-SourceDiagnosticsWithLegacyEncoding

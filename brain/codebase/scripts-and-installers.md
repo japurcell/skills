@@ -26,9 +26,4 @@ Read when reviewing, designing, updating, or creating scripts anywhere in this r
 - Malformed/ambiguous JSON and linked configuration parents stop the entire installation before copying assets. Never chmod existing configuration through a hard link: atomically replace with owner-only independent bytes when link count or mode requires repair. Preserve unrelated configuration, unmanaged agents, and runtime logs; repeated installs must converge.
 - Author/test changes use [script validation](script-testing.md) and [installer acceptance fixtures](installer-testing.md).
 
-## Timing probes
-
-- [benchmark-high-rate-hooks.py](../../scripts/benchmark-high-rate-hooks.py) uses disposable Git/home/log/RTK paths and direct provider JSON entrypoints, without installing hooks or invoking provider CLIs. Whole-subprocess timing does not measure provider delivery.
-- Run timing probes sequentially on frozen source, with no concurrent tests, generators, or benchmarks. Serialize generator/installer suites that mutate shared fixtures. Retain failed observations; optional ablations are separate from [security acceptance evidence](security-testing.md).
-
 Evidence: restored shell policy from `.agents/instructions/scripts.md` at `092038394a2e3bb0cc21fffdec2eb60a12cece29`, checked against linked sources plus [Bash](../../scripts/install.sh)/[PowerShell](../../scripts/install.ps1) preflight order on 2026-10-21. Recheck when CLIs, ownership, preflights, or benchmark methodology change. Inspection does not prove successful installed/native delivery or performance.

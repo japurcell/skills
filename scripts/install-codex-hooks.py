@@ -21,10 +21,8 @@ from hooks.registrations import (
     RETIRED,
     check_parent_directories,
     configuration_lock,
-    preflight_status_path,
     reconcile,
     retire_assets,
-    validate_status_asset,
     verify_unchanged,
     unique_object,
 )
@@ -150,7 +148,6 @@ def main() -> int:
         check_parent_directories(arguments.destination.absolute().parent, arguments.destination.absolute())
         if arguments.destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {arguments.destination}")
-        preflight_status_path("codex", maintained, hook_directory)
         with configuration_lock(arguments.destination, arguments.check):
             destination_exists = arguments.destination.exists()
             if destination_exists:
@@ -158,8 +155,6 @@ def main() -> int:
             else:
                 existing, existing_bytes = {}, b""
             merged = merged_config(existing, maintained, hook_directory)
-            if not arguments.check:
-                validate_status_asset("codex", maintained, hook_directory)
             if destination_exists and merged == existing:
                 info = arguments.destination.stat()
                 if not arguments.check and (info.st_nlink > 1 or (os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600)):

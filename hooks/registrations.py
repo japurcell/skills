@@ -17,26 +17,53 @@ import shlex
 from scripts.trusted_hook_launch import serialize_trusted_launch, trusted_posix_arguments, hook_arguments, template_commands
 
 DESIRED = {
-    "codex": {"SessionStart": ("load-required-skills.py",), "Stop": ("scan-status.py",)},
+    "codex": {"SessionStart": ("load-required-skills.py",)},
     "copilot": {
-        **{event: ("send-event.py",) for event in ("agentStop", "errorOccurred", "notification", "permissionRequest", "postToolUse", "preCompact", "postToolUseFailure", "subagentStart", "subagentStop", "userPromptSubmitted", "userPromptTransformed")},
-        "agentStop": ("send-event.py", "scan-status.py"),
-        "preToolUse": ("send-event.py",),
-        "sessionEnd": ("send-event.py", "bell.py"),
-        "sessionStart": ("send-event.py", "load-required-skills.py"),
+        "sessionEnd": ("bell.py",),
+        "sessionStart": ("load-required-skills.py",),
     },
     "gemini": {
-        **{event: ("send-event.py",) for event in ("AfterAgent", "BeforeAgent", "BeforeModel", "AfterModel", "BeforeToolSelection", "AfterTool", "PreCompress", "Notification", "SessionEnd")},
-        "SessionStart": ("send-event.py", "skill-context-injector.py"),
-        "BeforeTool": ("send-event.py", "rtk-hook-gemini.py"),
-        "AfterAgent": ("send-event.py", "scan-status.py"),
+        "SessionStart": ("skill-context-injector.py",),
+        "BeforeTool": ("rtk-hook-gemini.py",),
     },
 }
 # These identities do not depend on events present in the replacement template.
 RETIRED = {
-    "codex": {"PreToolUse": ("scan-secrets.py", "rtk-explicit-codex.py", "tool-guard.py"), "PostToolUse": ("rtk-explicit-codex.py", "rtk-agent-launcher.py", "auto-index-brain.py"), "SessionStart": ("inject-brain.py",), "Stop": ("scan-secrets.py",)},
-    "copilot": {"preToolUse": ("scan-secrets.py", "tool-guard.py"), "sessionEnd": ("scan-secrets.py",), "sessionStart": ("inject-brain.py",), "postToolUse": ("auto-index-brain.py",)},
-    "gemini": {"BeforeTool": ("scan-secrets.py", "tool-guard.py"), "SessionEnd": ("scan-secrets.py",), "SessionStart": ("inject-brain.py",), "AfterTool": ("auto-index-brain.py",)},
+    'codex': {
+        'PreToolUse': ('scan-secrets.py', 'rtk-explicit-codex.py', 'tool-guard.py'),
+        'PostToolUse': ('rtk-explicit-codex.py', 'rtk-agent-launcher.py', 'auto-index-brain.py'),
+        'SessionStart': ('inject-brain.py',),
+        'Stop': ('scan-secrets.py', 'scan-status.py'),
+    },
+    'copilot': {
+        'preToolUse': ('scan-secrets.py', 'tool-guard.py', 'send-event.py'),
+        'sessionEnd': ('scan-secrets.py', 'send-event.py'),
+        'sessionStart': ('inject-brain.py', 'send-event.py'),
+        'postToolUse': ('auto-index-brain.py', 'send-event.py'),
+        'agentStop': ('scan-status.py', 'send-event.py'),
+        'errorOccurred': ('send-event.py',),
+        'notification': ('send-event.py',),
+        'permissionRequest': ('send-event.py',),
+        'preCompact': ('send-event.py',),
+        'postToolUseFailure': ('send-event.py',),
+        'subagentStart': ('send-event.py',),
+        'subagentStop': ('send-event.py',),
+        'userPromptSubmitted': ('send-event.py',),
+        'userPromptTransformed': ('send-event.py',),
+    },
+    'gemini': {
+        'BeforeTool': ('scan-secrets.py', 'tool-guard.py', 'send-event.py'),
+        'SessionEnd': ('scan-secrets.py', 'send-event.py'),
+        'SessionStart': ('inject-brain.py', 'send-event.py'),
+        'AfterTool': ('auto-index-brain.py', 'send-event.py'),
+        'AfterAgent': ('scan-status.py', 'send-event.py'),
+        'BeforeAgent': ('send-event.py',),
+        'BeforeModel': ('send-event.py',),
+        'AfterModel': ('send-event.py',),
+        'BeforeToolSelection': ('send-event.py',),
+        'PreCompress': ('send-event.py',),
+        'Notification': ('send-event.py',),
+    },
 }
 
 # Historical ingestion/OKF registrations are retired only at exact known launches.
@@ -52,7 +79,6 @@ for _provider, _events in {
 }.items():
     for _event, _names in _events.items():
         RETIRED[_provider][_event] = (*RETIRED[_provider].get(_event, ()), *_names)
-
 
 
 def legacy_commands(provider, filename):
@@ -128,7 +154,7 @@ def classify(handler, provider, event, directory):
 def reconcile(current, maintained, provider, directory):
     result = copy.deepcopy(current)
     disabled = {}
-    # Collect disable intent before moving scanner registration to End Turn.
+    # Preserve explicit disable intent for retained handlers.
     for event in set(DESIRED[provider]) | set(RETIRED[provider]):
         entries = current.get(event, [])
         for entry in entries:
@@ -136,7 +162,7 @@ def reconcile(current, maintained, provider, directory):
                 name = classify(handler, provider, event, directory)
                 if name:
                     intent = {key: value for obj in (entry, handler) for key, value in obj.items() if (key == "enabled" and value is False) or (key == "disabled" and value is True)}
-                    disabled.setdefault("scan-status.py" if name == "scan-secrets.py" else name, {}).update(intent)
+                    disabled.setdefault(name, {}).update(intent)
     for event in dict.fromkeys((*maintained, *RETIRED[provider])):
         if provider == "gemini" and event == "disabled":
             result.setdefault(event, copy.deepcopy(maintained[event]))
@@ -160,31 +186,6 @@ def reconcile(current, maintained, provider, directory):
         if event in current or replacements:
             result[event] = [*preserved, *replacements]
     return result
-
-
-def has_status_registration(provider, maintained, directory):
-    for event, entries in maintained.items():
-        if "scan-status.py" not in DESIRED[provider].get(event, ()):
-            continue
-        for entry in entries:
-            for handler in ([entry] if provider == "copilot" else entry["hooks"]):
-                if classify(handler, provider, event, directory) == "scan-status.py":
-                    return True
-    return False
-
-
-def validate_status_asset(provider, maintained, directory):
-    """Activation requires the exact deployed self-contained replacement asset."""
-    if not has_status_registration(provider, maintained, directory):
-        return
-    source = Path(__file__).resolve().parents[1] / f".{provider}/hooks"
-    if provider != "codex":
-        source /= "scripts"
-    source /= "scan-status.py"
-    target = directory / "scan-status.py"
-    info = target.lstat()
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size != source.stat().st_size or target.read_bytes() != source.read_bytes():
-        raise ValueError("Replacement status asset is missing, linked or invalid; deploy assets before activation")
 
 
 def _check_ancestor_links(ancestor: Path, message: str) -> None:
@@ -228,20 +229,6 @@ def check_parent_directories(home: Path, destination: Path) -> None:
             raise ValueError(f"Refusing linked configuration directory: {current}")
         if not stat.S_ISDIR(info.st_mode):
             raise ValueError(f"Configuration parent must be a directory: {current}")
-
-
-
-def preflight_status_path(provider, maintained, directory):
-    if not has_status_registration(provider, maintained, directory):
-        return
-    _check_ancestor_links(directory, "Refusing linked status asset directory")
-    target = directory / "scan-status.py"
-    try:
-        info = target.lstat()
-    except FileNotFoundError:
-        return
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-        raise ValueError("Refusing linked status asset; restore a private regular file before retrying")
 
 
 @contextmanager
@@ -293,7 +280,57 @@ def verify_unchanged(destination, existed, content):
 
 # Receipts for repository-owned retired assets at the migration boundary.
 # Modified files and runtime logs belong to the user and are preserved.
-RETIRED_ASSETS = {'codex': {'repository-okf.py': '56d21dd4c59676d91c12c748e4ba16f61a79d0f28c3c9991bc137f4bb8924fda', 'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b', 'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43'}, 'gemini': {'auto-ingest.py': 'd46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b', 'inject-auto-ingest-context.py': '8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed', 'lint-okf.py': '2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6', 'helpers/source_ingest.py': 'ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82', 'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b', 'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43'}}
+SHARED_RETIRED_ASSETS = {
+    'helpers/tool_guard_policy.py': '3070fc058325b661fb4fd0c60bbc0b4ea9317910a90f4917c01059cd542c2b66',
+    'helpers/scan_types.py': '19f69ccb6d3268d9c43c353b86c0898d75994c1bf1279a544eed52dbac2bfe59',
+    'helpers/scan_reporting.py': '0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28',
+    'helpers/scan_allowlist.py': '370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43',
+    'helpers/scan_stream.py': '631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31',
+    'helpers/scan_git.py': '5512a1a5c39ac8e3d221f203514f35c27f6c466b9e76beb71ab8aaf8419d7dcb',
+    'helpers/scan_audit.py': '501f7dc6d5705538672642061835f9d1b95a35b2c69f1b73ba29d9934bc15450',
+    'helpers/scan_native_file.py': '1c07697a5020bed461b41f3c0015c7dc798fc8f5c62941af60947c003ea4adf8',
+    'helpers/scan_native_process.py': 'ed68b76b0021e2514ffd0822eba2a463e1bfb459ab707d47a4161c42e909bbc1',
+    'helpers/scan_engine.py': '2f75e639211905e25650af46959512e49ac2abb338aa248ffeb74b81d43570d1',
+}
+
+RETIRED_ASSETS = {
+    'codex': {
+        **SHARED_RETIRED_ASSETS,
+        'repository-okf.py': '56d21dd4c59676d91c12c748e4ba16f61a79d0f28c3c9991bc137f4bb8924fda',
+        'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b',
+        'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43',
+        'helpers/common.py': '5c4a4b1131feb3723624da7049e2fee8137ccd093f78c16dff677578a2adc40e',
+        'helpers/audit.py': 'ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87',
+        'tool-guard.py': 'd0d302d31d64979a09feb07055a4a4e25fe01b5a899c394d63c67541724c907a',
+        'hooks-diagnostics.py': '411f144f7bc4d4e21619c1b37e158eba3b753bd6d623962bedcdfe947e65ec44',
+        'scan-status.py': '126de1936d82b294e15306d99ab1a35e312d9d55e239c5941d6266ef96cf84f3',
+        'scan-secrets.py': 'ffb680d735f18607b41540bd1a8c0a1bfcf2027d5af7f51eeb04573b69ab865e',
+    },
+    'gemini': {
+        **SHARED_RETIRED_ASSETS,
+        'helpers/observability.py': 'ef1af39de4b1034fdbab7cdfd5c0b73a7ed187df1be3e4ed606c1cbe1b6858b7',
+        'auto-ingest.py': 'd46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b',
+        'inject-auto-ingest-context.py': '8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed',
+        'lint-okf.py': '2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6',
+        'helpers/source_ingest.py': 'ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82',
+        'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b',
+        'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43',
+        'send-event.py': '22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351',
+        'tool-guard.py': '522f1158c90b74876725162695b98b08f95530e0600dd27ab2f6daf768313efc',
+        'hooks-diagnostics.py': 'ae494bfdbc44f894ea4a482e80e5a7a6707e2986da5818039530dbb25c99d086',
+        'scan-status.py': '0fc85f1e234497eca04264bbaa0a7bf2008fe6c3c6cf26ad910558324fb16251',
+        'scan-secrets.py': '4e485f459f86d172771522e99172053222aef987e1fcc0546d7aeca53133a606',
+    },
+    'copilot': {
+        **SHARED_RETIRED_ASSETS,
+        'helpers/observability.py': 'f29c765db0b6ae70b62865e3a7f265ba733d0338092bd4544ac9bf90b54fc7a6',
+        'send-event.py': '22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351',
+        'tool-guard.py': 'b7b4b415e986bf43b8725508f6d748e7063b7601eef4a1cd51fba4634e3b249a',
+        'hooks-diagnostics.py': 'cf8a38f73e5286e07fe84c04a9430b9df6b988ee1c9197012d618bf052ca9c3a',
+        'scan-status.py': 'b85e4efd4d159746f0ff37b3c2800638a5d39173fa3031aa104e87f0677635da',
+        'scan-secrets.py': '8547fbf3855c9f47ed98d52fe365c230edaacb53752d5f2a98cdce8d0ef89849',
+    },
+}
 
 
 def retire_assets(provider, directory):

@@ -11,7 +11,7 @@
 
 ## Remaining implementation limits
 
-- The observability helper already deleted entries older than seven days even when SQLite reported active sessions. The later explicit policy requires age over 24 hours and terminal/absent state. Guidance is restored; [todo 13](../todos.md) scopes runtime repair.
+- The observability helper already deleted entries older than seven days even when SQLite reported active sessions. The later explicit policy requires age over 24 hours and terminal/absent state. This historical behavior is retired with hook capture; it is not current runtime guidance.
 - The custom-agent converter accepts single-quoted empty metadata. The nonempty authoring rule is explicit again; this audit does not claim converter enforcement or change installer behavior.
 
 Evidence: immutable legacy revision `092038394a2e3bb0cc21fffdec2eb60a12cece29`, root variants captured in the ledger, and current baseline `378f49c40abcadf34e765a8a4d5a6fd580008ba6`; checked 2026-10-21. Recheck affected dispositions after policy, provider, ownership, or loading-contract changes. This is historical audit evidence, not another instruction system.

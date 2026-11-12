@@ -3,7 +3,7 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../support/test-common.sh"
-clear_observability_test_overrides
+clear_hook_test_path_overrides
 
 run_skill_context_injector() {
   local skills_dir="$1"

@@ -21,8 +21,7 @@ class TestHookHelpers(unittest.TestCase):
         import json
         import subprocess
 
-        for path in (gemini_helpers_path, copilot_helpers_path,
-                     repo_root / ".codex" / "hooks"):
+        for path in (gemini_helpers_path, copilot_helpers_path):
             for options, payload, expected in (
                 ({}, '{"x":"[{,:}\\\""}', {"x": '[{,:}"'}),
                 ({"max_bytes": 64}, '{"x":1' + ' ' * 57 + '}', {"x": 1}),
@@ -54,8 +53,7 @@ class TestHookHelpers(unittest.TestCase):
         import subprocess
         import tempfile
 
-        helper_paths = (gemini_helpers_path, copilot_helpers_path,
-                        repo_root / ".codex" / "hooks")
+        helper_paths = (gemini_helpers_path, copilot_helpers_path)
         with tempfile.TemporaryDirectory(prefix="common-command-") as directory:
             for path in helper_paths:
                 with self.subTest(provider=path.parts[-3]):
@@ -76,8 +74,7 @@ class TestHookHelpers(unittest.TestCase):
     def test_run_command_preserves_failures_timeout_and_bytes_output(self):
         import subprocess
 
-        helper_paths = (gemini_helpers_path, copilot_helpers_path,
-                        repo_root / ".codex" / "hooks")
+        helper_paths = (gemini_helpers_path, copilot_helpers_path)
         for path in helper_paths:
             with self.subTest(provider=path.parts[-3]):
                 common = self._get_common_module(path)
@@ -90,7 +87,7 @@ class TestHookHelpers(unittest.TestCase):
                 with self.assertRaises(subprocess.TimeoutExpired):
                     common.run_command([sys.executable, "-c", "import time; time.sleep(5)"], timeout=0.05)
                 with self.assertRaises(FileNotFoundError):
-                    common.run_command(["guardian-nonexistent-executable-" + uuid4().hex])
+                    common.run_command(["hook-test-nonexistent-executable-" + uuid4().hex])
                 for invalid in ("echo safe", b"echo safe"):
                     with self.assertRaises(TypeError):
                         common.run_command(invalid)
@@ -153,9 +150,6 @@ class TestHookHelpers(unittest.TestCase):
 
     def _get_common_module(self, path: Path):
         return self._load_helper_module(path, "common")
-
-    def _get_observability_module(self, path: Path):
-        return self._load_helper_module(path, "observability")
 
     def _get_audit_module(self, path: Path):
         return self._load_helper_module(path, "audit")
@@ -310,206 +304,6 @@ class TestHookHelpers(unittest.TestCase):
                     self.assertEqual(resolved, common.convert_windows_path_to_posix(raw))
 
 
-
-    def test_observability_payload_size_fast_path_skips_utf8_encode(self):
-        class ExplodingEncodeStr(str):
-            def encode(self, encoding="utf-8", errors="strict"):
-                raise AssertionError("encode should not be called for safe short payloads")
-
-        for helpers_path in (copilot_helpers_path, gemini_helpers_path):
-            with self.subTest(runtime=helpers_path.parts[-3]):
-                obs = self._get_observability_module(helpers_path)
-                raw = {"message": "safe"}
-                effective = {"message": "safe"}
-
-                with patch.object(obs.json, "dumps", return_value=ExplodingEncodeStr('{"raw":{"message":"safe"}}')):
-                    returned_raw, returned_effective, was_capped = obs._cap_payload_content(raw, effective)
-
-                self.assertEqual(returned_raw, raw)
-                self.assertEqual(returned_effective, effective)
-                self.assertFalse(was_capped)
-
-    def test_observability_per_string_limit_caps_multibyte_strings(self):
-        raw = {
-            "content": "A" * 530000,
-            "emoji_payload": "🧪" * 3000,
-        }
-
-        copilot_obs = self._get_observability_module(copilot_helpers_path)
-        gemini_obs = self._get_observability_module(gemini_helpers_path)
-
-        copilot_raw, copilot_effective, copilot_capped = copilot_obs._cap_payload_content(raw, None)
-        gemini_raw, gemini_effective, gemini_capped = gemini_obs._cap_payload_content(raw, None)
-
-        self.assertTrue(copilot_capped)
-        self.assertTrue(gemini_capped)
-        self.assertIsNone(copilot_effective)
-        self.assertIsNone(gemini_effective)
-        self.assertTrue(copilot_raw["emoji_payload"].endswith("... [CAPPED]"))
-        self.assertTrue(gemini_raw["emoji_payload"].endswith("... [CAPPED]"))
-        self.assertEqual(copilot_raw, gemini_raw)
-
-    def test_observability_utf8_limit_uses_limit_specific_fast_path(self):
-        for helpers_path in (copilot_helpers_path, gemini_helpers_path):
-            with self.subTest(runtime=helpers_path.parts[-3]):
-                obs = self._get_observability_module(helpers_path)
-                self.assertTrue(obs._fits_utf8_limit("a" * 1200, 10 * 1024))
-                self.assertFalse(obs._fits_utf8_limit("🧪" * 3000, 10 * 1024))
-
-    def test_maintenance_reaping_gemini(self):
-        self._check_maintenance_reaping(gemini_helpers_path)
-
-    def test_maintenance_reaping_copilot(self):
-        self._check_maintenance_reaping(copilot_helpers_path)
-
-    def _check_maintenance_reaping(self, helpers_path):
-        import tempfile
-        import time
-        import sqlite3
-        import shutil
-
-        t0 = time.time()
-        print(f"[{helpers_path.name}] Start test...")
-        # Load the observability module
-        obs = self._get_observability_module(helpers_path)
-        print(f"[{helpers_path.name}] Loaded module in {time.time()-t0:.3f}s")
-
-        # Create temp dir
-        temp_dir = tempfile.mkdtemp()
-
-        # Set env var so db path points there
-        log_path = Path(temp_dir) / "observability.log"
-        old_log_path = os.environ.get("OBSERVABILITY_LOG_PATH")
-        os.environ["OBSERVABILITY_LOG_PATH"] = str(log_path)
-
-        old_timeout = os.environ.get("OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
-        os.environ["OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = "10"
-        old_stale = os.environ.get("OBSERVABILITY_RUNNING_SPAN_STALE_MS")
-        os.environ["OBSERVABILITY_RUNNING_SPAN_STALE_MS"] = "10"
-
-        old_testing = os.environ.get("OBSERVABILITY_TESTING")
-        os.environ["OBSERVABILITY_TESTING"] = "1"
-
-        # Also clear any runtime-specific vars that might override this
-        old_copilot_timeout = os.environ.get("COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
-        os.environ.pop("COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS", None)
-        old_gemini_timeout = os.environ.get("GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS")
-        os.environ.pop("GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS", None)
-
-        try:
-            t1 = time.time()
-            db_path = obs._get_db_path()
-            # Initialize db directly using the module's initializer (enabling WAL mode)
-            conn = obs._connect_and_init_db(db_path, 1000)
-            print(f"[{helpers_path.name}] DB initialized in {time.time()-t1:.3f}s")
-
-            # Now let's insert some mock sessions
-            now_ms = int(time.time() * 1000)
-
-            # Session 1: 'running' but has a dead PID (999999)
-            conn.execute(
-                "INSERT INTO sessions (session_id, status, start_time_ms, workspace_root) VALUES (?, ?, ?, ?)",
-                ("sess-dead-pid", "running", now_ms, "mock-root")
-            )
-            # Add a span with the dead pid
-            conn.execute(
-                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms, status) VALUES (?, ?, ?, ?, ?, ?)",
-                ("span-dead-pid", "sess-dead-pid", 1, 999999, now_ms, "running")
-            )
-
-            # Session 2: 'running' and stale (started/last active 3 hours ago)
-            three_hours_ago_ms = now_ms - 3 * 3600 * 1000
-            conn.execute(
-                "INSERT INTO sessions (session_id, status, start_time_ms, workspace_root) VALUES (?, ?, ?, ?)",
-                ("sess-stale", "running", three_hours_ago_ms, "mock-root")
-            )
-            # Add a span with no PID or active PID, but old timestamp
-            conn.execute(
-                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms) VALUES (?, ?, ?, ?, ?)",
-                ("span-stale", "sess-stale", 1, 0, three_hours_ago_ms)
-            )
-
-            # Session 3: 'running', active, valid PID (our own process PID) and not stale
-            our_pid = os.getpid()
-            conn.execute(
-                "INSERT INTO sessions (session_id, status, start_time_ms, workspace_root) VALUES (?, ?, ?, ?)",
-                ("sess-active", "running", now_ms, "mock-root")
-            )
-            conn.execute(
-                "INSERT INTO spans (span_id, session_id, sequence_no, pid, updated_at_ms, status) VALUES (?, ?, ?, ?, ?, ?)",
-                ("span-active", "sess-active", 1, our_pid, now_ms, "running")
-            )
-
-            conn.commit()
-            conn.close()
-            print(f"[{helpers_path.name}] Sessions inserted in {time.time()-t1:.3f}s total")
-
-            t2 = time.time()
-            # Run maintenance work!
-            obs._run_maintenance_work()
-            print(f"[{helpers_path.name}] Maintenance run completed in {time.time()-t2:.3f}s")
-
-            t3 = time.time()
-            # Reconnect and assert results
-            try:
-                conn = obs._connect_and_init_db(db_path, 100)
-                cursor = conn.cursor()
-
-                # Let's see the status of our test sessions
-                cursor.execute("SELECT session_id, status FROM sessions")
-                results = dict(cursor.fetchall())
-                conn.close()
-                print(f"[{helpers_path.name}] Results retrieved in {time.time()-t3:.3f}s")
-            except Exception as reconnect_err:
-                print(f"[{helpers_path.name}] Failed to reconnect/retrieve results: {reconnect_err}")
-                raise reconnect_err
-
-            self.assertIn("sess-dead-pid", results)
-            self.assertIn("sess-stale", results)
-            self.assertIn("sess-active", results)
-
-            # The dead/stale sessions must NOT be 'running' anymore
-            self.assertNotEqual(results["sess-dead-pid"], "running")
-            self.assertNotEqual(results["sess-stale"], "running")
-
-            # But the active session must still be 'running'
-            self.assertEqual(results["sess-active"], "running")
-            print(f"[{helpers_path.name}] Assertions passed!")
-
-        finally:
-            t4 = time.time()
-            if old_log_path is not None:
-                os.environ["OBSERVABILITY_LOG_PATH"] = old_log_path
-            else:
-                os.environ.pop("OBSERVABILITY_LOG_PATH", None)
-
-            if old_timeout is not None:
-                os.environ["OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = old_timeout
-            else:
-                os.environ.pop("OBSERVABILITY_FINALIZATION_TIMEOUT_MS", None)
-
-            if old_stale is not None:
-                os.environ["OBSERVABILITY_RUNNING_SPAN_STALE_MS"] = old_stale
-            else:
-                os.environ.pop("OBSERVABILITY_RUNNING_SPAN_STALE_MS", None)
-
-            if old_testing is not None:
-                os.environ["OBSERVABILITY_TESTING"] = old_testing
-            else:
-                os.environ.pop("OBSERVABILITY_TESTING", None)
-
-            if old_copilot_timeout is not None:
-                os.environ["COPILOT_OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = old_copilot_timeout
-            if old_gemini_timeout is not None:
-                os.environ["GEMINI_OBSERVABILITY_FINALIZATION_TIMEOUT_MS"] = old_gemini_timeout
-
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            print(f"[{helpers_path.name}] Cleaned up in {time.time()-t4:.3f}s")
-
-            # Clean up sys.modules to prevent circular references or unittest leaks
-            for key in list(sys.modules.keys()):
-                if "helpers_gemini" in key or "helpers_copilot" in key:
-                    sys.modules.pop(key, None)
 
 
     @classmethod

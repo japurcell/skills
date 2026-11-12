@@ -67,7 +67,7 @@ readonly PROVIDER_HOOK_MERGER="${REPO_ROOT}/scripts/install-provider-hooks.py"
 readonly COPILOT_INSTRUCTIONS_SRC="${REPO_ROOT}/.copilot/copilot-instructions.md"
 readonly COPILOT_LSP_SRC="${REPO_ROOT}/.copilot/lsp-config.json"
 readonly CODEX_HOOK_SRC_DIR="${REPO_ROOT}/.codex/hooks"
-readonly CODEX_HOOK_FILES=(auto-index-brain.py inject-brain.py load-required-skills.py scan-secrets.py scan-status.py tool-guard.py hooks-diagnostics.py helpers/common.py helpers/audit.py helpers/tool_guard_policy.py helpers/scan_types.py helpers/scan_reporting.py helpers/scan_allowlist.py helpers/scan_stream.py helpers/scan_git.py helpers/scan_native_file.py helpers/scan_native_process.py helpers/scan_audit.py helpers/scan_engine.py)
+readonly CODEX_HOOK_FILES=(auto-index-brain.py inject-brain.py load-required-skills.py)
 readonly CODEX_INSTRUCTIONS_SRC="${REPO_ROOT}/.codex/AGENTS.md"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
@@ -75,7 +75,6 @@ readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
 readonly REBASE_SKILL_REFERENCES="${REPO_ROOT}/scripts/rebase-skill-references.py"
 readonly VALIDATE_SKILL_SOURCES="${REPO_ROOT}/scripts/validate-skill-sources.py"
 readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
-readonly INSTALL_SCAN_SECRETS="${REPO_ROOT}/scripts/install-scan-secrets.py"
 readonly CONFIGURE_RTK="${REPO_ROOT}/scripts/configure-rtk.py"
 readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
 
@@ -181,7 +180,7 @@ install_codex_hook() {
     --template "$CODEX_HOOK_TEMPLATE_SRC" \
     --destination "$CODEX_HOOK_CONFIG_DEST" \
     --check
-  for hook in "$CODEX_HOOKS_DEST" "$CODEX_HOOKS_DEST/helpers"; do
+  for hook in "$CODEX_HOOKS_DEST"; do
     if [[ -L "$hook" ]]; then
       echo "Refusing linked Codex hook directory: $hook" >&2
       return 1
@@ -193,7 +192,7 @@ install_codex_hook() {
       return 1
     fi
   done
-  mkdir -p "$CODEX_HOOKS_DEST/helpers"
+  mkdir -p "$CODEX_HOOKS_DEST"
   for hook in "${CODEX_HOOK_FILES[@]}"; do
     cp -p "$CODEX_HOOK_SRC_DIR/$hook" "$CODEX_HOOKS_DEST/$hook"
     chmod 755 "$CODEX_HOOKS_DEST/$hook"
@@ -213,12 +212,11 @@ for src in "$SKILLS_SRC/default" "$SKILLS_SRC/forest-service" "$AGENTS_SRC" "$GE
 done
 
 for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTINGS_SRC" "$COPILOT_HOOK_TEMPLATE_SRC" "$PROVIDER_HOOK_MERGER" \
-  "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$REBASE_SKILL_REFERENCES" "$VALIDATE_SKILL_SOURCES" "$GENERATE_HOOKS" "$CONFIGURE_RTK" "$INSTALL_SCAN_SECRETS"; do
+  "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$REBASE_SKILL_REFERENCES" "$VALIDATE_SKILL_SOURCES" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
 "$TRUSTED_PYTHON" -B "$VALIDATE_SKILL_SOURCES" "$SKILLS_SRC"
-"$TRUSTED_PYTHON" -I -S -B "$INSTALL_SCAN_SECRETS" install --no-input --dry-run >&2
 "$TRUSTED_PYTHON" -B "$CONFIGURE_RTK" --home "$HOME" --check
 for hook in "${CODEX_HOOK_FILES[@]}"; do
   [[ -f "$CODEX_HOOK_SRC_DIR/$hook" ]] || { echo "Missing source file: $CODEX_HOOK_SRC_DIR/$hook" >&2; exit 1; }
@@ -240,7 +238,6 @@ fi
 "$TRUSTED_PYTHON" -B "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME" --check
 "$TRUSTED_PYTHON" -B "$CODEX_HOOK_MERGER" --template "$CODEX_HOOK_TEMPLATE_SRC" --destination "$CODEX_HOOK_CONFIG_DEST" --check
 
-"$TRUSTED_PYTHON" -I -S -B "$INSTALL_SCAN_SECRETS" install --no-input >&2
 "$TRUSTED_PYTHON" -B "$CONFIGURE_RTK" --home "$HOME"
 "$TRUSTED_PYTHON" -B "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 

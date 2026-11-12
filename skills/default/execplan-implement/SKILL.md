@@ -4,7 +4,7 @@ description: ExecPlan implementation workflow. Use when implementing ExecPlans a
 compatibility: Requires background subagent dispatch with follow-up messaging and Git worktrees.
 ---
 
-You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.
+This workflow applies when the parent implements an ExecPlan, whether supplied by the user, created during the session, or resumed from earlier work. This plan should have tasks and milestones associated with it, describing how to implement the plan.
 
 The goal is the entire plan implemented on a single **integration branch**, with every task and milestone resolved.
 
@@ -21,6 +21,16 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 [Enforce limits](#runtime-enforcement) for exploration, implementation, review, and fixes. An agent is idle only with no outstanding assignment; dependency waits remain active.
 
 Before every commit, the commit creator must activate the `commit` skill and follow its message validation workflow.
+
+## Pre-dispatch gate
+
+Before launching an agent or assigning new work to an existing agent, run the router CLI and record its invocation, returned route, and intended dispatch arguments in the assignment's coordination record.
+
+Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
+
+Automatically apply the router's final dispatchable model and effort policy, including verified fallbacks. Do not request separate user confirmation for routine routing choices. Preserve explicit user constraints and required host approval flows.
+
+After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
 
 ## Runtime enforcement
 

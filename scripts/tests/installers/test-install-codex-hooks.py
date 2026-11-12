@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import os
 import shlex
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -24,9 +23,6 @@ def run(
     *,
     environment: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    assets = destination.parent / "hooks"
-    assets.mkdir(exist_ok=True)
-    shutil.copy2(ROOT / ".codex/hooks/scan-status.py", assets / "scan-status.py")
     return subprocess.run(
         [sys.executable, str(INSTALLER), "--template", str(template), "--destination", str(destination)],
         text=True,
@@ -98,36 +94,18 @@ def main() -> None:
         assert merged["hooks"]["PreToolUse"][0]["custom"] == "keep"
         assert merged["hooks"]["PreToolUse"][0]["hooks"] == original["hooks"]["PreToolUse"][0]["hooks"][:3]
         assert "rtk-explicit-codex.py" not in destination.read_text(encoding="utf-8")
-        for event in ("SessionStart", "Stop"):
-            for group in maintained["hooks"][event]:
-                for handler in group["hooks"]:
-                    command = handler["command"]
-                    expected = dict(handler)
-                    filename = command.rsplit("/", 1)[-1].split()[0]
-                    if filename == "scan-status.py":
-                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename)])
-                        expected["command"] = command
-                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"'
-                    matches = [candidate for existing_group in merged["hooks"][event]
-                               for candidate in existing_group["hooks"]
-                               if candidate.get("command") == command
-                               ]
-                    assert matches == [expected], (event, command, matches)
+        for group in maintained["hooks"]["SessionStart"]:
+            for handler in group["hooks"]:
+                command = handler["command"]
+                expected = dict(handler)
+                matches = [candidate for existing_group in merged["hooks"]["SessionStart"]
+                           for candidate in existing_group["hooks"]
+                           if candidate.get("command") == command
+                           ]
+                assert matches == [expected], (command, matches)
         first_bytes = destination.read_bytes()
         second = run(template, destination)
         assert second.returncode == 0, second.stderr
-        assert destination.read_bytes() == first_bytes
-
-        # An upgrade can select a new interpreter after the previous one moved.
-        old = json.loads(first_bytes)
-        old_python = str(Path(temporary) / "old python & tools" / "python.exe")
-        owned = old["hooks"]["Stop"][-1]["hooks"][0]
-        script = str(destination.parent / "hooks/scan-status.py")
-        owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
-        owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
-        destination.write_text(json.dumps(old))
-        upgraded = run(template, destination)
-        assert upgraded.returncode == 0, upgraded.stderr
         assert destination.read_bytes() == first_bytes
 
         unowned = json.loads(first_bytes)
@@ -146,8 +124,8 @@ def main() -> None:
         destination.write_bytes(first_bytes)
 
         malformed = json.loads(template.read_text(encoding="utf-8"))
-        malformed["hooks"]["Stop"][0]["hooks"][0]["commandWindows"] = (
-            'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
+        malformed["hooks"]["SessionStart"][0]["hooks"][0]["commandWindows"] = (
+            'py -3 "%USERPROFILE%\\.codex\\hooks\\inject-brain.py"'
         )
         template.write_text(json.dumps(malformed), encoding="utf-8")
         failed = run(template, destination)

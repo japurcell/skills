@@ -18,7 +18,7 @@ Limits are 2 MiB input, 64 JSON levels, 0.5-second input idle and 2-second total
 
 ## Provider registrations
 
-Brain hooks are repository-scoped. Copilot scripts and registrations live in `.github/hooks`; `.copilot/hooks` contains user-level hooks and does not contain brain hooks. Codex uses `.codex/hooks.json` and Gemini uses `.gemini/settings.json`. Copy the complete repository brain handlers and their standalone scripts into another repository. Global templates do not register brain hooks or tool guards. Existing user installations change only after an explicit reinstall.
+Brain hooks are repository-scoped. Copilot scripts and registrations live in `.github/hooks`; `.copilot/hooks` contains user-level hooks and does not contain brain hooks. Codex uses `.codex/hooks.json` and Gemini uses `.gemini/settings.json`. Copy the complete repository brain handlers and their standalone scripts into another repository. Global templates do not register brain hooks. Existing user installations change only after an explicit reinstall.
 
 - Copilot: `sessionStart` injects on startup, resume, and new sessions. `postToolUse` reconciles when `toolResult.resultType` is `success`. Failures use a separate event. Context is top-level `additionalContext`; startup progress uses the documented progress line followed by one final JSON object.
 - Codex: `SessionStart` matches startup, resume, clear, compact, and fork. Every completed `PostToolUse` reconciles, including failed commands that may have changed files. Context uses `hookSpecificOutput` with `hookEventName: SessionStart`. The injector's own byte cap permits `additionalContextLimit: 0` without unlimited output.

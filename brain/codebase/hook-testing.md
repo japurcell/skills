@@ -10,8 +10,8 @@
 ## Select affected public suites
 
 - For required-skill boundaries or startup changes, read and run the affected [Copilot](../../scripts/tests/hooks/test-hooks-startup.sh), [Gemini](../../scripts/tests/hooks/test-gemini-hooks-startup.sh), and [Codex](../../scripts/tests/hooks/test-codex-hooks-startup.sh) startup suites. Keep multi-skill fixtures self-contained and independent of optional installed skills. Evaluate deliberate missing-skill diagnostics by assertions and exit status; a fixture hard stop does not establish native provider enforcement.
-- Preserve deterministic line-oriented required-skill delimiter parsing and diff-only secret suppression through the startup suites and [scanner merge suite](../../scripts/tests/scanner/test-scan-secrets-merge.py); keep exact grammars in source/tests.
+- Preserve deterministic line-oriented required-skill delimiter parsing through the startup suites; keep exact grammars in source/tests.
 - For shared helper or UTF-8 fallback changes, read [helper tests](../../scripts/tests/tooling/test_helpers.py), including isolated module setup and the simulated CP1252 fixture using `TextIOWrapper(BytesIO(...))`.
 - Exercise affected supported interpreter versions for parser/import changes. For RTK forwarding run both [Copilot](../../scripts/tests/hooks/test-hooks-rtk.sh) and [Gemini](../../scripts/tests/hooks/test-gemini-hooks-rtk.sh) suites; configuration changes also require [stable-RTK tests](../../scripts/tests/installers/test-rtk-stable.py).
 
-Evidence: [generator suite](../../scripts/tests/hooks/test-generate-hooks.py), [stdin suite](../../scripts/tests/guardian/test-hook-input-bounds.py), checked 2026-10-20. Recheck runtime and registration changes. See [live-hook-testing](live-hook-testing.md).
+Evidence: [generator suite](../../scripts/tests/hooks/test-generate-hooks.py), checked 2026-10-20. Recheck runtime and registration changes. See [live-hook-testing](live-hook-testing.md).

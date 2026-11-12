@@ -22,7 +22,7 @@
 
 - Disposable Git commits set fixture identity and `-c commit.gpgsign=false`; never change user Git configuration.
 - Cancellation descendants inherit output pipes. Assert bounded `communicate()` reaches EOF from descendants as well as the runner before cleanup. Cleanup-only kills occur after assertions and cannot make a leaked descendant pass. Cover graceful shutdown and forced termination after the suite leader exits in [test_test_all.py](../../scripts/tests/runner/test_test_all.py).
-- Imported provider helpers need isolated registered package/module specs; Codex helpers without `__init__.py` need a namespace-package spec. Put logs/audit files and rotation companions under writable `TemporaryDirectory` fixtures; patch locations rather than writing protected source or installed trees. See [test_helpers.py](../../scripts/tests/tooling/test_helpers.py).
+- Imported provider helpers need isolated registered package/module specs. Put logs/audit files and rotation companions under writable `TemporaryDirectory` fixtures; patch locations rather than writing protected source or installed trees. See [test_helpers.py](../../scripts/tests/tooling/test_helpers.py).
 - Keep [test-common.sh](../../scripts/tests/support/test-common.sh) `mock_bin` on `printf "%b\n"` so escaped newlines produce executable mocks.
 - Serialize generator and installer suites that mutate shared fixture files. Preserve failures and report missing prerequisites as errors.
 

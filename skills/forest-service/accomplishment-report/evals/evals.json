@@ -38,14 +38,18 @@
       "id": 3,
       "name": "missing-wage",
       "prompt": "Read plans/tooling/ExecPlan.md and prepare its accomplishment report. The application is WorkPlan Reports (WPR). Its export workflow is complete and acceptance passed. A defensible estimate is 16 human-only development hours versus 5 AI-assisted human hours, including prompting, review, testing, and integration. No wage rate or currency has been supplied.",
-      "expected_output": "Ask the user for their hourly wage and currency. Do not write or finalize a paragraph containing an estimated labor-cost amount until supplied. The missing wage must not be filled with an illustrative rate.",
+      "follow_up_prompt": "Use USD 100 per hour.",
+      "expected_output": "Ask the user for their hourly wage and currency and keep the report pending. Do not finalize a labor-cost amount or substitute an illustrative rate before the answer. After the follow-up supplies USD 100/hour, save plans/tooling/accomplishment-report.md without requiring another report request, reporting 11 development hours saved and USD 1,100 estimated labor savings with calculation notes.",
       "files": [
         "evals/fixtures/missing-wage/plans/tooling/ExecPlan.md"
       ],
       "assertions": [
         "Asks for user-supplied hourly wage and currency",
         "Does not use illustrative fallback wage",
-        "Does not finalize a cost claim without the missing input"
+        "Does not finalize a cost claim without the missing input",
+        "Keeps the report pending rather than skipping it or marking reporting complete because the wage is missing",
+        "After the wage-only follow-up, saves plans/tooling/accomplishment-report.md without another report request",
+        "Saved report includes 11 development hours saved and USD 1100 labor savings, with calculation notes showing (16 - 5) × USD 100/hour"
       ]
     },
     {

@@ -2,7 +2,6 @@
 
 - [agents-installation](agents-installation.md)
 - [Brain hooks](brain-hooks.md)
-- [hook-observability](hook-observability.md)
 - [hook-testing](hook-testing.md)
 - [hooks](hooks.md)
 - [hooks-codex](hooks-codex.md)
@@ -15,9 +14,5 @@
 - [repository-workflow](repository-workflow.md)
 - [Scripts and installers: design, authoring, review, and execution](scripts-and-installers.md)
 - [script-testing](script-testing.md)
-- [secret-scanner](secret-scanner.md)
-- [secret-scanner-recovery](secret-scanner-recovery.md)
-- [security-hooks](security-hooks.md)
-- [security-testing](security-testing.md)
 - [skills-and-installation](skills-and-installation.md)
 - [testing](testing.md)

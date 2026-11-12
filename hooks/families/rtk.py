@@ -65,7 +65,6 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from helpers.audit import audit_log_event
 from helpers.common import emit_json, sanitize_log_field
-from helpers.observability import begin_hook_capture
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -220,7 +219,6 @@ def forward_to_rtk(raw_input: bytes) -> tuple[dict | None, str | None]:
 
 def main() -> int:
     raw_input, payload, input_failure = read_hook_input()
-    begin_hook_capture(payload or {})
 
     if input_failure is not None or raw_input is None:
         log_failure(input_failure or "invalid hook input JSON")

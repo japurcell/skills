@@ -4,13 +4,15 @@ This opt-in Forest Service skill produces one concise, copy-ready accomplishment
 
 ## Invocation
 
-Pass the hourly wage and currency as a skill argument: `$accomplishment-report --hourly-wage 100 USD` (or `/accomplishment-report --hourly-wage 100 USD` on slash-command hosts). This supplies USD 100 per human hour for the current report. An explicit argument overrides older rates; omission retains the existing behavior of using a user-supplied task rate or asking for one. Invalid or incomplete arguments require correction before a cost claim.
+Optionally pass the hourly wage and currency as a skill argument: `$accomplishment-report --hourly-wage 100 USD` (or `/accomplishment-report --hourly-wage 100 USD` on slash-command hosts). This supplies USD 100 per human hour for the current report. An explicit argument overrides older rates. When omitted, use a user-supplied task rate or ask for the wage and currency, including at automatic closeout. Keep the report pending and finish it after the answer without requiring another invocation. Invalid or incomplete arguments require correction before a cost claim.
 
 ## Evaluation
 
 `evals/evals.json` contains creation, revision, and incomplete-work scenarios with realistic wage and effort evidence, plus missing-wage, insufficient-effort, zero-savings, negative-savings, explicit-argument, and invalid-argument branches. Each `files` entry points to a reusable input under `evals/fixtures/`; scenarios may share a fixture. For every run, copy the referenced fixture contents into a fresh isolated run root, run the prompt there with the exact local skill or without it, and keep generated outputs in a sibling `accomplishment-report-workspace/iteration-N/`, outside this installed bundle. Never run a scenario against the shared fixture itself.
 
-For each scenario, inspect the paragraph, calculation notes, and action transcript against every assertion. Verify the destination and preservation of existing content. Recalculate savings independently, check that missing wage leads to a question rather than a cost claim, and confirm that incomplete work produces no report. Treat unavailable output as failed, not a passing absence check.
+For a scenario with `follow_up_prompt`, first capture the initial response, then send that field as a separate user turn in the same session. Keep it hidden until that turn; do not include it in the initial prompt. Retain both turns and the resulting files so clarification and completion can be checked separately.
+
+For each scenario, inspect the paragraph, calculation notes, and action transcript against every assertion. Verify the destination and preservation of existing content. Recalculate savings independently, check that missing wage leads to a question followed by a saved report once answered, and confirm that incomplete work produces no report. Treat unavailable output as failed, not a passing absence check.
 
 Before running, confirm each rate and hour estimate required by the rubric is present in the prompt or fixture. Keep missing inputs intentional in clarification scenarios.
 

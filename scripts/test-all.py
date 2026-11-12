@@ -23,51 +23,17 @@ SUITES = (
     ("bash", "scripts/tests/installers/test-addy-install.sh"),
     ("bash", "scripts/tests/tooling/test-cleanup-skill-workspaces.sh"),
     ("bash", "scripts/tests/hooks/test-codex-hooks-startup.sh"),
-    ("bash", "scripts/tests/scanner/test-codex-hooks-secrets-scanner.sh"),
-    ("bash", "scripts/tests/hooks/test-gemini-hooks-observability.sh"),
     ("bash", "scripts/tests/hooks/test-gemini-hooks-rtk.sh"),
-    ("bash", "scripts/tests/scanner/test-gemini-hooks-secrets-scanner.sh"),
     ("bash", "scripts/tests/hooks/test-gemini-hooks-startup.sh"),
-    ("bash", "scripts/tests/guardian/test-gemini-hooks-tool-guard.sh"),
-    ("bash", "scripts/tests/hooks/test-hooks-observability.sh"),
     ("bash", "scripts/tests/hooks/test-hooks-rtk.sh"),
-    ("bash", "scripts/tests/scanner/test-hooks-secrets-scanner.sh"),
     ("bash", "scripts/tests/hooks/test-hooks-startup.sh"),
-    ("bash", "scripts/tests/guardian/test-hooks-tool-guard.sh"),
-    ("bash", "scripts/tests/guardian/test-codex-hooks-tool-guard.sh"),
     ("python3", "scripts/tests/installers/test-codex-agents.py"),
     ("python3", "scripts/tests/installers/test-install-codex-hooks.py"),
     ("python3", "scripts/tests/hooks/test-probe-provider-hook-delivery.py"),
     ("python3", "scripts/tests/hooks/test-generate-hooks.py"),
     ("python3", "scripts/tests/hooks/test-brain-hooks.py"),
     ("python3", "scripts/tests/installers/test-rtk-stable.py"),
-    ("python3", "scripts/tests/guardian/test-security-banners.py"),
-    ("python3", "scripts/tests/hooks/test-security-reporting.py"),
-    ("python3", "scripts/tests/guardian/test-hook-input-bounds.py"),
-    ("python3", "scripts/tests/hooks/test-hook-diagnostics.py"),
-    ("python3", "scripts/tests/hooks/test-hook-diagnostic-recovery.py"),
-    ("python3", "scripts/tests/hooks/test-verify-security-fixture-patch.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-cli.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-git-gates.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-lfs.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-status.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-lifecycle.py"),
-    ("python3", "scripts/tests/scanner/test-scan-status-cancellation.py"),
-    ("python3", "scripts/tests/scanner/test-install-scan-secrets.py"),
-    ("python3", "scripts/tests/scanner/test-install-repo-gates.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-merge.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-stream-component.py"),
-    ("python3", "scripts/tests/scanner/test-scan-secrets-streaming.py"),
-    ("python3", "scripts/tests/guardian/test-tool-guard-false-positives.py"),
-    ("python3", "scripts/tests/guardian/test-tool-guard-native-data.py"),
-    ("python3", "scripts/tests/guardian/test-tool-guard-shell-data.py"),
-    ("python3", "scripts/tests/guardian/test-tool-guard-limits.py"),
-    ("python3", "scripts/tests/guardian/test-tool-guard-file-operations.py"),
-    ("python3", "scripts/tests/hooks/test-benchmark-high-rate-hooks.py"),
-    ("python3", "scripts/tests/hooks/test-verify-hook-release.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/tests/installers/test-install.ps1"),
-    ("pwsh", "-NoProfile", "-File", "scripts/tests/hooks/test-codex-hooks-windows.ps1"),
-    ("pwsh", "-NoProfile", "-File", "scripts/tests/scanner/test-scan-secrets-windows.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/tests/hooks/test-lifecycle-messages-windows.ps1"),
     ("bash", "scripts/tests/installers/test-install.sh"),
     ("bash", "scripts/tests/tooling/test-repo-root.sh"),
@@ -184,7 +150,7 @@ def main(processes: Processes) -> int:
   ./scripts/test-all.py          Run every suite, continuing after failures.
   ./scripts/test-all.py --list   List suite commands without running them.
 
-Requires Python 3, bash, git, jq, flock, sqlite3, and PowerShell 7+ (pwsh).
+Requires Python 3, bash, git, jq, and PowerShell 7+ (pwsh).
 Install missing tools with your system package manager and add them to PATH.
 Help and listing do not check suite dependencies. No dependencies are installed.
 
@@ -210,7 +176,7 @@ broken pipes, do not prevent later suites from running.
               file=sys.stderr)
         return 2
     missing = [
-        tool for tool in ("bash", "python3", "git", "jq", "flock", "sqlite3", "pwsh")
+        tool for tool in ("bash", "python3", "git", "jq", "pwsh")
         if shutil.which(tool) is None
     ]
     if missing:

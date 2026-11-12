@@ -27,7 +27,7 @@ create_fixture_repo() {
     "$repo/.copilot/hooks" \
     "$repo/.gemini/policies"
 
-  for script in install.sh install-scan-secrets.py scan-secrets.py scan_install_windows.py file_io.py trusted_hook_launch.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
+  for script in install.sh file_io.py trusted_hook_launch.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
     cp -p "$REPO_ROOT/scripts/$script" "$repo/scripts/$script"
   done
   mkdir -p "$repo/bin"
@@ -59,7 +59,7 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/.copilot/copilot-instructions.md" "$repo/.copilot/copilot-instructions.md"
   printf '%s\n' '{}' > "$repo/.copilot/lsp-config.json"
   printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/test-hook.sh"
-  printf '%s\n' '{"version":1,"hooks":{"preToolUse":[{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"}]}}' > "$repo/.copilot/hooks/hooks.json"
+  printf '%s\n' '{"version":1,"hooks":{}}' > "$repo/.copilot/hooks/hooks.json"
   printf '%s\n' '{"global":"settings"}' > "$repo/.gemini/global-settings.json"
   printf '%s\n' '{"local":"settings"}' > "$repo/.gemini/settings.json"
 
@@ -125,11 +125,11 @@ for provider in ('copilot', 'gemini'):
     for name in ('repository-state.py', 'markdown-health.py'):
         (root / f'.{provider}/hooks/scripts/{name}').unlink(missing_ok=True)
 PY
-  printf '%s\n' '{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}' > "$repo/.gemini/global-settings.json"
+  printf '%s\n' '{"general":{"enableAutoUpdate":false},"hooks":{}}' > "$repo/.gemini/global-settings.json"
   PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
   mkdir -p "$home/.copilot/hooks" "$home/.gemini"
   cat > "$home/.copilot/hooks/hooks.json" <<'EOF'
-{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}
+{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}
 EOF
   cat > "$home/.gemini/settings.json" <<'EOF'
 {"general":{"enableAutoUpdate":true,"custom":42},"userSetting":{"keep":true},"hooks":{"BeforeTool":[{"matcher":"legacy","hooks":[{"name":"repository-state","type":"command","command":"python \"$HOME/.gemini/hooks/scripts/repository-state.py\"","timeout":17000},{"command":"echo custom"}]}],"AfterAgent":[{"hooks":[{"name":"markdown-health","command":"python \"$HOME/.gemini/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}}]}]}}
@@ -150,7 +150,6 @@ if os.name != 'nt':
 pre = copilot['hooks']['preToolUse']
 assert copilot['userSetting'] == {'keep': True}, copilot
 assert pre[0] == {'type': 'command', 'bash': 'python3 "$HOME/.copilot/hooks/scripts/repository-state.py"', 'powershell': 'python "$HOME/.copilot/hooks/scripts/repository-state.py"', 'timeoutSec': 17}, pre
-assert sum('tool-guard.py' in item.get('bash', '') for item in pre) == 1
 assert {'type': 'command', 'bash': 'echo custom'} in pre
 assert copilot['hooks']['agentStop'][0]['env'] == {'MARKDOWN_HEALTH_EVENT': 'final'}
 assert copilot['hooks']['agentStop'][1]['bash'] == 'echo unrelated'
@@ -351,31 +350,6 @@ test_fresh_generated_hooks_preflight_installs_without_bytecode() {
     echo "Expected fresh generated RTK outputs to be installed." >&2
     exit 1
   fi
-  python3 -I -S -B - "$repo" "$home" <<'PY'
-import json
-from pathlib import Path
-import subprocess
-import sys
-repo, home = (Path(value).resolve() for value in sys.argv[1:])
-for provider, path, config in (
-    ('codex', '.codex/hooks/hooks-diagnostics.py', '.codex/hooks.json'),
-    ('copilot', '.copilot/hooks/scripts/hooks-diagnostics.py', '.copilot/hooks/hooks.json'),
-    ('gemini', '.gemini/hooks/scripts/hooks-diagnostics.py', '.gemini/settings.json'),
-):
-    script = home / path
-    assert script.read_bytes() == (repo / path).read_bytes(), provider
-    assert script.stat().st_mode & 0o777 == 0o755, provider
-    before = (home / config).read_bytes()
-    result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script), '--doctor'], cwd=home, capture_output=True, timeout=5)
-    assert result.returncode == 0, (provider, result.stderr)
-    report = json.loads(result.stdout)
-    assert len(result.stdout) <= 16384, provider
-    assert report['provider'] == provider, provider
-    assert report['security']['outcome'] == 'not_scanned', provider
-    assert report['audit']['outcome'] == 'not_attempted', provider
-    assert report['repository']['health'] == 'not_collected', provider
-    assert (home / config).read_bytes() == before, provider
-PY
 }
 
 test_stale_generated_hooks_stop_before_destination_mutation() {
@@ -432,7 +406,7 @@ import sys
 
 path = Path(sys.argv[1])
 text = path.read_text(encoding="utf-8")
-path.write_text(text.replace('GeneratedTarget("send_event", "copilot"', 'GeneratedTarget("send_event", "unknown"', 1), encoding="utf-8")
+path.write_text(text.replace('GeneratedTarget("rtk", "copilot"', 'GeneratedTarget("rtk", "unknown"', 1), encoding="utf-8")
 PY
   mkdir -p "$home/preserved"
   printf '%s\n' 'do not change' > "$home/preserved/sentinel.txt"
@@ -577,42 +551,13 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in auto-index-brain.py inject-brain.py scan-secrets.py scan-status.py tool-guard.py helpers/common.py helpers/audit.py helpers/tool_guard_policy.py helpers/scan_types.py helpers/scan_reporting.py helpers/scan_allowlist.py helpers/scan_stream.py helpers/scan_git.py helpers/scan_native_file.py helpers/scan_native_process.py helpers/scan_audit.py helpers/scan_engine.py; do
+  for installed in auto-index-brain.py inject-brain.py load-required-skills.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
     fi
     cmp "$repo/.codex/hooks/$installed" "$home/.codex/hooks/$installed"
   done
-  python3 - "$home" <<'PY'
-import json
-import os
-from pathlib import Path
-import subprocess
-import sys
-
-home = Path(sys.argv[1])
-operation = ''.join(map(chr, (103,105,116,32,112,117,115,104,32,45,45,102,111,114,99,101,32,111,114,105,103,105,110,32,109,97,105,110)))
-for provider in ('copilot', 'gemini', 'codex'):
-    script = home / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
-    for command, expected in (('echo safe', 'allow'), (operation, 'deny')):
-        if provider == 'copilot':
-            payload = {'hook_event_name': 'preToolUse', 'toolName': 'bash', 'toolArgs': {'command': command}}
-        else:
-            payload = {'hook_event_name': 'PreToolUse' if provider == 'codex' else 'BeforeTool',
-                       'tool_name': 'Bash' if provider == 'codex' else 'run_shell_command', 'tool_input': {'command': command}}
-        env = {**os.environ, 'HOME': str(home), 'GUARD_MODE': 'block',
-               'TOOL_GUARD_LOG_DIR': str(home / ('guard-install-test-' + provider)), 'AUDIT_LOG': str(home / 'guard-audit.log')}
-        env.pop('SKIP_TOOL_GUARD', None)
-        env.pop('TOOL_GUARD_ALLOWLIST', None)
-        result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script)],
-                                input=json.dumps(payload), capture_output=True, text=True, env=env, timeout=5)
-        assert result.returncode == 0, (provider, result.stderr)
-        response = json.loads(result.stdout)
-        actual = (response.get('permissionDecision') if provider == 'copilot' else response.get('decision')
-                  if provider == 'gemini' else 'allow' if response == {} else response['hookSpecificOutput']['permissionDecision'])
-        assert actual == expected, (provider, response)
-PY
   if [[ -e "$home/.codex/hooks.json.bak" ]]; then
     echo "Expected a fresh Codex install not to create a backup." >&2
     exit 1
@@ -632,9 +577,6 @@ groups = config["hooks"]["SessionStart"]
 handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
-stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
-assert any(command.endswith("/scan-status.py") and " -I -S -B " in command for command in stop_commands)
-assert sum(hook["command"].endswith("/scan-status.py") and " -I -S -B " in hook["command"] for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY
 }
 
@@ -780,7 +722,7 @@ test_rejects_invalid_codex_configuration_without_mutation_and_can_retry() {
     exit 1
   fi
   assert_equals "$malformed" "$(<"$home/.codex/hooks.json")" "Expected malformed Codex config to remain unchanged."
-  if [[ -e "$home/.codex/hooks/scan-secrets.py" ]]; then
+  if [[ -e "$home/.codex/hooks/load-required-skills.py" ]]; then
     echo "Expected malformed Codex config to stop before copying hook files." >&2
     exit 1
   fi

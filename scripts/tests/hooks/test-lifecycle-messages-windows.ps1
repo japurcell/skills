@@ -6,7 +6,7 @@ if (-not $IsWindows) {
     exit 0
 }
 $source = @'
-import json, os, pathlib, shutil, subprocess, sys, tempfile
+import json, os, pathlib, subprocess, sys, tempfile
 
 source = pathlib.Path(sys.argv[1])
 assert os.name == "nt", "native Windows execution required"
@@ -22,10 +22,6 @@ def invoke(script, payload, *, cwd=None, environment=None):
     assert all(item.get("type") == "progress" for item in lines[:-1]), lines
     assert len(completed.stdout.encode()) < 8192, (script, len(completed.stdout.encode()))
     return lines
-
-def scanner_audit(environment):
-    audit = pathlib.Path(environment["SECRETS_LOG_DIR"]) / "scan.log"
-    return json.loads(audit.read_text(encoding="utf-8").splitlines()[-1])
 
 with tempfile.TemporaryDirectory(prefix="lifecycle-windows-") as temporary:
     base = pathlib.Path(temporary)
@@ -48,35 +44,6 @@ with tempfile.TemporaryDirectory(prefix="lifecycle-windows-") as temporary:
         lines = invoke(script, payload, environment=startup_env)
         visible = lines[0].get("message") or lines[-1].get("systemMessage")
         assert "pass; 1 skill file" in visible, (script, lines)
-
-    scan_root = base / "scan-repo"
-    scan_root.mkdir()
-    subprocess.run(["git", "init", "-q", str(scan_root)], check=True)
-    scanners = (
-        ("copilot", source / ".copilot/hooks/scripts/scan-secrets.py", {"sessionId": "test"}),
-        ("gemini", source / ".gemini/hooks/scripts/scan-secrets.py", {"hook_event_name": "BeforeTool", "cwd": str(scan_root)}),
-        ("codex", source / ".codex/hooks/scan-secrets.py", {"hook_event_name": "PreToolUse", "cwd": str(scan_root)}),
-    )
-    for iteration in range(20):
-        for provider, script, payload in scanners:
-            scan_env = {**env, "SCAN_MODE": "block", "SECRETS_LOG_DIR": str(base / (provider + "-logs"))}
-            clean = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
-            record = scanner_audit(scan_env)
-            # ScanFailure diagnostics contain only owned vocabulary and bounded numbers.
-            details = (provider, iteration, record.get("status"), record.get("diagnostic"))
-            assert clean == {} and record.get("status") == "clean", details
-            credential = scan_root / "credential.txt"
-            credential.write_text("sk_live_1234567890abcdefghij\n")
-            warning = invoke(script, payload, cwd=scan_root, environment={**scan_env, "SCAN_MODE": "warn"})[-1]
-            record = scanner_audit(scan_env)
-            assert record.get("status") == "findings" and record.get("findings"), (provider, iteration, record.get("status"), record.get("diagnostic"))
-            assert "scan-secrets warning" in warning["systemMessage"], (provider, warning)
-            denied = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
-            record = scanner_audit(scan_env)
-            assert record.get("status") == "findings" and record.get("findings"), (provider, iteration, record.get("status"), record.get("diagnostic"))
-            assert denied.get("decision") in {"deny", "block"} or denied.get("permissionDecision") == "deny" or denied.get("hookSpecificOutput", {}).get("permissionDecision") == "deny", (provider, denied)
-            assert "sk_live_" not in json.dumps(denied), (provider, denied)
-            credential.unlink()
 
 print("PASSED: native Windows lifecycle envelopes")
 '@
