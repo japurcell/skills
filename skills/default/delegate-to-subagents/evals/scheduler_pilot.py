@@ -157,7 +157,8 @@ def prepare(args):
                 python = Path(shutil.which("python3", path=cell["environment"]["PATH"])).resolve()
                 cell["executable_identity"] = {"path": str(executable), "sha256": digest(executable)}
                 cell["python_identity"] = {"path": str(python), "sha256": digest(python)}
-                cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "sandbox_workspace_write": {"writable_roots": cell["write_roots"]}, "features": {"hooks": True}, "mcp_servers": {}, "plugins": {}}
+                cell["hook_python_identity"] = {"path": str(Path(sys.executable).resolve()), "sha256": digest(sys.executable)}
+                cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "sandbox_workspace_write": {"writable_roots": cell["write_roots"], "network_access": False, "exclude_tmpdir_env_var": False, "exclude_slash_tmp": False}, "features": {'hooks': True, 'api_key_cyber_access_programs': True, 'api_key_model_discovery': True, 'auth_elicitation': True, 'background_paginated_rollout_migration': False, 'codex_apps_mcp_2026_07_28': False, 'mcp_2026_07_28': False, 'mcp_connection_sharing': False, 'memories': False, 'mentions_v2': True, 'remote_control': False, 'remote_plugin': True, 'tool_suggest': True, 'windows_sandbox_service': False}, "mcp_servers": {}, "plugins": {}}
                 cell["tool_restrictions"] = {"enumeration": "unavailable", "qualification": "requires observed native phase evidence"}
                 denied_probe = shlex.join(["python3", "-c", "from pathlib import Path; Path(" + repr(str(repo / "outputs/control-forbidden.json")) + ").write_text('denial failed')"])
                 hook_dir = repo / ".codex"
@@ -245,7 +246,7 @@ def codex_config_args(cell):
 
 def discover_codex(cell):
     """No-inference, bounded JSON RPC handshake against the frozen private setup."""
-    argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", "--ignore-rules", *codex_config_args(cell)]
+    argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", *codex_config_args(cell)]
     requests = [{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "scheduler_hook_discovery", "version": "1.0"}}},
                 {"method": "initialized", "params": {}},
                 {"id": 2, "method": "hooks/list", "params": {"cwds": [cell["repo"]]}},
@@ -314,15 +315,25 @@ def discover_codex(cell):
     layers = config_response.get("layers")
     if not isinstance(layers, list):
         raise ValueError("effective config layers unavailable")
+    safe_layers = []
     for layer in layers:
         source = layer.get("name", {})
+        if isinstance(source, dict) and source.get("type") == "system":
+            if source.get("file") != "/etc/codex/config.toml" or Path(source["file"]).exists() or layer.get("config") != {} or layer.get("disabledReason"):
+                raise ValueError("unexpected external system config")
+            safe_layers.append({"name": source, "empty": True})
+            continue
         if not isinstance(source, dict) or source.get("type") not in ("sessionFlags", "project", "user"):
             raise ValueError("unsupported external config layer")
+        expected_path = {"project": str(Path(cell["repo"]) / ".codex"), "user": str(Path(cell["environment"]["CODEX_HOME"]) / "config.toml")}.get(source["type"])
         path = source.get("dotCodexFolder") or source.get("file")
+        if path != expected_path or source.get("profile"):
+            raise ValueError("unexpected private config source or profile")
+        safe_layers.append({"name": source})
         if path and not Path(path).resolve().is_relative_to(Path(cell["environment"]["HOME"]).parent):
             raise ValueError("external config layer")
     safe_hook = {key: hook[key] for key in (*expected, "currentHash")}
-    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
+    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_layers": safe_layers, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
 
 
 def preflight(manifest, provider):
@@ -335,7 +346,7 @@ def preflight(manifest, provider):
         argv = [settings["executable"]] + (["exec", flag] if provider == "codex" and flag == "--help" else [flag])
         code, stdout, stderr = capture(argv, 3, cwd=first["repo"], env=first["environment"])
         probes.append({"argv": argv, "stdout": stdout, "stderr": stderr, "exit_code": code})
-    required = ("--json", "--model", "--sandbox", "--cd", "--add-dir", "--output-last-message", "--ignore-rules", "--enable") if provider == "codex" else ("--output-format", "--allow-tool", "--session-id", "--add-dir", "--model", "--reasoning-effort", "--share", "--usage-output-file", "--log-dir", "--no-auto-update", "--no-custom-instructions", "--prompt", "--disallow-temp-dir", "--disable-builtin-mcps", "--no-bash-env", "--secret-env-vars")
+    required = ("--json", "--model", "--sandbox", "--cd", "--add-dir", "--output-last-message", "--enable") if provider == "codex" else ("--output-format", "--allow-tool", "--session-id", "--add-dir", "--model", "--reasoning-effort", "--share", "--usage-output-file", "--log-dir", "--no-auto-update", "--no-custom-instructions", "--prompt", "--disallow-temp-dir", "--disable-builtin-mcps", "--no-bash-env", "--secret-env-vars")
     syntax = all(p["exit_code"] == 0 for p in probes) and all(flag in probes[1]["stdout"] for flag in required)
     blockers, discovery = [], {}
     if not syntax:
@@ -375,7 +386,7 @@ def argv_for(manifest, cell, phase):
     argv = [settings["executable"]]
     if cell["provider"] == "codex":
         argv += ["exec", "--json", "--cd", cell["repo"], "--add-dir", cell["write_roots"][1],
-                 "--skip-git-repo-check", "--enable", "hooks", "--ignore-rules", "--model", settings["model"], "--sandbox", "workspace-write",
+                 "--skip-git-repo-check", "--enable", "hooks", "--model", settings["model"], "--sandbox", "workspace-write",
                  *codex_config_args(cell),
                  "--output-last-message", str(evidence / "response.md"), "-"]
     else:
@@ -389,37 +400,84 @@ def argv_for(manifest, cell, phase):
 
 
 def native_events(provider, stdout):
-    calls, starts, usage = [], {}, None
-    observed_model, observed_effort = None, None
+    calls, starts, seen, normalized, errors = [], {}, set(), [], []
+    model = effort = session = usage = session_cwd = None
+    informational = {"assistant.message", "assistant.message_delta", "assistant.turn_start", "assistant.turn_end", "session.info", "session.usage_info", "session.shutdown", "user.message", "turn.completed", "turn.started", "thread.started"}
     for number, line in enumerate(stdout.splitlines(), 1):
         try:
             row = json.loads(line)
-        except ValueError:
-            continue
-        if not isinstance(row, dict):
-            continue
-        kind, data = row.get("type"), row.get("data", {})
-        if not isinstance(data, dict):
-            data = {}
-        item = row.get("item", {})
-        if provider == "codex" and kind == "item.completed" and isinstance(item, dict) and item.get("type") == "command_execution":
-            calls.append({"command": item.get("command", ""), "exit_code": item.get("exit_code"),
-                          "output": item.get("aggregated_output", ""), "line": number})
-        if provider == "copilot" and kind == "tool.execution_start":
-            starts[data.get("toolCallId")] = data.get("arguments", {})
-        if provider == "copilot" and kind == "tool.execution_complete":
-            arguments = starts.pop(data.get("toolCallId"), {})
-            if not isinstance(arguments, dict):
-                arguments = {}
-            result = data.get("result", {})
-            calls.append({"command": arguments.get("command", ""),
-                          "exit_code": 0 if data.get("success") is True else 1,
-                          "output": result.get("content", "") if isinstance(result, dict) else str(result), "line": number})
-        if provider == "copilot" and kind == "session.start":
-            observed_model, observed_effort = data.get("selectedModel"), data.get("reasoningEffort")
-        if kind == "turn.completed":
-            usage = row.get("usage", data.get("usage"))
-    return {"calls": calls, "usage": usage, "observed_model": observed_model, "observed_effort": observed_effort}
+            if not isinstance(row, dict) or not isinstance(row.get("type"), str):
+                raise ValueError("structured event object required")
+            kind, data = row["type"], row.get("data", {})
+            if not isinstance(data, dict):
+                raise ValueError("event data object required")
+            normalized.append({"line": number, "event": row})
+            if provider == "copilot" and kind == "session.start":
+                if session is not None:
+                    errors.append("duplicate-session")
+                session, model, effort = data.get("sessionId"), data.get("selectedModel"), data.get("reasoningEffort")
+                session_cwd = data.get("context", {}).get("cwd")
+                if not isinstance(session, str) or not session:
+                    errors.append("session-identity-missing")
+                continue
+            if provider == "codex" and kind == "thread.started":
+                session = row.get("thread_id")
+                continue
+            if provider == "copilot" and kind in ("tool.execution_start", "tool.execution_complete") and data.get("model") is not None and data["model"] != model:
+                errors.append("native-tool-model-mismatch")
+            if provider == "copilot" and kind == "tool.execution_start":
+                key = data.get("toolCallId")
+                if not isinstance(key, str) or not key or key in seen or key in starts:
+                    errors.append("duplicate-or-missing-tool-id")
+                    continue
+                if session is None:
+                    errors.append("tool-before-session")
+                starts[key] = (data, number)
+                seen.add(key)
+                if data.get("toolName") not in ("bash", "apply_patch") or not isinstance(data.get("arguments"), dict if data.get("toolName") == "bash" else str) or not isinstance(data.get("turnId"), str):
+                    errors.append("unsupported-tool-or-turn")
+                continue
+            if provider == "copilot" and kind == "tool.execution_complete":
+                key = data.get("toolCallId")
+                start, start_line = starts.pop(key, ({}, None))
+                if not start:
+                    errors.append("unmatched-tool-completion")
+                if start and data.get("turnId") != start.get("turnId"):
+                    errors.append("tool-turn-mismatch")
+                arguments = start.get("arguments", {})
+                result = data.get("result", {})
+                if type(data.get("success")) is not bool or not isinstance(result, dict) or not isinstance(result.get("content"), str):
+                    errors.append("malformed-tool-result")
+                calls.append({"id": key, "tool_type": start.get("toolName"), "turn_id": start.get("turnId"), "command": arguments.get("command", "") if isinstance(arguments, dict) else "", "patch": arguments if isinstance(arguments, str) else None, "file_edits": data.get("fileEdits"), "success": data.get("success"), "native_exit_code": None, "exit_code_source": "derived-from-native-success-boolean", "exit_code": 0 if data.get("success") is True else 1, "output": result.get("content", ""), "start_line": start_line, "line": number})
+                continue
+            if provider == "codex" and kind in ("item.started", "item.completed"):
+                item = row.get("item", {})
+                key = item.get("id")
+                if item.get("type") == "command_execution":
+                    if kind == "item.started":
+                        if not isinstance(key, str) or key in seen:
+                            errors.append("duplicate-or-missing-item-id")
+                        starts[key] = (item, number)
+                        seen.add(key)
+                    else:
+                        start, start_line = starts.pop(key, ({}, None))
+                        if not start or start.get("command") != item.get("command"):
+                            errors.append("unmatched-item-completion")
+                        calls.append({"id": key, "tool_type": "command_execution", "command": item.get("command", ""), "exit_code": item.get("exit_code"), "output": item.get("aggregated_output", ""), "start_line": start_line, "line": number})
+                elif item.get("type") not in ("agent_message", "reasoning"):
+                    errors.append("unsupported-native-item:" + str(item.get("type")))
+                continue
+            if kind == "turn.completed":
+                usage = row.get("usage", data.get("usage"))
+            if kind not in informational:
+                errors.append("unsupported-native-event:" + kind)
+        except (ValueError, TypeError, AttributeError) as error:
+            errors.append("malformed-native-line:" + str(number))
+    if starts:
+        errors.append("missing-tool-completion")
+    if provider == "codex":
+        errors.append("native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory")
+    return {"calls": calls, "usage": usage, "observed_model": model, "observed_effort": effort, "session_id": session, "session_cwd": session_cwd, "normalized": normalized, "invalid_reasons": errors}
 
 
 def command_argv(command):
@@ -515,65 +573,225 @@ def smoke_check(cell, events):
             loaded = any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "deny" and r.get("command_sha256") == denied_hash for r in rows) and any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "allow" and r.get("command_sha256") in allowed_hashes for r in rows)
         except (OSError, ValueError, TypeError, AttributeError):
             loaded = False
-    return {"control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": cell["provider"] != "copilot" or (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": registered and linked, "complete": completed and linked,
+    return {"control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": registered and linked, "complete": completed and linked,
             "write_readback": linked and any(r.get("kind") == "smoke-write" and r.get("helper_args") == ["smoke-write"] and r.get("readback") == {"smoke": True} and r.get("path") == str(output) for r in records)}
+
+
+def json_digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def atomic_receipt(path, value):
+    temporary = path.with_name(path.name + ".tmp")
+    with temporary.open("x") as stream:
+        stream.write(json.dumps(value, indent=2) + "\n")
+    os.replace(temporary, path)
+
+
+def audit_bytes(manifest, cell):
+    path = inside(Path(cell["control"]["audit"]), Path(manifest["root"]))
+    if path.exists():
+        if not path.is_file() or path.stat().st_nlink != 1:
+            raise ValueError("audit must be a physical single-link file")
+        return path.read_bytes()
+    return b""
+
+
+def phase_bindings(manifest, cell_id, phase):
+    cell = manifest["cells"][cell_id]
+    root = Path(manifest["root"])
+    preflight_path = inside(root / ("preflight/" + cell["provider"] + ".json"), root)
+    preflight_receipt = read(preflight_path)
+    if preflight_receipt.get("provider") != cell["provider"] or preflight_receipt.get("manifest_sha256") != digest(root / "manifest.json") or not preflight_receipt.get("smoke_ready"):
+        raise ValueError("valid bound provider preflight required")
+    snapshot = Path(cell["snapshot"])
+    hook = preflight_receipt.get("cells", {}).get(cell_id, {}).get("hook")
+    return {"schema_version": 1, "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
+            "root": manifest["root"], "cwd": cell["repo"], "manifest_sha256": digest(root / "manifest.json"),
+            "approved_payload_sha256": json_digest({"manifest_sha256": digest(root / "manifest.json"), "preflight_sha256": digest(preflight_path)}), "caller_sources": manifest["caller_sources"],
+            "selected_sources": {"skill": digest(snapshot / "SKILL.md"), "scheduler": digest(snapshot / "scripts/scheduler.py"), "helper": digest(cell["helper_prefix"][1])},
+            "policy_sha256": digest(cell["control"]["script"]), "hook_file_sha256": digest(cell["control"]["hook_config"]), "native_hook": hook,
+            "executable": cell["executable_identity"], "python": cell["python_identity"], "hook_python": cell["hook_python_identity"], "provider_version": preflight_receipt["probes"][0]["stdout"].strip(),
+            "preflight_sha256": digest(preflight_path), "argv": cell["argv"][phase], "environment": cell["environment"], "safe_config": cell["safe_config"], "safe_config_sha256": json_digest(cell["safe_config"]),
+            "requested_model": cell["requested_settings"]["model"], "requested_effort": cell["requested_settings"]["effort"], "delivered_prompt_sha256": digest(cell["prompts"][phase])}
+
+
+def validate_phase(manifest, cell_id, phase):
+    """Re-read raw evidence and current bindings. Stored success flags are never authority."""
+    cell = manifest["cells"][cell_id]
+    root = Path(manifest["root"])
+    directory = inside(Path(cell["repo"]).parent / "evidence" / phase, root)
+    errors, checks = [], {}
+    events = {"calls": [], "invalid_reasons": []}
+    try:
+        record = read(inside(directory / "run.json", root))
+        attempt = read(inside(directory / "attempt.json", root))
+        bindings = phase_bindings(manifest, cell_id, phase)
+        if any(record.get(key) != value or attempt.get(key) != value for key, value in bindings.items()):
+            errors.append("phase-bindings-drift")
+        if not record.get("attempt_id") or record.get("attempt_id") != attempt.get("attempt_id"):
+            errors.append("attempt-identity-mismatch")
+        raw_path = inside(directory / "stdout.jsonl", root)
+        stderr_path = inside(directory / "stderr.txt", root)
+        if record.get("raw_stdout") != str(raw_path) or record.get("raw_stderr") != str(stderr_path) or record.get("native_events") != str(directory / "native-events.json"):
+            errors.append("raw-evidence-reference-mismatch")
+        if record.get("raw_stdout_sha256") != digest(raw_path) or record.get("raw_stderr_sha256") != digest(stderr_path):
+            errors.append("raw-evidence-drift")
+        events = native_events(cell["provider"], raw_path.read_text())
+        if record.get("native_events_sha256") != digest(inside(directory / "native-events.json", root)) or read(directory / "native-events.json") != events:
+            errors.append("parsed-evidence-drift")
+        errors.extend(events["invalid_reasons"])
+        if cell["provider"] == "copilot" and bindings["provider_version"].splitlines()[0] != "GitHub Copilot CLI 1.0.109.":
+            errors.append("native-parser-version-unsupported")
+        if events.get("observed_model") != cell["requested_settings"]["model"] or events.get("observed_effort") != cell["requested_settings"]["effort"]:
+            errors.append("observed-selector-missing-or-wrong")
+        if cell["provider"] == "copilot" and events.get("session_id") != cell["session_ids"][phase]:
+            errors.append("native-session-mismatch")
+        if cell["provider"] == "copilot" and events.get("session_cwd") != cell["repo"]:
+            errors.append("native-cwd-mismatch")
+        if record.get("observed_model") != events.get("observed_model") or record.get("observed_effort") != events.get("observed_effort"):
+            errors.append("receipt-selector-mismatch")
+        if type(record.get("exit_code")) is not int or record.get("exit_code") != 0:
+            errors.append("provider-exit-failure")
+        if record.get("session_id") != events.get("session_id"):
+            errors.append("receipt-session-mismatch")
+        audit = audit_bytes(manifest, cell)
+        interval = record["audit_interval"]
+        start, end = interval["start"], interval["end"]
+        if type(start) is not int or type(end) is not int or not 0 <= start <= end <= len(audit):
+            raise ValueError("invalid audit interval")
+        if interval["prefix_sha256"] != hashlib.sha256(audit[:start]).hexdigest() or interval["sha256"] != hashlib.sha256(audit[start:end]).hexdigest():
+            errors.append("audit-prefix-or-range-drift")
+        if attempt.get("audit_start") != {"offset": start, "prefix_sha256": interval["prefix_sha256"]}:
+            errors.append("audit-attempt-mismatch")
+        if phase == "smoke" and start != 0:
+            errors.append("audit-unattributed-prefix")
+        other_phase = "scenario" if phase == "smoke" else "smoke"
+        other_path = directory.parent / other_phase / "run.json"
+        covered_end = end
+        if other_path.exists():
+            other = read(inside(other_path, root)).get("audit_interval", {})
+            if other.get("start", -1) < end and other.get("end", -1) > start:
+                errors.append("overlapping-audit-intervals")
+            covered_end = max(end, other.get("end", -1))
+        if covered_end != len(audit):
+            errors.append("audit-records-outside-phase")
+        if cell["provider"] == "codex":
+            rows = [json.loads(line) for line in audit[start:end].decode().splitlines()]
+            if audit[start:end] and not audit[start:end].endswith(b"\n"):
+                errors.append("truncated-audit-record")
+            expected = [hashlib.sha256(call["command"].encode()).hexdigest() for call in events["calls"]]
+            if len(rows) != len(expected) or sorted(row.get("command_sha256", "") for row in rows) != sorted(expected):
+                errors.append("audit-command-count-mismatch")
+            if any(row.get("policy_sha256") != cell["control"]["policy_sha256"] or row.get("decision") not in ("allow", "deny") for row in rows):
+                errors.append("audit-policy-or-decision-mismatch")
+        elif start != end:
+            errors.append("unexpected-copilot-policy-audit")
+        for call in events["calls"]:
+            if cell["provider"] == "copilot" and call.get("tool_type") == "apply_patch":
+                patch = call.get("patch", "").splitlines()
+                if len(patch) < 3 or patch[0] != "*** Begin Patch" or patch[-1] != "*** End Patch" or not patch[1].startswith("*** Add File: ") or any(not line.startswith("+") for line in patch[2:-1]):
+                    errors.append("unsupported-native-patch-form")
+                    continue
+                target = Path(patch[1].removeprefix("*** Add File: "))
+                if not target.is_absolute():
+                    target = Path(cell["repo"]) / target
+                target = inside(target, Path(cell["repo"]) / "outputs")
+                expected_edits = [{"path": str(target), "kind": "create"}]
+                expected_text = "".join(line[1:] + "\n" for line in patch[2:-1])
+                if call.get("success") is not True or call.get("file_edits") != expected_edits or target.read_text() != expected_text:
+                    errors.append("native-patch-result-mismatch")
+                continue
+            command = call["command"]
+            probe = phase == "smoke" and command == cell["control"]["denied_probe"]
+            if probe:
+                if call["exit_code"] == 0 or "den" not in str(call["output"]).lower() or "pilot_child" in str(call["output"]):
+                    errors.append("forbidden-probe-not-denied")
+                continue
+            argv = command_argv(command)
+            if argv[:2] != cell["helper_prefix"] or shlex.join(argv) != command:
+                errors.append("unexpected-exact-tool-command")
+            receipts = helper_records(cell, {"calls": [call]})
+            if len(receipts) != 1:
+                errors.append("missing-real-child-receipt")
+            elif call["exit_code"] != 0 and receipts[0].get("exit_code") != 2:
+                errors.append("unexpected-native-tool-rejection")
+            if "permission denied" in str(call["output"]).lower():
+                errors.append("unexpected-permission-denial")
+        if phase == "smoke":
+            checks = smoke_check(cell, events)
+            errors.extend("smoke:" + key for key, value in checks.items() if not value)
+        else:
+            checks = {"forbidden_write_absent": not Path(cell["control"]["forbidden_output"]).exists()}
+            if not all(checks.values()):
+                errors.append("forbidden-write-present")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
+        errors.append("phase-evidence-unavailable:" + str(error))
+    return {"valid": not errors, "invalid_reasons": sorted(set(errors)), "checks": checks, "events": events}
+
+
+def provider_smokes(manifest, provider):
+    reports = {variant: validate_phase(manifest, provider + "-" + variant, "smoke") for variant in ("baseline", "candidate")}
+    if not all(report["valid"] for report in reports.values()):
+        raise ValueError("provider-wide two-smoke qualification gate is not met")
+    return reports
 
 
 def run(manifest, cell_id, phase):
     cell = manifest["cells"][cell_id]
-    if phase == "scenario" and manifest.get("qualification_contract") == "observed-run-pending":
-        raise ValueError("observed-run qualification pending Q1-B; scenario launch disabled")
     if phase == "scenario":
-        for variant in ("baseline", "candidate"):
-            sibling = manifest["cells"][cell["provider"] + "-" + variant]
-            directory = Path(sibling["repo"]).parent / "evidence/smoke"
-            try:
-                smoke = read(directory / "run.json")
-                observed = native_events(cell["provider"], (directory / "stdout.jsonl").read_text())
-                valid = smoke.get("exit_code") == 0 and smoke.get("delivered_prompt_sha256") == digest(sibling["prompts"]["smoke"]) and all(smoke_check(sibling, observed).values())
-            except (OSError, ValueError, TypeError, AttributeError):
-                valid = False
-            if not valid:
-                raise ValueError("provider-wide two-smoke gate is not met")
-    config = read(manifest["config"])
-    settings = config["providers"][cell["provider"]]
-    receipt = read(Path(manifest["root"]) / ("preflight/" + cell["provider"] + ".json"))
-    if receipt.get("provider") != cell["provider"] or receipt.get("manifest_sha256") != digest(Path(manifest["root"]) / "manifest.json") or not receipt.get("smoke_ready") or receipt.get("executable_sha256") != digest(settings["executable"]):
-        raise ValueError("valid immutable-provider preflight required")
+        provider_smokes(manifest, cell["provider"])
+    # Any failed observation stops remaining calls for this provider.
+    for sibling_id, sibling in manifest["cells"].items():
+        if sibling["provider"] == cell["provider"]:
+            for previous_phase in ("smoke", "scenario"):
+                previous = Path(sibling["repo"]).parent / "evidence" / previous_phase
+                if previous.exists() and not validate_phase(manifest, sibling_id, previous_phase)["valid"]:
+                    raise ValueError("previous phase failed qualification; remaining provider calls stopped")
+    bindings = phase_bindings(manifest, cell_id, phase)
+    if cell["argv"][phase] != argv_for(manifest, cell, phase):
+        raise ValueError("frozen argv drift")
     if cell["provider"] == "codex":
+        receipt = read(Path(manifest["root"]) / "preflight/codex.json")
         if discover_codex(cell) != {key: value for key, value in receipt["cells"][cell_id].items() if key != "authentication"}:
             raise ValueError("private discovery drift")
-        if not receipt["cells"][cell_id]["authentication"]["present"]:
-            raise ValueError("private authentication unavailable")
     auth = {key: os.environ[key] for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN") if os.environ.get(key)} if cell["provider"] == "copilot" else {}
     if cell["provider"] == "copilot" and not auth:
         raise ValueError("copilot-isolated-home-auth-token-unavailable")
     directory = Path(cell["repo"]).parent / "evidence" / phase
-    if directory.exists():
-        raise ValueError("phase already attempted; evidence preserved; prepare a fresh root")
-    argv = cell["argv"][phase]
-    if argv != argv_for(manifest, cell, phase):
-        raise ValueError("frozen argv drift")
-    directory.mkdir()
-    record = {"argv": argv, "cwd": cell["repo"], "phase": phase, "session_id": cell["session_ids"][phase], "delivered_prompt_sha256": digest(cell["prompts"][phase]), "qualification_status": "pending-Q1-B", "skill_delivery": "exact frozen body in prompt", "auth_environment_names": sorted(auth), "requested_model": settings["model"], "requested_effort": settings["effort"]}
-    write(directory / "run.json", record)
+    directory.mkdir()  # Exclusive phase attempt, including failed/partial attempts.
+    provider_lock = Path(manifest["root"]) / (cell["provider"] + "-phase-active")
+    provider_descriptor = os.open(provider_lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    os.close(provider_descriptor)
+    lock = directory.parent / "phase-active"
+    descriptor = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    os.close(descriptor)
+    audit = audit_bytes(manifest, cell)
+    record = {**bindings, "attempt_id": str(uuid.uuid4()), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": "process-token" if auth else "private-CODEX_HOME-status"}
+    atomic_receipt(directory / "attempt.json", record)
     started = time.monotonic()
+    config = read(manifest["config"])
     try:
-        code, stdout, stderr = capture(argv, config["timeout_seconds"], cwd=cell["repo"], env={**cell["environment"], **auth}, text_input=Path(cell["prompts"][phase]).read_text() if cell["provider"] == "codex" else None)
-    except OSError as error:
-        code, stdout, stderr = 2, "", str(error)
-    (directory / "stdout.jsonl").write_text(stdout)
-    (directory / "stderr.txt").write_text(stderr)
-    events = native_events(cell["provider"], stdout)
-    write(directory / "native-events.json", events)
-    if not (directory / "usage.json").exists():
-        write(directory / "usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
-    checks = smoke_check(cell, events) if phase == "smoke" else {}
-    if manifest.get("qualification_contract") == "observed-run-pending":
-        checks["observed_run_qualification_pending"] = False
-    record.update({"exit_code": code, "elapsed_seconds": time.monotonic() - started, "smoke_checks": checks, "smoke_valid": phase == "smoke" and code == 0 and all(checks.values()), "observed_model": events.get("observed_model"), "observed_effort": events.get("observed_effort")})
-    write(directory / "run.json", record)
-    return record, code if code in (124,130) else (0 if code == 0 and (phase != "smoke" or record["smoke_valid"]) else 2)
+        try:
+            code, stdout, stderr = capture(bindings["argv"], config["timeout_seconds"], cwd=cell["repo"], env={**cell["environment"], **auth}, text_input=Path(cell["prompts"][phase]).read_text() if cell["provider"] == "codex" else None)
+        except OSError as error:
+            code, stdout, stderr = 2, "", str(error)
+        (directory / "stdout.jsonl").write_text(stdout)
+        (directory / "stderr.txt").write_text(stderr)
+        events = native_events(cell["provider"], stdout)
+        write(directory / "native-events.json", events)
+        if events.get("usage") is None:
+            write(directory / "usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
+        after = audit_bytes(manifest, cell)
+        record.update({"exit_code": code, "elapsed_seconds": time.monotonic() - started, "session_id": events.get("session_id"), "turn_ids": sorted({call.get("turn_id") for call in events["calls"] if call.get("turn_id")}), "observed_model": events.get("observed_model"), "observed_effort": events.get("observed_effort"), "raw_stdout": str(directory / "stdout.jsonl"), "raw_stdout_sha256": digest(directory / "stdout.jsonl"), "raw_stderr": str(directory / "stderr.txt"), "raw_stderr_sha256": digest(directory / "stderr.txt"), "native_events": str(directory / "native-events.json"), "native_events_sha256": digest(directory / "native-events.json"), "audit_interval": {"start": len(audit), "end": len(after), "prefix_sha256": hashlib.sha256(audit).hexdigest(), "sha256": hashlib.sha256(after[len(audit):]).hexdigest()}})
+        atomic_receipt(directory / "run.json", record)
+        validation = validate_phase(manifest, cell_id, phase)
+        record.update({"acceptance_contract": "verified-observed-run", "qualification_status": "valid" if validation["valid"] else "invalid", "invalid_reasons": validation["invalid_reasons"], "smoke_checks": validation["checks"], "smoke_valid": phase == "smoke" and validation["valid"], "observed_event_types": sorted({row["event"]["type"] for row in events["normalized"]}), "evidence_limits": "Observed phase evidence only; no universal tool coverage claim."})
+        atomic_receipt(directory / "run.json", record)
+        return record, code if code in (124, 130) else (0 if validation["valid"] else 2)
+    finally:
+        lock.unlink()
+        provider_lock.unlink()
 
 
 def grade(manifest, cell_id):
@@ -587,24 +805,30 @@ def grade(manifest, cell_id):
               "limits": "Synthetic shutdown facts; native provider readiness remains a separate prerequisite."}
     def native(phase):
         return native_events(cell["provider"], (directory / phase / "stdout.jsonl").read_text())
+    smoke_validation = validate_phase(manifest, cell_id, "smoke")
+    scenario_validation = validate_phase(manifest, cell_id, "scenario")
+    qualified = smoke_validation["valid"] and scenario_validation["valid"]
+    result["invalid_reasons"] = sorted(set(smoke_validation["invalid_reasons"] + scenario_validation["invalid_reasons"]))
+    if qualified:
+        try:
+            provider_smokes(manifest, cell["provider"])
+        except ValueError as error:
+            qualified = False
+            result["invalid_reasons"].append(str(error))
     try:
-        smoke = read(directory / "smoke/run.json")
-        setup = smoke.get("qualification_status") != "pending-Q1-B" and smoke.get("exit_code") == 0 and smoke.get("delivered_prompt_sha256") == digest(cell["prompts"]["smoke"]) and all(smoke_check(cell, native("smoke")).values())
-    except (OSError, ValueError, TypeError, AttributeError):
-        setup = False
-    if not setup:
-        write(directory / "grading.json", result)
-        return result
-    result["setup_status"] = "valid"
+        result["diagnostic_smoke_checks"] = smoke_check(cell, native("smoke"))
+    except (OSError, ValueError, KeyError, TypeError):
+        result["diagnostic_smoke_checks"] = {}
+    if qualified:
+        result["setup_status"] = "valid"
     try:
         run_record = read(directory / "scenario/run.json")
         events = native("scenario")
         records = helper_records(cell, events)
     except (OSError, ValueError, TypeError):
         run_record, events, records = {}, {"calls": []}, []
-    (directory / "scenario").mkdir(exist_ok=True)
     result["usage_status"] = "available" if events.get("usage") is not None else "unavailable"
-    if result["usage_status"] == "unavailable":
+    if result["usage_status"] == "unavailable" and (directory / "scenario").exists():
         write(directory / "scenario/usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
     denied = any("denied" in str(call["output"]).lower() or "permission" in str(call["output"]).lower() for call in events["calls"] if call["exit_code"] != 0)
     def artifact(relative):
@@ -751,6 +975,8 @@ def grade(manifest, cell_id):
         result["candidate_only"]["candidate_acknowledgment"] = {"passed": bool(ack and chronological and acknowledgment_bound and parent_records and parent_records[0]["line"] < ack["line"] and state_at(ack,"B","after").get("transfer_completed") is True and receipt.get("owner") == "agent-new" and receipt.get("recorded_at") == 205), "evidence": "real acknowledgment receipt resolves to the same current parent target and final native readback"}
     passed = all(c["passed"] for c in checks.values()) and all(c["passed"] for c in result["candidate_only"].values()) and chronological and not denied and run_record.get("exit_code") == 0
     result.update({"assertions": checks, "behavior_status": "pass" if passed else "fail", "output_contract_status": "pass" if schema_ok else "fail", "comparison_eligible": not denied and run_record.get("exit_code") == 0, "execution_status": "permission_failure" if denied else ("success" if run_record.get("exit_code") == 0 else "failure")})
+    if not qualified:
+        result.update({"setup_status": "invalid", "behavior_status": "not_evaluated", "comparison_eligible": False, "assertions_are_diagnostic": True})
     if set(checks) != set(rubric["assertions"]):
         raise ValueError("rubric assertions mismatch")
     write(directory / "grading.json", result)

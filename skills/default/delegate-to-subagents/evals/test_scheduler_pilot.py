@@ -139,6 +139,18 @@ class PilotTests(unittest.TestCase):
         save("scenario")
         return cell_id, repo
 
+    def assert_invalid_diagnostics(self, report):
+        self.assertEqual(report["setup_status"], "invalid", report)
+        self.assertEqual(report["behavior_status"], "not_evaluated", report)
+        self.assertFalse(report["comparison_eligible"], report)
+        self.assertTrue(report["invalid_reasons"], report)
+
+    def assert_behavior_diagnostics(self, report, expected):
+        self.assert_invalid_diagnostics(report)
+        claims=list(report["assertions"].values()) + list(report["candidate_only"].values())
+        passed=all(claim["passed"] for claim in claims) and report.get("execution_status")=="success"
+        self.assertEqual(passed, expected=="pass", report)
+
     def grade(self, cell):
         result=self.call("grade","--manifest",self.manifest,"--cell",cell)
         self.assertEqual(result.returncode,0,result.stderr)
@@ -151,7 +163,7 @@ class PilotTests(unittest.TestCase):
                 with self.subTest(provider=provider,variant=variant):
                     cell,_=self.fixture(provider,variant)
                     report=self.grade(cell)
-                    self.assertEqual(report["behavior_status"],"pass",report)
+                    self.assert_behavior_diagnostics(report, "pass")
 
     def test_second_extension_requires_valid_policy_rejection(self):
         cases = (("valid", ("--eta", "250"), True),
@@ -168,11 +180,11 @@ class PilotTests(unittest.TestCase):
                         self.matrix_root(label, provider, variant)
                         cell, _ = self.fixture(provider, variant, second_extension=extra)
                         report = self.grade(cell)
-                        self.assertEqual(report["setup_status"], "valid", report)
+                        self.assert_invalid_diagnostics(report)
                         self.assertEqual(report["assertions"]["single_extension"]["passed"], expected, report)
-                        self.assertEqual(report["behavior_status"], "pass" if expected else "fail", report)
+                        self.assert_behavior_diagnostics(report, "pass" if expected else "fail")
                         self.assertEqual(report["output_contract_status"], "pass", report)
-                        self.assertTrue(report["comparison_eligible"], report)
+                        self.assertFalse(report["comparison_eligible"], report)
 
     def test_each_semantic_negative_fails(self):
         self.prepare()
@@ -185,7 +197,7 @@ class PilotTests(unittest.TestCase):
                 for action in damaged["actions"]:
                     if action["action"]==name: action["at"]+=1
                 output.write_text(json.dumps(damaged))
-                self.assertEqual(self.grade(cell)["behavior_status"],"fail")
+                self.assert_behavior_diagnostics(self.grade(cell),"fail")
         output.write_text(json.dumps(original))
         state=repo / "outputs/scenario-state.json"
         state.write_text('{"assignments":[]}')
@@ -218,7 +230,7 @@ class PilotTests(unittest.TestCase):
                 item["command"]=shlex.join(["python3","-c","import subprocess\nif False: subprocess.run("+repr(shlex.split(item["command"]))+", check=True)"])
         raw.write_text("\n".join(json.dumps(row) for row in rows))
         report=self.grade(cell)
-        self.assertEqual(report["behavior_status"],"fail")
+        self.assert_behavior_diagnostics(report, "fail")
         self.assertFalse(report["assertions"]["immutable_execution"]["passed"])
 
     def test_smoke_gate_and_hash_drift_fail_closed(self):
@@ -276,7 +288,7 @@ class PilotTests(unittest.TestCase):
                 if mode=="wrong": (repo / "wrong.json").write_text(original)
                 if mode=="malformed": output.write_text("{")
                 report=self.grade(cell)
-                self.assertEqual(report["behavior_status"],"fail")
+                self.assert_behavior_diagnostics(report, "fail")
                 self.assertEqual(report["output_contract_status"],"fail")
                 self.assertEqual(report["usage_status"],"unavailable")
                 self.assertTrue((raw.parent / "usage-missing.json").exists())
@@ -292,7 +304,7 @@ class PilotTests(unittest.TestCase):
                 rows=[json.loads(line) for line in original.splitlines()]
                 rows=[row for row in rows if marker not in row.get("item",{}).get("command","")]
                 raw.write_text("\n".join(json.dumps(row) for row in rows))
-                self.assertEqual(self.grade(cell)["behavior_status"],"fail")
+                self.assert_behavior_diagnostics(self.grade(cell),"fail")
         raw.write_text(original)
 
     def test_reused_nonprivate_root_bypass_and_invalid_config_rejected(self):
@@ -359,49 +371,114 @@ class PilotTests(unittest.TestCase):
         report=self.grade(cell)
         self.assertEqual(report["setup_status"],"invalid")
         self.assertEqual(report["behavior_status"],"not_evaluated")
+        self.assertFalse(report["diagnostic_smoke_checks"]["register"])
+        self.assertFalse(report["diagnostic_smoke_checks"]["complete"])
         raw.write_text(original)
         output=repo / "outputs/smoke.json"
         for content in ("{",'{"wrong":true}'):
             output.write_text(content)
-            self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+            report=self.grade(cell)
+            self.assertEqual(report["setup_status"],"invalid")
+            self.assertFalse(report["diagnostic_smoke_checks"]["exact_output"])
         output.unlink()
         self.assertEqual(self.grade(cell)["setup_status"],"invalid")
 
-    def test_public_copilot_fake_smoke_uses_real_children_and_preserves_attempt(self):
+    def copilot_setup(self, mode="normal"):
+        (self.root / "copilot-mode").write_text(mode)
         fake=self.root / "fake-provider"
         fake.write_text("#!"+sys.executable+"\n"+r"""
 import json,pathlib,shlex,subprocess,sys
-if '--help' in sys.argv or '--version' in sys.argv:
+if '--version' in sys.argv:
+ print('GitHub Copilot CLI 1.0.109.');raise SystemExit
+if '--help' in sys.argv:
  print('--output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
  raise SystemExit
 repo=pathlib.Path.cwd()
 manifest=json.loads((repo.parents[2]/'manifest.json').read_text())
 cell=manifest['cells'][repo.parent.name]
-print(json.dumps({'type':'session.start','data':{'selectedModel':'gpt-6.1-sol','reasoningEffort':'medium'}}))
+phase='smoke' if sys.argv[sys.argv.index('--session-id')+1]==cell['session_ids']['smoke'] else 'scenario'
+mode=(repo.parents[3]/'copilot-mode').read_text()
+if mode=='malformed': print('{')
+if mode=='unknown': print(json.dumps({'type':'tool.unrecognized','data':{}}))
+print(json.dumps({'type':'session.start','data':{'sessionId':'wrong' if mode=='wrong-session' else cell['session_ids'][phase],'context':{'cwd':str(repo)},'selectedModel':'wrong' if mode=='wrong-model' else 'gpt-6.1-sol','reasoningEffort':None if mode=='missing-effort' else 'medium'}}))
+
+def write_artifact(relative,value):
+ text=json.dumps(value)+'\n'
+ path=repo/relative
+ patch='*** Begin Patch\n*** Add File: '+relative+'\n'+''.join('+'+line+'\n' for line in text.splitlines())+'*** End Patch\n'
+ key='patch-'+relative
+ print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'apply_patch','turnId':'0','arguments':patch}}))
+ path.write_text(text)
+ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':True,'fileEdits':[{'path':str(path),'kind':'create'}],'result':{'content':'Patch applied'}}}))
+if phase=='scenario':
+ state=str(repo/'outputs/scenario-state.json')
+ actions=[]
+ number=0
+ def invoke(args,label=None,assignment=None,at=None):
+  global number
+  argv=cell['helper_prefix']+args
+  command=shlex.join(argv)
+  key='scenario-'+str(number);number+=1
+  print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':key,'toolName':'bash','turnId':'0','arguments':{'command':command}}}))
+  child=subprocess.run(argv,capture_output=True,text=True)
+  print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':key,'turnId':'0','success':child.returncode==0,'result':{'content':child.stdout}}}))
+  if label:
+   relative='outputs/'+label+'-'+str(at)+'.json'
+   write_artifact(relative,{'command':command,'exit_code':child.returncode})
+   actions.append({'action':label,'assignment':assignment,'at':at,'evidence':relative})
+ def op(command,assignment=None,at=0,extra=(),label=None):
+  invoke(['--state',state,command]+([assignment] if assignment else [])+list(extra)+['--now',str(at)],label,assignment or ('A' if at==105 else 'B'),at)
+ for assignment,agent in (('A','agent-a'),('B','agent-old'),('C','agent-c')):
+  op('register',assignment,extra=[agent,'task','--deadline','100','--checkpoint','300','--grace','5'])
+ op('tick',at=100)
+ op('checkpoint','B',102,['--eta','200'])
+ op('checkpoint','C',102)
+ op('extend','B',103,['--eta','200'],'extend')
+ op('complete','C',104)
+ op('tick',at=105,label='stop')
+ op('checkpoint','B',150)
+ op('extend','B',151,['--eta','250'])
+ op('tick',at=200,label='stop')
+ op('transfer','B',201,label='transfer-rejected')
+ op('confirm-stopped','B',202,['--confirmation','worker-and-writes-stopped'],'confirm-stopped')
+ op('transfer','B',203,label='transfer')
+ invoke(['parent-update','agent-old','agent-new','204'],'parent-update','B',204)
+ if cell['variant']=='candidate': op('confirm-transfer','B',205,['--owner','agent-new','--evidence','outputs/ownership.json','--confirmation','parent-ownership-updated'],'confirm-transfer')
+ write_artifact('outputs/result.json',{'actions':actions,'final_state':{'old_owner':'agent-old','new_owner':'agent-new','worker_stopped':True,'writes_stopped':True,'transfer_authorized':True,'parent_record':'outputs/ownership.json','scheduler_state':'outputs/scenario-state.json'}})
+ raise SystemExit
+
 state=str(repo/'outputs/smoke-state.json')
 operations=[['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write']]
 for number,args in enumerate(operations):
  argv=cell['helper_prefix']+args
  child=subprocess.run(argv,capture_output=True,text=True)
- print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'arguments':{'command':shlex.join(argv)}}}))
- print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'success':child.returncode==0,'result':{'content':child.stdout}}}))
-print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':'denied','arguments':{'command':cell['control']['denied_probe']}}}))
-print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied','success':False,'result':{'content':'Permission denied by native grant fixture'}}}))
+ print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'toolName':'write_stdin' if mode=='unknown-tool' else 'bash','model':'wrong' if mode=='tool-model' else 'gpt-6.1-sol','turnId':'0','arguments':{'command':shlex.join(argv)}}}))
+ if mode!='missing-completion': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':child.returncode==0,'result':{'content':child.stdout}}}))
+ if mode=='duplicate': print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'turnId':'0','success':True,'result':{'content':child.stdout}}}))
+print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':'denied','toolName':'bash','turnId':'0','arguments':{'command':cell['control']['denied_probe']}}}))
+print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied','turnId':'0','success':False,'result':{'content':'Permission denied by native grant fixture'}}}))
 """)
         fake.chmod(0o700)
         config=json.loads(self.config.read_text());config["providers"]["copilot"]["executable"]=str(fake)
         self.config.write_text(json.dumps(config))
         self.prepare()
-        env={**os.environ,"GH_TOKEN":"offline-fixture-token"}
-        def call(*args):
-            return subprocess.run([sys.executable,str(CLI),*map(str,args)],env=env,capture_output=True,text=True)
+        result=self.provider_call("preflight","--manifest",self.manifest,"--provider","copilot")
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def provider_call(self, *args):
+        return subprocess.run([sys.executable,str(CLI),*map(str,args)],env={**os.environ,"GH_TOKEN":"offline-fixture-token"},capture_output=True,text=True)
+
+    def test_public_copilot_fake_smoke_uses_real_children_and_preserves_attempt(self):
+        self.copilot_setup()
+        call=self.provider_call
         result=call("preflight","--manifest",self.manifest,"--provider","copilot")
         self.assertEqual(result.returncode,0,result.stderr)
         result=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
-        self.assertEqual(result.returncode,2,result.stderr)
+        self.assertEqual(result.returncode,0,result.stderr)
         record=json.loads(result.stdout)
-        self.assertFalse(record["smoke_valid"],record)
-        self.assertEqual(record["qualification_status"],"pending-Q1-B")
+        self.assertTrue(record["smoke_valid"],record)
+        self.assertEqual(record["acceptance_contract"],"verified-observed-run")
+        self.assertEqual(record["schema_version"],1)
         self.assertEqual(json.loads((self.run / "cells/copilot-candidate/repo/outputs/smoke.json").read_text()),{"smoke":True})
         self.assertNotIn("offline-fixture-token",result.stdout)
         directory=self.run / "cells/copilot-candidate/evidence/smoke"
@@ -410,6 +487,58 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
         retry=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
         self.assertEqual(retry.returncode,2)
         self.assertEqual((directory / "run.json").read_bytes(),original)
+
+    def test_public_copilot_malformed_and_unsupported_events_stop_remaining_calls(self):
+        for mode in ('malformed','unknown','wrong-session','wrong-model','missing-effort','unknown-tool','missing-completion','duplicate','tool-model'):
+            with self.subTest(mode=mode):
+                self.run=self.root / ('copilot-'+mode)
+                self.manifest=self.run / 'manifest.json'
+                self.copilot_setup(mode)
+                failed=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+                self.assertEqual(failed.returncode,2,failed.stderr)
+                receipt=json.loads(failed.stdout)
+                self.assertFalse(receipt['smoke_valid'])
+                self.assertTrue(receipt['invalid_reasons'])
+                blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-baseline','--phase','smoke')
+                self.assertEqual(blocked.returncode,2)
+                self.assertIn('remaining provider calls stopped',blocked.stderr)
+                self.assertFalse((self.run/'cells/copilot-baseline/evidence/smoke').exists())
+
+    def test_public_copilot_both_smokes_replay_bindings_and_raw_regrading(self):
+        self.copilot_setup()
+        early=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','scenario')
+        self.assertEqual(early.returncode,2)
+        for variant in ('baseline','candidate'):
+            smoke=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','smoke')
+            self.assertEqual(smoke.returncode,0,smoke.stderr)
+        for variant in ('baseline','candidate'):
+            scenario=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','scenario')
+            self.assertEqual(scenario.returncode,0,scenario.stderr+scenario.stdout)
+            report=self.grade('copilot-'+variant)
+            self.assertEqual(report['setup_status'],'valid',report)
+            self.assertEqual(report['behavior_status'],'pass',report)
+            self.assertTrue(report['comparison_eligible'],report)
+            self.assertTrue(all(claim['passed'] for claim in report['assertions'].values()),report)
+        directory=self.run/'cells/copilot-candidate/evidence/smoke'
+        record=json.loads((directory/'run.json').read_text())
+        self.assertEqual(len(record['approved_payload_sha256']),64)
+        self.assertEqual(record['provider'],'copilot')
+        for key in ('attempt_id','caller_sources','selected_sources','environment','executable','python','provider_version','audit_interval','raw_stdout_sha256','native_events_sha256'):
+            self.assertIn(key,record)
+        raw=directory/'stdout.jsonl'
+        original=raw.read_text()
+        raw.write_text(original+'{\n')
+        report=self.grade('copilot-candidate')
+        self.assert_invalid_diagnostics(report)
+        self.assertIn('raw-evidence-drift',report['invalid_reasons'])
+        blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','scenario')
+        self.assertEqual(blocked.returncode,2)
+        self.assertIn('two-smoke',blocked.stderr)
+        raw.write_text(original)
+        data=json.loads((directory/'run.json').read_text())
+        data['cell']='copilot-baseline'
+        (directory/'run.json').write_text(json.dumps(data))
+        self.assertIn('phase-bindings-drift',self.grade('copilot-candidate')['invalid_reasons'])
 
     def codex_setup(self, mode="normal"):
         (self.root / "discovery-mode").write_text(mode)
@@ -441,25 +570,38 @@ if 'app-server' in sys.argv:
    hook=json.loads(pathlib.Path(cell['control']['hook_config']).read_text())['hooks']['PreToolUse'][0]['hooks'][0]
    result={'data':[{'cwd':str(repo),'errors':[],'warnings':[],'hooks':[dict(handlerType='command',command=hook['command'],timeoutSec=3,enabled=True,eventName='preToolUse',source='project',sourcePath=cell['control']['hook_config'],currentHash='sha256:offline-native-definition',trustStatus='trusted',key=cell['control']['hook_config']+':pre_tool_use:0:0',**{'async':False})]}]}
   if method=='config/read':
-   result={'config':{'model':'gpt-6.1-sol','model_reasoning_effort':'medium','sandbox_mode':'workspace-write','sandbox_workspace_write':{'writable_roots':cell['write_roots']},'features':{'hooks':True},'mcp_servers':{},'plugins':{}},'layers':[],'origins':{}}
+   result={'config':cell['safe_config'],'layers':[{'name':{'type':'system','file':'/etc/codex/config.toml'},'config':{}}],'origins':{}}
   if method=='hooks/list':
    h=result['data'][0]['hooks'][0]
    if mode in ('untrusted','modified'): h['trustStatus']=mode
    if mode=='disabled': h['enabled']=False
    if mode=='unexpected': result['data'][0]['hooks'].append(dict(h))
    if mode=='wrong-source': h['sourcePath']='/outside/hooks.json'
+   if mode=='changed-hash': h['currentHash']='sha256:changed-native-definition'
   if method=='config/read' and mode=='wrong-model': result['config']['model']='wrong'
   print(json.dumps({'id':request['id'],'result':result}),flush=True)
  raise SystemExit
 if sys.argv[1:]==['login','status']:
  print('Logged in using ChatGPT');raise SystemExit
 prompt=sys.stdin.read()
+print(json.dumps({'type':'thread.started','thread_id':'offline-exec-thread'}))
 (repo/'outputs/launch.json').write_text(json.dumps({'stdin':prompt,'env':dict(os.environ),'argv':sys.argv}))
 state=str(repo/'outputs/smoke-state.json')
-for args in (['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write']):
+for number,args in enumerate((['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write'])):
  argv=cell['helper_prefix']+args
+ command=shlex.join(argv)
+ event={'hook_event_name':'PreToolUse','tool_use_id':'offline-native-tool-'+str(number),'cwd':cell['repo'],'tool_name':'Bash','tool_input':{'command':command}}
+ verdict=subprocess.run([sys.executable,cell['control']['script'],'--manifest',manifest['root']+'/manifest.json','--cell',repo.parent.name],input=json.dumps(event),capture_output=True,text=True)
  child=subprocess.run(argv,capture_output=True,text=True)
- print(json.dumps({'type':'item.completed','item':{'type':'command_execution','command':shlex.join(argv),'exit_code':child.returncode,'aggregated_output':child.stdout}}))
+ item={'id':'item_'+str(number),'type':'command_execution','command':command}
+ print(json.dumps({'type':'item.started','item':item}))
+ print(json.dumps({'type':'item.completed','item':dict(item,exit_code=child.returncode,aggregated_output=child.stdout)}))
+command=cell['control']['denied_probe']
+event={'hook_event_name':'PreToolUse','tool_use_id':'offline-denied','cwd':cell['repo'],'tool_name':'Bash','tool_input':{'command':command}}
+verdict=subprocess.run([sys.executable,cell['control']['script'],'--manifest',manifest['root']+'/manifest.json','--cell',repo.parent.name],input=json.dumps(event),capture_output=True,text=True)
+item={'id':'item_denied','type':'command_execution','command':command}
+print(json.dumps({'type':'item.started','item':item}))
+print(json.dumps({'type':'item.completed','item':dict(item,exit_code=verdict.returncode,aggregated_output=verdict.stdout)}))
 """)
         fake.chmod(0o700)
         config=json.loads(self.config.read_text())
@@ -508,6 +650,72 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
                         pid=int((self.run/('cells/codex-'+variant+'/repo/outputs/discovery-child.pid')).read_text())
                         with self.assertRaises(ProcessLookupError):
                             os.kill(pid,0)
+
+    def test_public_codex_receipt_audit_intervals_and_unsupported_native_evidence(self):
+        self.codex_setup()
+        preflight=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+        self.assertEqual(preflight.returncode,0,preflight.stderr)
+        # A real preexisting audit prefix must be preserved and independently hashed.
+        self.assertEqual(self.hook('codex-candidate').returncode,0)
+        launched=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+        self.assertEqual(launched.returncode,2,launched.stderr)
+        record=json.loads(launched.stdout)
+        self.assertTrue(any('native-evidence-unsupported' in reason for reason in record['invalid_reasons']))
+        self.assertNotIn('audit-command-count-mismatch',record['invalid_reasons'])
+        self.assertGreater(record['audit_interval']['start'],0)
+        self.assertGreater(record['audit_interval']['end'],record['audit_interval']['start'])
+        self.assertTrue(all(record['smoke_checks'][key] for key in ('control_loaded','control_denial','register','complete','write_readback')))
+        audit=Path(self.data['cells']['codex-candidate']['control']['audit'])
+        original=audit.read_bytes()
+        changed=bytearray(original);changed[10]=ord('X')
+        audit.write_bytes(changed)
+        report=self.grade('codex-candidate')
+        self.assertIn('audit-prefix-or-range-drift',report['invalid_reasons'])
+        audit.write_bytes(original+b'{}\n')
+        self.assertIn('audit-records-outside-phase',self.grade('codex-candidate')['invalid_reasons'])
+        audit.write_bytes(original)
+
+    def test_public_setup_binding_drift_blocks_launch_before_child(self):
+        for mode in ('private-home','executable','provider-receipt','current-hash'):
+            with self.subTest(mode=mode):
+                self.run=self.root/('binding-'+mode)
+                self.manifest=self.run/'manifest.json'
+                self.codex_setup()
+                preflight=self.call('preflight','--manifest',self.manifest,'--provider','codex')
+                self.assertEqual(preflight.returncode,0,preflight.stderr)
+                cell=self.data['cells']['codex-candidate']
+                if mode=='private-home': Path(cell['environment']['CODEX_HOME']).rmdir()
+                if mode=='executable':
+                    fake=Path(cell['requested_settings']['executable']);fake.write_text(fake.read_text()+'\n# drift\n')
+                if mode=='provider-receipt':
+                    p=self.run/'preflight/codex.json';receipt=json.loads(p.read_text());receipt['provider']='copilot';p.write_text(json.dumps(receipt))
+                if mode=='current-hash': (self.root/'discovery-mode').write_text('changed-hash')
+                result=self.call('run','--manifest',self.manifest,'--cell','codex-candidate','--phase','smoke')
+                self.assertEqual(result.returncode,2)
+                self.assertFalse((Path(cell['repo'])/'outputs/launch.json').exists())
+
+    def test_public_discovery_interruption_reaps_server_and_descendant(self):
+        self.codex_setup('timeout')
+        process=subprocess.Popen([sys.executable,str(CLI),'preflight','--manifest',str(self.manifest),'--provider','codex'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        pid_file=self.run/'cells/codex-baseline/repo/outputs/discovery-child.pid'
+        for _ in range(200):
+            if pid_file.exists(): break
+            time.sleep(.01)
+        self.assertTrue(pid_file.exists())
+        process.send_signal(signal.SIGINT)
+        stdout,stderr=process.communicate(timeout=5)
+        self.assertEqual(process.returncode,130,stderr)
+        with self.assertRaises(ProcessLookupError): os.kill(int(pid_file.read_text()),0)
+
+    def test_public_partial_attempt_blocks_provider_without_child(self):
+        self.copilot_setup()
+        partial=self.run/'cells/copilot-baseline/evidence/smoke'
+        partial.mkdir()
+        (partial/'attempt.json').write_text('{}')
+        blocked=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+        self.assertEqual(blocked.returncode,2)
+        self.assertIn('remaining provider calls stopped',blocked.stderr)
+        self.assertFalse((self.run/'cells/copilot-candidate/repo/outputs/smoke.json').exists())
 
     def test_trusted_snapshot_configuration_is_rejected(self):
         source=self.root / "injected"
@@ -567,10 +775,14 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
         audit=Path(self.data["cells"][cell]["control"]["audit"])
         original=audit.read_text()
         audit.write_text("\n".join(line for line in original.splitlines() if json.loads(line)["decision"]!="deny"))
-        self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+        report=self.grade(cell)
+        self.assertEqual(report["setup_status"],"invalid")
+        self.assertFalse(report["diagnostic_smoke_checks"]["control_loaded"])
         audit.write_text(original)
         (repo / "outputs/control-forbidden.json").write_text("unexpected execution")
-        self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+        report=self.grade(cell)
+        self.assertEqual(report["setup_status"],"invalid")
+        self.assertFalse(report["diagnostic_smoke_checks"]["forbidden_write_absent"])
 
     def matrix_root(self, label, provider, variant):
         self.run=self.root / (label+"-"+provider+"-"+variant)
@@ -585,11 +797,11 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
                         self.matrix_root(ordering,provider,variant)
                         cell,_=self.fixture(provider,variant,ordering=ordering)
                         report=self.grade(cell)
-                        self.assertEqual(report["setup_status"],"valid",report)
+                        self.assert_invalid_diagnostics(report)
                         expected=ordering=="swap-equal"
                         self.assertEqual(report["assertions"]["independent_progress"]["passed"],expected,report)
-                        self.assertEqual(report["behavior_status"],"pass" if expected else "fail",report)
-                        self.assertTrue(report["comparison_eligible"],report)
+                        self.assert_behavior_diagnostics(report, "pass" if expected else "fail")
+                        self.assertFalse(report["comparison_eligible"], report)
 
     def test_r2_current_parent_target_cannot_be_hidden_by_detached_copy(self):
         for provider in ("codex","copilot"):
@@ -605,12 +817,12 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
                     data=json.loads(output.read_text());data["final_state"]["parent_record"]="outputs/detached.json"
                     output.write_text(json.dumps(data))
                     report=self.grade(cell)
-                    self.assertEqual(report["setup_status"],"valid")
-                    self.assertEqual(report["behavior_status"],"fail",report)
+                    self.assert_invalid_diagnostics(report)
+                    self.assert_behavior_diagnostics(report, "fail")
                     self.assertFalse(report["assertions"]["parent_transfer"]["passed"],report)
                     if variant=="candidate":
                         self.assertFalse(report["candidate_only"]["candidate_acknowledgment"]["passed"],report)
-                    self.assertTrue(report["comparison_eligible"])
+                    self.assertFalse(report["comparison_eligible"], report)
 
     def test_r2_acknowledgment_reads_same_target_in_causal_order(self):
         for provider in ("codex","copilot"):
@@ -619,11 +831,11 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
                     self.matrix_root(label,provider,"candidate")
                     cell,_=self.fixture(provider,"candidate",ordering=ordering,ack_reference=reference)
                     report=self.grade(cell)
-                    self.assertEqual(report["setup_status"],"valid")
+                    self.assert_invalid_diagnostics(report)
                     self.assertEqual(report["candidate_only"]["candidate_acknowledgment"]["passed"],expected,report)
                     self.assertEqual(report["assertions"]["parent_transfer"]["passed"],expected,report)
-                    self.assertEqual(report["behavior_status"],"pass" if expected else "fail",report)
-                    self.assertTrue(report["comparison_eligible"])
+                    self.assert_behavior_diagnostics(report, "pass" if expected else "fail")
+                    self.assertFalse(report["comparison_eligible"], report)
 
     def test_r2_exact_smoke_state_argv_order_and_linked_results(self):
         for provider in ("codex","copilot"):
@@ -636,6 +848,8 @@ for args in (['--state',state,'register','smoke','smoke-agent','neutral','--dead
                         self.assertEqual(report["setup_status"],"invalid",report)
                         self.assertEqual(report["behavior_status"],"not_evaluated",report)
                         self.assertFalse(report["comparison_eligible"])
+                        self.assertFalse(report["diagnostic_smoke_checks"]["register"])
+                        self.assertFalse(report["diagnostic_smoke_checks"]["complete"])
 
     def test_native_provider_command_boundary_fails_before_inference(self):
         result = self.call("prepare", "--run-root", self.run, "--baseline", SOURCE, "--candidate", SOURCE, "--config", self.config)
