@@ -208,7 +208,7 @@ After integrating supported source changes:
     rtk proxy env PYTHONPATH=scripts/vendor python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/subagent-model-router
     rtk git diff --check
 
-Use `skills/default/create-skill/scripts/eval_runner.py --help` and `references/provider-runs.md` for supported instruction-following eval runs, with immutable baseline and changed-skill snapshots. Those runs do not replace native model-capability trials. Run the registry suite if changing `scripts/test-all.py`; do not expand to unrelated full-repository checks without a relevant change or failure.
+Keep immutable baseline and changed-skill snapshots for instruction-following eval runs. They do not replace native model-capability trials. Run the registry suite if changing `scripts/test-all.py`; do not expand to unrelated full-repository checks without a relevant change or failure.
 
 ## Validation and Acceptance
 

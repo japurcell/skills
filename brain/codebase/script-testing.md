@@ -16,10 +16,8 @@
 
 ## Fixtures that must remain meaningful
 
-- Validate the provider/runner contract before implementation: distinguish documented capabilities, offline fixture coverage, native unproven behavior and explicit owner prerequisites. A passing adapter fixture cannot establish host delivery or enforcement.
-- Ground the required native execution and identity fixture shapes in actual retained envelopes. Keep fixture scope aligned with the behavior under test. The focused [scheduler fixtures](../../skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py) retain real-child command/argv receipts, source/session/selector identity, canonical state and replay checks, plus CLI interruption/cleanup. Exhaustive provider telemetry schemas and configuration inventories belong to a conformance task when requested. Passing offline envelopes leave native permission acceptance and live behavioral results unproved.
 - Fake provider envelopes must carry results from real underlying tool operations when those operations are the behavior under test. Execute the public CLI/helper and capture actual argv, exit, state and file readback; invent only the provider transport envelope, not positive component outputs.
-- Define evidence authority independently of the grader, then mutate real successful traces/files adversarially. Check causal event order as well as supplied timestamps, and bind acknowledgment pointers/readbacks to the actual current artifact. Assert individual claims so an unrelated failure cannot conceal false acceptance.
+- Keep offline fixture coverage distinct from native/provider proof. Ground required execution and identity evidence in retained provider output; a passing fixture cannot establish host behavior.
 - A benchmark root selector does not establish delegated child selectors. Bind claims to actual session/child context and keep state generations separated across resets. Preserve original automated outcomes separately from a versioned independent native-evidence assessment.
 
 - Disposable Git commits set fixture identity and `-c commit.gpgsign=false`; never change user Git configuration.

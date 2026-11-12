@@ -12,7 +12,7 @@
 ## Native authentication and adapter boundaries
 
 - Environment-token absence proves only process environment state. Compare provider-native authentication/status in the intended runner environment; keep credential lookup provider-owned and retain only safe status fields.
-- Hook/enforcement conformance tests can require frozen safe configuration and component inventories. Keep those inventories free of credential-bearing configuration. Ordinary scheduler benchmarks bind required source, session, selector, execution and state evidence without exhaustive provider inventories. Preserve provider-owned login and avoid whole credential-config hashes.
+- Hook/enforcement conformance tests can require frozen safe configuration and component inventories. Keep those inventories free of credential-bearing configuration. Preserve provider-owned login and avoid whole credential-config hashes.
 - Before declaring native evidence unsupported, inspect exact retained successful task execution and its version-pinned metadata. Compare transport item identities, logical commands and session/turn context without treating display IDs or requested settings as executing proof.
 - Integrate and probe the installed CLI at small no-inference boundary checkpoints. Ground required native execution and identity fixtures in observed shapes. Hook/enforcement conformance tests retain strict rejection where an unknown event leaves the tested delivery or enforcement claim unproved. For an ordinary behavioral benchmark, retain unrelated telemetry without making it an execution gate. Missing or contradictory required proof stays invalid.
 
@@ -24,4 +24,4 @@
 
 Evidence: [probe CLI](../../scripts/probe-provider-hook-delivery.py), checked 2026-10-20. Historical provider passes do not establish current installation behavior; recheck after CLI/hook changes.
 
-Inspect complete safe evidence before choosing the projection required by the task. Omitted diagnostic fields can create a false platform limitation. When component inventories are required for a hook/enforcement test, observe them after intended disabling controls. Native benchmark execution checks should prove required helper execution and output authoring. Keep real-child scenario fixtures and strict required identity/state checks in the scheduler [adapter](../../skills/default/delegate-to-subagents/evals/scheduler_pilot.py) and [fixtures](../../skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py).
+Inspect complete safe evidence before choosing the projection required by the task. Omitted diagnostic fields can create a false platform limitation. When component inventories are required for a hook/enforcement test, observe them after intended disabling controls.

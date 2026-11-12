@@ -37,7 +37,7 @@ The user authorized authoring these plans, moving them into `brain/plans`, and c
 - 2026-11-11: Keep automatic task/failure floors and the existing exact-user-model override contract. A user-selected out-of-catalog model may follow the existing host-verification path, but the router must not invent catalog qualification for it.
 - 2026-11-11: Preserve planning's restricted pool and preferred starting configuration in Phase 1. Cross-tier competition applies within the permitted pool and cannot silently replace planning policy.
 - 2026-11-11: Keep public benchmark evidence advisory. New candidate scopes require local evidence before activation. Lack of dollar measurements is an explicit unknown, not a zero cost or a reason to substitute unrelated API prices.
-- 2026-11-11: Reuse native subagent dispatch for capability experiments. Use the maintained provider runner only for scenarios its documented contract supports. A top-level CLI run does not by itself validate a subagent runtime.
+- 2026-11-11: Reuse native subagent dispatch for capability experiments. A top-level CLI run does not by itself validate a subagent runtime.
 - 2026-11-11: Prefer a small evidence file and deterministic offline summarizer to a live benchmark service, automatic scraper, or new provider orchestration framework.
 
 ## Outcomes & Retrospective
@@ -58,7 +58,7 @@ The source bundle currently contains:
 - `skills/default/subagent-model-router/scripts/test_route.py`: deterministic public-process tests, including copied portable bundles.
 - `skills/default/subagent-model-router/evals/evals.json`: live instruction-following scenarios for the skill.
 
-Relevant maintained guidance is `brain/codebase/script-testing.md`, `brain/codebase/testing.md`, `brain/codebase/skills-and-installation.md`, and `skills/default/create-skill/README.md`. The isolated provider runner is `skills/default/create-skill/scripts/eval_runner.py`; its scope is described in `skills/default/create-skill/references/provider-runs.md`. Existing dispatch research is `.agents/scratchpad/subagent-dispatch-model-and-reasoning-controls.md`. Its examples and installed-version observations are not current live-acceptance proof.
+Relevant maintained guidance is `brain/codebase/script-testing.md`, `brain/codebase/testing.md`, `brain/codebase/skills-and-installation.md`, and `skills/default/create-skill/README.md`. Existing dispatch research is `.agents/scratchpad/subagent-dispatch-model-and-reasoning-controls.md`. Its examples and installed-version observations are not current live-acceptance proof.
 
 A configuration means an exact model and effort pair. A capability floor is the minimum tier imposed by the task and diagnosed failures. A workload profile names a narrowly described family of assignments and its acceptance rubric. A runtime profile identifies the actual host, provider, versions/settings, tools, and model identifiers used for measurement. Pareto dominance means that, for comparable evidence and relevant objectives, one qualified configuration is no worse in any measured dimension and better in at least one. A point on a public chart does not establish local task qualification.
 
@@ -132,7 +132,7 @@ Use fresh experiment directories under `skills/default/subagent-model-router-wor
 
 For capability runs, use actual native subagents in the selected runtime. On the currently documented Codex V2 interface this means fresh `collaboration.spawn_agent` calls with `fork_turns: none`, an exact `model`, and exact `reasoning_effort`. Verify the current schema and observed/resolved settings. Do not put the model identity or expected winner into the task prompt. Use identical self-contained prompts and role instructions, with exclusive disposable fixture directories. Do not delegate within a benchmark worker or let it read other arms' outputs. Use scheduler/dispatch guidance required by the runtime. A successful spawn alone is insufficient evidence of resolved settings.
 
-The router instruction-following evals may use `eval_runner.py` after its capability check. Record whether they used CLI or native dispatch; do not combine their timing with capability trials. Keep baseline and changed-skill snapshots separate.
+Record whether router instruction-following evals used CLI or native dispatch; do not combine their timing with capability trials. Keep baseline and changed-skill snapshots separate.
 
 ### E1 protocol and acceptance gate
 
@@ -231,4 +231,4 @@ The motivating public snapshot was fetched by Slopalytics on 2026-11-10. Its gen
 
 Sources: [selected chart](https://slopalytics.com/?models=gpt-6-1-sol,gpt-6-1-terra,gpt-6-luna), [snapshot bundle](https://slopalytics.com/assets/index-Cx6N5DX8.js), [Terra-low benchmark and metric definitions](https://artificialanalysis.ai/models/gpt-6-1-terra-low), [Luna-high benchmark](https://artificialanalysis.ai/models/gpt-6-luna-high). Refresh and retain a dated source snapshot before live work; do not depend on the earlier investigation's `/tmp` files continuing to exist.
 
-The preparatory worktree contained unrelated `brain/plans/31-scheduler-reliability/review-2.md`; leave it untouched. Durable reusable methodology belongs in the maintained evaluation guide and evidence-routing reference, not only in these temporary plans. Run the applicable reflection workflow when implementation ends, preserving only durable findings.
+Durable reusable methodology belongs in the maintained evaluation guide and evidence-routing reference, not only in these temporary plans. Run the applicable reflection workflow when implementation ends, preserving only durable findings.

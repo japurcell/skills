@@ -110,7 +110,6 @@ class TestTestAll(unittest.TestCase):
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
         expected.add("skills/default/subagent-model-router/scripts/test_route.py")
-        expected.add("skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py")
         expected.add("skills/default/commit/evals/test_validate_message.py")
         expected.add("skills/default/commit/evals/test_grade_benchmark.py")
         listed = {

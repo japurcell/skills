@@ -55,9 +55,7 @@ Only add context the agent doesn’t already have. Challenge each piece of infor
    - Use deterministic assertions and a grader when the output can be checked objectively. Preserve scenario-specific conditions and malformed/missing-input cases.
    - Benchmark new skills against `without_skill`; compare modified skills against an explicit `old_skill` snapshot. Use a fresh iteration and preserve earlier valid failures.
    - Read [evaluation validation and evidence](references/validation.md) when writing scenarios or graders, running evaluations, or interpreting benchmarks.
-   - For provider preflight or live Codex/Copilot evaluations, read [provider run tooling](references/provider-runs.md) and check its capability limits first. Use the bundled `scripts/eval_runner.py` for supported scenarios: preflight, prepare or adopt an isolated run, then complete smoke before scenario turns. Keep paired-run provider settings consistent.
    - For unsupported scenarios, use a maintained scenario harness that preserves the same isolation, session, and evidence requirements. Record the capability gap; preserve the scenario's actions and baseline conditions instead of adding turns, exposing a skill, or bypassing guards to fit the runner.
-   - Before grading, normalize retained runner evidence into the artifacts required by the selected grader and aggregator, following the evidence reference. Inspect scenario assertions and authored outputs; a smoke receipt or zero provider exit establishes execution, not behavioral success.
    - Use the target project's existing validation tools and maintained skill's acceptance scope. Resolve tooling from the available skill installation rather than assuming the author's checkout layout.
 
 5. **Review the result**
