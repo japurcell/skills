@@ -14,7 +14,7 @@ Use background agents so you can stay in active dialogue with the user.
 
 Run independent work in parallel and dependent work in waves. Serialize edits to shared files.
 
-Routine communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers. There is an exception: relay every subagent question requiring human input through the parent’s user-facing question tool immediately.
+Routine communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers. There is an exception: relay every subagent question requiring human input through the parent's user-facing question tool immediately.
 
 ## Dispatch loop
 
@@ -26,9 +26,13 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 - Brief exploration workers with the needed context, acceptance criteria, and known negative cases; use context pointers where those facts are already available.
 - Use `subagent-model-router` to obtain the final dispatchable route for the subtask. Apply its model and effort policy through dispatch controls, and stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
 
-**Subagent rules**:
+### Pre-dispatch gate
 
-- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
+Before launching an agent or assigning new work to an existing agent, run the router CLI and record its invocation, returned route, and intended dispatch arguments in the assignment's coordination record.
+
+Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
+
+After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
 
 ## Runtime enforcement
 
@@ -41,3 +45,7 @@ Use [`scripts/scheduler.py`](scripts/scheduler.py) with a session-specific state
 5. **Close assignments.** Record verified completion with `complete`, or cancellation with `cancel` after stopping the worker.
 
 Keep dispatch start time, routed model, exact effort or host-default omission, and any host enforcement handle in a separate coordination record keyed by assignment ID; the scheduler lacks structured fields for these. Let the scheduler own deadline transitions and extension state. It advances only when called and emits JSON actions; the parent performs communication, worker control, and shutdown verification.
+
+## Gotchas
+
+- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.

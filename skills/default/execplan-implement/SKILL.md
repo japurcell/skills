@@ -22,6 +22,14 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 Before every commit, the commit creator must activate the `commit` skill and follow its message validation workflow.
 
+## Pre-dispatch gate
+
+Before launching an agent or assigning new work to an existing agent, run the router CLI and record its invocation, returned route, and intended dispatch arguments in the assignment's coordination record.
+
+Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
+
+After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
+
 ## Runtime enforcement
 
 1. **Record each background assignment you dispatch**, including reuse. Before dispatch, set a deadline based on expected effort and complexity. Record the routed model and its exact explicit effort or host-default omission. Track task and agent IDs, start time, extension count (initially zero), and enforcement handle as available.
