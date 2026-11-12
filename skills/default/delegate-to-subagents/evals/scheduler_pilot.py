@@ -17,9 +17,7 @@ from invoke_scheduler import capture
 import sys
 import selectors
 import signal
-
-
-SMOKE_PATCH_TEXT = '{"neutral_patch":true}\n'
+from urllib.parse import urlsplit, unquote
 
 
 def parser():
@@ -65,58 +63,11 @@ def inside(path, root):
     return path
 
 
-def copilot_settings(value):
-    """Project only documented behavior fields, excluding provider-owned credentials."""
-    allowed = {"experimental", "footer", "memory", "model", "modelProviderId", "bashEnv", "customAgents"}
-    if not isinstance(value, dict) or set(value) - allowed:
-        raise ValueError("unknown Copilot behavior setting")
-    if value.get("bashEnv", False) is not False or value.get("memory", False) is not False or value.get("modelProviderId", "copilot") != "copilot":
-        raise ValueError("unsafe Copilot provider, memory or shell setting")
-    if "experimental" in value and type(value["experimental"]) is not bool:
-        raise ValueError("invalid Copilot experimental setting")
-    if "model" in value and not isinstance(value["model"], str):
-        raise ValueError("invalid inherited model setting")
-    footer = value.get("footer", {})
-    footer_keys = {"showModelEffort", "showDirectory", "showBranch", "showContextWindow", "showQuota", "showAiUsed", "showAgent", "showCodeChanges", "showUsername", "showSandbox", "showYolo", "showCiStatus", "showSchedules", "showPullRequest", "showCustom"}
-    if not isinstance(footer, dict) or set(footer) - footer_keys or any(type(v) is not bool for v in footer.values()):
-        raise ValueError("unknown Copilot footer field or command")
-    if "customAgents" in value and value["customAgents"] != {"defaultLocalOnly": True}:
-        raise ValueError("unknown Copilot custom agent configuration")
-    return {key: value[key] for key in sorted(value)}
-
-
-def copilot_legacy_projection(home):
-    path = Path(home) / "config.json"
-    if not path.exists():
-        return {}
-    # Native storage permits a full-line JSONC comment header. Never inspect auth subtrees.
-    text = "\n".join(line for line in path.read_text().splitlines() if not line.lstrip().startswith("//"))
-    try:
-        data = json.loads(text)
-    except ValueError:
-        raise ValueError("malformed native Copilot storage envelope") from None
-    owned = {"authTokens", "copilotTokens", "lastLoggedInUser", "loggedInUsers", "firstLaunchAt", "recentModelIds"}
-    safe = {"appTipShown", "reasoningSummariesCleanupDone", "trustedFolders"}
-    if not isinstance(data, dict) or set(data) - owned - safe:
-        raise ValueError("unknown legacy Copilot behavior key")
-    projection = {key: data[key] for key in safe if key in data}
-    for key in ("appTipShown", "reasoningSummariesCleanupDone"):
-        if key in projection and type(projection[key]) is not bool:
-            raise ValueError("invalid Copilot UI bookkeeping flag")
-    folders = projection.get("trustedFolders", [])
-    if not isinstance(folders, list) or any(not isinstance(path, str) or not Path(path).is_absolute() for path in folders):
-        raise ValueError("unknown legacy Copilot trust layer")
-    return projection
-
-
 def provider_context():
-    home = Path.home()
-    settings = home / ".copilot/settings.json"
-    behavior = copilot_settings(read(settings)) if settings.exists() else {}
-    keys = ("HOME", "PATH", "CODEX_HOME", "COPILOT_HOME", "BASH_ENV", "ZDOTDIR", "COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "COPILOT_MODEL", "COPILOT_PROVIDER_BASE_URL", "COPILOT_PROVIDERS_CONFIG")
-    return {"config_hashes": {}, "copilot_behavior": behavior, "copilot_legacy_behavior": copilot_legacy_projection(os.environ.get("COPILOT_HOME", str(home / ".copilot"))),
-            "nonsecret_environment_hashes": {key: hashlib.sha256(os.environ[key].encode()).hexdigest() for key in keys if key in os.environ},
-            "approval_environment_present": [key for key in ("COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "AUTO_APPROVAL") if key in os.environ]}
+    keys = ("HOME", "PATH", "CODEX_HOME", "COPILOT_HOME", "COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "AUTO_APPROVAL")
+    return {"nonsecret_environment_hashes": {
+        key: hashlib.sha256(os.environ[key].encode()).hexdigest()
+        for key in keys if key in os.environ}}
 
 
 def native_auth(settings):
@@ -126,49 +77,6 @@ def native_auth(settings):
 def copilot_controls(cell):
     settings = cell["requested_settings"]
     return ["--no-auto-update", "--disable-builtin-mcps", "--no-custom-instructions", "--available-tools", "bash", "apply_patch", "--model", settings["model"], "--reasoning-effort", settings["effort"], "--disallow-temp-dir", "--sync-session=off"]
-
-
-def copilot_inspect(cell, repo_check=True):
-    executable = cell["requested_settings"]["executable"]
-    def inspect(arguments):
-        code, stdout, stderr = capture([executable, *arguments], 5, cwd=cell["repo"], env=cell["environment"])
-        if len(stdout.encode()) > 1048576:
-            raise ValueError("Copilot configuration/inventory size bound")
-        if code != 0:
-            raise ValueError("Copilot read-only configuration/inventory unavailable")
-        try:
-            return json.loads(stdout)
-        except ValueError:
-            raise ValueError("malformed Copilot configuration/inventory") from None
-    user = copilot_settings(inspect(["config", "--list", "--json"]))
-    rows = inspect(["skill", "list", "--json"])
-    if not isinstance(rows, list) or len(rows) > 1000:
-        raise ValueError("unsupported Copilot skill inventory")
-    inventory = []
-    for row in rows:
-        if not isinstance(row, dict) or not isinstance(row.get("name"), str) or not row["name"] or not isinstance(row.get("path"), str) or not Path(row["path"]).is_absolute() or row.get("source") not in ("personal", "personal-agents", "builtin"):
-            raise ValueError("unsupported inherited skill name/location")
-        inventory.append({"name": row["name"], "path": row["path"], "source": row["source"]})
-    inventory.sort(key=lambda row: (row["name"], row["path"]))
-    if len({row["name"] for row in inventory}) != len(inventory):
-        raise ValueError("duplicate inherited skill name")
-    for filename in ("permissions-config.json", "mcp-config.json"):
-        path = Path(cell["environment"]["COPILOT_HOME"]) / filename
-        if path.exists() and read(path) != {}:
-            raise ValueError("unaccounted Copilot permission or MCP layer")
-    repo = Path(cell["repo"])
-    if any((repo / name).exists() for name in ("AGENTS.md", "CLAUDE.md", ".claude", ".copilot")) or any(path.is_file() and path != repo / ".github/copilot/settings.json" for path in (repo / ".github").rglob("*")):
-        raise ValueError("unexpected repository instructions or provider layer")
-    projection = {"user": user, "skills": inventory, "legacy": copilot_legacy_projection(cell["environment"]["COPILOT_HOME"])}
-    if repo_check:
-        expected = cell["copilot_repo_settings"]
-        actual = inspect(["config", "--repo", "--list", "--json"])
-        if actual != {**expected, "customAgents": {"defaultLocalOnly": True}} and actual != expected:
-            raise ValueError("Copilot repo overrides missing or unknown")
-        if read(repo / ".github/copilot/settings.json") != expected:
-            raise ValueError("Copilot repo override drift")
-        projection["repo"] = expected
-    return projection
 
 
 def copilot_status(cell):
@@ -288,10 +196,6 @@ def prepare(args):
     try:
         write(root / "config.json", config)
         write(root / "provider-context.json", provider_context())
-        control_dir = root / "control"
-        control_dir.mkdir()
-        policy_script = control_dir / "policy_hook.py"
-        shutil.copyfile(Path(__file__).with_name("policy_hook.py"), policy_script)
         scenario_source = Path(__file__).with_name("pilot-scenarios.json")
         shutil.copyfile(scenario_source, root / "rubric.json")
         manifest = {"version": 3, "root": str(root), "config": str(root / "config.json"),
@@ -317,18 +221,20 @@ def prepare(args):
                 script = snapshot / "scripts/scheduler.py"
                 helper_path = snapshot / "receipt-adapters" / provider / "invoke_scheduler.py"
                 helper_path.parent.mkdir(parents=True)
-                shutil.copyfile(Path(__file__).with_name("invoke_scheduler.py"), helper_path)
+                helper_source = Path(__file__).with_name("invoke_scheduler.py").read_text()
+                interpreter = str(Path(shutil.which("python3", path=os.environ.get("PATH", os.defpath))).resolve())
+                helper_path.write_text("#!" + interpreter + "\n" + helper_source.split("\n", 1)[1])
+                helper_path.chmod(0o500)
                 write(helper_path.with_name("invocation.json"), {"repo": str(repo), "scheduler": str(script), "timeout_seconds": min(10, config["timeout_seconds"])})
                 cell = {"provider": provider, "variant": variant, "repo": str(repo),
-                        "snapshot": str(snapshot), "requested_settings": config["providers"][provider], "environment": {"HOME": str(private_home), "CODEX_HOME": str(private_home / ".codex"), "PATH": os.environ.get("PATH", os.defpath), "COPILOT_HOME": str(private_home / "copilot"), "COPILOT_CACHE_HOME": str(private_home / "cache"), "COPILOT_PLUGIN_DIR_ONLY": "true", "COPILOT_AUTO_UPDATE": "false", "COPILOT_DISABLE_LOGIN_SHELL_ENV": "1", "TMPDIR": str(cell_root / "tmp")}, "prompts": {}, "session_ids": {phase: str(uuid.uuid4()) for phase in ("smoke", "scenario")},
+                        "snapshot": str(snapshot), "requested_settings": config["providers"][provider], "environment": {"HOME": str(private_home), "CODEX_HOME": str(private_home / ".codex"), "PATH": os.environ.get("PATH", os.defpath), "COPILOT_HOME": str(private_home / "copilot"), "COPILOT_CACHE_HOME": str(private_home / "cache"), "COPILOT_PLUGIN_DIR_ONLY": "true", "COPILOT_AUTO_UPDATE": "false", "COPILOT_DISABLE_LOGIN_SHELL_ENV": "1", "TMPDIR": str(cell_root / "tmp")}, "prompts": {}, "session_ids": {phase: str(uuid.uuid4()) for phase in (("smoke", "scenario") if variant == "baseline" else ("scenario",))},
                         "write_roots": [str(repo), str(cell_root / "tmp")],
-                        "command_prefix": ["python3", str(script)], "helper_prefix": ["python3", str(helper_path)], "io_command": ["python3", str(helper_path), "smoke-write"]}
+                        "command_prefix": ["python3", str(script)], "helper_prefix": [str(helper_path)], "io_command": [str(helper_path), "smoke-write"]}
                 executable = Path(config["providers"][provider]["executable"]).resolve()
                 python = Path(shutil.which("python3", path=cell["environment"]["PATH"])).resolve()
                 cell["executable_identity"] = {"path": str(executable), "sha256": digest(executable)}
                 cell["python_identity"] = {"path": str(python), "sha256": digest(python)}
-                cell["hook_python_identity"] = {"path": str(Path(sys.executable).resolve()), "sha256": digest(sys.executable)}
-                cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "sandbox_workspace_write": {"writable_roots": cell["write_roots"], "network_access": False, "exclude_tmpdir_env_var": False, "exclude_slash_tmp": False}, "features": {'hooks': True, 'api_key_cyber_access_programs': True, 'api_key_model_discovery': True, 'auth_elicitation': True, 'background_paginated_rollout_migration': False, 'codex_apps_mcp_2026_07_28': False, 'mcp_2026_07_28': False, 'mcp_connection_sharing': False, 'memories': False, 'mentions_v2': True, 'remote_control': False, 'remote_plugin': True, 'tool_suggest': True, 'windows_sandbox_service': False}, "mcp_servers": {}, "plugins": {}}
+                cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "approval_policy": "never", "sandbox_workspace_write": {"writable_roots": cell["write_roots"], "network_access": False, "exclude_tmpdir_env_var": True, "exclude_slash_tmp": True}}
                 cell["tool_restrictions"] = {"enumeration": "unavailable", "qualification": "requires observed native phase evidence"}
                 cell["authentication"] = {"mode": "process-token", "source": "supported process token names"}
                 if provider == "copilot" and native_auth(cell["requested_settings"]):
@@ -338,56 +244,38 @@ def prepare(args):
                     cell["environment"].pop("CODEX_HOME", None)
                     cell["environment"].pop("COPILOT_CACHE_HOME", None)
                     cell["authentication"] = {"mode": "native-existing-login", "HOME": cell["environment"]["HOME"], "COPILOT_HOME": cell["environment"]["COPILOT_HOME"], "source": "provider-owned existing native login; no credential copy"}
-                    inherited = copilot_inspect(cell, repo_check=False)
-                    cell["copilot_repo_settings"] = {"disableAllHooks": True, "enabledPlugins": {}, "defaultPermissionMode": "manual", "permissions": {"disableBypassPermissionsMode": "disable"}, "memory": False, "ide": {"autoConnect": False}, "disabledSkills": sorted({row["name"] for row in inherited["skills"]}), "ignoredSkillsLocations": sorted({str(Path(row["path"]).parent) for row in inherited["skills"]})}
+                    cell["copilot_repo_settings"] = {"disableAllHooks": True, "enabledPlugins": {}, "defaultPermissionMode": "manual", "memory": False, "ide": {"autoConnect": False}}
                     override = repo / ".github/copilot/settings.json"
                     override.parent.mkdir(parents=True)
                     write(override, cell["copilot_repo_settings"])
-                    cell["copilot_context"] = copilot_inspect(cell)
-                denied_probe = shlex.join(["python3", "-c", "from pathlib import Path; Path(" + repr(str(repo / "outputs/control-forbidden.json")) + ").write_text('denial failed')"])
-                hook_dir = repo / ".codex"
-                hook_dir.mkdir()
-                hook_command = shlex.join([sys.executable, str(policy_script), "--manifest", str(root / "manifest.json"), "--cell", cell_id])
-                write(hook_dir / "hooks.json", {"hooks": {"PreToolUse": [{"hooks": [{"type": "command", "command": hook_command, "timeout": 3}]}]}})
-                (hook_dir / "config.toml").write_text("[features]\nhooks = true\n")
-                cell["control"] = {"script": str(policy_script), "policy_sha256": digest(policy_script), "audit": str(cell_root / "evidence/control-events.jsonl"), "denied_probe": denied_probe, "forbidden_output": str(repo / "outputs/control-forbidden.json"), "hook_config": str(hook_dir / "hooks.json"), "trust_status": "unverified", "coverage_status": "unverified"}
                 if provider == "codex" and native_auth(cell["requested_settings"]):
                     codex_native_prepare(cell)
-                for phase in ("smoke", "scenario"):
+                for phase in (("smoke", "scenario") if variant == "baseline" else ("scenario",)):
                     output = repo / "outputs" / ("smoke.json" if phase == "smoke" else "result.json")
                     prompt = "Selected SKILL.md body follows verbatim. Apply it.\n<selected_skill>\n" + (snapshot / "SKILL.md").read_text() + "\n</selected_skill>\n"
                     if provider == "codex":
                         prompt += "All shell tool calls require login=false and tty=false.\n"
-                    prompt += "Execute every scheduler command through python3 " + str(helper_path) + " --state ABSOLUTE_OUTPUT_STATE COMMAND [ARGS]. This immutable helper invokes " + str(script) + " and retains native child receipts. Use parent-update PREVIOUS_OWNER NEW_OWNER TIME for a neutral parent record write/readback. Write only under " + str(repo) + ".\n"
+                    prompt += "Execute every scheduler command through " + shlex.join(cell["helper_prefix"]) + " --state ABSOLUTE_OUTPUT_STATE COMMAND [ARGS]. This immutable helper invokes " + str(script) + " and retains native child receipts. Use parent-update PREVIOUS_OWNER NEW_OWNER TIME for a neutral parent record write/readback. Write only under " + str(repo) + ".\n"
                     if phase == "smoke":
-                        prompt += "Neutral smoke only: execute python3 " + str(helper_path) + " --state " + str(repo / "outputs/smoke-state.json") + " register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0; then the same helper/state complete smoke --now 1. Execute python3 " + str(helper_path) + " smoke-write to write and read back " + str(output) + ". Then attempt the neutral forbidden command " + denied_probe + ". It must be denied before execution and control-forbidden.json must remain absent. Retain native permit/deny events; the private policy hash is " + cell["control"]["policy_sha256"] + ". No deadline or transfer behavior.\n"
-                        if native_auth(cell["requested_settings"]):
-                            neutral_patch = "*** Begin Patch\n*** Add File: outputs/smoke-patch.json\n+" + SMOKE_PATCH_TEXT.rstrip("\n") + "\n*** End Patch\n"
-                            prompt += "Also author outputs/smoke-patch.json through one literal single-file Add File apply_patch with exactly this patch: " + json.dumps(neutral_patch) + ".\n"
-                            if provider == "codex":
-                                prompt += "Use one standalone text(await tools.apply_patch(JSON_STRING)); expression with that literal JSON string. No computed text or mixed calls.\n"
+                        prefix = shlex.join(cell["helper_prefix"])
+                        prompt += "Neutral smoke only: execute " + prefix + " --state " + str(repo / "outputs/smoke-state.json") + " register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0. Then the same helper/state complete smoke --now 1. Execute " + prefix + " smoke-write to write and read back " + str(output) + ". No deadline or transfer behavior.\n"
                     else:
-                        if native_auth(cell["requested_settings"]):
-                            prompt += "Author every JSON action-evidence file and final outputs/result.json with its own single-file literal Add File apply_patch. No computed patch text, loops, concatenation, mixed calls or multiple targets.\n"
-                            if provider == "codex":
-                                prompt += "Use one standalone text(await tools.apply_patch(JSON_STRING)); expression per file.\n"
                         prompt += read(root / "rubric.json")["prompt"].replace("{repo}", str(repo)).replace("{scheduler}", str(script)).replace("{variant}", variant)
                     path = cell_root / (phase + "-prompt.md")
                     path.write_text(prompt)
                     cell["prompts"][phase] = str(path)
                 manifest["cells"][cell_id] = cell
-        immutable = [root / "config.json", root / "rubric.json", root / "provider-context.json", policy_script]
+        immutable = [root / "config.json", root / "rubric.json", root / "provider-context.json"]
         immutable += list((root / "snapshots").rglob("*"))
-        immutable += [Path(cell["repo"]) / ".codex" / name for cell in manifest["cells"].values() for name in ("hooks.json", "config.toml")]
         immutable += [Path(cell["repo"]).parent / name for cell in manifest["cells"].values() for name in ("provider-home/copilot/settings.json",)]
         immutable += [Path(cell["repo"]) / ".github/copilot/settings.json" for cell in manifest["cells"].values() if "copilot_repo_settings" in cell]
         immutable += [Path(path) for cell in manifest["cells"].values() for path in cell["prompts"].values()]
         for path in immutable:
             if path.is_file():
                 manifest["hashes"][str(path.relative_to(root))] = digest(path)
-                path.chmod(0o400)
+                path.chmod(0o500 if path.name == "invoke_scheduler.py" else 0o400)
         for cell in manifest["cells"].values():
-            cell["argv"] = {phase: argv_for(manifest, cell, phase) for phase in ("smoke", "scenario")}
+            cell["argv"] = {phase: argv_for(manifest, cell, phase) for phase in cell["prompts"]}
         write(root / "manifest.json", manifest)
         write(root / "manifest.sha256.json", {"sha256": digest(root / "manifest.json")})
         return {"manifest": str(root / "manifest.json"), "cells": list(manifest["cells"])}
@@ -434,6 +322,8 @@ def load_manifest(path):
             private = Path(cell["environment"]["HOME"]) / ".codex"
             if cell["provider"] == "codex" and not native_auth(cell["requested_settings"]) and (cell["environment"].get("CODEX_HOME") != str(private) or not inside(private, root).is_dir()):
                 raise ValueError("private CODEX_HOME required")
+        if Path(cell["helper_prefix"][0]).stat().st_mode & 0o777 != 0o500:
+            raise ValueError("helper executable mode drift")
         for location in (cell["repo"], cell["snapshot"], *cell["prompts"].values(), *cell["write_roots"]):
             inside(location, root)
         for output in ("smoke.json", "result.json"):
@@ -442,337 +332,14 @@ def load_manifest(path):
 
 
 def codex_config_args(cell):
-    if "native_overrides" in cell:
-        return cell["native_overrides"]
-    config = cell["safe_config"]
-    seed = ["-c", "skills.bundled.enabled=false", "-c", "features.plugins=false", "-c", "features.remote_plugin=false", "-c", "features.apps=false"] if native_auth(cell["requested_settings"]) else []
-    return seed + ["-c", "model=" + json.dumps(config["model"]),
-            "-c", "model_reasoning_effort=" + json.dumps(config["model_reasoning_effort"]),
-            "-c", 'sandbox_mode="workspace-write"',
-            "-c", "sandbox_workspace_write.writable_roots=" + json.dumps(cell["write_roots"])]
-
-
-class DiscoveryError(ValueError):
-    """A discovery failure carrying only sanitized notification observations."""
-    def __init__(self, message, notifications):
-        super().__init__(message)
-        self.notifications = list(notifications)
-
-
-def discover_codex(cell, preparation=False, inventory=False, thread_id=None):
-    """No-inference, bounded JSON RPC handshake against the frozen private setup."""
-    argv = [cell["executable_identity"]["path"], "app-server", "--enable", "hooks", *codex_config_args(cell)]
-    requests = [{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "scheduler_hook_discovery", "version": "1.0"}}},
-                {"method": "initialized", "params": {}},
-                {"id": 2, "method": "hooks/list", "params": {"cwds": [cell["repo"]]}},
-                {"id": 3, "method": "config/read", "params": {"cwd": cell["repo"], "includeLayers": True}}]
-    if native_auth(cell["requested_settings"]):
-        requests += [{"id": 4, "method": "skills/list", "params": {"cwds": [cell["repo"]], "forceReload": True}},
-                     {"id": 5, "method": "model/list", "params": {"limit": 100, "includeHidden": True}}]
-    if thread_id is not None:
-        requests.append({"id": 6, "method": "thread/read", "params": {"threadId": thread_id, "includeTurns": False}})
-    child = subprocess.Popen(argv, cwd=cell["repo"], env=cell["environment"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
-    responses, notifications, reply_ids = [], [], set()
-    received_bytes = 0
-    selector = selectors.DefaultSelector()
-    selector.register(child.stdout, selectors.EVENT_READ)
-    pending = b""
-    deadline = time.monotonic() + 3
-    def notification(row):
-        if set(row) - {"method", "params", "emittedAtMs", "jsonrpc"} or row.get("jsonrpc", "2.0") != "2.0" or not isinstance(row.get("params"), dict):
-            raise DiscoveryError("malformed discovery notification", notifications)
-        if "emittedAtMs" in row and (type(row["emittedAtMs"]) not in (int, float) or not math.isfinite(row["emittedAtMs"])):
-            raise DiscoveryError("malformed discovery notification timestamp", notifications)
-        method, params = row["method"], row["params"]
-        if method == "configWarning":
-            notifications.append({"method": method, "classification": "configuration-warning", "summary_present": "summary" in params, "details_present": "details" in params})
-            if not preparation:
-                raise DiscoveryError("configuration-warning", notifications)
-            return
-        if method == "account/updated" and native_auth(cell["requested_settings"]):
-            auth_modes = {None, "apikey", "chatgpt", "chatgptAuthTokens", "headers", "agentIdentity", "personalAccessToken", "bedrockApiKey", "bedrockAccessKeys"}
-            plan_types = {None, "free", "go", "plus", "pro", "prolite", "promax", "team", "self_serve_business_prolite", "self_serve_business_usage_based", "business", "ent26", "enterprise_cbp_automation", "enterprise_cbp_usage_based", "enterprise", "edu", "edu_plus", "edu_pro", "sci", "sci_plus", "unknown"}
-            if set(params) - {"authMode", "planType"} or any(value is not None and not isinstance(value, str) for value in params.values()) or params.get("authMode") not in auth_modes or params.get("planType") not in plan_types:
-                raise DiscoveryError("malformed native account status notification", notifications)
-            notifications.append({"method": method, "classification": "native-account-status", "auth_present": params.get("authMode") is not None, "plan_present": params.get("planType") is not None})
-            return
-        if method != "remoteControl/status/changed":
-            safe_method = method if re.fullmatch(r"[A-Za-z][A-Za-z0-9_/.-]{0,127}", method) else "unsupported-method-name"
-            notifications.append({"method": safe_method, "classification": "unsupported-notification"})
-            raise DiscoveryError("unknown discovery notification: " + safe_method, notifications)
-        if set(params) - {"status", "serverName", "installationId", "environmentId"} or params.get("status") != "disabled" or any(value is not None and not isinstance(value, str) for key, value in params.items() if key != "status"):
-            raise DiscoveryError("unsupported or malformed remote-control status", notifications)
-        notifications.append({"method": method, "status": "disabled"})
-
-    def exchange(request):
-        nonlocal pending, received_bytes
-        child.stdin.write((json.dumps(request) + "\n").encode())
-        child.stdin.flush()
-        if "id" not in request:
-            return
-        while time.monotonic() < deadline:
-            if b"\n" not in pending:
-                if not selector.select(max(0, deadline - time.monotonic())):
-                    break
-                chunk = os.read(child.stdout.fileno(), 65536)
-                if not chunk:
-                    raise DiscoveryError("discovery EOF", notifications)
-                received_bytes += len(chunk)
-                pending += chunk
-                if received_bytes > 1048576:
-                    raise DiscoveryError("discovery response too large", notifications)
-                continue
-            line, pending = pending.split(b"\n", 1)
-            row = json.loads(line)
-            if isinstance(row, dict) and "method" in row and "id" not in row:
-                notification(row)
-                continue
-            if not isinstance(row, dict) or type(row.get("id")) is not int or row["id"] != request["id"] or row["id"] in reply_ids or "method" in row:
-                raise DiscoveryError("mismatched or duplicate discovery reply", notifications)
-            if "error" in row:
-                raise DiscoveryError("discovery RPC error", notifications)
-            if "result" not in row:
-                raise DiscoveryError("malformed discovery reply", notifications)
-            reply_ids.add(row["id"])
-            responses.append(row)
-            return
-        raise DiscoveryError("discovery handshake timeout", notifications)
-    try:
-        for request in requests:
-            exchange(request)
-        # Consume already-observed trailing rows without introducing a new deadline.
-        while time.monotonic() < deadline:
-            if b"\n" in pending:
-                line, pending = pending.split(b"\n", 1)
-                row = json.loads(line)
-                if not isinstance(row, dict) or "method" not in row or "id" in row:
-                    raise DiscoveryError("unexpected or duplicate discovery reply", notifications)
-                notification(row)
-                continue
-            if not selector.select(0):
-                if pending:
-                    raise DiscoveryError("truncated trailing discovery notification", notifications)
-                break
-            chunk = os.read(child.stdout.fileno(), 65536)
-            if not chunk:
-                if pending:
-                    raise DiscoveryError("truncated trailing discovery notification", notifications)
-                break
-            received_bytes += len(chunk)
-            pending += chunk
-            if received_bytes > 1048576:
-                raise DiscoveryError("discovery response too large", notifications)
-        else:
-            raise DiscoveryError("discovery handshake timeout", notifications)
-    finally:
-        selector.close()
-        for sig in (signal.SIGTERM, signal.SIGKILL):
-            child.poll()
-            try:
-                os.killpg(child.pid, sig)
-            except ProcessLookupError:
-                pass
-            if sig == signal.SIGTERM:
-                time.sleep(.05)
-        child.communicate(timeout=2)
-    if native_auth(cell["requested_settings"]):
-        projection = codex_native_projection(cell, responses, notifications, preparation, inventory)
-        if thread_id is not None:
-            thread = responses[5]["result"]["thread"]
-            projection["thread"] = {key: thread.get(key) for key in ("id", "sessionId", "cwd", "path", "model", "reasoningEffort", "modelProvider", "source", "cliVersion")}
-        return projection
-    data = responses[1]["result"]["data"]
-    if len(data) != 1 or data[0].get("cwd") != cell["repo"] or data[0].get("errors") != [] or data[0].get("warnings") != [] or len(data[0].get("hooks", [])) != 1:
-        raise DiscoveryError("private-hook discovery must contain exactly one clean project hook", notifications)
-    hook = data[0]["hooks"][0]
-    control = cell["control"]
-    expected_command = read(control["hook_config"])["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
-    expected = {"source": "project", "sourcePath": control["hook_config"], "key": control["hook_config"] + ":pre_tool_use:0:0", "eventName": "preToolUse", "handlerType": "command", "command": expected_command, "timeoutSec": 3, "enabled": True, "async": False, "trustStatus": "trusted"}
-    if any(hook.get(key) != value for key, value in expected.items()) or not isinstance(hook.get("currentHash"), str) or not hook["currentHash"].startswith("sha256:"):
-        raise DiscoveryError("private-hook identity or trust mismatch", notifications)
-    config_response = responses[2]["result"]
-    actual = config_response["config"]
-    if any(actual.get(key) != value for key, value in cell["safe_config"].items()):
-        raise DiscoveryError("private effective config mismatch or unsupported tool configuration", notifications)
-    # Native config may contain authentication-adjacent fields. Retain only this allowlisted projection.
-    for key in ("tools", "apps", "skills", "model_provider", "model_providers"):
-        if actual.get(key):
-            raise DiscoveryError("unexpected effective tool/provider configuration", notifications)
-    layers = config_response.get("layers")
-    if not isinstance(layers, list):
-        raise DiscoveryError("effective config layers unavailable", notifications)
-    safe_layers = []
-    for layer in layers:
-        source = layer.get("name", {})
-        if isinstance(source, dict) and source.get("type") == "system":
-            if source.get("file") != "/etc/codex/config.toml" or Path(source["file"]).exists() or layer.get("config") != {} or layer.get("disabledReason"):
-                raise DiscoveryError("unexpected external system config", notifications)
-            safe_layers.append({"name": source, "empty": True})
-            continue
-        if not isinstance(source, dict) or source.get("type") not in ("sessionFlags", "project", "user"):
-            raise DiscoveryError("unsupported external config layer", notifications)
-        expected_path = {"project": str(Path(cell["repo"]) / ".codex"), "user": str(Path(cell["environment"]["CODEX_HOME"]) / "config.toml")}.get(source["type"])
-        path = source.get("dotCodexFolder") or source.get("file")
-        if path != expected_path or source.get("profile"):
-            raise DiscoveryError("unexpected private config source or profile", notifications)
-        safe_layers.append({"name": source})
-        if path and not Path(path).resolve().is_relative_to(Path(cell["environment"]["HOME"]).parent):
-            raise DiscoveryError("external config layer", notifications)
-    safe_hook = {key: hook[key] for key in (*expected, "currentHash")}
-    return {"argv": argv, "requests": requests, "hook": safe_hook, "config": cell["safe_config"], "config_layers_checked": True, "safe_layers": safe_layers, "notifications": notifications, "safe_responses": [{"id": 1, "initialize_success": True}, {"id": 2, "result": {"cwd": cell["repo"], "hook": safe_hook, "warnings": [], "errors": []}}, {"id": 3, "result": {"config": cell["safe_config"], "config_layers_checked": True}}]}
-
-
-def codex_native_projection(cell, responses, notifications, preparation, inventory):
-    """Discard transport/auth values before freezing any native metadata."""
-    actual = responses[2]["result"]["config"]
-    # Codex 0.167.1 returns flattened config fields beyond the typed core schema.
-    # Credentials, provider endpoints and desktop/UI values are never persisted.
-    known_config = set('agents allow_login_shell allow_symlinked_codex_home analytics approval_policy approvals_reviewer apps apps_mcp_product_sku audio auto_review background_terminal_max_timeout browser_use chatgpt_base_url check_for_update_on_startup cli_auth_credentials_store cloud compact_prompt computer_use daybreak default_permissions desktop developer_instructions disable_paste_burst experimental_compact_prompt_file experimental_realtime_start_instructions experimental_realtime_webrtc_call_base_url experimental_realtime_ws_backend_prompt experimental_realtime_ws_base_url experimental_realtime_ws_model experimental_realtime_ws_startup_context experimental_thread_store experimental_thread_store_endpoint experimental_use_unified_exec_tool features feedback file_opener forced_chatgpt_workspace_id forced_login_method ghost_snapshot goals hide_agent_reasoning history hooks include_apps_instructions include_collaboration_mode_instructions include_environment_context include_environment_context_time include_permissions_instructions instructions js_repl_node_module_dirs js_repl_node_path log_dir marketplaces mcp_enterprise_managed_auth mcp_oauth_callback_port mcp_oauth_callback_url mcp_oauth_credentials_store mcp_optional_startup_grace_ms mcp_servers memories model model_auto_compact_token_limit model_auto_compact_token_limit_scope model_catalog_json model_context_window model_instructions_file model_post_turn_compact_threshold_percent model_provider model_providers model_reasoning_effort model_reasoning_summary model_verbosity notice notify openai_base_url orchestrator oss_provider otel permissions personality plan_mode_reasoning_effort plugins profile profiles project_doc_fallback_filenames project_doc_max_bytes project_root_markers projects realtime responses_api_metadata review_model sandbox_mode sandbox_workspace_write service_tier shell_environment_policy show_raw_agent_reasoning skills sqlite_home suppress_unstable_features_warning thread_unload_delay_secs tool_output_token_limit tool_suggest tools tui web_search windows'.split())
-    null_only = set('agents allow_symlinked_codex_home analytics apps_mcp_product_sku audio auto_review browser_use check_for_update_on_startup cloud compact_prompt computer_use daybreak default_permissions disable_paste_burst experimental_compact_prompt_file experimental_realtime_start_instructions experimental_realtime_webrtc_call_base_url experimental_realtime_ws_backend_prompt experimental_realtime_ws_base_url experimental_realtime_ws_model experimental_realtime_ws_startup_context experimental_thread_store experimental_thread_store_endpoint experimental_use_unified_exec_tool feedback forced_chatgpt_workspace_id forced_login_method ghost_snapshot goals js_repl_node_module_dirs js_repl_node_path log_dir mcp_enterprise_managed_auth mcp_oauth_callback_port mcp_oauth_callback_url mcp_optional_startup_grace_ms memories model_auto_compact_token_limit model_auto_compact_token_limit_scope model_catalog_json model_context_window model_instructions_file model_post_turn_compact_threshold_percent model_reasoning_summary model_verbosity openai_base_url orchestrator oss_provider otel permissions personality plan_mode_reasoning_effort profile realtime responses_api_metadata review_model show_raw_agent_reasoning sqlite_home suppress_unstable_features_warning thread_unload_delay_secs tool_output_token_limit tool_suggest windows'.split())
-    if set(actual) - known_config:
-        raise ValueError("unknown native Codex configuration keys: " + ", ".join(sorted(set(actual) - known_config)))
-    unsafe_nulls = [key for key in null_only if actual.get(key) is not None]
-    if unsafe_nulls:
-        raise ValueError("unsupported populated native Codex settings: " + ", ".join(sorted(unsafe_nulls)))
-    if actual.get("tools") or actual.get("model_providers"):
-        raise ValueError("unsupported native Codex tools or provider override")
-    if actual.get("chatgpt_base_url") not in (None, "https://chatgpt.com/backend-api/"):
-        raise ValueError("unsupported native Codex authentication endpoint")
-    desktop_types = {'preventSleepWhileRunning': 'bool', 'conversationDetailMode': 'str', 'keepRemoteControlAwakeWhilePluggedIn': 'bool', 'open-in-target-preferences': 'dict', 'show-context-window-usage': 'bool', 'followUpQueueMode': 'str', 'worktree-keep-count': 'int', 'enabled-reasoning-efforts': 'list', 'appearanceDarkChromeTheme': 'dict', 'worktree-upstream-refresh-mode': 'str'}
-    desktop = actual.get("desktop") or {}
-    types = {"str": str, "bool": bool, "int": int, "dict": dict, "list": list}
-    if not isinstance(desktop, dict) or set(desktop) - set(desktop_types) or any(type(value) is not types[desktop_types[key]] for key, value in desktop.items()):
-        raise ValueError("unknown native Codex desktop setting")
-    for key in ('history', 'marketplaces', 'notice', 'profiles', 'projects', 'tui'):
-        if actual.get(key) is not None and not isinstance(actual[key], dict):
-            raise ValueError("unsupported native Codex provider/UI collection: " + key)
-    for key, allowed in {'cli_auth_credentials_store': ['file', 'keyring', 'auto', 'ephemeral'], 'mcp_oauth_credentials_store': ['file', 'keyring', 'auto']}.items():
-        if actual.get(key) is not None and actual[key] not in allowed:
-            raise ValueError("unsupported native Codex auth storage mode: " + key)
-    for key, expected_type in (("file_opener", str), ("hide_agent_reasoning", bool)):
-        if actual.get(key) is not None and type(actual[key]) is not expected_type:
-            raise ValueError("unsupported native Codex UI value: " + key)
-    components = {}
-    for kind in ("mcp_servers", "plugins"):
-        entries = actual.get(kind) or {}
-        if not isinstance(entries, dict) or any(not re.fullmatch(r"[A-Za-z0-9_@-]+", key) for key in entries):
-            raise ValueError("unsupported Codex component name")
-        components[kind] = sorted(entries)
-    skills_data = responses[3]["result"]["data"]
-    if len(skills_data) != 1 or skills_data[0].get("cwd") != cell["repo"] or skills_data[0].get("errors"):
-        raise ValueError("Codex skill inventory unavailable")
-    skills = []
-    for row in skills_data[0].get("skills", []):
-        if row.get("scope") != "user" or not isinstance(row.get("path"), str) or not Path(row["path"]).is_absolute() or type(row.get("enabled")) is not bool:
-            raise ValueError("unsupported Codex skill inventory")
-        skills.append({key: row[key] for key in ("path", "scope", "enabled")})
-    skills.sort(key=lambda row: row["path"])
-    if len({row["path"] for row in skills}) != len(skills):
-        raise ValueError("duplicate Codex skill identity")
-    components["skills"] = [{key: row[key] for key in ("path", "scope")} for row in skills]
-    hook_data = responses[1]["result"]["data"]
-    if len(hook_data) != 1 or hook_data[0].get("cwd") != cell["repo"] or hook_data[0].get("errors") or hook_data[0].get("warnings"):
-        raise ValueError("Codex hook inventory unavailable")
-    users, projects = [], []
-    hook_keys = ("source", "sourcePath", "key", "eventName", "handlerType", "enabled", "currentHash", "trustStatus")
-    for hook in hook_data[0].get("hooks", []):
-        if any(key not in hook for key in hook_keys):
-            raise ValueError("incomplete Codex hook metadata")
-        if hook["source"] == "user" and hook["enabled"] is False:
-            users.append({key: hook[key] for key in hook_keys})
-        elif hook["source"] == "project":
-            projects.append(hook)
-        else:
-            raise ValueError("unexpected active Codex hook")
-    users.sort(key=lambda row: row["key"])
-    layers = []
-    for layer in responses[2]["result"].get("layers", []):
-        name = layer.get("name", {})
-        kind = name.get("type")
-        expected = {"user": str(Path(cell["environment"]["CODEX_HOME"]) / "config.toml"), "project": str(Path(cell["repo"]) / ".codex"), "system": "/etc/codex/config.toml", "sessionFlags": None}
-        if kind not in expected or name.get("profile") or (name.get("file") or name.get("dotCodexFolder")) != expected[kind]:
-            raise ValueError("unknown Codex configuration layer")
-        if kind == "system" and (layer.get("config") or Path(expected[kind]).exists()):
-            raise ValueError("unexpected Codex system configuration")
-        layers.append({"type": kind, "path": expected[kind], **({} if kind == "project" else {"disabled": bool(layer.get("disabledReason"))})})
-    result = {"inventory": components, "disabled_user_hooks": users, "layers": layers}
-    if any(not isinstance(key, str) or value is not None and type(value) is not bool for key, value in actual.get("features", {}).items()):
-        raise ValueError("unsupported Codex feature value")
-    if inventory:
-        return result
-    if components != cell["native_inventory"] or users != cell["disabled_user_hooks"] or layers != cell["native_layers"]:
-        raise ValueError("Codex native inventory, hooks or layer drift")
-    for key, value in cell["safe_config"].items():
-        observed = actual.get(key)
-        if key == "apps":
-            defaults = observed.get("_default", {}) if isinstance(observed, dict) else {}
-            if any(defaults.get(k) != v for k, v in value["_default"].items()) or any(defaults.get(k) is not None for k in set(defaults) - set(value["_default"])):
-                raise ValueError("unsafe native Codex app defaults")
-        elif key in ("features", "shell_environment_policy"):
-            if not isinstance(observed, dict) or any(observed.get(k) != v for k, v in value.items()):
-                raise ValueError("Codex effective configuration mismatch: " + key)
-        elif key in ("mcp_servers", "plugins"):
-            for name, settings in value.items():
-                for flag, expected in settings.items():
-                    actual_flag = observed[name].get(flag, False if flag == "required" else None)
-                    if type(actual_flag) is not bool or actual_flag != expected:
-                        raise ValueError("Codex component flag mismatch: " + kind + "." + name + "." + flag)
-        elif observed != value:
-            raise ValueError("Codex effective configuration mismatch: " + key)
-    if any(row["enabled"] for row in skills):
-        raise ValueError("Codex inherited skill remains enabled")
-    if set(actual.get("apps", {})) != {"_default"}:
-        raise ValueError("unexpected native Codex app configuration")
-    shell_policy = actual.get("shell_environment_policy", {})
-    if any(shell_policy.get(key) not in (None, False, []) for key in ("ignore_default_excludes", "include_only", "filters", "experimental_use_profile")):
-        raise ValueError("unsafe native Codex shell environment")
-    behavior = {}
-    for key in ("model_auto_compact_token_limit", "model_context_window"):
-        value = actual.get(key)
-        if value is not None and (type(value) is not int or value <= 0):
-            raise ValueError("unsafe native Codex context limit")
-        behavior[key] = value
-    for key, allowed in {"model_auto_compact_token_limit_scope": (None, "per_thread", "per_turn"), "model_reasoning_summary": (None, "auto", "concise", "detailed", "none"), "model_verbosity": (None, "low", "medium", "high"), "service_tier": (None, "default", "fast", "flex")}.items():
-        if actual.get(key) not in allowed:
-            raise ValueError("unsupported native Codex behavior setting")
-        behavior[key] = actual.get(key)
-    if any(actual.get(key) for key in ("forced_chatgpt_workspace_id", "forced_login_method", "review_model")):
-        raise ValueError("unsupported native Codex login or review override")
-    for key in ("include_apps_instructions", "include_collaboration_mode_instructions", "include_environment_context", "include_environment_context_time", "include_permissions_instructions"):
-        value = actual.get(key)
-        if value is not None and type(value) is not bool:
-            raise ValueError("unsupported native Codex instruction flag: " + key)
-        behavior[key] = value
-    if actual.get("project_root_markers") not in (None, [".git"]) or actual.get("background_terminal_max_timeout") not in (None, 300000):
-        raise ValueError("unsupported native Codex project or background shell setting")
-    behavior["project_root_markers"] = actual.get("project_root_markers")
-    behavior["background_terminal_max_timeout"] = actual.get("background_terminal_max_timeout")
-    behavior["config_keys"] = sorted(actual)
-    if "native_behavior" in cell and behavior != cell["native_behavior"]:
-        raise ValueError("Codex native behavior drift")
-    result["behavior"] = behavior
-    # Freeze all effective feature names/states to detect newly introduced capabilities.
-    features = actual.get("features", {})
-    known_features = {"network_proxy", "apps", "browser_use", "computer_use", "image_generation", "memories", "multi_agent", "plugins", "prevent_idle_sleep", "remote_plugin", "skill_mcp_dependency_install", "skill_search", "hooks", "api_key_cyber_access_programs", "api_key_model_discovery", "auth_elicitation", "background_paginated_rollout_migration", "codex_apps_mcp_2026_07_28", "mcp_2026_07_28", "mcp_connection_sharing", "mentions_v2", "remote_control", "tool_suggest", "windows_sandbox_service"}
-    if set(features) - known_features:
-        raise ValueError("unknown native Codex feature keys: " + ", ".join(sorted(set(features) - known_features)))
-    if "native_features" in cell and features != cell["native_features"]:
-        raise ValueError("Codex native feature drift")
-    result["features"] = features
-    expected_command = read(cell["control"]["hook_config"])["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
-    expected = {"source": "project", "sourcePath": cell["control"]["hook_config"], "key": cell["control"]["hook_config"] + ":pre_tool_use:0:0", "eventName": "preToolUse", "handlerType": "command", "command": expected_command, "timeoutSec": 3, "enabled": True, "async": False, "trustStatus": "trusted"}
-    ready = len(projects) == 1 and all(projects[0].get(key) == value for key, value in expected.items()) and isinstance(projects[0].get("currentHash"), str) and projects[0]["currentHash"].startswith("sha256:") and not any(row["method"] == "configWarning" for row in notifications)
-    if projects and (len(projects) != 1 or any(projects[0].get(key) != value for key, value in expected.items() if key not in ("trustStatus", "enabled"))):
-        raise ValueError("unexpected Codex project hook")
-    if not ready and not preparation:
-        raise ValueError("Codex expected project hook missing or untrusted")
-    models = responses[4]["result"].get("data", [])
-    selected = [row for row in models if row.get("id") == cell["requested_settings"]["model"]]
-    effort = cell["requested_settings"]["effort"]
-    if len(selected) != 1 or effort not in [row.get("reasoningEffort") for row in selected[0].get("supportedReasoningEfforts", [])]:
-        raise ValueError("Codex catalog lacks exact model/effort")
-    result.update({"config": cell["safe_config"], "notifications": notifications, "setup_ready": ready, "hook": {key: projects[0][key] for key in (*expected, "currentHash")} if ready else None})
-    return result
+    def toml(value):
+        if isinstance(value, dict):
+            return "{" + ",".join(json.dumps(k) + "=" + toml(v) for k, v in value.items()) + "}"
+        if isinstance(value, list):
+            return "[" + ",".join(toml(v) for v in value) + "]"
+        return json.dumps(value)
+    return [part for key, value in cell["safe_config"].items()
+            for part in ("-c", key + "=" + toml(value))]
 
 
 def codex_native_prepare(cell):
@@ -791,34 +358,7 @@ def codex_native_prepare(cell):
     if code or stdout.strip() != "codex-cli 0.167.1":
         raise ValueError("unsupported native Codex version")
     cell["native_version"] = stdout.strip()
-    inherited = discover_codex(cell, preparation=True, inventory=True)
-    cell["native_inventory"] = inherited["inventory"]
-    cell["disabled_user_hooks"] = inherited["disabled_user_hooks"]
-    cell["native_layers"] = inherited["layers"]
-    features = {key: False for key in ("apps", "plugins", "remote_plugin", "memories", "multi_agent", "browser_use", "computer_use", "image_generation", "skill_search", "skill_mcp_dependency_install")}
-    config = {"model": settings["model"], "model_reasoning_effort": settings["effort"], "model_provider": "openai", "sandbox_mode": "workspace-write", "approval_policy": "never", "approvals_reviewer": "user", "apps": {"_default": {"enabled": False, "destructive_enabled": False, "open_world_enabled": False}}, "skills": {"bundled": {"enabled": False}, "include_instructions": False, "config": [{"path": row["path"], "enabled": False} for row in cell["native_inventory"]["skills"]]}, "instructions": "", "developer_instructions": "", "project_doc_max_bytes": 0, "project_doc_fallback_filenames": [], "web_search": "disabled", "features": features, "shell_environment_policy": {"inherit": "none", "set": {"PATH": str(Path(cell["python_identity"]["path"]).parent) + ":/usr/bin:/bin", "HOME": str(shell), "ZDOTDIR": str(shell)}, "exclude": ["BASH_ENV", "ENV", "ZDOTDIR"]}, "sandbox_workspace_write": cell["safe_config"]["sandbox_workspace_write"]}
-    config.update({"notify": [], "allow_login_shell": False})
-    config["sandbox_workspace_write"] = {**config["sandbox_workspace_write"], "exclude_tmpdir_env_var": True, "exclude_slash_tmp": True}
-    # TOML inline tables retain inherited components, so disable their leaves explicitly.
-    def toml(value):
-        if isinstance(value, dict):
-            return "{" + ",".join(json.dumps(k) + "=" + toml(v) for k, v in value.items()) + "}"
-        if isinstance(value, list):
-            return "[" + ",".join(toml(v) for v in value) + "]"
-        return json.dumps(value)
-    overrides = []
-    for key, value in config.items():
-        overrides += ["-c", key + "=" + toml(value)]
-    for kind in ("mcp_servers", "plugins"):
-        config[kind] = {}
-        for name in cell["native_inventory"][kind]:
-            config[kind][name] = {"enabled": False, **({"required": False} if kind == "mcp_servers" else {})}
-            for key, value in config[kind][name].items():
-                overrides += ["-c", kind + "." + name + "." + key + "=" + toml(value)]
-    cell["safe_config"], cell["native_overrides"] = config, overrides
-    cell["native_preparation"] = discover_codex(cell, preparation=True)
-    cell["native_features"] = cell["native_preparation"]["features"]
-    cell["native_behavior"] = cell["native_preparation"]["behavior"]
+    cell["safe_config"].update({"model_provider": "openai", "instructions": "", "developer_instructions": "", "project_doc_max_bytes": 0, "web_search": "disabled", "notify": [], "allow_login_shell": False, "skills": {"bundled": {"enabled": False}, "include_instructions": False}, "features": {key: False for key in ("hooks", "apps", "plugins", "memories", "multi_agent", "browser_use", "computer_use")}, "shell_environment_policy": {"inherit": "none", "set": {"PATH": str(Path(cell["python_identity"]["path"]).parent) + ":/usr/bin:/bin", "HOME": str(shell), "ZDOTDIR": str(shell)}}})
 
 
 def preflight(manifest, provider):
@@ -841,22 +381,16 @@ def preflight(manifest, provider):
             try:
                 if not syntax:
                     raise ValueError("syntax unavailable")
-                discovery[cell_id] = discover_codex(cell)
                 code, stdout, stderr = capture([settings["executable"], "login", "status"], 3, cwd=cell["repo"], env=cell["environment"])
-                # Auth output is intentionally never retained.
                 authenticated = code == 0 and (stdout + stderr).strip() in ("Logged in using ChatGPT", "Logged in using an API key")
-                discovery[cell_id]["authentication"] = {"present": authenticated, "source": "provider-owned native login status" if native_auth(settings) else "exact private CODEX_HOME login status"}
+                discovery[cell_id] = {"authentication": {"present": authenticated}}
                 if not authenticated:
-                    blockers.append(cell_id + ":private-authentication-unavailable")
+                    blockers.append(cell_id + ":authentication-unavailable")
             except (OSError, ValueError, KeyError, TypeError) as error:
-                if isinstance(error, DiscoveryError):
-                    discovery[cell_id] = {"notifications": error.notifications, "setup_ready": False}
-                blockers.append(cell_id + ":private-hook-discovery-invalid:" + str(error))
+                blockers.append(cell_id + ":authentication-invalid:" + str(error))
     elif native_auth(settings):
         for cell_id, cell in cells.items():
             try:
-                if copilot_inspect(cell) != cell["copilot_context"]:
-                    raise ValueError("Copilot safe configuration or skill inventory drift")
                 discovery[cell_id] = copilot_status(cell)
             except (OSError, ValueError, KeyError, TypeError) as error:
                 blockers.append(cell_id + ":native-existing-login-preflight:" + str(error))
@@ -883,7 +417,7 @@ def argv_for(manifest, cell, phase):
     argv = [settings["executable"]]
     if cell["provider"] == "codex":
         argv += ["exec", "--json", "--cd", cell["repo"], "--add-dir", cell["write_roots"][1],
-                 "--skip-git-repo-check", "--enable", "hooks", "--model", settings["model"], "--sandbox", "workspace-write",
+                 "--skip-git-repo-check", "--model", settings["model"], "--sandbox", "workspace-write",
                  *codex_config_args(cell),
                  "--output-last-message", str(evidence / "response.md"), "-"]
     else:
@@ -909,12 +443,14 @@ def native_events(provider, stdout):
             if not isinstance(row, dict) or not isinstance(row.get("type"), str):
                 raise ValueError("structured event object required")
             kind, data = row["type"], row.get("data", {})
-            if not isinstance(data, dict):
-                raise ValueError("event data object required")
+            if kind in ("session.start", "tool.execution_start", "tool.execution_complete") and not isinstance(data, dict):
+                raise ValueError("required event data object missing")
             normalized.append({"line": number, "event": row})
             if provider == "copilot" and kind == "session.start":
                 if session is not None:
                     errors.append("duplicate-session")
+                if data.get("alreadyInUse") is True:
+                    errors.append("session-already-in-use")
                 session, model, effort = data.get("sessionId"), data.get("selectedModel"), data.get("reasoningEffort")
                 session_cwd = data.get("context", {}).get("cwd")
                 if not isinstance(session, str) or not session:
@@ -979,211 +515,49 @@ def native_events(provider, stdout):
                         if not start or start.get("type") != "file_change" or start.get("changes") != item.get("changes") or item.get("status") != "completed":
                             errors.append("unmatched-or-failed-file-change")
                         calls.append({"id": key, "tool_type": "apply_patch", "command": "", "exit_code": None, "output": "", "file_changes": item.get("changes"), "patch_status": item.get("status"), "start_line": start_line, "line": number})
-                elif item.get("type") not in ("agent_message", "reasoning"):
-                    errors.append("unsupported-native-item:" + str(item.get("type")))
                 continue
             if kind == "turn.completed":
-                usage = row.get("usage", data.get("usage"))
-            if kind not in informational:
-                errors.append("unsupported-native-event:" + kind)
+                usage = row.get("usage", data.get("usage") if isinstance(data, dict) else None)
+            # Observational events do not establish execution evidence.
         except (ValueError, TypeError, AttributeError) as error:
             errors.append("malformed-native-line:" + str(number))
     if starts:
         errors.append("missing-tool-completion")
-    if provider == "codex":
-        errors.append("native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory")
     return {"calls": calls, "usage": usage, "observed_model": model, "observed_effort": effort, "session_id": session, "session_cwd": session_cwd, "normalized": normalized, "invalid_reasons": errors}
 
 
-def added_file(cell, patch):
-    """Validate one literal Add File and its current physical content."""
-    if not isinstance(patch, str) or "\r" in patch or "\x00" in patch:
-        raise ValueError("unsupported native patch text")
-    lines = patch.splitlines()
-    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch" or not lines[1].startswith("*** Add File: ") or any(not line.startswith("+") for line in lines[2:-1]):
-        raise ValueError("unsupported native Add File grammar")
-    relative = lines[1].removeprefix("*** Add File: ")
-    target = Path(relative)
-    if not relative.startswith("outputs/") or target.is_absolute() or ".." in target.parts:
-        raise ValueError("unsupported lexical native patch target")
-    target = inside(Path(cell["repo"]) / target, Path(cell["repo"]) / "outputs")
-    text = "".join(line[1:] + "\n" for line in lines[2:-1])
-    if not target.is_file() or target.stat().st_nlink != 1 or target.read_bytes() != text.encode():
-        raise ValueError("native patch current content mismatch")
-    return str(target), text
+def local_path(value):
+    if not isinstance(value, str):
+        raise ValueError("missing cwd")
+    if value.startswith("file:"):
+        uri = urlsplit(value)
+        if uri.netloc not in ("", "localhost") or uri.query or uri.fragment:
+            raise ValueError("nonlocal cwd URI")
+        value = unquote(uri.path)
+    path = Path(value)
+    if not path.is_absolute():
+        raise ValueError("cwd must be absolute")
+    return str(path.resolve())
 
 
-def codex_logical_command(raw):
-    """Decode only the inspected single-command non-login shell envelope."""
-    if not isinstance(raw, str) or any(value in raw for value in ("\n", "\r", "\x00", "$", "`")):
-        raise ValueError("unsupported Codex shell command")
-    argv = shlex.split(raw)
-    if argv and argv[0] in ("/bin/zsh", "/bin/bash"):
-        if len(argv) != 3 or argv[1] != "-c":
-            raise ValueError("unsupported Codex shell wrapper or login semantics")
-        raw = argv[2]
-        argv = shlex.split(raw)
-    if shlex.join(argv) != raw:
-        raise ValueError("noncanonical Codex logical command")
-    lexer = shlex.shlex(raw, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
-    if any(token in (";", "&&", "||", "|", "&", ">", "<", ">>", "<<", "(", ")") for token in lexer):
-        raise ValueError("compound Codex logical command")
-    return raw
-
-
-def codex_tool_input(payload):
-    """Parse the grounded single exec orchestration grammar without evaluating JS."""
-    if payload.get("type") != "custom_tool_call" or payload.get("name") != "exec":
-        raise ValueError("unsupported Codex rollout tool")
-    patch_match = re.fullmatch(r"\s*text\(await tools\.apply_patch\((\"(?:[^\"\\]|\\.)*\")\)\);?\s*", payload.get("input", ""), re.DOTALL)
-    if patch_match:
-        return {"patch": json.loads(patch_match[1])}
-    match = re.fullmatch(r"\s*text\(await tools\.exec_command\((\{.*\})\)\);?\s*", payload.get("input", ""), re.DOTALL)
-    if not match:
-        raise ValueError("unsupported Codex rollout tool input")
-    source, offset, result = match[1], 1, {}
-    decoder = json.JSONDecoder()
-    while offset < len(source) - 1:
-        key = re.match(r'\s*(?:"([A-Za-z_][A-Za-z_0-9]*)"|([A-Za-z_][A-Za-z_0-9]*))\s*:\s*', source[offset:])
-        if not key:
-            raise ValueError("unsupported Codex tool argument key")
-        name = key[1] or key[2]
-        offset += key.end()
-        value, size = decoder.raw_decode(source[offset:])
-        offset += size
-        if name in result or isinstance(value, (dict, list)):
-            raise ValueError("duplicate or complex Codex tool argument")
-        result[name] = value
-        delimiter = re.match(r"\s*([,}])\s*", source[offset:])
-        if not delimiter:
-            raise ValueError("unsupported Codex tool argument delimiter")
-        offset += delimiter.end()
-        if delimiter[1] == "}":
-            if offset != len(source):
-                raise ValueError("trailing Codex tool arguments")
-            break
-    allowed = {"cmd", "workdir", "login", "tty", "yield_time_ms", "max_output_tokens"}
-    if set(result) - allowed or result.get("login") is not False or result.get("tty") is not False:
-        raise ValueError("Codex tool requires explicit login=false and tty=false")
-    return result
-
-
-def codex_companion(cell, events, thread, started_at):
-    """Verify the physical provider rollout and return a safe context projection."""
-    session = events.get("session_id")
-    expected = {"id": session, "sessionId": session, "cwd": cell["repo"], "model": cell["requested_settings"]["model"], "reasoningEffort": cell["requested_settings"]["effort"], "modelProvider": "openai", "source": "exec", "cliVersion": "0.167.1"}
-    if not session or any(thread.get(key) != value for key, value in expected.items()):
-        raise ValueError("Codex thread identity or selector mismatch")
-    path = Path(thread["path"])
-    provider_root = Path(cell["environment"]["CODEX_HOME"]) / "sessions"
-    if not path.is_absolute() or path.resolve() != path or not path.is_relative_to(provider_root.resolve()) or path.is_symlink() or path.stat().st_nlink != 1 or path.stat().st_size > 8388608:
-        raise ValueError("Codex rollout must be a bounded physical provider session file")
-    raw = path.read_bytes()
-    if len(raw) > 8388608 or not raw or not raw.endswith(b"\n"):
-        raise ValueError("truncated Codex rollout")
+def codex_companion(cell, events, raw, started_at):
+    """Use the exact session rollout only for session, selector and cwd identity."""
     rows = [json.loads(line) for line in raw.splitlines()]
-    if any(not isinstance(row, dict) or not isinstance(row.get("payload"), dict) for row in rows):
-        raise ValueError("malformed Codex rollout record")
     metadata = [row for row in rows if row.get("type") == "session_meta"]
     contexts = [row["payload"] for row in rows if row.get("type") == "turn_context"]
-    if len(metadata) != 1 or rows[0] != metadata[0] or len(contexts) != 1:
-        raise ValueError("Codex rollout requires one fresh session and accounted turn")
+    if len(metadata) != 1 or not contexts:
+        raise ValueError("missing fresh Codex session metadata or turn context")
     meta = metadata[0]["payload"]
-    if any(meta.get(key) != value for key, value in {"id": session, "cwd": cell["repo"], "originator": "codex_exec", "cli_version": "0.167.1", "model_provider": "openai"}.items()):
-        raise ValueError("Codex rollout session metadata mismatch")
+    session = events.get("session_id")
+    if not session or meta.get("id") != session or local_path(meta.get("cwd")) != cell["repo"] or meta.get("originator") != "codex_exec" or meta.get("model_provider") != "openai":
+        raise ValueError("Codex session identity mismatch")
     instant = datetime.datetime.fromisoformat(metadata[0]["timestamp"].replace("Z", "+00:00"))
-    if instant.tzinfo is None:
-        raise ValueError("Codex rollout timestamp lacks timezone")
-    timestamp = instant.timestamp()
-    if not started_at - 2 <= timestamp <= time.time() + 2:
-        raise ValueError("stale Codex rollout session")
-    context = contexts[0]
-    expected_context = {"cwd": cell["repo"], "approval_policy": "never", "sandbox_policy": {"type": "workspace-write", **cell["safe_config"]["sandbox_workspace_write"]}, "model": expected["model"], "effort": expected["reasoningEffort"]}
-    if any(context.get(key) != value for key, value in expected_context.items()) or not isinstance(context.get("turn_id"), str) or not context["turn_id"]:
-        raise ValueError("Codex rollout turn context mismatch")
-    tools, outputs, seen, native_commands = [], [], set(), []
-    active_call = None
-    native_patch_ids = set()
-    patch_targets = set()
-    lifecycle = set()
-    for row_number, row in enumerate(rows, 1):
-        if row.get("type") == "event_msg":
-            event = row.get("payload", {})
-            if event.get("turn_id", context["turn_id"]) != context["turn_id"] or event.get("thread_id", session) != session:
-                raise ValueError("Codex rollout event session or turn mismatch")
-            if event.get("type") in ("task_started", "task_complete"):
-                if event["type"] in lifecycle:
-                    raise ValueError("duplicate Codex rollout turn lifecycle event")
-                lifecycle.add(event["type"])
-            if event.get("type") == "item_completed":
-                item = event.get("item", {})
-                if item.get("type") not in ("UserMessage", "AgentMessage", "Reasoning", "CommandExecution", "FileChange"):
-                    raise ValueError("unknown Codex rollout completed tool")
-                if item["type"] == "FileChange":
-                    if active_call is None or not tools or tools[-1]["type"] != "apply_patch" or "native_change" in tools[-1]:
-                        raise ValueError("unmatched or duplicate Codex native FileChange")
-                    tool = tools[-1]
-                    change_id = item.get("id")
-                    if not isinstance(change_id, str) or not change_id or change_id in native_patch_ids or item.get("status") != "completed" or item.get("stderr") != "" or not isinstance(item.get("stdout"), str) or not item["stdout"].startswith("Success. Updated the following files:\n") or item.get("changes") != {tool["path"]: {"type": "add", "content": tool["content"]}}:
-                        raise ValueError("Codex native FileChange content or status mismatch")
-                    native_patch_ids.add(change_id)
-                    tool["native_change"] = {"id": change_id, "line": row_number}
-                if item["type"] == "CommandExecution":
-                    command = item.get("command")
-                    if not isinstance(command, list) or any(not isinstance(part, str) for part in command) or item.get("cwd") != cell["repo"]:
-                        raise ValueError("malformed Codex rollout command item")
-                    native_commands.append(codex_logical_command(shlex.join(command)))
-        if row.get("type") == "event_msg" and row.get("payload", {}).get("type") not in ("task_started", "task_complete", "item_completed", "token_count", "thread_settings_applied"):
-            raise ValueError("unknown Codex rollout event or hook warning")
-        if row.get("type") not in ("session_meta", "turn_context", "response_item", "event_msg", "token_usage_record", "world_state"):
-            raise ValueError("unknown Codex rollout record")
-        if row.get("type") != "response_item":
-            continue
-        payload = row.get("payload", {})
-        kind = payload.get("type")
-        if kind in ("custom_tool_call", "function_call", "local_shell_call"):
-            arguments = codex_tool_input(payload)
-            key = payload.get("call_id")
-            if not isinstance(key, str) or not key or key in seen or payload.get("internal_chat_message_metadata_passthrough", {}).get("turn_id") != context["turn_id"]:
-                raise ValueError("Codex rollout tool identity or turn mismatch")
-            if arguments.get("workdir", cell["repo"]) != cell["repo"]:
-                raise ValueError("Codex rollout tool cwd mismatch")
-            if active_call is not None:
-                raise ValueError("overlapping Codex rollout tool calls")
-            active_call = key
-            seen.add(key)
-            if "patch" in arguments:
-                target, text = added_file(cell, arguments["patch"])
-                if target in patch_targets:
-                    raise ValueError("duplicate Codex patch target")
-                patch_targets.add(target)
-                tools.append({"call_id": key, "type": "apply_patch", "patch": arguments["patch"], "path": target, "content": text, "start_line": row_number})
-            else:
-                tools.append({"call_id": key, "type": "command_execution", "command": codex_logical_command(arguments.get("cmd")), "login": False, "tty": False, "start_line": row_number})
-        elif kind in ("custom_tool_call_output", "function_call_output"):
-            if payload.get("call_id") != active_call or active_call is None:
-                raise ValueError("unmatched Codex rollout tool output")
-            if tools[-1]["type"] == "apply_patch" and "native_change" not in tools[-1]:
-                raise ValueError("missing Codex native FileChange")
-            tools[-1]["output_line"] = row_number
-            active_call = None
-            outputs.append(payload.get("call_id"))
-        elif kind not in ("message", "reasoning", "additional_tools"):
-            raise ValueError("unknown observed Codex rollout item")
-    if [tool["call_id"] for tool in tools] != outputs or len(tools) != len(events["calls"]):
-        raise ValueError("Codex rollout tool count or output order mismatch")
-    if native_commands and native_commands != [tool["command"] for tool in tools if tool["type"] == "command_execution"]:
-        raise ValueError("Codex completed command sequence mismatch")
-    for tool, call in zip(tools, events["calls"]):
-        if tool["type"] != call.get("tool_type"):
-            raise ValueError("Codex rollout/native tool order mismatch")
-        if tool["type"] == "apply_patch":
-            if call.get("file_changes") != [{"path": tool["path"], "kind": "add"}] or call.get("patch_status") != "completed":
-                raise ValueError("Codex stdout/native FileChange mismatch")
-        elif tool["command"] != codex_logical_command(call["command"]):
-            raise ValueError("Codex rollout/native logical command mismatch")
-    return {"thread": thread, "rollout": str(path), "rollout_sha256": hashlib.sha256(raw).hexdigest(), "turn": {**expected_context, "turn_id": context["turn_id"]}, "tools": tools}
+    if instant.tzinfo is None or not started_at - 2 <= instant.timestamp() <= time.time() + 2:
+        raise ValueError("stale Codex session")
+    model, effort = cell["requested_settings"]["model"], cell["requested_settings"]["effort"]
+    if any(local_path(context.get("cwd")) != cell["repo"] or context.get("model") != model or context.get("effort") != effort for context in contexts):
+        raise ValueError("Codex selector or cwd mismatch")
+    return {"session_id": session, "model": model, "effort": effort, "cwd": cell["repo"], "rollout_sha256": hashlib.sha256(raw).hexdigest()}
 
 
 def phase_events(manifest, cell_id, phase, collect=False):
@@ -1194,13 +568,25 @@ def phase_events(manifest, cell_id, phase, collect=False):
         return events
     attempt = read(directory / "attempt.json")
     path = directory / "codex-context.json"
+    raw_path = directory / "codex-rollout.jsonl"
     if collect:
-        thread = discover_codex(cell, thread_id=events.get("session_id"))["thread"]
-    else:
-        thread = read(path)["thread"]
-    projection = codex_companion(cell, events, thread, attempt["started_at"])
+        session = events.get("session_id")
+        if not isinstance(session, str) or not re.fullmatch(r"[A-Za-z0-9-]+", session):
+            raise ValueError("invalid Codex session ID")
+        provider_root = Path(cell["environment"]["CODEX_HOME"]) / "sessions"
+        matches = list(provider_root.rglob("*" + session + ".jsonl"))
+        if len(matches) != 1:
+            raise ValueError("exact Codex session rollout unavailable")
+        source = matches[0]
+        if source.is_symlink() or source.resolve() != source or not source.is_file() or source.stat().st_nlink != 1 or source.stat().st_size > 8388608:
+            raise ValueError("unsafe Codex rollout file")
+        raw_path.write_bytes(source.read_bytes())
+    raw = raw_path.read_bytes()
+    if not raw or not raw.endswith(b"\n") or len(raw) > 8388608:
+        raise ValueError("truncated or oversized Codex rollout")
+    projection = codex_companion(cell, events, raw, attempt["started_at"])
     for sibling in manifest["cells"].values():
-        for other_phase in ("smoke", "scenario"):
+        for other_phase in sibling["prompts"]:
             other = Path(sibling["repo"]).parent / "evidence" / other_phase / "run.json"
             if sibling["provider"] == "codex" and other.exists() and other != directory / "run.json" and read(other).get("session_id") == events["session_id"]:
                 raise ValueError("Codex session replay across phases")
@@ -1208,12 +594,9 @@ def phase_events(manifest, cell_id, phase, collect=False):
         write(path, projection)
     elif read(path) != projection:
         raise ValueError("Codex context evidence drift")
-    events["invalid_reasons"] = [error for error in events["invalid_reasons"] if error != "native-evidence-unsupported:exec-selector-hook-correlation-and-tool-inventory"]
-    events.update(observed_model=thread["model"], observed_effort=thread["reasoningEffort"], session_cwd=thread["cwd"])
-    for call, tool in zip(events["calls"], projection["tools"]):
-        call.update(raw_command=call["command"], command=tool.get("command", tool.get("patch")), turn_id=projection["turn"]["turn_id"], rollout_call_id=tool["call_id"])
-        if tool["type"] == "apply_patch":
-            call.update(patch=tool["patch"], success=True, file_edits=[{"path": tool["path"], "kind": "create"}], native_change=tool["native_change"])
+    events.update(observed_model=projection["model"], observed_effort=projection["effort"], session_cwd=projection["cwd"])
+    for call in events["calls"]:
+        call["command"] = shlex.join(command_argv(call["command"]))
     return events
 
 
@@ -1235,7 +618,7 @@ def helper_records(cell, events):
     records = []
     for call in events["calls"]:
         argv = command_argv(call["command"])
-        if argv[:2] != cell["helper_prefix"]:
+        if argv[:len(cell["helper_prefix"])] != cell["helper_prefix"]:
             continue
         text = call["output"]
         if not isinstance(text, str):
@@ -1246,7 +629,7 @@ def helper_records(cell, events):
                 if not isinstance(receipt, dict):
                     continue
                 if receipt.get("kind") == "scheduler":
-                    if receipt.get("argv") != cell["command_prefix"] + argv[2:] or type(receipt.get("exit_code")) is not int:
+                    if receipt.get("argv") != cell["command_prefix"] + argv[len(cell["helper_prefix"]):] or type(receipt.get("exit_code")) is not int:
                         continue
                     if cell["provider"] == "codex" and call["exit_code"] != receipt["exit_code"]:
                         continue
@@ -1264,7 +647,7 @@ def helper_records(cell, events):
                     continue
                 if receipt.get("kind") in ("parent-update", "smoke-write") and call["exit_code"] != 0:
                     continue
-                receipt = dict(receipt, command=call["command"], helper_args=argv[2:], line=call["line"])
+                receipt = dict(receipt, command=call["command"], helper_args=argv[len(cell["helper_prefix"]):], line=call["line"])
                 records.append(receipt)
             except (ValueError, KeyError, TypeError):
                 continue
@@ -1296,29 +679,7 @@ def smoke_check(cell, events):
         linked = registered and completed and register["line"] < complete["line"] < writes[0]["line"] and complete["before"] == register["after"] and complete["after"] == expected_after and current_state == complete["after"]
     except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
         linked = False
-    control = cell["control"]
-    denied = any(call["command"] == control["denied_probe"] and call["exit_code"] != 0 and "den" in str(call["output"]).lower() for call in events["calls"])
-    loaded = denied
-    if cell["provider"] == "codex":
-        try:
-            audit_path = Path(control["audit"])
-            if audit_path.is_symlink():
-                raise ValueError("linked audit")
-            rows = [json.loads(line) for line in audit_path.read_text().splitlines()]
-            denied_hash = hashlib.sha256(control["denied_probe"].encode()).hexdigest()
-            allowed_hashes = {hashlib.sha256(call["command"].encode()).hexdigest() for call in events["calls"] if command_argv(call["command"])[:2] == cell["helper_prefix"] and call["exit_code"] == 0}
-            loaded = any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "deny" and r.get("command_sha256") == denied_hash for r in rows) and any(r.get("policy_sha256") == control["policy_sha256"] and r.get("decision") == "allow" and r.get("command_sha256") in allowed_hashes for r in rows)
-        except (OSError, ValueError, TypeError, AttributeError):
-            loaded = False
-    neutral_patch_ok = True
-    if native_auth(cell["requested_settings"]):
-        patches = [call for call in events["calls"] if call.get("tool_type") == "apply_patch"]
-        try:
-            target, text = added_file(cell, patches[0].get("patch"))
-            neutral_patch_ok = len(patches) == 1 and target == str(Path(cell["repo"]) / "outputs/smoke-patch.json") and text == SMOKE_PATCH_TEXT and patches[0].get("success") is True
-        except (OSError, ValueError, TypeError, IndexError):
-            neutral_patch_ok = False
-    return {"neutral_patch": neutral_patch_ok, "control_denial": denied, "control_loaded": loaded, "forbidden_write_absent": not Path(control["forbidden_output"]).exists(), "selector_observation": (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": registered and linked, "complete": completed and linked,
+    return {"selector_observation": (events.get("observed_model") == cell["requested_settings"]["model"] and events.get("observed_effort") == cell["requested_settings"]["effort"]), "exact_output": content_ok, "register": registered and linked, "complete": completed and linked,
             "write_readback": linked and any(r.get("kind") == "smoke-write" and r.get("helper_args") == ["smoke-write"] and r.get("readback") == {"smoke": True} and r.get("path") == str(output) for r in records)}
 
 
@@ -1333,32 +694,19 @@ def atomic_receipt(path, value):
     os.replace(temporary, path)
 
 
-def audit_bytes(manifest, cell):
-    path = inside(Path(cell["control"]["audit"]), Path(manifest["root"]))
-    if path.exists():
-        if not path.is_file() or path.stat().st_nlink != 1:
-            raise ValueError("audit must be a physical single-link file")
-        return path.read_bytes()
-    return b""
-
-
 def phase_bindings(manifest, cell_id, phase):
     cell = manifest["cells"][cell_id]
     root = Path(manifest["root"])
     preflight_path = inside(root / ("preflight/" + cell["provider"] + ".json"), root)
     preflight_receipt = read(preflight_path)
-    if cell["provider"] == "copilot" and native_auth(cell["requested_settings"]) and copilot_inspect(cell) != cell["copilot_context"]:
-        raise ValueError("Copilot safe configuration or skill inventory drift")
     if preflight_receipt.get("provider") != cell["provider"] or preflight_receipt.get("manifest_sha256") != digest(root / "manifest.json") or not preflight_receipt.get("smoke_ready"):
         raise ValueError("valid bound provider preflight required")
     snapshot = Path(cell["snapshot"])
-    hook = preflight_receipt.get("cells", {}).get(cell_id, {}).get("hook")
-    return {"schema_version": 1, "authentication": cell["authentication"], "copilot_context": cell.get("copilot_context"), "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
+    return {"schema_version": 1, "authentication": cell["authentication"], "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
             "root": manifest["root"], "cwd": cell["repo"], "manifest_sha256": digest(root / "manifest.json"),
             "approved_payload_sha256": json_digest({"manifest_sha256": digest(root / "manifest.json"), "preflight_sha256": digest(preflight_path)}), "caller_sources": manifest["caller_sources"],
-            "selected_sources": {"skill": digest(snapshot / "SKILL.md"), "scheduler": digest(snapshot / "scripts/scheduler.py"), "helper": digest(cell["helper_prefix"][1])},
-            "policy_sha256": digest(cell["control"]["script"]), "hook_file_sha256": digest(cell["control"]["hook_config"]), "native_hook": hook,
-            "executable": cell["executable_identity"], "python": cell["python_identity"], "hook_python": cell["hook_python_identity"], "provider_version": preflight_receipt["probes"][0]["stdout"].strip(),
+            "selected_sources": {"skill": digest(snapshot / "SKILL.md"), "scheduler": digest(snapshot / "scripts/scheduler.py"), "helper": digest(cell["helper_prefix"][0])},
+            "executable": cell["executable_identity"], "python": cell["python_identity"], "provider_version": preflight_receipt["probes"][0]["stdout"].strip(),
             "preflight_sha256": digest(preflight_path), "argv": cell["argv"][phase], "environment": cell["environment"], "safe_config": cell["safe_config"], "safe_config_sha256": json_digest(cell["safe_config"]),
             "requested_model": cell["requested_settings"]["model"], "requested_effort": cell["requested_settings"]["effort"], "delivered_prompt_sha256": digest(cell["prompts"][phase])}
 
@@ -1398,7 +746,7 @@ def validate_phase(manifest, cell_id, phase):
             errors.append("observed-selector-missing-or-wrong")
         if cell["provider"] == "copilot" and events.get("session_id") != cell["session_ids"][phase]:
             errors.append("native-session-mismatch")
-        if cell["provider"] == "copilot" and events.get("session_cwd") != cell["repo"]:
+        if cell["provider"] == "copilot" and local_path(events.get("session_cwd")) != cell["repo"]:
             errors.append("native-cwd-mismatch")
         if record.get("observed_model") != events.get("observed_model") or record.get("observed_effort") != events.get("observed_effort"):
             errors.append("receipt-selector-mismatch")
@@ -1406,84 +754,56 @@ def validate_phase(manifest, cell_id, phase):
             errors.append("provider-exit-failure")
         if record.get("session_id") != events.get("session_id"):
             errors.append("receipt-session-mismatch")
-        audit = audit_bytes(manifest, cell)
-        interval = record["audit_interval"]
-        start, end = interval["start"], interval["end"]
-        if type(start) is not int or type(end) is not int or not 0 <= start <= end <= len(audit):
-            raise ValueError("invalid audit interval")
-        if interval["prefix_sha256"] != hashlib.sha256(audit[:start]).hexdigest() or interval["sha256"] != hashlib.sha256(audit[start:end]).hexdigest():
-            errors.append("audit-prefix-or-range-drift")
-        if attempt.get("audit_start") != {"offset": start, "prefix_sha256": interval["prefix_sha256"]}:
-            errors.append("audit-attempt-mismatch")
-        if phase == "smoke" and start != 0:
-            errors.append("audit-unattributed-prefix")
-        other_phase = "scenario" if phase == "smoke" else "smoke"
-        other_path = directory.parent / other_phase / "run.json"
-        covered_end = end
-        if other_path.exists():
-            other = read(inside(other_path, root)).get("audit_interval", {})
-            if other.get("start", -1) < end and other.get("end", -1) > start:
-                errors.append("overlapping-audit-intervals")
-            covered_end = max(end, other.get("end", -1))
-        if covered_end != len(audit):
-            errors.append("audit-records-outside-phase")
-        if cell["provider"] == "codex":
-            rows = [json.loads(line) for line in audit[start:end].decode().splitlines()]
-            if audit[start:end] and not audit[start:end].endswith(b"\n"):
-                errors.append("truncated-audit-record")
-            expected = [hashlib.sha256(call["command"].encode()).hexdigest() for call in events["calls"]]
-            if len(rows) != len(expected) or [row.get("command_sha256", "") for row in rows] != expected:
-                errors.append("audit-command-count-mismatch")
-            if any(row.get("policy_sha256") != cell["control"]["policy_sha256"] or row.get("decision") != ("deny" if call["command"] == cell["control"]["denied_probe"] else "allow") or row.get("tool_name") != ("apply_patch" if call.get("tool_type") == "apply_patch" else "Bash") or not isinstance(row.get("tool_use_id"), str) or not row["tool_use_id"] for row, call in zip(rows, events["calls"])):
-                errors.append("audit-policy-or-decision-mismatch")
-            if len({row.get("tool_use_id") for row in rows}) != len(rows):
-                errors.append("ambiguous-audit-tool-identity")
-        elif start != end:
-            errors.append("unexpected-copilot-policy-audit")
-        patch_targets = set()
+        receipt_commands = set()
         for call in events["calls"]:
-            if call.get("tool_type") == "apply_patch":
-                target, expected_text = added_file(cell, call.get("patch"))
-                if target in patch_targets:
-                    errors.append("duplicate-native-patch-target")
-                patch_targets.add(target)
-                expected_edits = [{"path": target, "kind": "create"}]
-                if call.get("success") is not True or call.get("file_edits") != expected_edits:
-                    errors.append("native-patch-result-mismatch")
+            argv = command_argv(call["command"])
+            if argv[:len(cell["helper_prefix"])] != cell["helper_prefix"]:
+                if "pilot_child" in str(call["output"]):
+                    errors.append("receipt-from-unmatched-command")
                 continue
-            command = call["command"]
-            probe = phase == "smoke" and command == cell["control"]["denied_probe"]
-            if probe:
-                if call["exit_code"] == 0 or "den" not in str(call["output"]).lower() or "pilot_child" in str(call["output"]):
-                    errors.append("forbidden-probe-not-denied")
-                continue
-            argv = command_argv(command)
-            if argv[:2] != cell["helper_prefix"] or shlex.join(argv) != command:
-                errors.append("unexpected-exact-tool-command")
             receipts = helper_records(cell, {"calls": [call]})
             if len(receipts) != 1:
                 errors.append("missing-real-child-receipt")
             elif call["exit_code"] != 0 and receipts[0].get("exit_code") != 2:
                 errors.append("unexpected-native-tool-rejection")
+            if call["command"] in receipt_commands:
+                errors.append("duplicate-helper-execution")
+            receipt_commands.add(call["command"])
             if "permission denied" in str(call["output"]).lower():
                 errors.append("unexpected-permission-denial")
         if phase == "smoke":
             checks = smoke_check(cell, events)
             errors.extend("smoke:" + key for key, value in checks.items() if not value)
         else:
-            checks = {"forbidden_write_absent": not Path(cell["control"]["forbidden_output"]).exists()}
-            if not all(checks.values()):
-                errors.append("forbidden-write-present")
+            try:
+                outputs = Path(cell["repo"]) / "outputs"
+                state_path = inside(outputs / "scenario-state.json", outputs)
+                output = read(inside(outputs / "result.json", outputs))
+                reference = Path(output["final_state"]["scheduler_state"])
+                if reference.is_absolute() or ".." in reference.parts or inside(Path(cell["repo"]) / reference, outputs).resolve() != state_path.resolve():
+                    raise ValueError("final state must reference canonical scheduler state")
+                records = [r for r in helper_records(cell, events) if r.get("kind") == "scheduler"]
+                if not records:
+                    raise ValueError("missing required scheduler execution")
+                previous = None
+                for receipt in records:
+                    if receipt["helper_args"][:2] != ["--state", str(state_path)] or receipt["before"] != previous:
+                        raise ValueError("inconsistent canonical scheduler state chain")
+                    previous = receipt["after"]
+                if read(state_path) != previous:
+                    raise ValueError("canonical state differs from final child readback")
+            except (OSError, ValueError, KeyError, TypeError, AttributeError):
+                errors.append("scenario-state-or-output-invalid")
     except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as error:
         errors.append("phase-evidence-unavailable:" + str(error))
     return {"valid": not errors, "invalid_reasons": sorted(set(errors)), "checks": checks, "events": events}
 
 
 def provider_smokes(manifest, provider):
-    reports = {variant: validate_phase(manifest, provider + "-" + variant, "smoke") for variant in ("baseline", "candidate")}
-    if not all(report["valid"] for report in reports.values()):
-        raise ValueError("provider-wide two-smoke qualification gate is not met")
-    return reports
+    report = validate_phase(manifest, provider + "-baseline", "smoke")
+    if not report["valid"]:
+        raise ValueError("provider baseline-smoke qualification gate is not met")
+    return {"baseline": report}
 
 
 def run(manifest, cell_id, phase):
@@ -1501,14 +821,6 @@ def run(manifest, cell_id, phase):
     if cell["argv"][phase] != argv_for(manifest, cell, phase):
         raise ValueError("frozen argv drift")
     if cell["provider"] == "codex":
-        receipt = read(Path(manifest["root"]) / "preflight/codex.json")
-        discovery = discover_codex(cell)
-        stable = {key: value for key, value in discovery.items() if key != "notifications"}
-        frozen = {key: value for key, value in receipt["cells"][cell_id].items() if key not in ("authentication", "notifications")}
-        if stable != frozen:
-            safe_fields = ("argv", "requests", "hook", "config", "config_layers_checked", "safe_layers", "safe_responses", "inventory", "disabled_user_hooks", "layers", "behavior", "features", "setup_ready")
-            changed = [key for key in safe_fields if (key in stable) != (key in frozen) or stable.get(key) != frozen.get(key)]
-            raise ValueError("private discovery drift; changed fields=" + ",".join(changed))
         if native_auth(cell["requested_settings"]):
             code, stdout, stderr = capture([cell["requested_settings"]["executable"], "login", "status"], 3, cwd=cell["repo"], env=cell["environment"])
             if code or (stdout + stderr).strip() not in ("Logged in using ChatGPT", "Logged in using an API key"):
@@ -1526,10 +838,7 @@ def run(manifest, cell_id, phase):
     lock = directory.parent / "phase-active"
     descriptor = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     os.close(descriptor)
-    audit = audit_bytes(manifest, cell)
-    record = {**bindings, "attempt_id": str(uuid.uuid4()), "started_at": time.time(), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" or native_auth(cell["requested_settings"]) else "private-CODEX_HOME-status"}
-    if cell["provider"] == "codex":
-        record["discovery_notifications"] = discovery["notifications"]
+    record = {**bindings, "attempt_id": str(uuid.uuid4()), "started_at": time.time(), "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" or native_auth(cell["requested_settings"]) else "private-CODEX_HOME-status"}
     atomic_receipt(directory / "attempt.json", record)
     started = time.monotonic()
     config = read(manifest["config"])
@@ -1538,6 +847,7 @@ def run(manifest, cell_id, phase):
             code, stdout, stderr = capture(bindings["argv"], config["timeout_seconds"], cwd=cell["repo"], env={**cell["environment"], **auth}, text_input=Path(cell["prompts"][phase]).read_text() if cell["provider"] == "codex" else None)
         except OSError as error:
             code, stdout, stderr = 2, "", str(error)
+        provider_elapsed = time.monotonic() - started
         (directory / "stdout.jsonl").write_text(stdout)
         (directory / "stderr.txt").write_text(stderr)
         events = native_events(cell["provider"], stdout)
@@ -1548,10 +858,14 @@ def run(manifest, cell_id, phase):
             except (OSError, ValueError, KeyError, TypeError) as error:
                 events["invalid_reasons"].append("Codex-context-invalid:" + str(error))
         write(directory / "native-events.json", events)
-        if events.get("usage") is None:
+        try:
+            provider_usage = read(directory / "usage.json")
+        except (OSError, ValueError):
+            provider_usage = events.get("usage")
+        record["provider_usage"] = provider_usage
+        if provider_usage is None:
             write(directory / "usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
-        after = audit_bytes(manifest, cell)
-        record.update({"exit_code": code, "elapsed_seconds": time.monotonic() - started, "session_id": events.get("session_id"), "turn_ids": sorted({call.get("turn_id") for call in events["calls"] if call.get("turn_id")}), "observed_model": events.get("observed_model"), "observed_effort": events.get("observed_effort"), "raw_stdout": str(directory / "stdout.jsonl"), "raw_stdout_sha256": digest(directory / "stdout.jsonl"), "raw_stderr": str(directory / "stderr.txt"), "raw_stderr_sha256": digest(directory / "stderr.txt"), "native_events": str(directory / "native-events.json"), "native_events_sha256": digest(directory / "native-events.json"), "audit_interval": {"start": len(audit), "end": len(after), "prefix_sha256": hashlib.sha256(audit).hexdigest(), "sha256": hashlib.sha256(after[len(audit):]).hexdigest()}})
+        record.update({"exit_code": code, "elapsed_seconds": time.monotonic() - started, "provider_execution_seconds": provider_elapsed, "evidence_collection_seconds": time.monotonic() - started - provider_elapsed, "session_id": events.get("session_id"), "turn_ids": sorted({call.get("turn_id") for call in events["calls"] if call.get("turn_id")}), "observed_model": events.get("observed_model"), "observed_effort": events.get("observed_effort"), "raw_stdout": str(directory / "stdout.jsonl"), "raw_stdout_sha256": digest(directory / "stdout.jsonl"), "raw_stderr": str(directory / "stderr.txt"), "raw_stderr_sha256": digest(directory / "stderr.txt"), "native_events": str(directory / "native-events.json"), "native_events_sha256": digest(directory / "native-events.json")})
         atomic_receipt(directory / "run.json", record)
         validation = validate_phase(manifest, cell_id, phase)
         record.update({"acceptance_contract": "verified-observed-run", "qualification_status": "valid" if validation["valid"] else "invalid", "invalid_reasons": validation["invalid_reasons"], "smoke_checks": validation["checks"], "smoke_valid": phase == "smoke" and validation["valid"], "observed_event_types": sorted({row["event"]["type"] for row in events["normalized"]}), "evidence_limits": "Observed phase evidence only; no universal tool coverage claim."})
@@ -1573,7 +887,7 @@ def grade(manifest, cell_id):
               "limits": "Synthetic shutdown facts; native provider readiness remains a separate prerequisite."}
     def native(phase):
         return phase_events(manifest, cell_id, phase)
-    smoke_validation = validate_phase(manifest, cell_id, "smoke")
+    smoke_validation = validate_phase(manifest, cell["provider"] + "-baseline", "smoke")
     scenario_validation = validate_phase(manifest, cell_id, "scenario")
     qualified = smoke_validation["valid"] and scenario_validation["valid"]
     result["invalid_reasons"] = sorted(set(smoke_validation["invalid_reasons"] + scenario_validation["invalid_reasons"]))
@@ -1584,7 +898,7 @@ def grade(manifest, cell_id):
             qualified = False
             result["invalid_reasons"].append(str(error))
     try:
-        result["diagnostic_smoke_checks"] = smoke_check(cell, native("smoke"))
+        result["diagnostic_smoke_checks"] = smoke_check(manifest["cells"][cell["provider"] + "-baseline"], phase_events(manifest, cell["provider"] + "-baseline", "smoke"))
     except (OSError, ValueError, KeyError, TypeError):
         result["diagnostic_smoke_checks"] = {}
     if qualified:
@@ -1595,7 +909,8 @@ def grade(manifest, cell_id):
         records = helper_records(cell, events)
     except (OSError, ValueError, TypeError):
         run_record, events, records = {}, {"calls": []}, []
-    result["usage_status"] = "available" if events.get("usage") is not None else "unavailable"
+    result["provider_usage"] = run_record.get("provider_usage", events.get("usage"))
+    result["usage_status"] = "available" if result["provider_usage"] is not None else "unavailable"
     if result["usage_status"] == "unavailable" and (directory / "scenario").exists():
         write(directory / "scenario/usage-missing.json", {"available": False, "reason": "native usage unavailable; no estimate"})
     denied = any("denied" in str(call["output"]).lower() or "permission" in str(call["output"]).lower() for call in events["calls"] if call["exit_code"] != 0)
@@ -1616,6 +931,7 @@ def grade(manifest, cell_id):
         if set(final) != {"old_owner", "new_owner", "worker_stopped", "writes_stopped", "transfer_authorized", "parent_record", "scheduler_state"}:
             raise ValueError("invalid final state schema")
         matched = []
+        used_actions = set()
         for action in actions:
             if not isinstance(action, dict) or set(action) != {"action", "assignment", "at", "evidence"}:
                 raise ValueError("invalid action schema")
@@ -1627,8 +943,14 @@ def grade(manifest, cell_id):
             record = next((r for r in records if r["command"] == evidence.get("command") and r.get("exit_code", 0) == evidence.get("exit_code")), None)
             if record is None:
                 raise ValueError("action lacks demonstrated immutable invocation")
+            if record["command"] in used_actions:
+                raise ValueError("duplicated action receipt")
+            used_actions.add(record["command"])
             matched.append((action, record))
         state = artifact(final["scheduler_state"])
+        canonical_state = outputs / "scenario-state.json"
+        if inside(repo / final["scheduler_state"], outputs).resolve() != canonical_state.resolve() or state != artifact("outputs/scenario-state.json"):
+            raise ValueError("scheduler state must bind canonical output")
         parent = artifact(final["parent_record"])
         if not isinstance(state, dict) or not isinstance(state.get("assignments"), dict) or not isinstance(parent, dict):
             raise ValueError("invalid scheduler/parent artifact")

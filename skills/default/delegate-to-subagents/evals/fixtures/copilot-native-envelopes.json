@@ -1,0 +1,555 @@
+{
+  "provenance": {
+    "source_stdout_sha256": "e4eb657b13106b5b332c06f480529e61761f51fc8a6b187fd56be3287520ffc0",
+    "version": "1.0.109",
+    "note": "Actual sanitized P03 envelopes. Paths and session/tool IDs are substituted in offline tests. Denied completion remains a negative."
+  },
+  "events": {
+    "session.start": {
+      "type": "session.start",
+      "data": {
+        "sessionId": "7fe88737-5ebc-4a55-bd19-9cb7e36457fe",
+        "version": 1,
+        "producer": "copilot-agent",
+        "copilotVersion": "1.0.109",
+        "startTime": "2026-11-12T14:21:10.665Z",
+        "selectedModel": "gpt-6.1-sol",
+        "reasoningEffort": "medium",
+        "contextTier": null,
+        "context": {
+          "cwd": "/E/T4-native-pilot-03/run-01/cells/copilot-baseline/repo"
+        },
+        "alreadyInUse": false,
+        "remoteSteerable": false
+      },
+      "id": "0396b8d1-10f9-464c-8169-9db4445d5082",
+      "timestamp": "2026-11-12T14:21:10.726Z",
+      "parentId": null
+    },
+    "session.extensions_loaded": {
+      "type": "session.extensions_loaded",
+      "data": {
+        "extensions": []
+      },
+      "ephemeral": true,
+      "id": "12728dc8-43eb-4ded-b506-547d148de568",
+      "timestamp": "2026-11-12T14:21:11.487Z",
+      "parentId": "0396b8d1-10f9-464c-8169-9db4445d5082"
+    },
+    "session.tools_updated": {
+      "type": "session.tools_updated",
+      "data": {
+        "model": "gpt-6.1-sol"
+      },
+      "ephemeral": true,
+      "id": "caaaf106-6851-4e6e-b8b2-c02f7d0be224",
+      "timestamp": "2026-11-12T14:21:11.488Z",
+      "parentId": "0396b8d1-10f9-464c-8169-9db4445d5082"
+    },
+    "session.mcp_servers_loaded": {
+      "type": "session.mcp_servers_loaded",
+      "ephemeral": true,
+      "data": {
+        "servers": [
+          {
+            "name": "WorkIQ",
+            "status": "disabled"
+          },
+          {
+            "name": "browser-use",
+            "status": "disabled"
+          },
+          {
+            "name": "github-copilot-browser",
+            "status": "disabled"
+          },
+          {
+            "name": "github-mcp-server",
+            "status": "disabled",
+            "source": "builtin"
+          }
+        ]
+      },
+      "id": "6c5f425e-f77d-46a8-90f4-212d8d8fb7f4",
+      "timestamp": "2026-11-12T14:21:11.904Z",
+      "parentId": "0396b8d1-10f9-464c-8169-9db4445d5082"
+    },
+    "tool.execution_start": {
+      "type": "tool.execution_start",
+      "data": {
+        "toolCallId": "call_ufpR1zu5dxvO9f8nbTfUK3w1",
+        "toolName": "bash",
+        "arguments": {
+          "command": "python3 /E/T4-native-pilot-03/run-01/snapshots/baseline/receipt-adapters/copilot/invoke_scheduler.py --state /E/T4-native-pilot-03/run-01/cells/copilot-baseline/repo/outputs/smoke-state.json register smoke smoke-agent neutral --deadline 100 --checkpoint 300 --now 0",
+          "description": "Register neutral smoke assignment"
+        },
+        "turnId": "0",
+        "model": "gpt-6.1-sol",
+        "toolTitle": "Running command",
+        "shellToolInfo": {
+          "possiblePaths": [
+            "/E/T4-native-pilot-03/run-01/snapshots/baseline/receipt-adapters/copilot/invoke_scheduler.py",
+            "/E/T4-native-pilot-03/run-01/cells/copilot-baseline/repo/outputs/smoke-state.json",
+            "register",
+            "smoke",
+            "smoke-agent",
+            "neutral",
+            "100",
+            "300"
+          ],
+          "hasWriteFileRedirection": false
+        }
+      },
+      "id": "ea717389-661a-4f79-b52c-7dcb2769281f",
+      "timestamp": "2026-11-12T14:21:15.991Z",
+      "parentId": "0764f77a-0292-4b02-9f4f-218baa421bf1"
+    },
+    "tool.execution_complete": {
+      "type": "tool.execution_complete",
+      "data": {
+        "toolCallId": "call_ufpR1zu5dxvO9f8nbTfUK3w1",
+        "model": "gpt-6.1-sol",
+        "interactionId": "5b30e346-475c-4a11-bd85-02691a318bd2",
+        "turnId": "0",
+        "rte": true,
+        "success": false,
+        "error": {
+          "message": "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission.",
+          "code": "denied"
+        },
+        "result": {
+          "content": "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission.",
+          "detailedContent": "Permission denied because no interactive user response was available. Retry in an interactive session so the user can approve it, or try an alternative that does not require this permission.",
+          "structuredContent": {
+            "shellId": "0"
+          }
+        },
+        "toolTelemetry": {
+          "properties": {
+            "shell_error_category": "permission_denied"
+          },
+          "metrics": {
+            "context_token_limit": 272000,
+            "context_current_tokens": 6724,
+            "large_output_threshold_bytes": 20480
+          }
+        }
+      },
+      "id": "98c06f0d-53fc-4515-b4e8-ed73f4a66be0",
+      "timestamp": "2026-11-12T14:21:16.011Z",
+      "parentId": "e83b7361-377b-4e3d-8af6-45d910776d0c"
+    },
+    "session.usage_checkpoint": {
+      "type": "session.usage_checkpoint",
+      "data": {
+        "totalNanoAiu": 3078300000,
+        "totalPremiumRequests": 1,
+        "modelCacheState": [
+          {
+            "modelId": "gpt-6.1-sol",
+            "cacheExpiresAt": "2026-11-12T14:51:25.502Z",
+            "cacheTtlSeconds": 1800
+          }
+        ],
+        "promptCacheBreakState": [
+          {
+            "conversation": "main",
+            "models": {
+              "gpt-6.1-sol": {
+                "model": "gpt-6.1-sol",
+                "vendor": "openai",
+                "model_call_id": "[REDACTED_OPAQUE_ID]",
+                "request_id": "00000-47419eef-12b8-4bba-ac8c-ba984f19ca50",
+                "github_request_id": "c55592bd-ab56-4d52-90b8-2ea21165ee06",
+                "api_endpoint": "ws:/responses",
+                "transport": "websocket",
+                "session_mode": "interactive",
+                "reasoning_effort": "medium",
+                "initiator": "agent",
+                "tool_count": 2,
+                "tool_tokens": 987,
+                "tools": [
+                  {
+                    "name": "bash",
+                    "schema_hash": "c0170aaae50c",
+                    "safe": true
+                  },
+                  {
+                    "name": "apply_patch",
+                    "schema_hash": "82b4475374ff",
+                    "safe": true
+                  }
+                ],
+                "tools_truncated": 0,
+                "system_segments": [
+                  {
+                    "segment": "customized_identity_preamble",
+                    "hash": "6770ae0b8f3f",
+                    "tokens": 17
+                  },
+                  {
+                    "segment": "interaction_mode",
+                    "hash": "4e74ea09c005",
+                    "tokens": 54
+                  },
+                  {
+                    "segment": "tone_and_style",
+                    "hash": "866a6130c416",
+                    "tokens": 227
+                  },
+                  {
+                    "segment": "search_and_delegation",
+                    "hash": "0b5fcf95abcd",
+                    "tokens": 62
+                  },
+                  {
+                    "segment": "tool_efficiency",
+                    "hash": "37c533327958",
+                    "tokens": 158
+                  },
+                  {
+                    "segment": "version_information",
+                    "hash": "49bde96cfe2f",
+                    "tokens": 17
+                  },
+                  {
+                    "segment": "model_information",
+                    "hash": "f007c0612b48",
+                    "tokens": 88
+                  },
+                  {
+                    "segment": "environment_context",
+                    "hash": "85b346ad24e0",
+                    "tokens": 187
+                  },
+                  {
+                    "segment": "identity_task_instructions",
+                    "hash": "adb5ce208724",
+                    "tokens": 11
+                  },
+                  {
+                    "segment": "code_change_instructions",
+                    "hash": "76434458b065",
+                    "tokens": 532
+                  },
+                  {
+                    "segment": "dynamic_guidelines",
+                    "hash": "50c87476c7a2",
+                    "tokens": 67
+                  },
+                  {
+                    "segment": "environment_limitations",
+                    "hash": "59ab66bb90e0",
+                    "tokens": 218
+                  },
+                  {
+                    "segment": "tool_intro",
+                    "hash": "2c07d9f78963",
+                    "tokens": 20
+                  },
+                  {
+                    "segment": "tool_instructions",
+                    "hash": "235af060ce7b",
+                    "tokens": 1149
+                  },
+                  {
+                    "segment": "system_notifications",
+                    "hash": "06e72cdc5231",
+                    "tokens": 86
+                  },
+                  {
+                    "segment": "host_additional_instructions",
+                    "hash": "f22cacb5f16b",
+                    "tokens": 930
+                  },
+                  {
+                    "segment": "workspace_context",
+                    "hash": "e642d7e98f0f",
+                    "tokens": 82
+                  },
+                  {
+                    "segment": "git_commit_trailer",
+                    "hash": "1d737bc1da62",
+                    "tokens": 67
+                  },
+                  {
+                    "segment": "final_instructions",
+                    "hash": "98af07552963",
+                    "tokens": 148
+                  }
+                ],
+                "conversation": {
+                  "message_count": 14,
+                  "points": [
+                    {
+                      "index": 0,
+                      "hash": "b92271493fab"
+                    },
+                    {
+                      "index": 1,
+                      "hash": "0edbc33591b6"
+                    },
+                    {
+                      "index": 2,
+                      "hash": "e349e947dffd"
+                    },
+                    {
+                      "index": 3,
+                      "hash": "e09be0d64150"
+                    },
+                    {
+                      "index": 4,
+                      "hash": "b1364f50a2c5"
+                    },
+                    {
+                      "index": 5,
+                      "hash": "31dc6697280c"
+                    },
+                    {
+                      "index": 6,
+                      "hash": "f33a7f62b323"
+                    },
+                    {
+                      "index": 7,
+                      "hash": "2e2634c7cb57"
+                    },
+                    {
+                      "index": 8,
+                      "hash": "5063dce2d4e5"
+                    },
+                    {
+                      "index": 9,
+                      "hash": "5f4e3b53ae50"
+                    },
+                    {
+                      "index": 10,
+                      "hash": "547c1a867b81"
+                    },
+                    {
+                      "index": 11,
+                      "hash": "69e2b2dedc29"
+                    },
+                    {
+                      "index": 12,
+                      "hash": "4370f6931a12"
+                    },
+                    {
+                      "index": 13,
+                      "hash": "0287394c2904"
+                    }
+                  ]
+                },
+                "cache_config": {
+                  "arm": "hybrid",
+                  "marks_system_prompt": true,
+                  "marks_conversation": false,
+                  "advisor_tool": false,
+                  "incremental_input": true,
+                  "system_prompt_layout": "legacy"
+                },
+                "prompt_tokens": 7643,
+                "cache_read": 7549,
+                "cache_write": 91,
+                "cache_details_reported": true,
+                "frontier_tokens": 7640,
+                "frontier_source": "reported_writes",
+                "ttl_seconds": 1800,
+                "cache_expires_at": "2026-11-12T14:51:25.502Z",
+                "completed_at": "2026-11-12T14:21:27.337Z"
+              }
+            },
+            "lastActiveModel": "gpt-6.1-sol",
+            "pendingRewriteSources": []
+          }
+        ],
+        "accountingSnapshot": {
+          "totalPremiumRequestCost": 1,
+          "totalUserRequests": 1,
+          "totalNanoAiu": 3078300000,
+          "aiCreditsStatus": "complete",
+          "tokenDetails": {
+            "input": {
+              "tokenCount": 21
+            },
+            "cache_read": {
+              "tokenCount": 42910
+            },
+            "cache_write": {
+              "tokenCount": 7640
+            },
+            "output": {
+              "tokenCount": 735
+            }
+          },
+          "totalApiDurationMs": 13833,
+          "sessionStartTime": "2026-11-12T14:21:10.665Z",
+          "codeChanges": {
+            "linesAdded": 1,
+            "linesRemoved": 0,
+            "filesModifiedCount": 1,
+            "filesModified": [
+              "/E/T4-native-pilot-03/run-01/cells/copilot-baseline/repo/outputs/smoke-patch.json"
+            ]
+          },
+          "modelMetrics": {
+            "gpt-6.1-sol": {
+              "requests": {
+                "count": 7,
+                "cost": 1
+              },
+              "usage": {
+                "inputTokens": 50571,
+                "outputTokens": 735,
+                "cacheReadTokens": 42910,
+                "cacheWriteTokens": 7640,
+                "reasoningTokens": 28
+              },
+              "cacheExpiresAt": "2026-11-12T14:51:25.502Z",
+              "totalNanoAiu": 3078300000,
+              "aiCreditsStatus": "complete",
+              "tokenDetails": {
+                "input": {
+                  "tokenCount": 21
+                },
+                "cache_read": {
+                  "tokenCount": 42910
+                },
+                "cache_write": {
+                  "tokenCount": 7640
+                },
+                "output": {
+                  "tokenCount": 735
+                }
+              }
+            }
+          },
+          "agentMetrics": {
+            "main": {
+              "totalApiDurationMs": 13833,
+              "totalNanoAiu": 3078300000,
+              "modelMetrics": {
+                "gpt-6.1-sol": {
+                  "requests": {
+                    "count": 7,
+                    "cost": 1
+                  },
+                  "usage": {
+                    "inputTokens": 50571,
+                    "outputTokens": 735,
+                    "cacheReadTokens": 42910,
+                    "cacheWriteTokens": 7640,
+                    "reasoningTokens": 28
+                  },
+                  "totalNanoAiu": 3078300000,
+                  "tokenDetails": {
+                    "input": {
+                      "tokenCount": 21
+                    },
+                    "cache_read": {
+                      "tokenCount": 42910
+                    },
+                    "cache_write": {
+                      "tokenCount": 7640
+                    },
+                    "output": {
+                      "tokenCount": 735
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "providerModelMetrics": [
+            {
+              "provider": {
+                "id": "copilot",
+                "label": "GitHub Copilot",
+                "kind": "copilot"
+              },
+              "modelId": "gpt-6.1-sol",
+              "metrics": {
+                "requests": {
+                  "count": 7,
+                  "cost": 1
+                },
+                "usage": {
+                  "inputTokens": 50571,
+                  "outputTokens": 735,
+                  "cacheReadTokens": 42910,
+                  "cacheWriteTokens": 7640,
+                  "reasoningTokens": 28
+                },
+                "totalNanoAiu": 3078300000,
+                "aiCreditsStatus": "complete",
+                "tokenDetails": {
+                  "input": {
+                    "tokenCount": 21
+                  },
+                  "cache_read": {
+                    "tokenCount": 42910
+                  },
+                  "cache_write": {
+                    "tokenCount": 7640
+                  },
+                  "output": {
+                    "tokenCount": 735
+                  }
+                }
+              },
+              "modelDisplayName": "GPT-6.1 Sol"
+            }
+          ],
+          "currentModel": "gpt-6.1-sol",
+          "lastCallInputTokens": 7643,
+          "lastCallOutputTokens": 54
+        },
+        "providerModelMetrics": [
+          {
+            "provider": {
+              "id": "copilot",
+              "label": "GitHub Copilot",
+              "kind": "copilot"
+            },
+            "modelId": "gpt-6.1-sol",
+            "metrics": {
+              "requests": {
+                "count": 7,
+                "cost": 1
+              },
+              "usage": {
+                "inputTokens": 50571,
+                "outputTokens": 735,
+                "cacheReadTokens": 42910,
+                "cacheWriteTokens": 7640,
+                "reasoningTokens": 28
+              },
+              "totalNanoAiu": 3078300000,
+              "aiCreditsStatus": "complete",
+              "tokenDetails": {
+                "input": {
+                  "tokenCount": 21
+                },
+                "cache_read": {
+                  "tokenCount": 42910
+                },
+                "cache_write": {
+                  "tokenCount": 7640
+                },
+                "output": {
+                  "tokenCount": 735
+                }
+              }
+            },
+            "modelDisplayName": "GPT-6.1 Sol"
+          }
+        ],
+        "usageAccountingWatermarks": {
+          "7fe88737-5ebc-4a55-bd19-9cb7e36457fe": 7
+        }
+      },
+      "id": "2082f17e-ceed-4627-833f-e3406d35e48c",
+      "timestamp": "2026-11-12T14:21:27.345Z",
+      "parentId": "a854a71c-9701-4401-96e7-c381a86aa25f"
+    }
+  }
+}
