@@ -15,6 +15,7 @@
 ## Fixtures that must remain meaningful
 
 - Validate the provider/runner contract before implementation: distinguish documented capabilities, offline fixture coverage, native unproven behavior and explicit owner prerequisites. A passing adapter fixture cannot establish host delivery or enforcement.
+- Ground native response/notification fixture shapes in installed-version schemas and sanitized real envelopes before building large adapter paths. Pair focused public red/green checks with an installed no-inference boundary probe at integration; [scheduler fixtures](../../skills/default/delegate-to-subagents/evals/test_scheduler_pilot.py) enforce real-child operations, auth modes, metadata drift and cleanup. Their passing offline envelopes do not establish native qualification.
 - Fake provider envelopes must carry results from real underlying tool operations when those operations are the behavior under test. Execute the public CLI/helper and capture actual argv, exit, state and file readback; invent only the provider transport envelope, not positive component outputs.
 - Define evidence authority independently of the grader, then mutate real successful traces/files adversarially. Check causal event order as well as supplied timestamps, and bind acknowledgment pointers/readbacks to the actual current artifact. Assert individual claims so an unrelated failure cannot conceal false acceptance.
 
