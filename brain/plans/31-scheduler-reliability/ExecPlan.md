@@ -1,6 +1,6 @@
 # Complete the scheduler comparison with a focused native harness
 
-This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. F2-D is accepted and integrated at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`. The final same-byte suite passed all 39 maintained tests in 137.926 seconds, and both [independent delta review axes](review-four-scenario.md) report zero material findings. The three changed files and unchanged helper match reviewed/tested/committed/integrated hashes. M2 correction acceptance is met. Parent next prepares and verifies a fresh exact four-scored-slot payload using its frozen PATH. Four total scored sessions remain, with independent current-phase validation, no extra smoke/retry, and no new planning or approval gate. Actual paired results and closeout remain incomplete.
+This living ExecPlan is `brain/plans/31-scheduler-reliability/ExecPlan.md`. Apply the repository-local exec-plans skill. Current checkpoint is 2026-11-12. The one-sentence prompt clarification is accepted and integrated at `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`, final harness SHA-256 `2983c40a5bf864917f07c440b2cc991f051b376e436de4da7546ccf8fbfad739`. It explicitly requests one helper invocation per native shell call and preserves the existing evidence contract. Both mechanical delta acknowledgments report zero findings. Public preparation found the sentence exactly once in all six prepared prompts, and three existing targeted public checks passed in 5.623 seconds. The 39-test full-suite pass remains bound to `47d985b7`/harness `7cc5afe5...`; no full-suite pass is claimed for the final prompt-only hash. Parent prepares the final exact four-scored-slot payload from this accepted source. Four total sessions remain, no extra smoke/retry, with independent current-phase proof. Actual results and closeout remain incomplete.
 
 ## Purpose / Big Picture
 
@@ -35,6 +35,7 @@ Ordinary controls exclude all-tools/all-paths permission bypasses. Existing glob
 - [x] (2026-11-12) [milestone-2] F2-C3 public canonical-state corruption reproduction and independent target/state-chain binding corrected, accepted in review 2.
 - [x] (2026-11-12) [milestone-2] F2 final 38-test verification, independent zero-finding review axes and exact-byte integration complete.
 - [x] (2026-11-12) [milestone-4] F3 P04 prepared and two native smokes consumed. Both automated qualifications failed, with no scored attempts. Preserve the report and source acceptance history.
+- [x] (2026-11-12) [milestone-2] F2-D prompt clarity addendum integrated at `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`, three targeted tests pass in 5.623 seconds, both mechanical acknowledgments zero findings.
 - [x] (2026-11-12) [milestone-2] F2-D integrated `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`, 39 final-byte tests pass in 137.926 seconds and both independent delta axes report zero findings.
 - [ ] [milestone-4] F3 prepare/verify a fresh four-scored-session payload and execute all four independently validated scored slots.
 - [ ] [milestone-4] F4 verify each result independently and retain the paired report and machine-readable results.
@@ -133,7 +134,7 @@ Acceptance: not met
 
 #### F3 - Fresh four-scored-session payload and execution
 
-Depends on accepted F2-D final bytes. Parent prepares a fresh exact source archive/manifest, disposable repos, frozen skill/prompt bytes, helper paths/grants, fresh session IDs, Sol/medium, 600-second limits and ordinary native controls. Verify the payload before dispatch. Invoke the harness under its exact prepared PATH and environment. Equivalent temporary setup paths for this plan purpose already have authorization. Do not backfill P04 or reuse its failed receipts.
+Depends on accepted F2-D final bytes plus the accepted prompt-only clarification at `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`. Parent prepares a fresh exact source archive/manifest, disposable repos, frozen skill/prompt bytes, helper paths/grants, fresh session IDs, Sol/medium, 600-second limits and ordinary native controls. Verify the payload before dispatch. Invoke the harness under its exact prepared PATH and environment. Equivalent temporary setup paths for this plan purpose already have authorization. Do not backfill P04 or reuse its failed receipts.
 
 Run exactly four scored sessions, baseline/candidate for each provider, serially. No extra neutral smoke or retry is authorized. Each phase independently supplies required native execution/session/selector proof, real child receipts, canonical readbacks/state chain and the full rubric. A prior smoke or scored result is not a readiness prerequisite. Deliver each selected skill body verbatim with equivalent synthetic facts and control conditions. Preserve each result and invalidity honestly, with no efficacy claim from an incomplete pair.
 
@@ -152,7 +153,7 @@ F5 depends on F4 and resolution of all remaining plan tasks. Keep reusable behav
 
 ## Concrete Steps
 
-F2-D is accepted and integrated at `47d985b7b698077e0dcb4a9e28b3169db1a7bc13`. The final same-byte suite passed all 39 maintained tests in 137.926 seconds, and both [independent delta review axes](review-four-scenario.md) report zero material findings. The three changed files and unchanged helper match reviewed/tested/committed/integrated hashes. M2 correction acceptance is met. Parent next prepares and verifies a fresh exact four-scored-slot payload using its frozen PATH. Four total scored sessions remain, with independent current-phase validation, no extra smoke/retry, and no new planning or approval gate. Actual paired results and closeout remain incomplete. Parent verifies frozen source/prompt/helper/session identities and invokes each launch under the exact prepared PATH and ordinary narrow permissions. Preserve P04 receipts without backfill. Do not launch optional diagnostic smokes.
+Parent prepares final P05 from accepted `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`, verifies frozen source/prompt/helper/session identities and launches only the four active scored slots under the exact prepared PATH and ordinary narrow permissions. [Prompt delta acknowledgment and targeted proof](review-four-scenario.md#prompt-clarification-addendum) preserve the separate earlier full-suite chronology. Source47 P05 draft is superseded unrun history. Preserve P04 without backfill. Do not launch optional diagnostic smokes or add retries/approval gates.
 
 ## Validation and Acceptance
 
@@ -171,6 +172,8 @@ Focused review 1 found retained cancellation coverage removed with an obsolete l
 P03 provider processes exited 0 while added conformance checks made both smokes invalid. Copilot's actual command identifier explains helper permission denial. Codex's actual context includes a file URI cwd and semantically different sandbox representation. The complete [Codex diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-codex/findings.md) and [Copilot diagnosis](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-native-phase-copilot/findings.md) are evidence inputs for minimal parsing and the narrow helper candidate. Their broader proposed schema/journal repair designs are superseded by this approved scope. Optional telemetry and usage do not establish scheduler behavior.
 
 ## Decision Log
+
+- 2026-11-12. Accept the one-sentence helper-call prompt clarification using exact mechanical 0/0 acknowledgments and three targeted checks on the final hash. Keep the earlier 39-test proof bound to its tested source and proceed with four scored slots.
 
 - 2026-11-12. Accept exact F2-D source after 39 maintained tests and zero material findings on both delta axes. Proceed to fresh four-scenario payload verification. Optional diagnostic smoke support is outside the remaining call allocation.
 

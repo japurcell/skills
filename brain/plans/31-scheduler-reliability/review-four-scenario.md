@@ -44,3 +44,12 @@ The separate final unchanged-byte suite passed 39 tests in 137.926 seconds, exit
 ## Next execution boundary
 
 Only the four scenario slots are authorized and active in the next fresh payload. Optional diagnostic smoke CLI or manifest entries do not grant smoke launches. Parent uses the exact prepared PATH. Current-phase native helper/session/selector and full state/rubric evidence determine each scored result independently. P04 remains historical and unchanged.
+
+## Prompt clarification addendum
+
+The one-sentence prompt clarification is accepted and integrated at `c52ab3d7cfee5c783dd62c89a26b51c57de5d0c3`, final harness SHA-256 `2983c40a5bf864917f07c440b2cc991f051b376e436de4da7546ccf8fbfad739`. It explicitly requests one helper invocation per native shell call and preserves the existing evidence contract. Both mechanical delta acknowledgments report zero findings. Public preparation found the sentence exactly once in all six prepared prompts, and three existing targeted public checks passed in 5.623 seconds. The 39-test full-suite pass remains bound to `47d985b7`/harness `7cc5afe5...`; no full-suite pass is claimed for the final prompt-only hash.
+
+- Standards acknowledges zero material findings in the exact one-source-line prompt delta. [Acknowledgment](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-prompt-clarity/standards.md).
+- Spec acknowledges zero material findings, with the four-scored-slot contract unchanged. [Acknowledgment](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-prompt-clarity/spec.md).
+
+[Exact delta metadata](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/review-prompt-clarity/source.json), [public preparation proof](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-four-scenario-fix/prompt-clarity-proof.json) and [targeted test log](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-four-scenario-fix/prompt-clarity-targeted.log). Optional diagnostic smoke prompts in the proof are unlaunched and outside the four active scored slots. The earlier source47 P05 draft is retained as [historical unrun preparation](/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/scheduler-reliability-qq1u65jw/T4-focused-pilot-05-source47-draft/source-binding.json). Parent prepares final P05 from the accepted final source.
