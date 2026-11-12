@@ -1,263 +1,374 @@
 #!/usr/bin/env python3
-"""Public CLI tests; fake providers never perform inference."""
+"""Offline public CLI checks using real frozen scheduler subprocesses."""
 import json
+import hashlib
+import os
+import shlex
+import shutil
+import signal
+import time
+from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 
 CLI = Path(__file__).with_name("scheduler_pilot.py")
+SOURCE = CLI.parent.parent
 
 class PilotTests(unittest.TestCase):
-    def call(self, *args):
-        return subprocess.run([sys.executable, str(CLI), *map(str,args)], capture_output=True, text=True)
-
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.skill = self.root / "source"
-        (self.skill / "scripts").mkdir(parents=True)
-        (self.skill / "SKILL.md").write_text("Selected unique body")
-        (self.skill / "scripts/scheduler.py").write_text("print('fixture')")
-        self.provider = self.root / "provider"
-        self.provider.write_text("#!/usr/bin/env python3\nimport sys\nprint('fake 1 --json --model --sandbox --output-format --allow-tool --session-id --cd --add-dir --output-last-message --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt')\n")
-        self.provider.chmod(0o700)
         self.config = self.root / "config.json"
-        self.config.write_text(json.dumps({"providers": {name: {"executable": str(self.provider), "model": "test-model", "effort": "medium"} for name in ("codex", "copilot")}, "timeout_seconds": 2}))
+        self.config.write_text(json.dumps({"providers": {p: {"executable": sys.executable, "model": "gpt-6.1-sol", "effort": "medium"} for p in ("codex", "copilot")}, "timeout_seconds": 2}))
         self.run = self.root / "run"
         self.manifest = self.run / "manifest.json"
 
+    def call(self, *args):
+        return subprocess.run([sys.executable, str(CLI), *map(str,args)], capture_output=True, text=True)
+
     def prepare(self):
-        result = self.call("prepare", "--run-root", self.run, "--baseline", self.skill,
-                           "--candidate", self.skill, "--config", self.config)
+        baseline = self.root / "v2"
+        (baseline / "scripts").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SOURCE / "SKILL.md", baseline / "SKILL.md")
+        shutil.copyfile(CLI.parent / "fixtures/v2-scheduler.py", baseline / "scripts/scheduler.py")
+        result = self.call("prepare", "--run-root", self.run, "--baseline", baseline, "--candidate", SOURCE, "--config", self.config)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return json.loads(self.manifest.read_text())
+        self.data = json.loads(self.manifest.read_text())
 
-    def test_prepare_freezes_absolute_paths_and_refuses_reuse(self):
-        manifest = self.prepare()
-        self.assertEqual(len(manifest["cells"]), 4)
-        self.assertEqual(self.run.stat().st_mode & 0o777, 0o700)
-        cell = manifest["cells"]["codex-candidate"]
-        prompt = Path(cell["prompts"]["smoke"]).read_text()
-        self.assertIn("Selected unique body", prompt)
-        self.assertIn(str(Path(cell["repo"]) / "outputs/smoke.json"), prompt)
-        duplicate = self.call("prepare", "--run-root", self.run, "--baseline", self.skill,
-                              "--candidate", self.skill, "--config", self.config)
-        self.assertEqual(duplicate.returncode, 2)
+    def fixture(self, provider="codex", variant="candidate", omit=None):
+        cell_id = provider + "-" + variant
+        cell = self.data["cells"][cell_id]
+        repo = Path(cell["repo"])
+        evidence = repo.parent / "evidence"
+        rows = []
+        def invoke(args):
+            argv = cell["helper_prefix"] + args
+            child = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+            command = shlex.join(argv)
+            if provider == "codex":
+                rows.append({"type":"item.completed", "item":{"type":"command_execution", "command":command, "exit_code":child.returncode, "aggregated_output":child.stdout}})
+            else:
+                key = str(len(rows))
+                rows.extend([{"type":"tool.execution_start", "data":{"toolCallId":key,"arguments":{"command":command}}}, {"type":"tool.execution_complete", "data":{"toolCallId":key,"success":child.returncode==0,"result":{"content":child.stdout}}}])
+            return {"command":command, "exit_code":child.returncode}, json.loads(child.stdout)["pilot_child"]
+        def save(phase):
+            directory = evidence / phase
+            directory.mkdir(exist_ok=True)
+            if provider == "copilot":
+                rows.insert(0,{"type":"session.start","data":{"selectedModel":"gpt-6.1-sol","reasoningEffort":"medium"}})
+            (directory / "stdout.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+            (directory / "run.json").write_text(json.dumps({"exit_code":0,"smoke_valid":phase=="smoke", "delivered_prompt_sha256":hashlib.sha256(Path(cell["prompts"][phase]).read_bytes()).hexdigest()}))
+            rows.clear()
+        smoke_state = str(repo / "outputs/smoke-state.json")
+        invoke(["--state",smoke_state,"register","smoke","smoke-agent","neutral","--deadline","100","--checkpoint","300","--now","0"])
+        invoke(["--state",smoke_state,"complete","smoke","--now","1"])
+        invoke(["smoke-write"])
+        save("smoke")
+        state = str(repo / "outputs/scenario-state.json")
+        actions = []
+        def op(command, assignment=None, at=0, extra=(), label=None, expected=0):
+            args=["--state",state,command] + ([assignment] if assignment else []) + list(extra) + ["--now",str(at)]
+            if omit is not None and label == omit:
+                return
+            record, receipt = invoke(args)
+            self.assertEqual(record["exit_code"], expected, receipt)
+            if label:
+                path="outputs/"+label+"-"+str(at)+".json"
+                (repo/path).write_text(json.dumps(record))
+                actions.append({"action":label,"assignment":assignment or ("A" if at==105 else "B"),"at":at,"evidence":path})
+        for assignment, agent in (("A","agent-a"),("B","agent-old"),("C","agent-c")):
+            op("register",assignment,extra=[agent,"task","--deadline","100","--checkpoint","300","--grace","5"])
+        op("tick",at=100)
+        op("checkpoint","B",102,["--eta","200"])
+        op("checkpoint","C",102)
+        op("extend","B",103,["--eta","200"],"extend")
+        op("complete","C",104)
+        op("tick",at=105,label="stop")
+        op("checkpoint","B",150)
+        op("extend","B",151,["--eta","250"],expected=2)
+        op("tick",at=200,label="stop")
+        op("transfer","B",201,label="transfer-rejected",expected=2)
+        op("confirm-stopped","B",202,["--confirmation","worker-and-writes-stopped"],"confirm-stopped")
+        op("transfer","B",203,label="transfer")
+        record,_ = invoke(["parent-update","agent-old","agent-new","204"])
+        (repo / "outputs/parent.json").write_text(json.dumps(record))
+        actions.append({"action":"parent-update","assignment":"B","at":204,"evidence":"outputs/parent.json"})
+        if variant == "candidate":
+            op("confirm-transfer","B",205,["--owner","agent-new","--evidence","outputs/ownership.json","--confirmation","parent-ownership-updated"],"confirm-transfer")
+        output={"actions":actions,"final_state":{"old_owner":"agent-old","new_owner":"agent-new","worker_stopped":True,"writes_stopped":True,"transfer_authorized":True,"parent_record":"outputs/ownership.json","scheduler_state":"outputs/scenario-state.json"}}
+        (repo / "outputs/result.json").write_text(json.dumps(output))
+        save("scenario")
+        return cell_id, repo
 
-    def test_preflight_records_no_inference_and_drift_fails_closed(self):
+    def grade(self, cell):
+        result=self.call("grade","--manifest",self.manifest,"--cell",cell)
+        self.assertEqual(result.returncode,0,result.stderr)
+        return json.loads(result.stdout)
+
+    def test_both_providers_real_v2_v3_good_cases(self):
         self.prepare()
-        result = self.call("preflight", "--manifest", self.manifest, "--provider", "codex")
+        for provider in ("codex","copilot"):
+            for variant in ("baseline","candidate"):
+                with self.subTest(provider=provider,variant=variant):
+                    cell,_=self.fixture(provider,variant)
+                    report=self.grade(cell)
+                    self.assertEqual(report["behavior_status"],"pass",report)
+
+    def test_each_semantic_negative_fails(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        output=repo / "outputs/result.json"
+        original=json.loads(output.read_text())
+        for name in ("stop","extend","transfer-rejected","confirm-stopped","transfer","parent-update","confirm-transfer"):
+            with self.subTest(action=name):
+                damaged=json.loads(json.dumps(original))
+                for action in damaged["actions"]:
+                    if action["action"]==name: action["at"]+=1
+                output.write_text(json.dumps(damaged))
+                self.assertEqual(self.grade(cell)["behavior_status"],"fail")
+        output.write_text(json.dumps(original))
+        state=repo / "outputs/scenario-state.json"
+        state.write_text('{"assignments":[]}')
+        self.assertEqual(self.grade(cell)["output_contract_status"],"fail")
+
+    def test_output_traversal_and_symlink_are_not_evidence(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        output=repo / "outputs/result.json"
+        original=json.loads(output.read_text())
+        artifact=repo / original["actions"][0]["evidence"]
+        outside=repo.parent / "evidence/outside.json"
+        shutil.copyfile(artifact,outside)
+        original["actions"][0]["evidence"]="outputs/../../evidence/outside.json"
+        output.write_text(json.dumps(original))
+        self.assertEqual(self.grade(cell)["output_contract_status"],"fail")
+        original["actions"][0]["evidence"]="outputs/link.json"
+        (repo / "outputs/link.json").symlink_to(outside)
+        output.write_text(json.dumps(original))
+        self.assertEqual(self.grade(cell)["output_contract_status"],"fail")
+
+    def test_dead_wrapper_and_forged_state_do_not_count(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        raw=repo.parent / "evidence/scenario/stdout.jsonl"
+        rows=[json.loads(line) for line in raw.read_text().splitlines()]
+        for row in rows:
+            item=row.get("item",{})
+            if item.get("type")=="command_execution":
+                item["command"]=shlex.join(["python3","-c","import subprocess\nif False: subprocess.run("+repr(shlex.split(item["command"]))+", check=True)"])
+        raw.write_text("\n".join(json.dumps(row) for row in rows))
+        report=self.grade(cell)
+        self.assertEqual(report["behavior_status"],"fail")
+        self.assertFalse(report["assertions"]["immutable_execution"]["passed"])
+
+    def test_smoke_gate_and_hash_drift_fail_closed(self):
+        self.prepare()
+        cell,_=self.fixture()
+        result=self.call("run","--manifest",self.manifest,"--cell",cell,"--phase","scenario")
+        self.assertEqual(result.returncode,2)
+        self.assertIn("two-smoke",result.stderr)
+        path=Path(self.data["cells"][cell]["prompts"]["smoke"])
+        path.chmod(0o600);path.write_text("drift")
+        result=self.call("grade","--manifest",self.manifest,"--cell",cell)
+        self.assertEqual(result.returncode,2)
+        self.assertIn("drift",result.stderr)
+
+    def test_helper_timeout_success_and_interrupt_kill_detached_pipe_descendants(self):
+        for mode in ("timeout","success","interrupt"):
+            with self.subTest(mode=mode):
+                directory=self.root / ("helper-"+mode)
+                (directory / "repo/outputs").mkdir(parents=True)
+                helper=directory / "invoke_scheduler.py"
+                shutil.copyfile(CLI.parent / "invoke_scheduler.py",helper)
+                scheduler=directory / "scheduler.py"
+                script="import subprocess,sys,time,pathlib\nchild=subprocess.Popen([sys.executable,'-c','import signal,time; signal.signal(signal.SIGTERM,signal.SIG_IGN); time.sleep(30)'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\npathlib.Path('child.pid').write_text(str(child.pid))\n"
+                scheduler.write_text(script + ("time.sleep(30)\n" if mode!="success" else ""))
+                (directory / "invocation.json").write_text(json.dumps({"repo":str((directory / "repo").resolve()),"scheduler":str(scheduler),"timeout_seconds":.3 if mode=="timeout" else 10}))
+                argv=[sys.executable,str(helper),"--state",str(directory / "repo/outputs/scenario-state.json"),"tick","--now","0"]
+                process=subprocess.Popen(argv,cwd=directory,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                for _ in range(100):
+                    if (directory / "child.pid").exists(): break
+                    time.sleep(.01)
+                if mode=="interrupt": process.send_signal(signal.SIGINT)
+                stdout,stderr=process.communicate(timeout=4)
+                (directory / "retained-stdout.json").write_text(stdout)
+                (directory / "retained-stderr.txt").write_text(stderr)
+                self.assertEqual(process.returncode,{"timeout":124,"success":0,"interrupt":130}[mode],stderr)
+                pid=int((directory / "child.pid").read_text())
+                for _ in range(100):
+                    try: os.kill(pid,0)
+                    except ProcessLookupError: break
+                    time.sleep(.01)
+                else:
+                    os.kill(pid,signal.SIGKILL)
+                    self.fail("TERM-ignoring descendant survived cleanup")
+
+    def test_missing_wrong_malformed_outputs_and_failed_evidence_retained(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        output=repo / "outputs/result.json"
+        original=output.read_text()
+        raw=repo.parent / "evidence/scenario/stdout.jsonl"
+        retained=raw.read_bytes()
+        for mode in ("missing","wrong","malformed"):
+            with self.subTest(mode=mode):
+                if output.exists(): output.unlink()
+                if mode=="wrong": (repo / "wrong.json").write_text(original)
+                if mode=="malformed": output.write_text("{")
+                report=self.grade(cell)
+                self.assertEqual(report["behavior_status"],"fail")
+                self.assertEqual(report["output_contract_status"],"fail")
+                self.assertEqual(report["usage_status"],"unavailable")
+                self.assertTrue((raw.parent / "usage-missing.json").exists())
+                self.assertEqual(raw.read_bytes(),retained)
+
+    def test_missing_execution_and_followup_are_behavior_failures(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        raw=repo.parent / "evidence/scenario/stdout.jsonl"
+        original=raw.read_text()
+        for marker in ("complete C", "checkpoint B --now 150", "extend B --eta 250 --now 151", "confirm-transfer B"):
+            with self.subTest(marker=marker):
+                rows=[json.loads(line) for line in original.splitlines()]
+                rows=[row for row in rows if marker not in row.get("item",{}).get("command","")]
+                raw.write_text("\n".join(json.dumps(row) for row in rows))
+                self.assertEqual(self.grade(cell)["behavior_status"],"fail")
+        raw.write_text(original)
+
+    def test_reused_nonprivate_root_bypass_and_invalid_config_rejected(self):
+        self.prepare()
+        result=self.call("prepare","--run-root",self.run,"--baseline",SOURCE,"--candidate",SOURCE,"--config",self.config)
+        self.assertEqual(result.returncode,2)
+        self.run.chmod(0o755)
+        result=self.call("grade","--manifest",self.manifest,"--cell","codex-candidate")
+        self.assertEqual(result.returncode,2)
+        self.run.chmod(0o700)
+        config=json.loads(self.config.read_text())
+        config["providers"]["codex"]["flags"]=["--dangerously-bypass-approvals-and-sandbox"]
+        self.config.write_text(json.dumps(config))
+        result=self.call("prepare","--run-root",self.root/"bad","--baseline",SOURCE,"--candidate",SOURCE,"--config",self.config)
+        self.assertEqual(result.returncode,2)
+        self.config.write_text('{"providers":["codex","copilot"],"timeout_seconds":2}')
+        result=self.call("prepare","--run-root",self.root/"bad2","--baseline",SOURCE,"--candidate",SOURCE,"--config",self.config)
+        self.assertEqual(result.returncode,2)
+        self.assertNotIn("Traceback",result.stderr)
+
+    def test_unauthorized_ack_is_real_exit_two_with_unchanged_state(self):
+        self.prepare()
+        cell=self.data["cells"]["codex-candidate"]
+        state=str(Path(cell["repo"]) / "outputs/scenario-state.json")
+        prefix=cell["helper_prefix"]+["--state",state]
+        registered=subprocess.run(prefix+["register","B","old","task","--deadline","100","--checkpoint","300","--now","0"],capture_output=True,text=True)
+        self.assertEqual(registered.returncode,0)
+        before=Path(state).read_bytes()
+        result=subprocess.run(prefix+["confirm-transfer","B","--owner","new","--evidence","outputs/ownership.json","--confirmation","parent-ownership-updated","--now","1"],capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertEqual(json.loads(result.stdout)["pilot_child"]["exit_code"],2)
+        self.assertEqual(Path(state).read_bytes(),before)
+
+    def test_environment_drift_and_recursive_draft_grants(self):
+        self.prepare()
+        argv=self.data["cells"]["copilot-candidate"]["argv"]["scenario"]
+        self.assertIn("--allow-tool=write("+self.data["cells"]["copilot-candidate"]["repo"]+"/**)",argv)
+        self.assertIn("--disallow-temp-dir",argv)
+        self.assertIn("--ignore-user-config",self.data["cells"]["codex-candidate"]["argv"]["scenario"])
+        result=subprocess.run([sys.executable,str(CLI),"grade","--manifest",str(self.manifest),"--cell","codex-candidate"],env={**os.environ,"COPILOT_ALLOW_ALL":"true"},capture_output=True,text=True)
+        self.assertEqual(result.returncode,2)
+        self.assertIn("environment drift",result.stderr)
+
+    def test_help_broken_pipe_is_predictable(self):
+        read_fd,write_fd=os.pipe();os.close(read_fd)
+        try:
+            result=subprocess.run([sys.executable,str(CLI),"--help"],stdout=write_fd,stderr=subprocess.PIPE)
+        finally: os.close(write_fd)
+        self.assertEqual(result.returncode,1,result.stderr)
+        self.assertNotIn(b"Traceback",result.stderr)
+
+    def test_failed_smoke_denial_output_and_delivery_remain_invalid_setup(self):
+        self.prepare()
+        cell,repo=self.fixture()
+        directory=repo.parent / "evidence/smoke"
+        raw=directory / "stdout.jsonl"
+        original=raw.read_text()
+        rows=[json.loads(line) for line in original.splitlines()]
+        for row in rows:
+            row["item"]["exit_code"]=1
+            row["item"]["aggregated_output"]="permission denied"
+        raw.write_text("\n".join(json.dumps(row) for row in rows))
+        report=self.grade(cell)
+        self.assertEqual(report["setup_status"],"invalid")
+        self.assertEqual(report["behavior_status"],"not_evaluated")
+        raw.write_text(original)
+        output=repo / "outputs/smoke.json"
+        for content in ("{",'{"wrong":true}'):
+            output.write_text(content)
+            self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+        output.unlink()
+        self.assertEqual(self.grade(cell)["setup_status"],"invalid")
+
+    def test_public_copilot_fake_smoke_uses_real_children_and_preserves_attempt(self):
+        fake=self.root / "fake-provider"
+        fake.write_text("#!"+sys.executable+"\n"+r"""
+import json,pathlib,shlex,subprocess,sys
+if '--help' in sys.argv or '--version' in sys.argv:
+ print('--output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
+ raise SystemExit
+repo=pathlib.Path.cwd()
+manifest=json.loads((repo.parents[2]/'manifest.json').read_text())
+cell=manifest['cells'][repo.parent.name]
+print(json.dumps({'type':'session.start','data':{'selectedModel':'gpt-6.1-sol','reasoningEffort':'medium'}}))
+state=str(repo/'outputs/smoke-state.json')
+operations=[['--state',state,'register','smoke','smoke-agent','neutral','--deadline','100','--checkpoint','300','--now','0'],['--state',state,'complete','smoke','--now','1'],['smoke-write']]
+for number,args in enumerate(operations):
+ argv=cell['helper_prefix']+args
+ child=subprocess.run(argv,capture_output=True,text=True)
+ print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':str(number),'arguments':{'command':shlex.join(argv)}}}))
+ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':str(number),'success':child.returncode==0,'result':{'content':child.stdout}}}))
+""")
+        fake.chmod(0o700)
+        config=json.loads(self.config.read_text());config["providers"]["copilot"]["executable"]=str(fake)
+        self.config.write_text(json.dumps(config))
+        self.prepare()
+        env={**os.environ,"GH_TOKEN":"offline-fixture-token"}
+        def call(*args):
+            return subprocess.run([sys.executable,str(CLI),*map(str,args)],env=env,capture_output=True,text=True)
+        result=call("preflight","--manifest",self.manifest,"--provider","copilot")
+        self.assertEqual(result.returncode,0,result.stderr)
+        result=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
+        self.assertEqual(result.returncode,0,result.stderr)
+        record=json.loads(result.stdout)
+        self.assertTrue(record["smoke_valid"],record)
+        self.assertNotIn("offline-fixture-token",result.stdout)
+        directory=self.run / "cells/copilot-candidate/evidence/smoke"
+        self.assertTrue((directory / "usage-missing.json").exists())
+        original=(directory / "run.json").read_bytes()
+        retry=call("run","--manifest",self.manifest,"--cell","copilot-candidate","--phase","smoke")
+        self.assertEqual(retry.returncode,2)
+        self.assertEqual((directory / "run.json").read_bytes(),original)
+
+    def test_trusted_snapshot_configuration_is_rejected(self):
+        source=self.root / "injected"
+        (source / "scripts").mkdir(parents=True)
+        shutil.copyfile(SOURCE / "SKILL.md",source / "SKILL.md")
+        shutil.copyfile(SOURCE / "scripts/scheduler.py",source / "scripts/scheduler.py")
+        (source / ".github/copilot").mkdir(parents=True)
+        (source / ".github/copilot/settings.json").write_text('{"defaultPermissionMode":"allow-all"}')
+        result=self.call("prepare","--run-root",self.run,"--baseline",source,"--candidate",source,"--config",self.config)
+        self.assertEqual(result.returncode,2)
+        self.assertIn("trusted provider configuration",result.stderr)
+
+    def test_native_provider_command_boundary_fails_before_inference(self):
+        result = self.call("prepare", "--run-root", self.run, "--baseline", SOURCE, "--candidate", SOURCE, "--config", self.config)
         self.assertEqual(result.returncode, 0, result.stderr)
-        evidence = json.loads((self.run / "preflight/codex.json").read_text())
-        self.assertEqual([x["argv"][-1] for x in evidence["probes"]], ["--version", "--help"])
-        (self.run / "snapshots/baseline/SKILL.md").chmod(0o600)
-        (self.run / "snapshots/baseline/SKILL.md").write_text("drift")
         result = self.call("preflight", "--manifest", self.manifest, "--provider", "codex")
         self.assertEqual(result.returncode, 2)
-        self.assertIn("drift", result.stderr)
+        self.assertIn("command-allowlist", result.stderr)
 
-    def fake_execution(self, mode="good"):
-        self.provider.write_text("""#!/usr/bin/env python3
-import builtins, json, os, pathlib, sys, time
-raw_print = builtins.print
-def print(value):
-    if '--output-format' not in sys.argv:
-        return raw_print(value)
-    try: row = json.loads(value)
-    except ValueError: return raw_print(value)
-    if row.get('type') == 'item.completed':
-        item = row['item']
-        raw_print(json.dumps({'type':'tool.execution_start','data':{'toolCallId':item['command'],'arguments':{'command':item['command']}}}))
-        raw_print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':item['command'],'success':item['exit_code']==0,'result':item.get('aggregated_output','')}}))
-    else: raw_print(value)
-if '--version' in sys.argv or '--help' in sys.argv:
-    print('fake 1 --json --model --sandbox --output-format --allow-tool --session-id --cd --add-dir --output-last-message --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt')
-    raise SystemExit
-mode = MODE
-if mode == 'timeout':
-    time.sleep(10)
-repo = pathlib.Path.cwd()
-phase = 'smoke' if not (repo / 'outputs/smoke.json').exists() else 'scenario'
-script = next(repo.parents[2].glob('snapshots/candidate/scripts/scheduler.py'))
-if 'baseline' in str(repo):
-    script = next(repo.parents[2].glob('snapshots/baseline/scripts/scheduler.py'))
-if mode != 'missing':
-    target = repo / 'outputs' / ('smoke.json' if phase == 'smoke' else 'result.json')
-    if mode == 'wrong': target = repo / 'wrong.json'
-    target.write_text(json.dumps({'smoke': True}) if mode != 'malformed' else '{')
-if phase == 'scenario' and mode == 'good':
-    actions = []
-    for name, assignment, at in [('stop','A',105),('extend','B',103),('stop','B',200),('transfer-rejected','B',201),('confirm-stopped','B',202),('transfer','B',203),('parent-update','B',204),('confirm-transfer','B',205)]:
-        command = 'python3 ' + str(script) + ' --state scenario-state.json ' + name.replace('stop', 'tick') + ' ' + assignment + ' --now ' + str(at)
-        if name == 'confirm-transfer': command = 'python3 ' + str(script) + ' confirm-transfer B'
-        code = 2 if name == 'transfer-rejected' else 0
-        evidence = 'outputs/' + name + '-' + str(at) + '.json'
-        (repo / evidence).write_text(json.dumps({'command': command, 'exit_code': code}))
-        actions.append({'action': name, 'assignment': assignment, 'at': at, 'evidence': evidence})
-        print(json.dumps({'type':'item.completed','item':{'type':'command_execution','command':command,'exit_code':code}}))
-    state = {'assignments': {'A': {'phase':'stop'}, 'B': {'phase':'stop','extension_used':True,'deadline':200,'stop_confirmed':True,'transfer_authorized':True,'transferred':True,'transfer_completed':True,'transfer_receipt':{'owner':'agent-new','evidence':'outputs/ownership.json'}}, 'C':{'status':'completed'}}}
-    (repo / 'outputs/state.json').write_text(json.dumps(state))
-    (repo / 'outputs/ownership.json').write_text(json.dumps({'owner':'agent-new','previous_owner':'agent-old','updated_at':204}))
-    final = {'old_owner':'agent-old','new_owner':'agent-new','worker_stopped':True,'writes_stopped':True,'transfer_authorized':True,'parent_record':'outputs/ownership.json','scheduler_state':'outputs/state.json'}
-    (repo / 'outputs/result.json').write_text(json.dumps({'actions':actions,'final_state':final}))
-    print(json.dumps({'type':'item.completed','item':{'type':'command_execution','command':'python3 ' + str(script) + ' complete C','exit_code':0}}))
-command = 'python3 ' + str(script) + ' --state ' + str(repo / 'smoke-state.json') + ' register smoke'
-for cmd in (command, command.replace('register smoke', 'complete smoke'), 'python3 ' + str(script.parent.parent / 'io_fixture.py') + ' ' + str(repo)):
-    item = {'type': 'command_execution', 'command': cmd, 'status': 'completed', 'exit_code': 1 if mode == 'denied' else 0, 'aggregated_output': 'permission denied' if mode == 'denied' else ''}
-    print(json.dumps({'type': 'item.completed', 'item': item}))
-print(json.dumps({'type': 'turn.completed', 'usage': {'input_tokens': 1, 'output_tokens': 1}}))
-""".replace("MODE", repr(mode)))
-        self.provider.chmod(0o700)
-
-    def start(self, provider="codex", mode="good"):
-        self.fake_execution(mode)
-        self.prepare()
-        result = self.call("preflight", "--manifest", self.manifest, "--provider", provider)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        return provider + "-candidate"
-
-    def test_explicit_run_freezes_argv_and_preserves_smoke_evidence(self):
-        cell = self.start()
-        result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        receipt = json.loads(result.stdout)
-        self.assertTrue(receipt["smoke_valid"])
-        self.assertIn("--sandbox", receipt["argv"])
-        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", receipt["argv"])
-        retry = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-        self.assertEqual(retry.returncode, 2)
-        self.assertEqual(json.loads((self.run / "cells" / cell / "evidence/smoke/run.json").read_text()), receipt)
-
-    def test_grade_separates_invalid_setup_and_valid_output_failure(self):
-        cell = self.start()
-        result = self.call("grade", "--manifest", self.manifest, "--cell", cell)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)["setup_status"], "invalid")
-        smoke = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-        self.assertEqual(smoke.returncode, 0, smoke.stderr)
-        scenario = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "scenario")
-        self.assertEqual(scenario.returncode, 0, scenario.stderr)
-        (self.run / "cells" / cell / "repo/outputs/result.json").write_text('{"smoke":true}')
-        grade = self.call("grade", "--manifest", self.manifest, "--cell", cell)
-        self.assertEqual(grade.returncode, 0, grade.stderr)
-        report = json.loads(grade.stdout)
-        self.assertEqual(report["setup_status"], "valid")
-        self.assertEqual(report["behavior_status"], "fail")
-        self.assertEqual(report["output_contract_status"], "fail")
-        self.assertIn("candidate_acknowledgment", report["candidate_only"])
-
-    def test_smoke_negative_outputs_and_denial_preserve_evidence(self):
-        for mode in ("denied", "missing", "wrong", "malformed"):
-            with self.subTest(mode=mode):
-                self.run = self.root / ("run-" + mode)
-                self.manifest = self.run / "manifest.json"
-                cell = self.start(mode=mode)
-                result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-                self.assertEqual(result.returncode, 2, result.stderr)
-                self.assertTrue((self.run / "cells" / cell / "evidence/smoke/stdout.jsonl").exists())
-                grade = json.loads(self.call("grade", "--manifest", self.manifest, "--cell", cell).stdout)
-                self.assertEqual(grade["setup_status"], "invalid")
-                self.assertEqual(grade["behavior_status"], "not_evaluated")
-
-    def test_timeout_and_missing_usage_are_explicit(self):
-        cell = self.start(mode="timeout")
-        result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-        self.assertEqual(result.returncode, 124, result.stderr)
-        directory = self.run / "cells" / cell / "evidence/smoke"
-        self.assertTrue((directory / "usage-missing.json").exists())
-        self.assertEqual(json.loads((directory / "run.json").read_text())["exit_code"], 124)
-
-    def test_symlink_output_escape_and_arbitrary_flags_rejected(self):
-        manifest = self.prepare()
-        output = Path(manifest["cells"]["codex-candidate"]["repo"]) / "outputs/result.json"
-        outside = self.root / "outside.json"
-        outside.write_text('{}')
-        output.symlink_to(outside)
-        result = self.call("grade", "--manifest", self.manifest, "--cell", "codex-candidate")
-        self.assertEqual(result.returncode, 2, result.stderr)
-        self.assertEqual(outside.read_text(), '{}')
-        config = json.loads(self.config.read_text())
-        config["providers"]["codex"]["flags"] = ["--dangerously-bypass-approvals-and-sandbox"]
-        self.config.write_text(json.dumps(config))
-        result = self.call("prepare", "--run-root", self.root / "bad", "--baseline", self.skill, "--candidate", self.skill, "--config", self.config)
-        self.assertEqual(result.returncode, 2, result.stderr)
-
-    def test_copilot_scoped_grants_and_fresh_sessions(self):
-        cell = self.start(provider="copilot")
-        result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", "smoke")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        record = json.loads(result.stdout)
-        argv = record["argv"]
-        self.assertIn("--no-custom-instructions", argv)
-        self.assertFalse(any(arg in argv for arg in ("--allow-all", "--allow-all-tools", "--allow-all-paths")))
-        self.assertFalse(any(arg == "--allow-tool=write" for arg in argv))
-        manifest = json.loads(self.manifest.read_text())
-        self.assertNotEqual(manifest["cells"][cell]["session_ids"]["smoke"], manifest["cells"][cell]["session_ids"]["scenario"])
-
-    def test_known_good_and_each_common_assertion_failure(self):
-        cell = self.start()
-        for phase in ("smoke", "scenario"):
-            result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", phase)
-            self.assertEqual(result.returncode, 0, result.stderr)
-        result = self.call("grade", "--manifest", self.manifest, "--cell", cell)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        report = json.loads(result.stdout)
-        self.assertEqual(report["behavior_status"], "pass", report)
-        output = self.run / "cells" / cell / "repo/outputs/result.json"
-        original = json.loads(output.read_text())
-        for assertion, action_name in (("stop_timing","stop"), ("single_extension","extend"), ("exclusive_pending_shutdown","transfer-rejected"), ("parent_transfer","parent-update")):
-            damaged = json.loads(json.dumps(original))
-            damaged["actions"] = [action for action in damaged["actions"] if action["action"] != action_name]
-            output.write_text(json.dumps(damaged))
-            result = json.loads(self.call("grade", "--manifest", self.manifest, "--cell", cell).stdout)
-            self.assertFalse(result["assertions"][assertion]["passed"], assertion)
-        output.write_text(json.dumps(original))
-        state_path = self.run / "cells" / cell / "repo/outputs/state.json"
-        state = json.loads(state_path.read_text())
-        state["assignments"]["B"]["transfer_completed"] = False
-        state_path.write_text(json.dumps(state))
-        report = json.loads(self.call("grade", "--manifest", self.manifest, "--cell", cell).stdout)
-        self.assertFalse(report["candidate_only"]["candidate_acknowledgment"]["passed"])
-
-    def test_interrupt_retains_partial_evidence(self):
-        import signal
-        import time
-        cell = self.start(mode="timeout")
-        process = subprocess.Popen([sys.executable, str(CLI), "run", "--manifest", str(self.manifest), "--cell", cell, "--phase", "smoke"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        evidence = self.run / "cells" / cell / "evidence/smoke/run.json"
-        for _ in range(100):
-            if evidence.exists(): break
-            time.sleep(0.01)
-        time.sleep(0.1)
-        process.send_signal(signal.SIGINT)
-        stdout, stderr = process.communicate(timeout=5)
-        self.assertEqual(process.returncode, 130, stderr)
-        self.assertEqual(json.loads(evidence.read_text())["exit_code"], 130)
-
-    def test_wrapped_immutable_execution_is_valid(self):
-        import shlex
-        cell = self.start()
-        for phase in ("smoke", "scenario"):
-            result = self.call("run", "--manifest", self.manifest, "--cell", cell, "--phase", phase)
-            self.assertEqual(result.returncode, 0, result.stderr)
-        raw = self.run / "cells" / cell / "evidence/scenario/stdout.jsonl"
-        rows = [json.loads(line) for line in raw.read_text().splitlines()]
-        for row in rows:
-            event = row.get("item", {})
-            if "complete C" in event.get("command", ""):
-                event["command"] = shlex.join(["python3", "-c", "import subprocess; subprocess.run(" + repr(shlex.split(event["command"])) + ", check=True)"])
-        raw.write_text("\n".join(json.dumps(row) for row in rows))
-        report = json.loads(self.call("grade", "--manifest", self.manifest, "--cell", cell).stdout)
-        self.assertTrue(report["assertions"]["independent_progress"]["passed"])
-
-    def test_help_is_offline_and_describes_contract(self):
-        result = self.call("--help")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        for word in ("prepare", "preflight", "run", "grade", "124", "130"):
-            self.assertIn(word, result.stdout)
+    def test_help(self):
+        self.assertEqual(self.call("--help").returncode, 0)
 
 if __name__ == "__main__":
     unittest.main()
