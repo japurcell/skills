@@ -14,6 +14,10 @@
 
 ## Fixtures that must remain meaningful
 
+- Validate the provider/runner contract before implementation: distinguish documented capabilities, offline fixture coverage, native unproven behavior and explicit owner prerequisites. A passing adapter fixture cannot establish host delivery or enforcement.
+- Fake provider envelopes must carry results from real underlying tool operations when those operations are the behavior under test. Execute the public CLI/helper and capture actual argv, exit, state and file readback; invent only the provider transport envelope, not positive component outputs.
+- Define evidence authority independently of the grader, then mutate real successful traces/files adversarially. Check causal event order as well as supplied timestamps, and bind acknowledgment pointers/readbacks to the actual current artifact. Assert individual claims so an unrelated failure cannot conceal false acceptance.
+
 - Disposable Git commits set fixture identity and `-c commit.gpgsign=false`; never change user Git configuration.
 - Cancellation descendants inherit output pipes. Assert bounded `communicate()` reaches EOF from descendants as well as the runner before cleanup. Cleanup-only kills occur after assertions and cannot make a leaked descendant pass. Cover graceful shutdown and forced termination after the suite leader exits in [test_test_all.py](../../scripts/tests/runner/test_test_all.py).
 - Imported provider helpers need isolated registered package/module specs; Codex helpers without `__init__.py` need a namespace-package spec. Put logs/audit files and rotation companions under writable `TemporaryDirectory` fixtures; patch locations rather than writing protected source or installed trees. See [test_helpers.py](../../scripts/tests/tooling/test_helpers.py).
