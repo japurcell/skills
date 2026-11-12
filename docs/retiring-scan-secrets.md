@@ -70,15 +70,28 @@ unverified revision or continue if its ownership checks fail.
 ## Review and remove the standalone bundle
 
 Only after all active repository gates have been uninstalled, inspect the
-standalone bundle's root `installation.json`. It records the exact files and
-SHA-256 hashes owned by that legacy installation. Compare every listed file
-against its recorded hash, and inspect the entire bundle for modified, missing,
-or unlisted entries before cleanup. If ownership is ambiguous or any content has
-changed, preserve the bundle and request manual review. Otherwise remove only
-the verified manifest-listed files using an appropriate per-file file manager or
-administrative tool, then remove empty directories. Do not use a wildcard or
-recursive directory deletion. Keep scanner data, logs, unrelated files, and
-repository recovery records unless they have been separately reviewed.
+standalone bundle's root `installation.json`. Before deleting anything, check
+that the manifest is readable, valid JSON with the legacy
+`scan_secrets_install_v1` schema, and that every path in its `files` and
+`launchers` maps is a relative path confined to the bundle. Reject empty or
+POSIX-absolute, drive-letter, or UNC paths, `.` or `..` components, and any
+symlink, reparse point, or linked path component; do not follow links. For each
+listed file, verify its SHA-256 against the manifest and confirm it is a regular,
+singly linked file.
+
+Build the expected inventory from the manifest-listed files and launchers, the
+parent directories required by those paths, and the root `installation.json`.
+Walk the bundle without following links and compare the complete inventory of
+files and directories with that expected set. If the manifest cannot be read or
+parsed, or any path is missing, modified, linked, special, or unlisted, preserve
+the entire bundle and request manual review.
+
+When the inventory and hashes match, remove only the verified payload and
+launcher files using an appropriate per-file file manager or administrative
+tool. Remove `installation.json` last as the ownership record, then remove only
+empty directories up to the bundle root. Do not use a wildcard or recursive
+directory deletion. Keep scanner data, logs, unrelated files, and repository
+recovery records unless they have been separately reviewed.
 
 Neither the current provider installers nor the legacy standalone installer
 perform this bundle or repository discovery automatically.
