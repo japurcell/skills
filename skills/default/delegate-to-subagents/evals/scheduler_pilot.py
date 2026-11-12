@@ -60,14 +60,177 @@ def inside(path, root):
     return path
 
 
+def copilot_settings(value):
+    """Project only documented behavior fields, excluding provider-owned credentials."""
+    allowed = {"experimental", "footer", "memory", "model", "modelProviderId", "bashEnv", "customAgents"}
+    if not isinstance(value, dict) or set(value) - allowed:
+        raise ValueError("unknown Copilot behavior setting")
+    if value.get("bashEnv", False) is not False or value.get("memory", False) is not False or value.get("modelProviderId", "copilot") != "copilot":
+        raise ValueError("unsafe Copilot provider, memory or shell setting")
+    if "experimental" in value and type(value["experimental"]) is not bool:
+        raise ValueError("invalid Copilot experimental setting")
+    if "model" in value and not isinstance(value["model"], str):
+        raise ValueError("invalid inherited model setting")
+    footer = value.get("footer", {})
+    footer_keys = {"showModelEffort", "showDirectory", "showBranch", "showContextWindow", "showQuota", "showAiUsed", "showAgent", "showCodeChanges", "showUsername", "showSandbox", "showYolo", "showCiStatus", "showSchedules", "showPullRequest", "showCustom"}
+    if not isinstance(footer, dict) or set(footer) - footer_keys or any(type(v) is not bool for v in footer.values()):
+        raise ValueError("unknown Copilot footer field or command")
+    if "customAgents" in value and value["customAgents"] != {"defaultLocalOnly": True}:
+        raise ValueError("unknown Copilot custom agent configuration")
+    return {key: value[key] for key in sorted(value)}
+
+
+def copilot_legacy_projection(home):
+    path = Path(home) / "config.json"
+    if not path.exists():
+        return {}
+    # Native storage permits a full-line JSONC comment header. Never inspect auth subtrees.
+    text = "\n".join(line for line in path.read_text().splitlines() if not line.lstrip().startswith("//"))
+    try:
+        data = json.loads(text)
+    except ValueError:
+        raise ValueError("malformed native Copilot storage envelope") from None
+    owned = {"authTokens", "copilotTokens", "lastLoggedInUser", "loggedInUsers", "firstLaunchAt", "recentModelIds"}
+    safe = {"appTipShown", "reasoningSummariesCleanupDone", "trustedFolders"}
+    if not isinstance(data, dict) or set(data) - owned - safe:
+        raise ValueError("unknown legacy Copilot behavior key")
+    projection = {key: data[key] for key in safe if key in data}
+    for key in ("appTipShown", "reasoningSummariesCleanupDone"):
+        if key in projection and type(projection[key]) is not bool:
+            raise ValueError("invalid Copilot UI bookkeeping flag")
+    folders = projection.get("trustedFolders", [])
+    if not isinstance(folders, list) or any(not isinstance(path, str) or not Path(path).is_absolute() for path in folders):
+        raise ValueError("unknown legacy Copilot trust layer")
+    return projection
+
+
 def provider_context():
     home = Path.home()
-    candidates = [home / ".codex/config.toml", home / ".copilot/config.json", home / ".copilot/settings.json", home / ".copilot/permissions-config.json", home / ".copilot/mcp-config.json"]
-    candidates += list((home / ".codex/rules").glob("*.rules"))
+    candidates = [home / ".codex/config.toml"] + list((home / ".codex/rules").glob("*.rules"))
+    settings = home / ".copilot/settings.json"
+    behavior = copilot_settings(read(settings)) if settings.exists() else {}
     keys = ("HOME", "PATH", "CODEX_HOME", "COPILOT_HOME", "BASH_ENV", "ZDOTDIR", "COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "COPILOT_MODEL", "COPILOT_PROVIDER_BASE_URL", "COPILOT_PROVIDERS_CONFIG")
-    return {"config_hashes": {str(p): digest(p) if p.is_file() else None for p in candidates},
+    return {"config_hashes": {str(p): digest(p) if p.is_file() else None for p in candidates}, "copilot_behavior": behavior, "copilot_legacy_behavior": copilot_legacy_projection(os.environ.get("COPILOT_HOME", str(home / ".copilot"))),
             "nonsecret_environment_hashes": {key: hashlib.sha256(os.environ[key].encode()).hexdigest() for key in keys if key in os.environ},
             "approval_environment_present": [key for key in ("COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "AUTO_APPROVAL") if key in os.environ]}
+
+
+def native_auth(settings):
+    return settings.get("authentication", {}).get("mode", "process-token") == "native-existing-login"
+
+
+def copilot_controls(cell):
+    settings = cell["requested_settings"]
+    return ["--no-auto-update", "--disable-builtin-mcps", "--no-custom-instructions", "--available-tools", "bash", "apply_patch", "--model", settings["model"], "--reasoning-effort", settings["effort"], "--disallow-temp-dir", "--sync-session=off"]
+
+
+def copilot_inspect(cell, repo_check=True):
+    executable = cell["requested_settings"]["executable"]
+    def inspect(arguments):
+        code, stdout, stderr = capture([executable, *arguments], 5, cwd=cell["repo"], env=cell["environment"])
+        if len(stdout.encode()) > 1048576:
+            raise ValueError("Copilot configuration/inventory size bound")
+        if code != 0:
+            raise ValueError("Copilot read-only configuration/inventory unavailable")
+        try:
+            return json.loads(stdout)
+        except ValueError:
+            raise ValueError("malformed Copilot configuration/inventory") from None
+    user = copilot_settings(inspect(["config", "--list", "--json"]))
+    rows = inspect(["skill", "list", "--json"])
+    if not isinstance(rows, list) or len(rows) > 1000:
+        raise ValueError("unsupported Copilot skill inventory")
+    inventory = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get("name"), str) or not row["name"] or not isinstance(row.get("path"), str) or not Path(row["path"]).is_absolute() or row.get("source") not in ("personal", "personal-agents", "builtin"):
+            raise ValueError("unsupported inherited skill name/location")
+        inventory.append({"name": row["name"], "path": row["path"], "source": row["source"]})
+    inventory.sort(key=lambda row: (row["name"], row["path"]))
+    if len({row["name"] for row in inventory}) != len(inventory):
+        raise ValueError("duplicate inherited skill name")
+    for filename in ("permissions-config.json", "mcp-config.json"):
+        path = Path(cell["environment"]["COPILOT_HOME"]) / filename
+        if path.exists() and read(path) != {}:
+            raise ValueError("unaccounted Copilot permission or MCP layer")
+    repo = Path(cell["repo"])
+    if any((repo / name).exists() for name in ("AGENTS.md", "CLAUDE.md", ".claude", ".copilot")) or any(path.is_file() and path != repo / ".github/copilot/settings.json" for path in (repo / ".github").rglob("*")):
+        raise ValueError("unexpected repository instructions or provider layer")
+    projection = {"user": user, "skills": inventory, "legacy": copilot_legacy_projection(cell["environment"]["COPILOT_HOME"])}
+    if repo_check:
+        expected = cell["copilot_repo_settings"]
+        actual = inspect(["config", "--repo", "--list", "--json"])
+        if actual != {**expected, "customAgents": {"defaultLocalOnly": True}} and actual != expected:
+            raise ValueError("Copilot repo overrides missing or unknown")
+        if read(repo / ".github/copilot/settings.json") != expected:
+            raise ValueError("Copilot repo override drift")
+        projection["repo"] = expected
+    return projection
+
+
+def copilot_status(cell):
+    """Bounded no-session Content-Length RPC, retaining status/catalog fields only."""
+    argv = [cell["requested_settings"]["executable"], "--headless", "--stdio", "--log-level", "none", *copilot_controls(cell)]
+    child = subprocess.Popen(argv, cwd=cell["repo"], env=cell["environment"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+    selector = selectors.DefaultSelector()
+    selector.register(child.stdout, selectors.EVENT_READ)
+    pending, received, results = b"", 0, []
+    deadline = time.monotonic() + 10
+    requests = [{"jsonrpc": "2.0", "id": i, "method": method, "params": {}} for i, method in enumerate(("status.get", "auth.getStatus", "models.list"), 1)]
+    try:
+        for request in requests:
+            payload = json.dumps(request).encode()
+            child.stdin.write(("Content-Length: " + str(len(payload)) + "\r\n\r\n").encode() + payload)
+            child.stdin.flush()
+            while time.monotonic() < deadline:
+                if b"\r\n\r\n" in pending:
+                    header, body = pending.split(b"\r\n\r\n", 1)
+                    if not header.startswith(b"Content-Length: ") or b"\r\n" in header:
+                        raise ValueError("unsupported Copilot RPC framing")
+                    length = header.removeprefix(b"Content-Length: ")
+                    if not length.isdigit():
+                        raise ValueError("invalid Copilot RPC length")
+                    size = int(length)
+                    if not 0 < size <= 1048576:
+                        raise ValueError("Copilot RPC size bound")
+                    if len(body) >= size:
+                        row = json.loads(body[:size]); pending = body[size:]
+                        if not isinstance(row, dict) or type(row.get("id")) is not int or row.get("id") != request["id"] or "error" in row or "method" in row or row.get("jsonrpc", "2.0") != "2.0" or not isinstance(row.get("result"), dict):
+                            raise ValueError("unexpected Copilot RPC reply")
+                        results.append(row["result"])
+                        break
+                if not selector.select(max(0, deadline - time.monotonic())):
+                    raise ValueError("Copilot status timeout")
+                chunk = os.read(child.stdout.fileno(), 65536)
+                if not chunk:
+                    raise ValueError("Copilot status EOF")
+                received += len(chunk); pending += chunk
+                if received > 1048576:
+                    raise ValueError("Copilot RPC size bound")
+            else:
+                raise ValueError("Copilot status timeout")
+        if pending or (selector.select(0) and os.read(child.stdout.fileno(), 65536)):
+            raise ValueError("unexpected trailing Copilot RPC bytes")
+    finally:
+        selector.close()
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            child.poll()
+            try:
+                os.killpg(child.pid, sig)
+            except ProcessLookupError:
+                pass
+            if sig == signal.SIGTERM:
+                time.sleep(.05)
+        child.communicate(timeout=2)
+    status, auth, catalog = results
+    if status.get("version") != "1.0.109" or status.get("protocolVersion") != 3:
+        raise ValueError("unsupported Copilot native status version/protocol")
+    if auth.get("isAuthenticated") is not True or auth.get("authType") != "user":
+        raise ValueError("native-existing-login unavailable in invoking environment")
+    settings = cell["requested_settings"]
+    matches = [row for row in catalog.get("models", []) if isinstance(row, dict) and row.get("id") == settings["model"]]
+    if len(matches) != 1 or not isinstance(matches[0].get("supportedReasoningEfforts"), list) or settings["effort"] not in matches[0]["supportedReasoningEfforts"]:
+        raise ValueError("native catalog lacks exact model/effort")
+    return {"argv": argv, "requests": requests, "version": status["version"], "protocolVersion": 3, "isAuthenticated": True, "authType": "user", "login_present": bool(auth.get("login")), "host_present": bool(auth.get("host")), "catalog": {"id": settings["model"], "effort_supported": settings["effort"]}}
 
 
 def config_check(config):
@@ -79,12 +242,15 @@ def config_check(config):
         raise ValueError("both providers are required")
     if type(config["timeout_seconds"]) not in (int, float) or not 0 < config["timeout_seconds"] <= 600:
         raise ValueError("timeout_seconds must be in (0, 600]")
-    for settings in config["providers"].values():
+    for provider, settings in config["providers"].items():
         if not isinstance(settings, dict):
             raise ValueError("provider settings must be an object")
-        if set(settings) != {"executable", "model", "effort"}:
+        if set(settings) - {"executable", "model", "effort", "authentication"} or not {"executable", "model", "effort"} <= set(settings):
             raise ValueError("provider settings require executable, model, effort; arbitrary flags prohibited")
-        for key, value in settings.items():
+        if "authentication" in settings and (provider != "copilot" or settings["authentication"] not in ({"mode": "process-token"}, {"mode": "native-existing-login"})):
+            raise ValueError("invalid Copilot authentication mode")
+        for key in ("executable", "model", "effort"):
+            value = settings[key]
             if not isinstance(value, str) or not value.strip() or value.startswith("-"):
                 raise ValueError("invalid provider setting: " + key)
         executable = Path(settings["executable"])
@@ -160,6 +326,20 @@ def prepare(args):
                 cell["hook_python_identity"] = {"path": str(Path(sys.executable).resolve()), "sha256": digest(sys.executable)}
                 cell["safe_config"] = {"model": config["providers"][provider]["model"], "model_reasoning_effort": config["providers"][provider]["effort"], "sandbox_mode": "workspace-write", "sandbox_workspace_write": {"writable_roots": cell["write_roots"], "network_access": False, "exclude_tmpdir_env_var": False, "exclude_slash_tmp": False}, "features": {'hooks': True, 'api_key_cyber_access_programs': True, 'api_key_model_discovery': True, 'auth_elicitation': True, 'background_paginated_rollout_migration': False, 'codex_apps_mcp_2026_07_28': False, 'mcp_2026_07_28': False, 'mcp_connection_sharing': False, 'memories': False, 'mentions_v2': True, 'remote_control': False, 'remote_plugin': True, 'tool_suggest': True, 'windows_sandbox_service': False}, "mcp_servers": {}, "plugins": {}}
                 cell["tool_restrictions"] = {"enumeration": "unavailable", "qualification": "requires observed native phase evidence"}
+                cell["authentication"] = {"mode": "process-token", "source": "supported process token names"}
+                if provider == "copilot" and native_auth(cell["requested_settings"]):
+                    if os.environ.get("BASH_ENV") or any(os.environ.get(key) for key in ("COPILOT_ALLOW_ALL", "COPILOT_ASSISTED_APPROVAL", "AUTO_APPROVAL", "COPILOT_PROVIDER_BASE_URL", "COPILOT_PROVIDERS_CONFIG")):
+                        raise ValueError("unsafe inherited Copilot behavior environment")
+                    cell["environment"].update({"HOME": str(Path.home().resolve()), "COPILOT_HOME": str(Path(os.environ.get("COPILOT_HOME", str(Path.home() / ".copilot"))).resolve())})
+                    cell["environment"].pop("CODEX_HOME", None)
+                    cell["environment"].pop("COPILOT_CACHE_HOME", None)
+                    cell["authentication"] = {"mode": "native-existing-login", "HOME": cell["environment"]["HOME"], "COPILOT_HOME": cell["environment"]["COPILOT_HOME"], "source": "provider-owned existing native login; no credential copy"}
+                    inherited = copilot_inspect(cell, repo_check=False)
+                    cell["copilot_repo_settings"] = {"disableAllHooks": True, "enabledPlugins": {}, "defaultPermissionMode": "manual", "permissions": {"disableBypassPermissionsMode": "disable"}, "memory": False, "ide": {"autoConnect": False}, "disabledSkills": sorted({row["name"] for row in inherited["skills"]}), "ignoredSkillsLocations": sorted({str(Path(row["path"]).parent) for row in inherited["skills"]})}
+                    override = repo / ".github/copilot/settings.json"
+                    override.parent.mkdir(parents=True)
+                    write(override, cell["copilot_repo_settings"])
+                    cell["copilot_context"] = copilot_inspect(cell)
                 denied_probe = shlex.join(["python3", "-c", "from pathlib import Path; Path(" + repr(str(repo / "outputs/control-forbidden.json")) + ").write_text('denial failed')"])
                 hook_dir = repo / ".codex"
                 hook_dir.mkdir()
@@ -183,6 +363,7 @@ def prepare(args):
         immutable += list((root / "snapshots").rglob("*"))
         immutable += [Path(cell["repo"]) / ".codex" / name for cell in manifest["cells"].values() for name in ("hooks.json", "config.toml")]
         immutable += [Path(cell["repo"]).parent / name for cell in manifest["cells"].values() for name in ("provider-home/copilot/settings.json",)]
+        immutable += [Path(cell["repo"]) / ".github/copilot/settings.json" for cell in manifest["cells"].values() if "copilot_repo_settings" in cell]
         immutable += [Path(path) for cell in manifest["cells"].values() for path in cell["prompts"].values()]
         for path in immutable:
             if path.is_file():
@@ -227,7 +408,7 @@ def load_manifest(path):
             if cell["python_identity"] != {"path": str(python), "sha256": digest(python)}:
                 raise ValueError("python interpreter drift")
             private = Path(cell["environment"]["HOME"]) / ".codex"
-            if cell["environment"].get("CODEX_HOME") != str(private) or not inside(private, root).is_dir():
+            if cell["provider"] == "codex" and (cell["environment"].get("CODEX_HOME") != str(private) or not inside(private, root).is_dir()):
                 raise ValueError("private CODEX_HOME required")
         for location in (cell["repo"], cell["snapshot"], *cell["prompts"].values(), *cell["write_roots"]):
             inside(location, root)
@@ -423,8 +604,18 @@ def preflight(manifest, provider):
                 if isinstance(error, DiscoveryError):
                     discovery[cell_id] = {"notifications": error.notifications, "setup_ready": False}
                 blockers.append(cell_id + ":private-hook-discovery-invalid:" + str(error))
+    elif native_auth(settings):
+        for cell_id, cell in cells.items():
+            try:
+                if copilot_inspect(cell) != cell["copilot_context"]:
+                    raise ValueError("Copilot safe configuration or skill inventory drift")
+                discovery[cell_id] = copilot_status(cell)
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                blockers.append(cell_id + ":native-existing-login-preflight:" + str(error))
     elif not any(os.environ.get(key) for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN")):
         blockers.append("copilot-isolated-home-auth-token-unavailable")
+    if provider == "copilot" and native_auth(settings) and not all(flag in probes[1]["stdout"] for flag in ("--headless", "--stdio", "--available-tools", "--sync-session", "--trust-folder")):
+        blockers.append("native-Copilot-required-controls-missing")
     receipt = {"schema_version": 1, "provider": provider, "manifest_sha256": digest(root / "manifest.json"), "cells": discovery, "model_resolution": {"requested": settings["model"], "effort": settings["effort"], "observed": None, "status": "pending separately authorized smoke"}, "probes": probes, "valid": not blockers, "syntax_supported": syntax, "setup_ready": not blockers, "smoke_ready": not blockers, "scenario_ready": False, "prerequisites": blockers, "executable_sha256": digest(settings["executable"])}
     directory = root / "preflight"
     directory.mkdir(exist_ok=True)
@@ -454,6 +645,9 @@ def argv_for(manifest, cell, phase):
                  "--allow-tool=shell(" + shlex.join(cell["helper_prefix"]) + ":*)", "--no-custom-instructions", "--output-format", "json",
                  "--share", str(evidence / "transcript.md"), "--usage-output-file", str(evidence / "usage.json"),
                  "--log-dir", str(evidence / "logs"), "--no-auto-update", "--prompt", prompt]
+    if cell["provider"] == "copilot" and native_auth(settings):
+        argv.remove("--no-bash-env")
+        argv += ["--available-tools", "bash", "apply_patch", "--sync-session=off", "--trust-folder"]
     return argv
 
 
@@ -660,11 +854,13 @@ def phase_bindings(manifest, cell_id, phase):
     root = Path(manifest["root"])
     preflight_path = inside(root / ("preflight/" + cell["provider"] + ".json"), root)
     preflight_receipt = read(preflight_path)
+    if cell["provider"] == "copilot" and native_auth(cell["requested_settings"]) and copilot_inspect(cell) != cell["copilot_context"]:
+        raise ValueError("Copilot safe configuration or skill inventory drift")
     if preflight_receipt.get("provider") != cell["provider"] or preflight_receipt.get("manifest_sha256") != digest(root / "manifest.json") or not preflight_receipt.get("smoke_ready"):
         raise ValueError("valid bound provider preflight required")
     snapshot = Path(cell["snapshot"])
     hook = preflight_receipt.get("cells", {}).get(cell_id, {}).get("hook")
-    return {"schema_version": 1, "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
+    return {"schema_version": 1, "authentication": cell["authentication"], "copilot_context": cell.get("copilot_context"), "provider": cell["provider"], "cell": cell_id, "variant": cell["variant"], "phase": phase,
             "root": manifest["root"], "cwd": cell["repo"], "manifest_sha256": digest(root / "manifest.json"),
             "approved_payload_sha256": json_digest({"manifest_sha256": digest(root / "manifest.json"), "preflight_sha256": digest(preflight_path)}), "caller_sources": manifest["caller_sources"],
             "selected_sources": {"skill": digest(snapshot / "SKILL.md"), "scheduler": digest(snapshot / "scripts/scheduler.py"), "helper": digest(cell["helper_prefix"][1])},
@@ -816,8 +1012,10 @@ def run(manifest, cell_id, phase):
         receipt = read(Path(manifest["root"]) / "preflight/codex.json")
         if discover_codex(cell) != {key: value for key, value in receipt["cells"][cell_id].items() if key != "authentication"}:
             raise ValueError("private discovery drift")
-    auth = {key: os.environ[key] for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN") if os.environ.get(key)} if cell["provider"] == "copilot" else {}
-    if cell["provider"] == "copilot" and not auth:
+    if cell["provider"] == "copilot" and native_auth(cell["requested_settings"]):
+        copilot_status(cell)
+    auth = {key: os.environ[key] for key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN") if os.environ.get(key)} if cell["provider"] == "copilot" and not native_auth(cell["requested_settings"]) else {}
+    if cell["provider"] == "copilot" and not native_auth(cell["requested_settings"]) and not auth:
         raise ValueError("copilot-isolated-home-auth-token-unavailable")
     directory = Path(cell["repo"]).parent / "evidence" / phase
     directory.mkdir()  # Exclusive phase attempt, including failed/partial attempts.
@@ -828,7 +1026,7 @@ def run(manifest, cell_id, phase):
     descriptor = os.open(lock, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
     os.close(descriptor)
     audit = audit_bytes(manifest, cell)
-    record = {**bindings, "attempt_id": str(uuid.uuid4()), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": "process-token" if auth else "private-CODEX_HOME-status"}
+    record = {**bindings, "attempt_id": str(uuid.uuid4()), "audit_start": {"offset": len(audit), "prefix_sha256": hashlib.sha256(audit).hexdigest()}, "auth_environment_names": sorted(auth), "authentication_source": cell["authentication"]["source"] if cell["provider"] == "copilot" else "private-CODEX_HOME-status"}
     atomic_receipt(directory / "attempt.json", record)
     started = time.monotonic()
     config = read(manifest["config"])

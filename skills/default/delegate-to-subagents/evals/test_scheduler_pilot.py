@@ -383,7 +383,7 @@ class PilotTests(unittest.TestCase):
         output.unlink()
         self.assertEqual(self.grade(cell)["setup_status"],"invalid")
 
-    def copilot_setup(self, mode="normal"):
+    def copilot_setup(self, mode="normal", native=False):
         (self.root / "copilot-mode").write_text(mode)
         fake=self.root / "fake-provider"
         fake.write_text("#!"+sys.executable+"\n"+r"""
@@ -391,12 +391,41 @@ import json,pathlib,shlex,subprocess,sys
 if '--version' in sys.argv:
  print('GitHub Copilot CLI 1.0.109.');raise SystemExit
 if '--help' in sys.argv:
- print('--output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
+ print('--headless --stdio --available-tools --sync-session --trust-folder --output-format --allow-tool --session-id --add-dir --model --reasoning-effort --share --usage-output-file --log-dir --no-auto-update --no-custom-instructions --prompt --disallow-temp-dir --disable-builtin-mcps --no-bash-env --secret-env-vars')
  raise SystemExit
 repo=pathlib.Path.cwd()
+mode=(repo.parents[3]/'copilot-mode').read_text()
+if sys.argv[1:3]==['config','--list']:
+ print(json.dumps({'memory':False,'modelProviderId':'copilot',**({'allowAllTools':True} if mode=='native-unsafe-setting' else {})}));raise SystemExit
+if sys.argv[1:3]==['skill','list']:
+ print(json.dumps([{'name':'inherited' if mode!='native-skill-drift' else 'changed','path':str(pathlib.Path.home()/'.agents/skills/inherited'),'source':'personal-agents','enabled':True,'description':'excluded'}]));raise SystemExit
+if sys.argv[1:3]==['config','--repo']:
+ settings=json.loads((repo/'.github/copilot/settings.json').read_text())
+ print(json.dumps(dict(settings,customAgents={'defaultLocalOnly':True})));raise SystemExit
 manifest=json.loads((repo.parents[2]/'manifest.json').read_text())
 cell=manifest['cells'][repo.parent.name]
-phase='smoke' if sys.argv[sys.argv.index('--session-id')+1]==cell['session_ids']['smoke'] else 'scenario'
+if '--headless' in sys.argv:
+ import os,time,signal
+ (repo/'outputs/status-server.pid').write_text(str(os.getpid()))
+ if mode=='native-timeout':
+  child=subprocess.Popen([sys.executable,'-c','import signal,time;signal.signal(signal.SIGTERM,signal.SIG_IGN);time.sleep(30)'])
+  (repo/'outputs/status-child.pid').write_text(str(child.pid));time.sleep(30)
+ while True:
+  header=sys.stdin.buffer.readline()
+  if not header:break
+  length=int(header.split(b':')[1]);sys.stdin.buffer.readline()
+  request=json.loads(sys.stdin.buffer.read(length));method=request['method']
+  result={'version':'1.0.109','protocolVersion':3}
+  if method=='auth.getStatus': result={'isAuthenticated':mode!='native-unavailable','authType':'user','login':'private-account-never-retain','host':'private-host-never-retain','statusMessage':'private-status-never-retain'}
+  if method=='models.list': result={'models':[{'id':'gpt-6.1-sol','supportedReasoningEfforts':['medium']} ]}
+  row={'jsonrpc':'2.0','id':99 if mode=='native-wrong-id' else request['id'],'result':result}
+  if mode=='native-malformed': row={'id':request['id'],'result':'invalid'}
+  raw=json.dumps(row).encode();sys.stdout.buffer.write(('Content-Length: '+str(len(raw))+'\r\n\r\n').encode()+raw);sys.stdout.buffer.flush()
+ raise SystemExit
+if cell.get('authentication',{}).get('mode')=='native-existing-login':
+ import os
+ (repo/'outputs/native-environment.json').write_text(json.dumps({'HOME':os.environ.get('HOME'),'COPILOT_HOME':os.environ.get('COPILOT_HOME'),'auth_names':[k for k in ('GH_TOKEN','GITHUB_TOKEN','COPILOT_GITHUB_TOKEN') if k in os.environ]}))
+phase='smoke'  if sys.argv[sys.argv.index('--session-id')+1]==cell['session_ids']['smoke'] else 'scenario'
 mode=(repo.parents[3]/'copilot-mode').read_text()
 if mode=='malformed': print('{')
 if mode=='unknown': print(json.dumps({'type':'tool.unrecognized','data':{}}))
@@ -463,13 +492,94 @@ print(json.dumps({'type':'tool.execution_complete','data':{'toolCallId':'denied'
 """)
         fake.chmod(0o700)
         config=json.loads(self.config.read_text());config["providers"]["copilot"]["executable"]=str(fake)
+        if native: config["providers"]["copilot"]["authentication"]={"mode":"native-existing-login"}
         self.config.write_text(json.dumps(config))
         self.prepare()
         result=self.provider_call("preflight","--manifest",self.manifest,"--provider","copilot")
-        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(result.returncode,2 if mode in ("native-unavailable","native-malformed","native-wrong-id","native-timeout") else 0,result.stderr)
 
     def provider_call(self, *args):
         return subprocess.run([sys.executable,str(CLI),*map(str,args)],env={**os.environ,"GH_TOKEN":"offline-fixture-token"},capture_output=True,text=True)
+
+    def test_public_native_login_uses_standard_lookup_without_process_tokens(self):
+        settings=Path.home()/'.copilot/settings.json'
+        before=settings.read_bytes() if settings.exists() else None
+        self.copilot_setup(native=True)
+        for variant in ('baseline','candidate'):
+            cell=self.data['cells']['copilot-'+variant]
+            self.assertEqual(cell['authentication']['mode'],'native-existing-login')
+            self.assertEqual(cell['environment']['HOME'],str(Path.home().resolve()))
+            self.assertNotIn('--no-bash-env',cell['argv']['smoke'])
+            self.assertIn('--trust-folder',cell['argv']['smoke'])
+            self.assertIn('--sync-session=off',cell['argv']['smoke'])
+            self.assertIn('--available-tools',cell['argv']['smoke'])
+            override=json.loads((Path(cell['repo'])/'.github/copilot/settings.json').read_text())
+            self.assertTrue(override['disableAllHooks'])
+            self.assertEqual(override['disabledSkills'],['inherited'])
+            result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','smoke')
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            record=json.loads(result.stdout)
+            self.assertEqual(record['auth_environment_names'],[])
+            env=json.loads((Path(cell['repo'])/'outputs/native-environment.json').read_text())
+            self.assertEqual(env['auth_names'],[])
+        for variant in ('baseline','candidate'):
+            result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-'+variant,'--phase','scenario')
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            self.assertEqual(self.grade('copilot-'+variant)['behavior_status'],'pass')
+        receipt=(self.run/'preflight/copilot.json').read_text()
+        for private in ('private-account-never-retain','private-host-never-retain','private-status-never-retain','offline-fixture-token',hashlib.sha256(b'offline-fixture-token').hexdigest()):
+            self.assertNotIn(private,receipt)
+        for variant in ('baseline','candidate'):
+            self.assertNotIn('--trust-folder',json.loads(receipt)['cells']['copilot-'+variant]['argv'])
+        context=json.loads((self.run/'provider-context.json').read_text())
+        self.assertFalse(any(path.endswith('/.copilot/config.json') for path in context['config_hashes']))
+        self.assertEqual(settings.read_bytes() if settings.exists() else None,before)
+
+    def test_public_native_status_failures_and_skill_drift_stay_closed(self):
+        for mode in ('native-unavailable','native-malformed','native-wrong-id','native-timeout'):
+            with self.subTest(mode=mode):
+                self.run=self.root/mode;self.manifest=self.run/'manifest.json'
+                self.copilot_setup(mode,native=True)
+                receipt=json.loads((self.run/'preflight/copilot.json').read_text())
+                self.assertFalse(receipt['smoke_ready'])
+                self.assertFalse(receipt['scenario_ready'])
+                if mode=='native-timeout':
+                    for variant in ('baseline','candidate'):
+                        pid=int((self.run/('cells/copilot-'+variant+'/repo/outputs/status-child.pid')).read_text())
+                        with self.assertRaises(ProcessLookupError):os.kill(pid,0)
+        self.run=self.root/'native-drift';self.manifest=self.run/'manifest.json'
+        self.copilot_setup(native=True)
+        for mode in ('native-skill-drift','native-unsafe-setting'):
+            (self.root/'copilot-mode').write_text(mode)
+            result=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+            self.assertEqual(result.returncode,2)
+            self.assertFalse((self.run/'cells/copilot-candidate/evidence/smoke').exists())
+
+    def test_public_native_status_interruption_and_repo_layer_rejection(self):
+        self.copilot_setup(native=True)
+        (self.root/'copilot-mode').write_text('native-timeout')
+        process=subprocess.Popen([sys.executable,str(CLI),'preflight','--manifest',str(self.manifest),'--provider','copilot'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        pid_file=self.run/'cells/copilot-baseline/repo/outputs/status-child.pid'
+        for _ in range(300):
+            if pid_file.exists():break
+            time.sleep(.01)
+        self.assertTrue(pid_file.exists())
+        process.send_signal(signal.SIGINT)
+        stdout,stderr=process.communicate(timeout=5)
+        self.assertEqual(process.returncode,130,stderr)
+        with self.assertRaises(ProcessLookupError):os.kill(int(pid_file.read_text()),0)
+        (self.root/'copilot-mode').write_text('normal')
+        repo=Path(self.data['cells']['copilot-candidate']['repo'])
+        extra=repo/'.github/instructions/unsafe.md';extra.parent.mkdir();extra.write_text('extra instructions')
+        rejected=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+        self.assertEqual(rejected.returncode,2)
+        self.assertIn('unexpected repository',rejected.stderr)
+        extra.unlink();extra.parent.rmdir()
+        override=repo/'.github/copilot/settings.json';override.chmod(0o600)
+        settings=json.loads(override.read_text());settings['disabledSkills']=[];override.write_text(json.dumps(settings))
+        rejected=self.provider_call('run','--manifest',self.manifest,'--cell','copilot-candidate','--phase','smoke')
+        self.assertEqual(rejected.returncode,2)
+        self.assertIn('drift',rejected.stderr)
 
     def test_public_copilot_fake_smoke_uses_real_children_and_preserves_attempt(self):
         self.copilot_setup()
