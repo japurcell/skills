@@ -12,7 +12,7 @@ The user authorized this cleanup after learning that the renderer remained share
 - [x] (2026-11-12) [milestone-1] T2: Remove capture implementation and exclusive dependencies, update existing fixtures and documentation, regenerate, and verify retained behavior in an isolated worktree. Depends on T1 and the committed plan.
 - [x] (2026-11-12) [milestone-2] T3: Integrate T2 and verify the integrated result with no concurrent repository writes during generator tests. Depends on T2.
 - [x] (2026-11-12) [milestone-2] T4a: Complete first independent Standards and Spec review of the integrated source.
-- [ ] [milestone-2] T4b: Correct the ADR status so the system is explicitly retired while the design body remains historical.
+- [x] (2026-11-12) [milestone-2] T4b: Correct the ADR status so the system is explicitly retired while the design body remains historical.
 - [ ] [milestone-2] T4c: Independently re-review the ADR correction and close T4, repeating review/fix only within the three-iteration cap.
 - [ ] [milestone-2] T5: Reflect, archive the completed plan and review reports, and remove the clean merged implementer worktree/branch. Depends on clean T4c.
 
@@ -21,7 +21,7 @@ The user authorized this cleanup after learning that the renderer remained share
 - `hooks/families/common.py` injects optional capture calls into JSON input/output; `hooks/families/rtk.py` imports and calls capture directly. Both integrations must disappear before removing generated helpers.
 - `hooks/providers.py` has an observability-only environment-prefix field, while `runtime_home_name` remains used by ordinary audit logging.
 - Before T2, helper and generator suites contained capture-only cases. T2 removed those deletion-specific cases while retaining assertions for input parsing, UTF-8, forwarding, startup behavior, and installer safety.
-- The first independent Spec review found that the historical ADR banner said retired while its next status line still said capture was retained for RTK/startup. The correction must retire the status and label the remaining design body historical.
+- The first independent Spec review found that the historical ADR banner said retired while its next status line still said capture was retained for RTK/startup. T4b now changes that status to “fully retired” while preserving the design body as history; T4c must independently re-review the correction.
 
 ## Decision Log
 
@@ -29,7 +29,7 @@ The user authorized this cleanup after learning that the renderer remained share
 - 2026-11-11: Preserve exact historical asset hashes in `hooks/registrations.py` for safe upgrades. Do not delete logs/databases/transcripts or modified installed helpers.
 - 2026-11-11: Do not add regression tests for a deleted feature. Use existing retained suites and disposable one-off migration checks.
 - 2026-11-11: Use one implementer in its own worktree and a persistent integration coordinator. The parent owns dispatch deadlines and independent biaxis review; the coordinator owns plan checkpoints and integration.
-- 2026-11-12: Correct the ADR status to state the complete capture system is retired; preserve its design content as historical context. The first report must remain in the plan evidence, and the fix receives a separate independent re-review.
+- 2026-11-12: Correct the ADR status to state the complete capture system is retired; preserve its design content as historical context. The first report remains in plan evidence, and the correction receives a separate independent re-review.
 
 ## Context and Orientation
 
@@ -53,11 +53,11 @@ Acceptance: not met
 
 T3 is complete. The integration branch fast-forwarded to worker commit `6876a6559487bbbf41caebd47ef1093de64087a1`, whose parent is the plan baseline `9291b24a2b98b9cd14c77f874a0146ee51f56f81`; integrated `HEAD` equals the exact tested worker commit. Integrated generation freshness reports 14 current files and `rtk git diff --check` passes. No retained suites were rerun because the integrated source exactly matches the tested worker commit.
 
-T4a is complete. Standards found zero findings; Spec found one P2 historical-documentation inconsistency in `docs/adr/0003-sqlite-backed-hook-observability.md`: line 5 says capture is retained for shared RTK/startup after the implementation removed all capture. The accepted fix is T4b: replace that stale status with a full-retirement status and label the remaining design body historical. One isolated docs-only implementer owns T4b. T4c independently re-reviews that correction; reviewers must distinguish static review from implementation/provider CLI evidence and must not claim they ran tests. Allow at most three review iterations. T5 records final acceptance and reflection, archives the plan and all reports, and removes only the clean merged worker worktree and branch.
+T4a found zero Standards issues and one P2 stale ADR status. T4b is complete in worker commit `ad871ba32f80d0768dd9148afbb5299adaf0c54c`, fast-forwarded onto integration commit `54e0d0633982ca7eefdca05a0a5ded299803983d`. The line now reads “Status: fully retired.” The historical banner remains, and the rest of the design body is byte-identical to its pre-fix version. `rtk git diff --check` and the explicit wording/body comparison pass; no tests were rerun for this documentation-only correction. T4c is next: independently re-review the ADR correction. Reviewers must distinguish static review from implementation/provider CLI evidence and must not claim they ran tests. Allow at most three review iterations. T5 records final acceptance and reflection, archives the plan and all reports, and removes only the clean merged worker worktree and branch.
 
 ## Concrete Steps
 
-T2 and T3 are complete. T4a reviewed integrated target `3906d0c1b17888cd70de38e22ef925af17ddfcaa` against base `87f4f90ad680f0239fe2f2e9891e3cec42d19118`; reports and snapshot metadata are recorded in [review-1.md](review-1.md). Next, one isolated docs-only implementer performs T4b by correcting the ADR status and labeling the design body historical. Then T4c independently re-reviews the fix. Keep milestone 2 acceptance unmet until T4c closes. Commands run from the selected worktree root and are prefixed with `rtk`. The completed implementation checkout is `/private/tmp/retire-observability/worktree`; do not remove it until T5.
+T4a and T4b are complete. T4a evidence is in [review-1.md](review-1.md). The integrated ADR-only T4b fix is `ad871ba32f80d0768dd9148afbb5299adaf0c54c`; the exact status and unchanged historical body were verified. Next, freeze the current plan/source candidate and run T4c as an independent re-review of the ADR correction. Keep milestone 2 acceptance unmet until T4c closes. Commands run from the selected worktree root and are prefixed with `rtk`. The completed implementation checkout is `/private/tmp/retire-observability/worktree`; do not remove it until T5.
 
 ## Validation and Acceptance
 
