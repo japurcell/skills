@@ -1,5 +1,15 @@
 # Grading the runs
 
+## Contents
+
+- [Grade per rule, not per diff](#grade-per-rule-not-per-diff)
+- [Read full evidence](#read-full-evidence)
+- [Grade blind](#grade-blind)
+- [Then read the pattern across runs](#then-read-the-pattern-across-runs)
+- [The confound that will bite you](#the-confound-that-will-bite-you)
+- [Six places the difference actually shows up](#six-places-the-difference-actually-shows-up)
+- [The re-add ladder](#the-re-add-ladder)
+
 The hard part of an ablation is not deleting things. It is seeing what you lost.
 
 **Every run will look fine.** The stripped agent does not produce broken code. It
@@ -19,7 +29,7 @@ ways, and the differences that matter drown in the ones that do not.
 Instead, turn the always-loaded files into a numbered checklist of **testable
 claims**, then judge every run against every claim.
 
-A testable rule names something you can see in a diff:
+A testable rule names something observable in the diff or captured workflow:
 
 - "Every public function is decorated with `@tracked`" is testable.
 - "Write clean, maintainable code" is not. Mark it `unfalsifiable` and move on.
@@ -29,16 +39,37 @@ For each (run, rule) pair record exactly one of:
 
 | Verdict | Meaning |
 |---|---|
-| `followed` | the diff visibly complies |
-| `violated` | the diff visibly breaks it |
-| `n/a` | this task never gave the rule an opportunity to apply |
+| `followed` | the available evidence visibly complies |
+| `violated` | the available evidence visibly breaks it |
+| `n/a` | the task did not exercise the rule, or evidence is insufficient; record which |
+
+## Read full evidence
+
+Require a passing one-pair capture gate before grading or funding remaining runs.
+Read the complete raw stdout and stderr at each run's `stdout_path` and
+`stderr_path`, alongside its diff and `summary.json`. `result_text` and
+`stderr_tail` are bounded previews; their truncation flags describe the previews,
+not raw file completeness. JSONL and malformed or binary output remain raw
+artifacts, so read them with tools that preserve the originals.
+
+For workflow rules such as running tests or reading guidance, cite an observed tool
+result in the full stream. A diff, requested command, final answer claiming success,
+or exit 0 cannot establish an unobserved outcome. If the runner omits tool results,
+report that limit and mark the claim untested rather than inferring compliance or
+violation. Preserve the distinction between a task that never exercised a rule
+and an exercised rule whose evidence is missing.
 
 ## Grade blind
 
 Do not tell the grader which arm a diff came from, and do not grade a diff in the
 same breath as the rule text you just read out of CLAUDE.md. Knowing that a diff is
-"the stripped one" is enough to make violations appear. Shuffle the diffs, grade
-them, then join the verdicts back to their arms.
+"the stripped one" is enough to make violations appear. Preserve the original
+streams and diffs unchanged. Make grading copies under neutral shuffled run IDs,
+removing arm labels, worktree/output paths, stripped-file lists, and instruction
+contents that disclose the arm. Give graders the relevant full-stream evidence
+through these copies, with redactions marked. Keep the ID-to-arm mapping private
+until verdicts are fixed. When redaction removes evidence needed for a claim,
+mark it untested and record the limitation. Then join verdicts back to arms.
 
 ## Then read the pattern across runs
 

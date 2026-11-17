@@ -85,15 +85,28 @@ The dry run also surfaces two things worth pausing on:
 
 ## Step 4. Run it
 
+Start with one control/stripped pair inside the approved run budget, using a fresh
+external output directory:
+
 ```bash
-python <skill>/scripts/run_ablation.py <repo> --task-file <task.md> --runs 2
+python <skill>/scripts/run_ablation.py <repo> --task-file <task.md> --runs 1 --out <capture-dir>
 ```
 
-This is the whole experiment. It builds a fresh worktree per run, strips the layer
-in the stripped arm, runs the same prompt in each, captures every diff, cleans up
-every worktree whose runner shutdown is confirmed, and writes results to
-`.ablation/<timestamp>/`. Use `--out` outside the repository to keep results out of
-the working tree; the script does not edit `.gitignore`.
+**Pass the capture gate before spending on remaining runs.** Inspect both runs'
+full `stdout_path` and `stderr_path` files from `summary.json`. Check that they are
+accessible after cleanup, their sizes match `stdout_bytes`/`stderr_bytes`, and the
+stdout includes the expected final answer or provider terminal event. Check usable
+diffs, including newly created files, `shutdown_confirmed: true`, and
+`cleanup_status: removed` (or deliberate `retained` with `--keep-worktrees`). An
+exit 0 or a nonempty diff alone does not pass. Missing, incomplete, or insufficient
+capture is a harness failure: stop before further spend, preserve evidence, and
+repair capture before a replacement gate. Count a passing pair toward the approved
+total; run only the remaining approved pairs in fresh output directories.
+
+Every run uses a detached external worktree from HEAD, strips instructions in the
+stripped arm, captures the diff and complete raw streams, then removes the worktree
+once shutdown is confirmed. Use `--out` outside the repository to keep results out
+of the working tree; the script does not edit `.gitignore`.
 
 Useful flags: `--runs 3` when the user intends to act on the result, `--scope all`
 to test the harder claim that skills and subagents have expired too, `--model`,
@@ -119,8 +132,13 @@ The short version:
 
 1. Turn the always-loaded files into a numbered checklist of testable claims. Mark
    anything unfalsifiable ("write clean code") as exactly that.
-2. Judge every run's diff against every claim: `followed`, `violated`, or `n/a`.
-3. Only then join verdicts back to arms and read the pattern.
+2. Read every run's full raw streams alongside its diff. Use observed tool results
+   for workflow claims; previews, commands requested, and final assertions alone
+   cannot establish tool outcomes. Mark missing evidence untested.
+3. Judge each claim: `followed`, `violated`, or `n/a`. Preserve raw originals and
+   provide shuffled, neutral-ID grading copies with arm-revealing instruction
+   contents and paths removed; record any evidence lost to blinding.
+4. Only then join verdicts back to arms and read the pattern.
 
 ## Step 6. Report
 
