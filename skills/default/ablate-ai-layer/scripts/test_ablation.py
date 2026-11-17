@@ -39,7 +39,7 @@ class AblationCliTests(unittest.TestCase):
         self.git("-c", "user.name=Ablation Test", "-c", "user.email=test@example.invalid",
                  "-c", "commit.gpgsign=false", "commit", "-qm", "fixture")
 
-    def experiment(self, runner_code):
+    def experiment(self, runner_code, *extra, env=None):
         task = self.base / "task.md"
         task.write_text("Exercise the agent outcome")
         runner = self.base / "runner.py"
@@ -47,8 +47,214 @@ class AblationCliTests(unittest.TestCase):
         out = self.base / "results"
         result = self.cli("run_ablation.py", self.repo, "--task-file", task,
                           "--runs", "1", "--jobs", "1", "--out", out,
-                          "--runner", f"exec {shlex.quote(sys.executable)} {shlex.quote(str(runner))}")
+                          "--runner", f"exec {shlex.quote(sys.executable)} {shlex.quote(str(runner))}", *extra, env=env)
         return result, json.loads((out / "summary.json").read_text())
+
+    def test_full_streams_survive_cleanup(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        stdout = b'x' * 5000 + b'FINAL-MARKER\n'
+        stderr = b'e' * 700 + b'ERROR-END\n'
+        result, summary = self.experiment(
+            "import os\nfrom pathlib import Path\n"
+            "Path('new.txt').write_text('done')\n"
+            f"os.write(1, {stdout!r})\nos.write(2, {stderr!r})\n")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        for run in summary["runs"]:
+            self.assert_streams(run, stdout, stderr)
+            self.assertTrue(run["ok"])
+            self.assertEqual(run["files_changed"], ["new.txt"])
+            self.assertEqual(run["cleanup_status"], "removed")
+            self.assertTrue(run["shutdown_confirmed"])
+            self.assertTrue(run["result_text_truncated"])
+            self.assertTrue(run["stderr_tail_truncated"])
+        self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
+
+    def assert_streams(self, run, stdout, stderr):
+        for name, expected in (("stdout", stdout), ("stderr", stderr)):
+            path = Path(run[name + "_path"])
+            self.assertTrue(path.is_absolute())
+            self.assertTrue(path.is_relative_to((self.base / "results").resolve()))
+            self.assertEqual(path.read_bytes(), expected)
+            self.assertEqual(run[name + "_bytes"], len(expected))
+        self.assertLessEqual(len(run["result_text"]), 4000)
+        self.assertLessEqual(len(run["stderr_tail"]), 600)
+
+    def test_stream_formats_preserve_bytes_and_optional_metadata(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        claude = {"result": "answer" * 1000, "is_error": False,
+                  "total_cost_usd": 0.25, "num_turns": 3, "usage": {"output_tokens": 27}}
+        cases = [
+            (json.dumps(claude).encode(), "answer" * 666 + "answ", True),
+            (b'{"type":"item.completed"}\n' + b' ' * 5000 +
+             b'{"type":"turn.completed","final":"FINAL"}\n', None, True),
+            (b'{"broken":', None, False),
+            (b'{"type":"event"}\n{"partial":', None, False),
+            (b'\xff\x00plain\r\n', None, False),
+            (b'[]', None, False), (b'42', None, False), (b'null', None, False),
+            (b'{"result":7,"is_error":"false","usage":[],"num_turns":true,'
+             b'total_cost_usd":"bad"}', None, False),
+            (b'', None, False),
+        ]
+        for index, (stdout, preview, truncated) in enumerate(cases):
+            with self.subTest(index=index):
+                result, summary = self.experiment(
+                    "import os\nfrom pathlib import Path\n"
+                    "Path('result.txt').write_text('done')\n"
+                    f"os.write(1, {stdout!r})\n")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                for run in summary["runs"]:
+                    self.assert_streams(run, stdout, b'')
+                    self.assertTrue(run["ok"])
+                    self.assertEqual(run["result_text"], preview if preview is not None else
+                                     stdout.decode('utf-8', errors='replace')[:4000])
+                    self.assertEqual(run["result_text_truncated"], truncated)
+                    self.assertFalse(run["stderr_tail_truncated"])
+                    if index == 0:
+                        self.assertEqual(run["cost_usd"], 0.25)
+                        self.assertEqual(run["num_turns"], 3)
+                        self.assertEqual(run["output_tokens"], 27)
+                    elif index == 8:
+                        self.assertNotIn("cost_usd", run)
+                        self.assertNotIn("num_turns", run)
+                        self.assertNotIn("output_tokens", run)
+
+    def test_explicit_keep_retains_worktrees_and_streams(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        result, summary = self.experiment(
+            "from pathlib import Path\nPath('result.txt').write_text('done')\n"
+            "print('retained')\n", "--keep-worktrees")
+        try:
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for run in summary["runs"]:
+                self.assertEqual(run["cleanup_status"], "retained")
+                self.assertTrue(run["shutdown_confirmed"])
+                self.assertTrue(Path(run["worktree_kept"]).exists())
+                self.assert_streams(run, b'retained\n', b'')
+        finally:
+            for run in summary["runs"]:
+                worktree = Path(run["worktree_kept"])
+                self.git("worktree", "remove", "--force", str(worktree))
+                worktree.parent.rmdir()
+
+    def test_cancellation_before_queued_launch_has_empty_artifacts(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        result, summary = self.experiment(
+            "import os, signal, time\n"
+            "os.write(1, b'cancel-ready')\n"
+            "os.kill(os.getppid(), signal.SIGTERM)\ntime.sleep(20)\n")
+        self.assertEqual(result.returncode, 143, result.stdout + result.stderr)
+        active, queued = summary["runs"]
+        self.assert_streams(active, b'cancel-ready', b'')
+        self.assert_streams(queued, b'', b'')
+        self.assertEqual(queued["note"], "cancelled before launch")
+        self.assertEqual(queued["cleanup_status"], "not_created")
+        self.assertTrue(queued["shutdown_confirmed"])
+        self.assertFalse(queued["ok"])
+
+    def test_unconfirmed_shutdown_retains_worktree_and_evidence(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        # Inject a host signal permission failure at process startup, exercising
+        # the public CLI's real failure path without changing process policy.
+        hook = self.base / "sitecustomize.py"
+        hook.write_text(
+            "import os, sys\n"
+            "if sys.argv[0].endswith('run_ablation.py'):\n"
+            "    original = os.killpg\n"
+            "    def denied(pgid, sig):\n"
+            "        if sig: raise PermissionError('fixture signal denied')\n"
+            "        return original(pgid, sig)\n"
+            "    os.killpg = denied\n")
+        log = self.base / "groups"
+        env = dict(os.environ, PYTHONPATH=str(self.base))
+        task = self.base / "task.md"
+        task.write_text("Test shutdown failure")
+        runner = self.base / "runner.py"
+        runner.write_text(
+            "import os, subprocess, sys\nfrom pathlib import Path\n"
+            "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(20)'])\n"
+            f"with open({str(log)!r}, 'a') as f: f.write(str(os.getpid()) + '\\n')\n"
+            "Path('result.txt').write_text('done')\nos.write(1, b'retained-output')\n"
+            "os.write(2, b'retained-error')\n")
+        out = self.base / "results"
+        summary = None
+        try:
+            result = self.cli("run_ablation.py", self.repo, "--task-file", task,
+                              "--runs", "1", "--jobs", "1", "--out", out,
+                              "--runner", f"exec {shlex.quote(sys.executable)} {shlex.quote(str(runner))}",
+                              env=env)
+            summary = json.loads((out / "summary.json").read_text())
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            for run in summary["runs"]:
+                self.assertFalse(run["ok"])
+                self.assertFalse(run["shutdown_confirmed"])
+                self.assertEqual(run["cleanup_status"], "retained")
+                self.assertTrue(Path(run["worktree_kept"]).exists())
+                self.assertIn("cannot verify process group", run["note"])
+                self.assert_streams(run, b'retained-output', b'retained-error')
+        finally:
+            if log.exists():
+                for pgid in log.read_text().splitlines():
+                    try:
+                        os.killpg(int(pgid), signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+            if summary:
+                for run in summary["runs"]:
+                    worktree = Path(run["worktree_kept"])
+                    self.git("worktree", "remove", "--force", str(worktree))
+                    worktree.parent.rmdir()
+
+    def test_claude_error_flag_and_short_result_remain_compatible(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        stdout = b'{"result":"short answer","is_error":true,"usage":{"output_tokens":5}}\n'
+        result, summary = self.experiment(
+            "import os\nfrom pathlib import Path\n"
+            "Path('partial.txt').write_text('partial')\n"
+            f"os.write(1, {stdout!r})\n")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        for run in summary["runs"]:
+            self.assert_streams(run, stdout, b'')
+            self.assertEqual(run["result_text"], "short answer")
+            self.assertFalse(run["result_text_truncated"])
+            self.assertTrue(run["agent_error"])
+            self.assertFalse(run["ok"])
+            self.assertEqual(run["exit_code"], 0)
+            self.assertEqual(run["output_tokens"], 5)
+
+    def test_cleanup_failure_retains_streams_and_reports_failure(self):
+        (self.repo / "AGENTS.md").write_text("instructions")
+        self.commit_fixture()
+        (self.base / "sitecustomize.py").write_text(
+            "import subprocess, sys\n"
+            "if sys.argv[0].endswith('run_ablation.py'):\n"
+            "    original = subprocess.run\n"
+            "    def fail_remove(args, **kwargs):\n"
+            "        if args[:3] == ['git', 'worktree', 'remove']:\n"
+            "            return subprocess.CompletedProcess(args, 1, '', 'fixture removal failed')\n"
+            "        return original(args, **kwargs)\n"
+            "    subprocess.run = fail_remove\n")
+        result, summary = self.experiment(
+            "from pathlib import Path\nPath('new.txt').write_text('done')\nprint('evidence')\n",
+            env=dict(os.environ, PYTHONPATH=str(self.base)))
+        try:
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            for run in summary["runs"]:
+                self.assertFalse(run["ok"])
+                self.assertTrue(run["shutdown_confirmed"])
+                self.assertEqual(run["cleanup_status"], "failed")
+                self.assertTrue(Path(run["worktree_kept"]).exists())
+                self.assert_streams(run, b'evidence\n', b'')
+        finally:
+            for run in summary["runs"]:
+                worktree = Path(run["worktree_kept"])
+                self.git("worktree", "remove", "--force", str(worktree))
+                worktree.parent.rmdir()
 
     def test_failed_runner_with_json_output_is_unusable(self):
         (self.repo / "AGENTS.md").write_text("instructions")
@@ -61,6 +267,7 @@ class AblationCliTests(unittest.TestCase):
             self.assertEqual(run["exit_code"], 1)
             self.assertTrue(run["agent_error"])
             self.assertFalse(run["ok"])
+            self.assert_streams(run, b"{}\n", b"")
 
     def test_invalid_task_files_report_usage_errors_without_running(self):
         (self.repo / "AGENTS.md").write_text("instructions")
@@ -123,6 +330,7 @@ class AblationCliTests(unittest.TestCase):
         runner = self.base / "runner.py"
         runner.write_text(
             "import subprocess, sys, os, json, time\n"
+            "os.write(1, b'before-timeout\\n'); os.write(2, b'timeout-error\\n')\n"
             f"p = subprocess.Popen([sys.executable, {str(child)!r}])\n"
             f"with open({str(log)!r}, 'a') as f: "
             "f.write(json.dumps({'pid': p.pid, 'cwd': os.getcwd()}) + '\\n')\n"
@@ -151,6 +359,10 @@ class AblationCliTests(unittest.TestCase):
             self.assertFalse(Path(entry["cwd"]).exists())
         summary = json.loads((out / "summary.json").read_text())
         self.assertTrue(all("timed out" in r["note"] for r in summary["runs"]))
+        for run in summary["runs"]:
+            self.assert_streams(run, b'before-timeout\n', b'timeout-error\n')
+            self.assertTrue(run["shutdown_confirmed"])
+            self.assertEqual(run["cleanup_status"], "removed")
         self.assertEqual(self.git("worktree", "list", "--porcelain").count("worktree "), 1)
 
     def test_map_help_and_invalid_arguments_do_not_scan(self):
@@ -212,6 +424,7 @@ class AblationCliTests(unittest.TestCase):
         ready = self.base / "ready"
         runner = self.base / "runner.py"
         runner.write_text("import os, time\n"
+                          "os.write(1, b'before-cancel\\n'); os.write(2, b'cancel-error\\n')\n"
                           f"with open({str(ready)!r}, 'a') as f: f.write(str(os.getpid()) + '\\n')\n"
                           "time.sleep(20)\n")
         out = self.base / "results"
@@ -229,6 +442,11 @@ class AblationCliTests(unittest.TestCase):
             process.send_signal(signal.SIGTERM)
             stdout, stderr = process.communicate(timeout=10)
             self.assertEqual(process.returncode, 143, stdout + stderr)
+            summary = json.loads((out / "summary.json").read_text())
+            for run in summary["runs"]:
+                self.assert_streams(run, b'before-cancel\n', b'cancel-error\n')
+                self.assertTrue(run["shutdown_confirmed"])
+                self.assertEqual(run["cleanup_status"], "removed")
             for pid in ready.read_text().splitlines():
                 with self.assertRaises(ProcessLookupError):
                     os.kill(int(pid), 0)

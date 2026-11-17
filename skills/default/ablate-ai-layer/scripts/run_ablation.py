@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import json
+import math
 import os
 import shutil
 import signal
@@ -88,10 +89,9 @@ def stop_group(process: subprocess.Popen) -> None:
     raise ShutdownUnconfirmed(f"process group {process.pid} still exists; worktree retained")
 
 
-def run_agent(cmd, use_shell, wt, prompt, timeout):
+def run_agent(cmd, use_shell, wt, prompt, timeout, stdout_path, stderr_path):
     # Files avoid waiting for pipe EOF from descendants after the leader exits.
-    with tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace") as stdout, \
-            tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace") as stderr:
+    with stdout_path.open("wb") as stdout, stderr_path.open("wb") as stderr:
         process = subprocess.Popen(
             cmd, cwd=str(wt), stdin=subprocess.PIPE, stdout=stdout, stderr=stderr,
             text=True, encoding="utf-8", errors="replace", shell=use_shell,
@@ -116,9 +116,37 @@ def run_agent(cmd, use_shell, wt, prompt, timeout):
             except (OSError, subprocess.SubprocessError, ValueError) as error:
                 raise ShutdownUnconfirmed(
                     f"cannot verify process group {process.pid}: {error}; worktree retained") from error
-        stdout.seek(0)
-        stderr.seek(0)
-        return subprocess.CompletedProcess(cmd, process.returncode, stdout.read(), stderr.read())
+        return process.returncode
+
+
+def stream_metadata(rec, stdout_path, stderr_path):
+    """Decode previews only; raw artifacts remain the authoritative evidence."""
+    stdout = stdout_path.read_bytes()
+    stderr = stderr_path.read_bytes()
+    rec.update(stdout_path=str(stdout_path), stderr_path=str(stderr_path),
+               stdout_bytes=len(stdout), stderr_bytes=len(stderr))
+    text = stdout.decode("utf-8", errors="replace")
+    error_text = stderr.decode("utf-8", errors="replace")
+    rec["agent_error"] = rec.get("exit_code", 1) != 0
+    try:
+        payload = json.loads(text)
+    except (ValueError, RecursionError):
+        payload = None
+    if isinstance(payload, dict):
+        if isinstance(payload.get("is_error"), bool):
+            rec["agent_error"] |= payload["is_error"]
+        if isinstance(payload.get("result"), str):
+            text = payload["result"]
+        for source, target, kind in (("total_cost_usd", "cost_usd", (int, float)),
+                                     ("num_turns", "num_turns", (int,))):
+            value = payload.get(source)
+            if type(value) in kind and (not isinstance(value, float) or math.isfinite(value)):
+                rec[target] = value
+        usage = payload.get("usage")
+        if isinstance(usage, dict) and type(usage.get("output_tokens")) is int:
+            rec["output_tokens"] = usage["output_tokens"]
+    rec.update(result_text=text[:4000], result_text_truncated=len(text) > 4000,
+               stderr_tail=error_text[-600:], stderr_tail_truncated=len(error_text) > 600)
 
 
 # ---------------------------------------------------------------- git plumbing
@@ -204,22 +232,26 @@ def build_command(model: str | None, runner: str | None) -> tuple[list[str] | st
 
 def run_one(root: Path, sha: str, arm: str, index: int, prompt: str,
             targets: list[dict], model: str | None, runner: str | None,
-            timeout: int, keep: bool) -> dict:
+            timeout: int, keep: bool, out: Path) -> dict:
     """One worktree, one agent session, one diff. Fresh worktree per run so runs
     never compound on each other."""
     tmp = Path(tempfile.mkdtemp(prefix=f"ablate-{arm}-{index}-"))
     wt = tmp / "repo"
     rec: dict = {"arm": arm, "index": index, "removed": [], "ok": False}
     started = time.time()
-    if CANCELLED.is_set():
-        shutil.rmtree(tmp)
-        rec["note"] = "cancelled before launch"
-        rec["duration_s"] = 0
-        return rec
+    stdout_path = out / f"{arm}-{index}.stdout"
+    stderr_path = out / f"{arm}-{index}.stderr"
     shutdown_confirmed = True
+    created = False
     try:
+        stdout_path.write_bytes(b"")
+        stderr_path.write_bytes(b"")
+        if CANCELLED.is_set():
+            rec["note"] = "cancelled before launch"
+            return rec
         with WORKTREE_LOCK:
             git(["worktree", "add", "--detach", "--quiet", str(wt), sha], root)
+            created = True
 
         if arm == STRIPPED:
             for t in targets:
@@ -243,23 +275,9 @@ def run_one(root: Path, sha: str, arm: str, index: int, prompt: str,
         baseline = git(["write-tree"], wt).strip()
 
         cmd, use_shell = build_command(model, runner)
-        proc = run_agent(cmd, use_shell, wt, prompt, timeout)
-
-        rec["exit_code"] = proc.returncode
-        rec["stderr_tail"] = (proc.stderr or "")[-600:]
-        try:
-            payload = json.loads(proc.stdout)
-            rec["agent_error"] = proc.returncode != 0 or bool(payload.get("is_error"))
-            rec["result_text"] = str(payload.get("result", ""))[:4000]
-            rec["cost_usd"] = payload.get("total_cost_usd")
-            rec["num_turns"] = payload.get("num_turns")
-            usage = payload.get("usage") or {}
-            rec["output_tokens"] = usage.get("output_tokens")
-        except (json.JSONDecodeError, TypeError):
-            # A non-Claude runner may print plain text. Not fatal: the diff is
-            # the measurement, the transcript is only context for grading.
-            rec["result_text"] = (proc.stdout or "")[:4000]
-            rec["agent_error"] = proc.returncode != 0
+        rec["exit_code"] = run_agent(cmd, use_shell, wt, prompt, timeout,
+                                     stdout_path, stderr_path)
+        stream_metadata(rec, stdout_path, stderr_path)
 
         git(["add", "-A"], wt)
         rec["diff"] = git(["diff", "--cached", baseline], wt)
@@ -276,17 +294,26 @@ def run_one(root: Path, sha: str, arm: str, index: int, prompt: str,
     except Exception as exc:  # a broken run must not sink the other five
         rec["note"] = f"{type(exc).__name__}: {exc}"
     finally:
+        try:
+            stream_metadata(rec, stdout_path, stderr_path)
+        except OSError as error:
+            rec["ok"] = False
+            rec["note"] = f"{rec.get('note', '')}; stream metadata failed: {error}".lstrip("; ")
+        rec["shutdown_confirmed"] = shutdown_confirmed
         rec["duration_s"] = round(time.time() - started, 1)
-        if keep or not shutdown_confirmed:
+        if (keep and created) or not shutdown_confirmed:
             rec["worktree_kept"] = str(wt)
+            rec["cleanup_status"] = "retained"
         else:
             try:
                 with WORKTREE_LOCK:
                     if wt.exists():
                         git(["worktree", "remove", "--force", str(wt)], root)
                     shutil.rmtree(tmp)
+                rec["cleanup_status"] = "removed" if created else "not_created"
             except (OSError, RuntimeError) as error:
                 rec["ok"] = False
+                rec["cleanup_status"] = "failed"
                 rec["worktree_kept"] = str(wt)
                 rec["note"] = f"{rec.get('note', '')}; cleanup failed: {error}".lstrip("; ")
     return rec
@@ -376,7 +403,7 @@ def main() -> int:
         return 2
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out = Path(args.out) if args.out else root / ".ablation" / stamp
+    out = (Path(args.out) if args.out else root / ".ablation" / stamp).resolve()
     out.mkdir(parents=True, exist_ok=True)
 
     jobs = [(arm, i) for arm in (CONTROL, STRIPPED) for i in range(1, args.runs + 1)]
@@ -394,7 +421,7 @@ def main() -> int:
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.jobs)) as pool:
             futures = {
                 pool.submit(run_one, root, sha, arm, i, prompt, targets,
-                            args.model, args.runner, args.timeout, args.keep_worktrees): (arm, i)
+                            args.model, args.runner, args.timeout, args.keep_worktrees, out): (arm, i)
                 for arm, i in jobs
             }
             for fut in concurrent.futures.as_completed(futures):
