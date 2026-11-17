@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 34 -->
+<!-- next-id: 35 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -31,3 +31,5 @@
 32. [ ] Update the published `commit` skill to require the committing LLM's model name and reasoning effort in commit messages. Verify with actual Codex and Copilot CLI evaluation runs covering commits made through each role's own commit workflow: Codex main agent, Codex subagent, Copilot main agent, and Copilot subagent. In each scenario, establish the agent's contribution, have that same agent perform a normal commit without prompting it to add model or effort metadata, and inspect the resulting Git commit message. Confirm it includes the actual observed model name and reasoning effort for the committing agent. Record CLI versions, selected models, selected reasoning efforts, transcripts, and actual committed messages. Do not infer metadata from host defaults; use observed session metadata. Before implementation, decide and document the message representation, how to handle unavailable model or reasoning-effort metadata, and how attribution applies when multiple agents contribute. Preserve existing commit-skill behavior and evaluate against its published source.
 
 33. [ ] Update the `accomplishment-report` skill to format saved labor costs as `$<amount> <currency>` instead of `<currency> <amount>`, and always connect any agency priority that mentions AI because AI is always used when this skill is activated.
+
+34. [ ] Update `create-verification-skill` to install `skills/default/maintain-verification-skill`, and add an `AGENTS.md` rule requiring `maintain-verification-skill` when updating the installed verify skill after its feature maps change.
