@@ -11,6 +11,8 @@
 
 ## Investigations
 
+29. [x] Investigate and fix `execplan-implement` blocking before implementation when router-selected subagent model controls are unavailable under session permissions. Reported blocker: "Required workflow needs router-selected subagent model controls unavailable under this session's permissions. Your requested workflow required model-controlled subagents, but I lacked authorization to select their models." Identify the requirement causing the block and make the workflow honor available permissions without requiring unauthorized model selection. `delegate-to-subagents` does not cause this issue. Reported by copilot cli agent. - Archived at user request 2026-11-17.
+
 18. [x] Incorporate relevant brain principles into code review skills. - Archived at user request 2026-11-12.
 
 9. [x] An agent executing the 'execplan-implement' skill didn't enforce a subagent runtime limit. It suggested this improvement to the skill: "Deadlines require parent-side enforcement. Before each background assignment, record its task ID, start time, deadline, extension count, and enforcement handle. Arm a host timeout or parent-owned deadline timer before waiting.

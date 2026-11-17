@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 33 -->
+<!-- next-id: 36 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -9,6 +9,12 @@
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
 
 ## Investigations
+
+35. [ ] Improve `skills/forest-service/accomplishment-report`: when the concise accomplishment paragraph references agency priorities, include the priority's substantive text or a faithful plain-language description, never only its number or identifier (for example, "USDA strategic goal 6"). The paragraph must clearly explain the alignment without requiring readers to look up references. Update the skill's guidance and examples, and verify generated paragraphs remain concise and understandable on their own.
+
+33. [ ] Audit this repository's maintained test suite for tautological assertions, excessive coupling to implementation structure, and mocks that diverge from real dependency or user-facing behavior. Identify affected tests or groups with concrete evidence, explain what defects they could miss or which harmless changes would break them, and recommend behavior-focused replacements or improvements. This item is an investigation; report findings before changing tests.
+
+34. [ ] Research and implement risk-based code review tiering for this repository's agent review workflows. Start with the [video reference at 15:47](https://youtu.be/f6OVURAlYXI?list=TLPQMTcxMTIwMjZ2swN18k_drQ&t=947), inspect the existing review skills and model-routing policy, and define risk criteria, review tiers, required checks, and escalation rules. Implement the resulting policy in the relevant workflows and validate representative low-risk, high-risk, and ambiguous changes without weakening required safety checks.
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
 
@@ -23,8 +29,6 @@
 23. [ ] Investigate Cursor’s formal verification skill: [create-formal-verification-skill](https://github.com/cursor/plugins/blob/main/pstack/skills/create-formal-verification-skill/SKILL.md).
 
 28. [ ] agent self-reported inefficient orchestration and provided these skill improvement suggestions. Strengthen `execplan-implement` `SKILL.md` enforcement: require persistent integration coordinators to run in background mode and verify follow-up messaging; require intermediate acceptance-worker evidence checkpoints and split oversized validation matrices into bounded independent tasks; run full configuration matrices on the final source revision unless configurations or milestone gates require earlier runs, reusing evidence by source/configuration/toolchain identity; mechanically validate commit messages against `references/message.md` for required sections, real newlines, and trailers before committing.
-
-29. [ ] Investigate and fix `execplan-implement` blocking before implementation when router-selected subagent model controls are unavailable under session permissions. Reported blocker: "Required workflow needs router-selected subagent model controls unavailable under this session's permissions. Your requested workflow required model-controlled subagents, but I lacked authorization to select their models." Identify the requirement causing the block and make the workflow honor available permissions without requiring unauthorized model selection. `delegate-to-subagents` does not cause this issue. Reported by copilot cli agent.
 
 30. [ ] Create a council skill. References: [warpdotdev/common-skills](https://github.com/warpdotdev/common-skills/blob/main/.agents/skills/council/SKILL.md), [t3dotgg/tstack](https://github.com/t3dotgg/tstack/blob/main/skills/council/SKILL.md).
 
