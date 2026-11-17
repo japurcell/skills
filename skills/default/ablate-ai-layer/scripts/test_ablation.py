@@ -93,12 +93,19 @@ class AblationCliTests(unittest.TestCase):
             (b'{"type":"event"}\n{"partial":', None, False),
             (b'\xff\x00plain\r\n', None, False),
             (b'[]', None, False), (b'42', None, False), (b'null', None, False),
-            (b'{"result":7,"is_error":"false","usage":[],"num_turns":true,'
-             b'total_cost_usd":"bad"}', None, False),
+            (json.dumps({"result": 7, "is_error": "false", "usage": [],
+                         "num_turns": True, "total_cost_usd": "bad"}).encode(), None, False),
+            (json.dumps({"result": "optional metadata survived", "is_error": "false",
+                         "usage": {"output_tokens": "bad"}, "num_turns": [],
+                         "total_cost_usd": False}).encode(), "optional metadata survived", False),
             (b'', None, False),
         ]
         for index, (stdout, preview, truncated) in enumerate(cases):
             with self.subTest(index=index):
+                if index in (8, 9):
+                    # These must reach dictionary metadata handling, not the
+                    # separate malformed-JSON fallback cases above.
+                    self.assertIsInstance(json.loads(stdout), dict)
                 result, summary = self.experiment(
                     "import os\nfrom pathlib import Path\n"
                     "Path('result.txt').write_text('done')\n"
@@ -115,7 +122,10 @@ class AblationCliTests(unittest.TestCase):
                         self.assertEqual(run["cost_usd"], 0.25)
                         self.assertEqual(run["num_turns"], 3)
                         self.assertEqual(run["output_tokens"], 27)
-                    elif index == 8:
+                    elif index in (8, 9):
+                        self.assertFalse(run["agent_error"])
+                        self.assertEqual(run["exit_code"], 0)
+                        self.assertEqual(run["files_changed"], ["result.txt"])
                         self.assertNotIn("cost_usd", run)
                         self.assertNotIn("num_turns", run)
                         self.assertNotIn("output_tokens", run)
