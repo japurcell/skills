@@ -2,6 +2,8 @@
 
 This repository publishes skills from `skills/`, canonical custom-agent Markdown from `agents/`, repo-local Copilot hooks from `.github/hooks/`, installed Copilot hook sources from `.copilot/hooks/`, Gemini hooks plus config from `.gemini/`, and user-global Codex hook sources from `.codex/`. The repository `.codex/` directory is not a source for generated Codex custom agents.
 
+For installer CLI verification, category selection, generated agents, or installed provider configuration, activate the `verify-skills` skill. It owns the disposable-install journeys and evidence procedure.
+
 ## Brain
 
 The `brain/` directory is an Obsidian vault - persistent memory across sessions.

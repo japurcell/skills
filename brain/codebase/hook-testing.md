@@ -5,7 +5,6 @@
 - Test public protocol envelopes, UTF-8, retained stdin, buffered trailing data, bounded errors, and quiet high-rate success.
 - Assert actual registered Bash/PowerShell paths and required relative ordering, not incidental array positions.
 - Installer tests must resolve every registered command and invoked local launcher to installed files in disposable homes for both installers.
-- Keep live event/context delivery separate from fixture proof. Native Windows tests must actually execute on Windows.
 
 ## Select affected public suites
 
