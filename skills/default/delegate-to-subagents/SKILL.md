@@ -1,12 +1,12 @@
 ---
 name: delegate-to-subagents
-description: Pursue a long-running goal in a single session by co-ordinating subagents.
+description: Pursue a long-running goal in a single session by delegating work to subagents.
 compatibility: Requires Python 3, subagent dispatch with model controls and effort controls when the route requires explicit effort, worker cancellation, and worker/write shutdown verification.
 ---
 
 # Delegate to Subagents
 
-You co-ordinate subagents to pursue a long-running goal.
+You coordinate subagents to pursue a long-running goal.
 
 You - the parent - owns routing, scheduling, user questions, and completion verification; delegate all other work to subagents. Protect your context window.
 
@@ -18,25 +18,29 @@ Routine communication to and from subagents should be sparse. Communicate primar
 
 ## Dispatch loop
 
-Activate the `subagent-model-router` skill.
+Activate the `subagent-model-router` skill to learn how to use the router CLI.
 
 While you pursue the long-running goal and maintain dialogue with the user, you will continuously identify subtasks to make progress until the goal is achieved. For each subtask:
 
 - Define scope, file ownership, acceptance criteria, and required completion evidence.
 - Brief exploration workers with the needed context, acceptance criteria, and known negative cases; use context pointers where those facts are already available.
-- Use `subagent-model-router` to obtain the final dispatchable route for the subtask. Apply its model and effort policy through dispatch controls, and stop on a named blocker. Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
+- Follow the [pre-dispatch gate](#pre-dispatch-gate). Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
 
 ### Pre-dispatch gate
 
-Before launching an agent or assigning new work to an existing agent, run the router CLI and record its invocation, returned route, and intended dispatch arguments in the assignment's coordination record.
+Before each new assignment, including agent reuse, run the router CLI. Save its invocation, unchanged JSON result, and intended dispatch arguments in the assignment's coordination record.
 
-A new subtask requires a new assignment ID and route, even when reusing an agent. Retain the assignment ID for same-subtask status updates or clarifications.
+Use a new assignment ID for each new subtask; retain it for status updates and clarifications.
 
-Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
+Apply the selected route automatically, subject to explicit user constraints and required host approvals. The parent validates dispatch:
 
-Automatically apply the router's final dispatchable model and effort policy, including verified fallbacks. Do not request separate user confirmation for routine routing choices. Preserve explicit user constraints and required host approval flows.
+- Require `route_available: true`, except for an exact user-selected model. Apply that override through host controls; leave unknown catalog tier, price, and capability unresolved.
+- Confirm model-control support, permission, context fit, applicable restrictions, and live acceptance. For `explicit`, confirm effort-control support, permission, and acceptance of the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
+- Validate fallbacks identically, preserving effort policy and capability floor. Whole-model unavailability excludes every effort for that model; reassess from known facts without collecting an inventory.
 
-After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
+Dispatch only after all required checks pass and the dispatch arguments match the validated route. Otherwise, report the specific blocker, distinguishing permission from availability or capability. Record any user override or fallback separately from the CLI result.
+
+After dispatch, record actual arguments and the returned agent ID. Routine routing needs no separate user confirmation.
 
 ## Runtime enforcement
 

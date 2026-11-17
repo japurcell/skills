@@ -64,11 +64,11 @@ class RouterCliTests(unittest.TestCase):
                     else:
                         self.assertIsNotNone(output["fallback"]["reasoning_effort"])
 
-    def test_no_match_keeps_no_recommendation_distinct_from_effort_omission(self):
+    def test_no_match_keeps_no_route_distinct_from_effort_omission(self):
         result = run_cli("--work", "coding", "--model", "no-such-model")
         self.assertEqual(result.returncode, 0, result.stderr)
         output = json.loads(result.stdout)
-        self.assertFalse(output["recommendation_available"])
+        self.assertFalse(output["route_available"])
         self.assertIsNone(output["model"])
         self.assertIsNone(output["reasoning_effort"])
 
@@ -100,7 +100,7 @@ class RouterCliTests(unittest.TestCase):
 
     def test_minimal_planning_request_has_primary_and_alternative(self):
         result = decision({"task": {"work": "planning"}})
-        self.assertTrue(result["recommendation_available"])
+        self.assertTrue(result["route_available"])
         self.assertEqual((result["floor"], result["model"], result["reasoning_effort"]),
                          ("Standard", "gpt-6.1-sol", "medium"))
         self.assertEqual(result["fallback"]["model"], "gpt-6-sol")
@@ -132,7 +132,7 @@ class RouterCliTests(unittest.TestCase):
         self.assertEqual(override["model"], "gpt-6.1-terra")
         blocked = decision({"task": {"work": "planning", "risks": {"high_stakes": True}},
                             "constraints": {"models": ["gpt-6-sol"], "efforts": ["medium"]}})
-        self.assertFalse(blocked["recommendation_available"])
+        self.assertFalse(blocked["route_available"])
 
     def test_planning_model_allowlist_selects_lowest_eligible_tier(self):
         result = decision({"task": {"work": "planning"},

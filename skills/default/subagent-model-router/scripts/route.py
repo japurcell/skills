@@ -350,7 +350,7 @@ def route(request):
         eligible = [item for item in eligible if item["model"] in {model for model, _ in planning}]
     tier = next((name for name in TIERS[TIER_RANK[start]:] if any(item["tier"] == name for item in eligible)), None)
     if tier is None:
-        return {"recommendation_available": False, "availability_verified": False, "floor": floor,
+        return {"route_available": False, "availability_verified": False, "floor": floor,
                 "tier": None, "model": None, "reasoning_effort": None,
                 "effort_policy": effort_policy, "capability_at_host_default_verified": False,
                 "reason": reason + "; no catalog configuration meets the floor and constraints",
@@ -372,7 +372,7 @@ def route(request):
                  "reasoning_effort": alternative["effort"] if effort_required else None,
                  "effort_policy": effort_policy,
                  "capability_at_host_default_verified": False} if alternative else "none")
-    return {"recommendation_available": True, "availability_verified": False, "floor": floor, "tier": tier,
+    return {"route_available": True, "availability_verified": False, "floor": floor, "tier": tier,
             "model": chosen["model"], "reasoning_effort": chosen["effort"] if effort_required else None,
             "effort_policy": effort_policy, "capability_at_host_default_verified": False, "reason": reason,
             "escalation_trigger": "verification reveals a reasoning gap",
@@ -386,7 +386,7 @@ def route(request):
 def main():
     parser = argparse.ArgumentParser(
         allow_abbrev=False,
-        description="Recommend a model and effort policy from task facts, constraints, and optional token estimates.",
+        description="Select a model and effort policy from task facts, constraints, and optional token estimates.",
         epilog=(
             "JSON fields and defaults:\n"
             "  task.work: standard; task.review and task.selected_tier: unset.\n"
@@ -426,7 +426,7 @@ def main():
             "\n"
             "Output and limits:\n"
             "  Success writes one JSON object to stdout (exit 0). Errors go to stderr\n"
-            "  (exit 2). recommendation_available=false means no catalog match; it is\n"
+            "  (exit 2). route_available=false means no catalog match; it is\n"
             "  still a valid result with exit 0. effort_policy is explicit for planning,\n"
             "  execplan, substantive/security review, or a user effort constraint; otherwise\n"
             "  it is host_default and reasoning_effort is null. The caller omits the effort\n"

@@ -81,6 +81,12 @@ run_step "warp/common-skills" "$SCRIPT_DIR/copy-from-git.sh" \
   --repo "https://github.com/warpdotdev/common-skills.git" --clone-dir "warp-common-skills" \
   ".agents/skills/saga" "skills/default"
 
+# ablate-ai-layer is locally maintained; see its README.md before importing updates.
+
+run_step "cursor/plugins" "$SCRIPT_DIR/copy-from-git.sh" \
+  --repo "https://github.com/cursor/plugins.git" --clone-dir "cursor-plugins" \
+  "pstack/skills/create-verification-skill" "skills/default"
+
 # "$SCRIPT_DIR/copy-from-git.sh" \
 #   "https://github.com/kunchenguid/lavish-axi.git" \
 #   "skills/lavish" "skills/default"

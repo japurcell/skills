@@ -3,175 +3,179 @@
   "evals": [
     {
       "id": 1,
-      "eval_name": "minimal-planning-recommendation",
-      "prompt": "Route a low-risk planning task. The already-present dispatch interface facts confirm gpt-6.1-sol and medium effort. Use the bundled CLI and snapshot; do not ask for a billing platform, model inventory, or token estimates. Return the final route.",
-      "expected_output": "The minimal planning request yields a Standard catalog recommendation of gpt-6.1-sol at medium with gpt-6-sol at medium as fallback. Existing interface facts confirm the exact selected pair, so the final route is dispatchable. Actual completion cost is unverified.",
+      "eval_name": "minimal-planning-route",
+      "prompt": "Route a low-risk planning task. Use the bundled CLI and snapshot; do not ask for a billing platform, model inventory, or token estimates. Return the unchanged CLI result.",
+      "expected_output": "The minimal planning request yields a Standard catalog route of gpt-6.1-sol at medium with gpt-6-sol at medium as fallback. Actual completion cost is unverified.",
       "expectations": [
         "Runs the CLI with a minimal planning task and no billing or runtime inventory fields.",
         "Returns gpt-6.1-sol and medium at Standard and a gpt-6-sol medium fallback.",
-        "Sets final dispatchable true only after using the supplied confirmation of both exact values.",
-        "Does not claim a verified actual minimum cost."
+        "Does not claim a verified actual minimum cost.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
       "files": []
     },
     {
       "id": 2,
       "eval_name": "host-default-omits-effort",
-      "prompt": "Route a bounded task with the bundled CLI. The interface confirms the recommended model control is supported, permitted, and live-accepted, but exposes no effort control. Return the final route without browsing, dispatching, or asking for an inventory.",
-      "expected_output": "The CLI produces an available host_default recommendation with reasoning_effort null and capability_at_host_default_verified false. Omit the effort argument; confirmed model acceptance makes the route dispatchable. Do not claim host-default effort capability was verified.",
+      "prompt": "Route a bounded task with the bundled CLI. Return the unchanged CLI result without browsing, dispatching, or asking for an inventory.",
+      "expected_output": "The CLI produces an available host_default route with reasoning_effort null and capability_at_host_default_verified false. Do not claim host-default effort capability was verified.",
       "expectations": [
-        "Distinguishes recommendation availability from effort policy.",
+        "Distinguishes route availability from effort policy.",
         "Reports host_default with null reasoning_effort and capability_at_host_default_verified false.",
-        "Dispatches without an effort argument when model checks pass.",
-        "Does not claim host-default capability verification."
+        "Does not claim host-default capability verification.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
       "files": []
     },
     {
       "id": 3,
       "eval_name": "explicit-planning-models",
-      "prompt": "Route a planning task with an explicit user allowlist of gpt-6.1-terra and gpt-6-astra and an explicit medium effort constraint. Existing interface facts confirm gpt-6.1-terra at medium. Use the bundled snapshot and return the decision.",
-      "expected_output": "The explicit allowlist defines the pool; Standard gpt-6.1-terra at medium is selected over Premium Astra. The confirmed exact pair makes the final route dispatchable.",
+      "prompt": "Route a planning task with an explicit user allowlist of gpt-6.1-terra and gpt-6-astra and an explicit medium effort constraint. Use the bundled snapshot and return the decision.",
+      "expected_output": "The explicit allowlist defines the pool; Standard gpt-6.1-terra at medium is selected over Premium Astra.",
       "expectations": [
         "Passes explicit model and effort constraints to the CLI.",
         "Selects Standard gpt-6.1-terra at medium without narrowing the explicit allowlist to the Planning defaults.",
-        "Returns dispatchable true only for the confirmed exact pair."
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
       "files": []
     },
     {
       "id": 4,
       "eval_name": "threshold-token-pricing",
-      "prompt": "Compare the bundled Copilot token prices for a bounded task with an explicit allowlist of claude-haiku-5.5 and gpt-5.6-luna, both at medium. Estimate 150000 uncached input tokens and 2000 output tokens. The interface facts already confirm the recommended exact pair. Return the route and token estimate.",
+      "prompt": "Compare the bundled Copilot token prices for a bounded task with an explicit allowlist of claude-haiku-5.5 and gpt-5.6-luna, both at medium. Estimate 150000 uncached input tokens and 2000 output tokens. Return the route and token estimate.",
       "expected_output": "Select Fast gpt-5.6-luna at medium with an estimated token cost of $0.0324. Haiku 5.5 uses its above-100K row and costs $0.080 for that shape. Actual completion cost remains unverified.",
       "expectations": [
         "Uses the CLI and the supplied token shape with the bundled Copilot pricing.",
         "Selects gpt-5.6-luna at medium and estimates $0.0324 in token charges.",
         "Does not present the token estimate as verified total completion cost.",
-        "Confirms the exact chosen pair before marking the final route dispatchable."
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
       "files": []
     },
     {
       "id": 5,
       "eval_name": "cached-token-pricing",
-      "prompt": "Route ordinary substantive work with an explicit allowlist of claude-sonnet-5 and claude-sonnet-5.5 at medium. Estimate zero uncached input, 100000 confirmed cached input tokens, and 1000 output tokens. Existing interface facts confirm the selected pair. Use the CLI and bundled prices.",
-      "expected_output": "The Standard recommendation is claude-sonnet-5.5 at medium with a $0.020 token estimate; Sonnet 5 would cost $0.030. The confirmed pair is dispatchable and actual completion cost is unverified.",
+      "prompt": "Route ordinary substantive work with an explicit allowlist of claude-sonnet-5 and claude-sonnet-5.5 at medium. Estimate zero uncached input, 100000 confirmed cached input tokens, and 1000 output tokens. Use the CLI and bundled prices.",
+      "expected_output": "The Standard route is claude-sonnet-5.5 at medium with a $0.020 token estimate; Sonnet 5 would cost $0.030.",
       "expectations": [
         "Passes confirmed cache reuse and the specified token shape to the CLI.",
         "Selects claude-sonnet-5.5 at medium with a $0.020 token estimate.",
-        "Keeps token-only pricing distinct from total completion cost and confirms both exact dispatch values."
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
+        "Keeps token-only pricing distinct from total completion cost."
       ],
       "files": []
     },
     {
       "id": 6,
       "eval_name": "floor-and-fallback",
-      "prompt": "A previously recorded Premium authentication-review route selected model-a at high and listed model-a at max as its same-tier fallback. The whole model is now known to be unavailable. Explain how to proceed using only facts already in context, without browsing, dispatching, collecting a model inventory, or asking for approval. Treat the synthetic pair as supplied route data.",
-      "expected_output": "Keep a Premium floor, reject the same-model fallback when the whole model is unavailable, and reassess from known facts. Mark the final route dispatchable only after both values of a qualifying pair are confirmed.",
+      "prompt": "Use the bundled CLI to route a security review previously routed at Premium. The previously selected model is unavailable. Return the catalog result unchanged; host availability and fallback selection belong to the caller.",
+      "expected_output": "Preserves the Premium security-review floor and explicit effort policy, returning the CLI route unchanged.",
       "expectations": [
         "Maintains the Premium security-review floor.",
-        "Does not treat a different effort on an unavailable model as an independent fallback.",
-        "Requires confirmed exact model and effort for any final dispatch without requesting a full inventory."
+        "Runs the CLI and returns its output unchanged without resolving host availability."
       ],
       "files": []
     },
     {
       "id": 7,
       "eval_name": "routine-plan-update-coordination",
-      "prompt": "Select a model for an agent coordinating updates to an existing plan. The original author used gpt-6.1-sol at high, recorded as Premium, because the design was unusually difficult. This new agent collects three workers' status reports, copies their approved wording into the progress section, and checks the supplied completion checklist. All decisions are settled; the edits are reversible and straightforward to verify. There is no model or effort constraint for this agent. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
-      "expected_output": "Classifies the coordinator's own work as bounded and selects Fast gpt-6-luna at medium. The author's Premium route does not become this task's selected_tier, risk, or model/effort constraint. The host_default policy omits effort; confirmed model acceptance makes the route dispatchable.",
+      "prompt": "Select a model for an agent coordinating updates to an existing plan. The original author used gpt-6.1-sol at high, recorded as Premium, because the design was unusually difficult. This new agent collects three workers' status reports, copies their approved wording into the progress section, and checks the supplied completion checklist. All decisions are settled; the edits are reversible and straightforward to verify. There is no model or effort constraint for this agent. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
+      "expected_output": "Classifies the coordinator's own work as bounded and selects Fast gpt-6-luna with host_default and null reasoning_effort. The author's Premium route does not become this task's selected_tier, risk, or model/effort constraint.",
       "expectations": [
         "Runs the CLI with task.work bounded, without planning or execplan classification.",
         "Does not inherit the author's Premium selected_tier, unusually_difficult risk, or Sol/high constraints.",
-        "Returns Fast gpt-6-luna at medium with final dispatchable true using the supplied exact interface facts."
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
+        "Returns host_default with null reasoning_effort, without inheriting the plan author effort."
       ],
       "files": []
     },
     {
       "id": 8,
       "eval_name": "substantive-plan-update-coordination",
-      "prompt": "Select a model for an agent coordinating updates to an existing plan whose original author used Premium gpt-6.1-sol at high. Two workers disagree about which acceptance criteria are complete. The coordinator must read their test evidence, reconcile the conflicting reports, and update the plan's status and evidence links. It must preserve the agreed scope, architecture, dependencies, and sequencing. This requires ordinary judgment, with no security sensitivity or unusually difficult reasoning. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
-      "expected_output": "Classifies the reconciliation as standard, selects Standard gpt-6-luna at high, and confirms the exact pair for dispatch. It neither reduces substantive judgment to Fast nor applies the planning pool or inherits the author's Premium route.",
+      "prompt": "Select a model for an agent coordinating updates to an existing plan whose original author used Premium gpt-6.1-sol at high. Two workers disagree about which acceptance criteria are complete. The coordinator must read their test evidence, reconcile the conflicting reports, and update the plan's status and evidence links. It must preserve the agreed scope, architecture, dependencies, and sequencing. This requires ordinary judgment, with no security sensitivity or unusually difficult reasoning. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
+      "expected_output": "Classifies the reconciliation as standard, selects Standard gpt-6-luna with host_default and null reasoning_effort. It neither reduces substantive judgment to Fast nor applies the planning pool or inherits the author's Premium route.",
       "expectations": [
         "Runs the CLI with task.work standard for substantive reconciliation without redesigning the plan.",
         "Does not inherit the author's selected_tier or model/effort constraints.",
-        "Returns Standard gpt-6-luna at high with final dispatchable true, rather than Fast or a mandatory planning model."
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
+        "Returns host_default with null reasoning_effort, without inheriting the plan author effort."
       ],
       "files": []
     },
     {
       "id": 9,
       "eval_name": "existing-plan-substantive-redesign",
-      "prompt": "Select a model for an agent described as the coordinator of updates to an existing plan. A new constraint invalidates the agreed service boundaries and creates a dependency cycle. This agent must choose a new decomposition, revise scope, and design a viable migration sequence. Resolving the competing constraints is unusually difficult. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
-      "expected_output": "Treats the agent's decisions as substantive planning despite its coordinator title and the existing artifact. Uses planning or execplan with unusually_difficult risk and selects Premium gpt-6.1-sol at high, confirmed dispatchable by the supplied exact pair. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
+      "prompt": "Select a model for an agent described as the coordinator of updates to an existing plan. A new constraint invalidates the agreed service boundaries and creates a dependency cycle. This agent must choose a new decomposition, revise scope, and design a viable migration sequence. Resolving the competing constraints is unusually difficult. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
+      "expected_output": "Uses planning or execplan with unusually_difficult risk and returns Premium gpt-6.1-sol at high with explicit effort. The coordinator title and existing artifact do not change the classification.",
       "expectations": [
         "Runs the CLI with task.work planning or execplan because the task owns material planning decisions.",
         "Sets unusually_difficult risk from this agent's assigned reasoning, preserving the Premium floor.",
-        "Returns Premium gpt-6.1-sol at high with final dispatchable true; does not downgrade because the plan already exists.",
-        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does."
+        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
+        "Returns Premium gpt-6.1-sol at high with explicit effort."
       ],
       "files": []
     },
     {
       "id": 10,
       "eval_name": "new-plan-substantive-design",
-      "prompt": "Select a model for an agent creating a plan for a migration across three coupled subsystems. The agent must choose service boundaries, settle scope, identify dependencies, and design the rollout order. The competing compatibility and availability constraints make the reasoning unusually difficult. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
-      "expected_output": "Uses planning or execplan with unusually_difficult risk, preserving Premium gpt-6.1-sol at high for difficult plan creation. The supplied exact pair makes the final route dispatchable. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
+      "prompt": "Select a model for an agent creating a plan for a migration across three coupled subsystems. The agent must choose service boundaries, settle scope, identify dependencies, and design the rollout order. The competing compatibility and availability constraints make the reasoning unusually difficult. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
+      "expected_output": "Uses planning or execplan with unusually_difficult risk, preserving Premium gpt-6.1-sol at high for difficult plan creation. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
       "expectations": [
         "Runs the CLI with task.work planning or execplan for new substantive plan creation.",
         "Sets unusually_difficult risk and returns Premium gpt-6.1-sol at high.",
-        "Confirms both supplied dispatch values before returning final dispatchable true.",
-        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does."
+        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
       "files": []
     },
     {
       "id": 11,
       "eval_name": "security-sensitive-plan-coordination",
-      "prompt": "Select a model for an agent coordinating evidence updates to an existing rollout plan. The scope, architecture, dependencies, and sequencing are settled. The coordinator must adjudicate conflicting authentication-bypass review findings and decide whether the security acceptance criterion is satisfied before rollout. This agent owns that security-sensitive judgment, not only the transcription of an approved decision. No model or effort constraint applies. Supplied interface facts confirm gpt-6-luna at medium and high, gpt-6.1-terra at high, and gpt-6.1-sol at medium and high. Use the bundled CLI and return the request, CLI result, and final route without dispatching.",
-      "expected_output": "Classifies the task as substantive coordination/security review, not planning merely because it updates a plan. Records security sensitivity or a security review, preserves a Premium floor, and selects gpt-6.1-terra at high from the ordinary pool. Confirms the supplied exact pair for dispatch. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
+      "prompt": "Select a model for an agent coordinating evidence updates to an existing rollout plan. The scope, architecture, dependencies, and sequencing are settled. The coordinator must adjudicate conflicting authentication-bypass review findings and decide whether the security acceptance criterion is satisfied before rollout. This agent owns that security-sensitive judgment, not only the transcription of an approved decision. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
+      "expected_output": "Classifies the task as substantive coordination/security review, not planning merely because it updates a plan. Records security sensitivity or a security review, preserves a Premium floor, and selects gpt-6.1-terra at high from the ordinary pool. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
       "expectations": [
         "Uses standard or review work with task.review security or task.risks.security_sensitive true, rather than planning or execplan.",
         "Preserves Premium for the coordinator's own security-sensitive responsibility instead of treating all coordination as Fast or Standard.",
-        "Returns Premium gpt-6.1-terra at high with final dispatchable true using the supplied exact pair.",
-        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does."
+        "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
+        "Classifies the assigned security review with task.review security and returns Premium gpt-6.1-terra at high with explicit effort."
       ],
       "files": []
     },
     {
       "id": 12,
       "eval_name": "coding-risk-keeps-host-default",
-      "prompt": "Route coding that has unusually difficult debugging and a repeated prior reasoning failure. No user effort constraint applies. The interface confirms the selected model is permitted and live-accepted, but effort support is unknown. Use the bundled CLI; return request and final route without dispatching.",
-      "expected_output": "Risk and failure can raise the model tier, but coding keeps host_default effort policy. Return reasoning_effort null and capability_at_host_default_verified false; model acceptance suffices for dispatchability, with effort omitted.",
+      "prompt": "Route coding that has unusually difficult debugging and a repeated prior reasoning failure. No user effort constraint applies. Use the bundled CLI; return request and unchanged CLI result without dispatching.",
+      "expected_output": "Risk and failure can raise the model tier, but coding keeps host_default effort policy. Return reasoning_effort null and capability_at_host_default_verified false.",
       "expectations": [
         "Keeps coding at host_default despite risk and failure flags.",
         "Does not require effort-control support or permission for omitted effort.",
-        "Does not claim host-default effort capability verification."
+        "Does not claim host-default effort capability verification.",
+        "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ]
     },
     {
       "id": 13,
       "eval_name": "permission-blocker-is-specific",
-      "prompt": "A substantive review requires explicit effort. Before routing, the host confirms model-control support and permission but denies permission to set an effort override. State the routing decision without dispatching or browsing.",
-      "expected_output": "Stop before routing and report effort-override permission as the blocker. Do not describe this permission failure as unavailable model/effort capability or live unavailability.",
+      "prompt": "Route a substantive review using the bundled CLI. The host denies permission to set effort overrides. Return the catalog result; the caller will validate dispatch.",
+      "expected_output": "Returns the CLI route with explicit effort despite the host permission issue; leaves dispatch validation to the caller.",
       "expectations": [
-        "Preflights effort support and permission before routing when effort is required.",
-        "Names denied effort-override permission specifically.",
-        "Does not conflate permission with capability or live availability."
+        "Runs the CLI for substantive review with explicit effort.",
+        "Returns CLI JSON unchanged without adding dispatchable or treating permission as catalog capability."
       ]
     },
     {
       "id": 14,
-      "eval_name": "user-model-bypasses-empty-catalog-only-with-verification",
-      "prompt": "Use the bundled CLI to examine two dispatch requests and return a final route for each; do not dispatch. The first task is ordinary coding with host_default effort policy. The user chose exact model `host-model-x`, which has no catalog entry, so the CLI returns recommendation_available false. Existing host facts confirm exact model control is supported, permitted, context-fit, and live-accepted; applicable host restrictions allow it. The second task is dedicated material planning with explicit high effort and the same user-chosen model. Its model checks pass, but the host has not exposed or confirmed the required effort control or high-effort acceptance. Explain whether either route is dispatchable, what values are recorded, and any blocker.",
-      "expected_output": "For ordinary coding, the exact user model bypasses the empty catalog-candidate gate and is dispatchable through the existing host control after the supplied checks. Record host_default, null reasoning_effort, capability_at_host_default_verified false, and no catalog tier or capability claim. For material planning, do not dispatch because required high effort is unconfirmed; report that specific blocker and do not substitute host default.",
+      "eval_name": "user-model-absent-from-catalog",
+      "prompt": "Use the bundled CLI for two tasks with an exact user model constraint of host-model-x, which is absent from the catalog: ordinary coding with no effort constraint, and material planning with explicit high effort. Return both CLI results unchanged. The caller will apply the user model through host controls.",
+      "expected_output": "Both results preserve route_available false and unresolved catalog model/tier. Coding uses host_default and null effort; planning uses explicit effort policy. No invented catalog capability or dispatchability result.",
       "files": [],
       "expectations": [
-        "Uses the exact user model despite recommendation_available false, after model support, permission, context-fit, live-acceptance, and restriction checks.",
-        "Applies host_default and omits effort, keeping capability_at_host_default_verified false and making no catalog tier or capability claim for the out-of-catalog model.",
-        "Blocks the explicit-effort route when required effort support or acceptance is unconfirmed and names the effort blocker.",
-        "Does not substitute host default for required explicit effort or invent a CLI override API."
+        "Passes the exact user model constraint to the CLI for both requests.",
+        "Preserves the unavailable catalog result without inserting the user model into CLI output.",
+        "Returns host_default for coding and explicit for planning.",
+        "Leaves host overrides and dispatch validation to the caller."
       ]
     }
   ]

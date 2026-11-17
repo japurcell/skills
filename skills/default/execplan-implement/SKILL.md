@@ -12,7 +12,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- For every subagent dispatch, use the `subagent-model-router` skill to obtain its final dispatchable route, and apply its model and effort policy through dispatch controls. Stop on a named blocker.
+- Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
@@ -24,13 +24,17 @@ Before every commit, the commit creator must activate the `commit` skill and fol
 
 ## Pre-dispatch gate
 
-Before launching an agent or assigning new work to an existing agent, run the router CLI and record its invocation, returned route, and intended dispatch arguments in the assignment's coordination record.
+Before each new assignment, including agent reuse, run the router CLI. Save its invocation, unchanged JSON result, and intended dispatch arguments in the assignment's coordination record.
 
-Loading `subagent-model-router` does not complete routing. Proceed only when the record establishes a dispatchable route and the intended arguments match its model and effort policy. If permissions or host restrictions prevent applying the route, report the named blocker instead of silently substituting runtime defaults.
+Apply the selected route automatically, subject to explicit user constraints and required host approvals. The parent validates dispatch:
 
-Automatically apply the router's final dispatchable model and effort policy, including verified fallbacks. Do not request separate user confirmation for routine routing choices. Preserve explicit user constraints and required host approval flows.
+- Require `route_available: true`, except for an exact user-selected model. Apply that override through host controls; leave unknown catalog tier, price, and capability unresolved.
+- Confirm model-control support, permission, context fit, applicable restrictions, and live acceptance. For `explicit`, confirm effort-control support, permission, and acceptance of the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
+- Validate fallbacks identically, preserving effort policy and capability floor. Whole-model unavailability excludes every effort for that model; reassess from known facts without collecting an inventory.
 
-After dispatch, record the actual arguments and returned agent ID. A successful launch does not replace the required routing evidence.
+Dispatch only after all required checks pass and the dispatch arguments match the validated route. Otherwise, report the specific blocker, distinguishing permission from availability or capability. Record any user override or fallback separately from the CLI result.
+
+After dispatch, record actual arguments and the returned agent ID. Routine routing needs no separate user confirmation.
 
 ## Runtime enforcement
 
@@ -47,7 +51,7 @@ After dispatch, record the actual arguments and returned agent ID. A successful 
 
 3. If current branch is `main` or `master`, create a new **integration branch**. Start the background **integration coordinator** and verify follow-up messaging as above. Instruct it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
 
-4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Follow the router’s final dispatchable route and runtime enforcement above. Each implementer subagent:
+4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Each implementer subagent:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - merges the integration branch tip into its own branch before reporting done
 
@@ -69,5 +73,6 @@ For each repeat of the cycle, prefer reusing the code review and implementer sub
 
 ## Gotchas
 
+- Do not allow code reviews result in scope creep. It is your job to keep scope limited to the ExecPlan frontier.
 - Do not create worktrees anywhere within the main project directory because agents will automatically discover files like `AGENTS.md` causing context window bloat. Recommend creating them in `../<project name>.worktrees`.
 - Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
