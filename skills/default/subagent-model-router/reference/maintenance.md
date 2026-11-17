@@ -1,6 +1,6 @@
 # Snapshot Maintenance
 
-Load only when updating catalog/pricing snapshots or investigating historical exclusions. Routing uses the active catalog and current runtime capabilities.
+Load only when updating catalog/pricing snapshots or investigating historical exclusions. Routing uses the active catalog snapshot.
 
 ## Refresh
 

@@ -5,23 +5,26 @@
       "id": 1,
       "name": "create-grounded-release",
       "prompt": "Read plans/recreation/ExecPlan.md, then create its sibling accomplishment report. GrowHub Nursery Operations (GNO) released version 1.27.0 on October 5, 2026. The nursery seedling production and fulfillment workflow shipped and 18 acceptance tests passed; deployment and adoption are outside scope. This supports Forest Service reforestation and operational efficiency because nursery staff can manage seedlings for restoration. Baseline equivalent human work is estimated at 24 hours based on analogous completed nursery workflow work; AI-assisted human effort is 6 hours, including prompting, review, testing, and correction. My supplied fully burdened rate is USD 100/hour. All acceptance checks and milestones are complete.",
-      "expected_output": "Write one sibling paragraph following the approved template with the date, known version, complete app name and acronym, supported priority rationale, 18 saved development hours and USD 1,800 estimated labor savings. Follow it with brief notes showing (24 - 6) × USD 100/hour = USD 1,800 and the estimate basis. Do not claim deployment or adoption.",
+      "expected_output": "Write one sibling paragraph following the approved template with the date, known version, complete app name and acronym, supported priority rationale, 18 saved development hours and $1,800 USD estimated labor savings. Follow it with brief notes showing (24 - 6) × $100 USD/hour = $1,800 USD and the estimate basis. Do not claim deployment or adoption.",
       "files": [
         "evals/fixtures/create-grounded-release/plans/recreation/ExecPlan.md"
       ],
       "assertions": [
         "One copy-ready paragraph followed by calculation notes",
         "Begins with Released on October 5, then version 1.27.0, then GrowHub Nursery Operations (GNO); omits the release year",
-        "Claims exactly 18 development hours and USD 1800 using supplied wage",
+        "Claims exactly 18 development hours and $1,800 USD using supplied wage",
         "Calculation notes include baseline, assisted effort, rate, arithmetic and assumptions",
-        "Alignment is supported and deployment/adoption are not claimed"
+        "Alignment is supported and deployment/adoption are not claimed",
+        "Every priority mentioned in the paragraph includes its substantive meaning and a causal connection, without requiring reference lookup",
+        "Connects USDA direction to strengthen service delivery through AI and advanced technology to AI-assisted development or reporting, without claiming deployed AI or measured mission gains",
+        "Monetary amounts use $<amount> <currency>, with an honest sign or additional-cost wording for negative savings"
       ]
     },
     {
       "id": 2,
       "name": "revise-negative-savings",
-      "prompt": "Read plans/internal/ExecPlan.md, then update its existing accomplishment-report.md in place. Preserve the human-written owner note. The application is Incident Procurement Automation (IIPA); no release date or version applies. It delivered incident contract modification capabilities, and no agency-priority connection is supported by the evidence. Baseline equivalent human effort is defensibly estimated at 10 hours from the documented manual workflow. AI-assisted human work took 12 hours including prompting, oversight, review, testing, corrections, and integration. My supplied wage is USD 80/hour. Acceptance is complete. Be honest about the result.",
-      "expected_output": "Update the same file, preserve the note, and report negative savings honestly: -2 development hours and -USD 160 estimated labor savings. Include brief arithmetic and assumptions. Do not invent a release date, version, or agency alignment.",
+      "prompt": "Read plans/internal/ExecPlan.md, then update its existing accomplishment-report.md in place. Preserve the human-written owner note. The application is Incident Procurement Automation (IIPA); no release date or version applies. It delivered incident contract modification capabilities, and no mission-outcome agency-priority connection is supported by the evidence. Baseline equivalent human effort is defensibly estimated at 10 hours from the documented manual workflow. AI-assisted human work took 12 hours including prompting, oversight, review, testing, corrections, and integration. My supplied wage is USD 80/hour. Acceptance is complete. Be honest about the result.",
+      "expected_output": "Update the same file, preserve the note, and report negative savings honestly: -2 development hours and -$160 USD estimated labor savings. Include brief arithmetic and assumptions. Do not invent a release date, version, or mission-outcome alignment. Retain the process-level AI priority connection even though there are no positive labor savings.",
       "files": [
         "evals/fixtures/revise-negative-savings/plans/internal/ExecPlan.md",
         "evals/fixtures/revise-negative-savings/plans/internal/accomplishment-report.md"
@@ -29,9 +32,12 @@
       "assertions": [
         "Existing file updated without duplicate; preserves the exact line Owner note: adoption review scheduled for November.",
         "Uses full application name and acronym; omits inapplicable date/version",
-        "Reports -2 development hours and -USD 160 labor savings, not positive savings",
-        "Calculation notes show 10 baseline hours, 12 assisted hours and USD 80/hour",
-        "Does not invent agency alignment"
+        "Reports -2 development hours and -$160 USD labor savings, or equivalently 2 additional development hours and $160 USD additional labor costs",
+        "Calculation notes show 10 baseline hours, 12 assisted hours and $80 USD/hour",
+        "Does not invent mission-outcome alignment; the required AI process connection is allowed",
+        "Every priority mentioned in the paragraph includes its substantive meaning and a causal connection, without requiring reference lookup",
+        "Connects USDA direction to strengthen service delivery through AI and advanced technology to AI-assisted development or reporting, without claiming deployed AI or measured mission gains",
+        "Monetary amounts use $<amount> <currency>, with an honest sign or additional-cost wording for negative savings"
       ]
     },
     {
@@ -39,7 +45,7 @@
       "name": "missing-wage",
       "prompt": "Read plans/tooling/ExecPlan.md and prepare its accomplishment report. The application is WorkPlan Reports (WPR). Its export workflow is complete and acceptance passed. A defensible estimate is 16 human-only development hours versus 5 AI-assisted human hours, including prompting, review, testing, and integration. No wage rate or currency has been supplied.",
       "follow_up_prompt": "Use USD 100 per hour.",
-      "expected_output": "Ask the user for their hourly wage and currency and keep the report pending. Do not finalize a labor-cost amount or substitute an illustrative rate before the answer. After the follow-up supplies USD 100/hour, save plans/tooling/accomplishment-report.md without requiring another report request, reporting 11 development hours saved and USD 1,100 estimated labor savings with calculation notes.",
+      "expected_output": "Ask the user for their hourly wage and currency and keep the report pending. Do not finalize a labor-cost amount or substitute an illustrative rate before the answer. After the follow-up supplies $100 USD/hour, save plans/tooling/accomplishment-report.md without requiring another report request, reporting 11 development hours saved and $1,100 USD estimated labor savings with calculation notes.",
       "files": [
         "evals/fixtures/missing-wage/plans/tooling/ExecPlan.md"
       ],
@@ -49,7 +55,7 @@
         "Does not finalize a cost claim without the missing input",
         "Keeps the report pending rather than skipping it or marking reporting complete because the wage is missing",
         "After the wage-only follow-up, saves plans/tooling/accomplishment-report.md without another report request",
-        "Saved report includes 11 development hours saved and USD 1100 labor savings, with calculation notes showing (16 - 5) × USD 100/hour"
+        "Saved report includes 11 development hours saved and $1,100 USD labor savings, with calculation notes showing (16 - 5) × $100 USD/hour"
       ]
     },
     {
@@ -69,16 +75,19 @@
     {
       "id": 5,
       "name": "zero-savings",
-      "prompt": "Read plans/tooling/ExecPlan.md and create its sibling accomplishment report. WorkPlan Reports (WPR) completed the export workflow; all acceptance checks passed. No release date or version applies. Comparable human-only effort is estimated at 8 hours from a documented prior workflow, and measured AI-assisted human work was 8 hours including prompting, review, testing, correction, and integration. My wage is USD 90/hour. No agency-priority connection is supported by the supplied evidence.",
-      "expected_output": "Write one copy-ready paragraph with no release or version prefix. Close with 0 estimated development hours saved and USD 0 labor-cost savings. Include (8 - 8) × USD 90/hour = USD 0 in supporting notes; do not invent other benefits or agency alignment.",
+      "prompt": "Read plans/tooling/ExecPlan.md and create its sibling accomplishment report. WorkPlan Reports (WPR) completed the export workflow; all acceptance checks passed. No release date or version applies. Comparable human-only effort is estimated at 8 hours from a documented prior workflow, and measured AI-assisted human work was 8 hours including prompting, review, testing, correction, and integration. My wage is USD 90/hour. No mission-outcome agency-priority connection is supported by the supplied evidence.",
+      "expected_output": "Write one copy-ready paragraph with no release or version prefix. Close with 0 estimated development hours saved and $0 USD labor-cost savings. Include (8 - 8) × $90 USD/hour = $0 USD in supporting notes; do not invent other benefits or mission-outcome alignment. Retain the process-level AI priority connection even though there are no positive labor savings.",
       "files": [
         "evals/fixtures/zero-savings/plans/tooling/ExecPlan.md"
       ],
       "assertions": [
-        "Reports 0 development hours and USD 0 labor-cost savings",
+        "Reports 0 development hours and $0 USD labor-cost savings",
         "Uses full application name and acronym without release date or version prefix",
-        "Shows 8 baseline hours, 8 assisted hours and USD 90/hour in calculation notes",
-        "Does not claim positive savings or unsupported agency alignment"
+        "Shows 8 baseline hours, 8 assisted hours and $90 USD/hour in calculation notes",
+        "Does not claim positive savings or unsupported agency alignment",
+        "Every priority mentioned in the paragraph includes its substantive meaning and a causal connection, without requiring reference lookup",
+        "Connects USDA direction to strengthen service delivery through AI and advanced technology to AI-assisted development or reporting, identifying the documented use without inferring a service-delivery contribution from AI use alone",
+        "Monetary amounts use $<amount> <currency>, with an honest sign or additional-cost wording for negative savings"
       ]
     },
     {
@@ -99,21 +108,24 @@
       "id": 7,
       "name": "explicit-hourly-wage",
       "prompt": "Invoke accomplishment-report with --hourly-wage 125 USD for plans/recreation/ExecPlan.md.",
-      "expected_output": "Use the invocation rate of USD 125/hour despite the older USD 100/hour recorded in the plan. Report 18 development hours saved and USD 2,250 labor-cost savings without asking for a wage already supplied.",
+      "expected_output": "Use the invocation rate of $125 USD/hour despite the older $100 USD/hour recorded in the plan. Report 18 development hours saved and $2,250 USD labor-cost savings without asking for a wage already supplied.",
       "files": [
         "evals/fixtures/wage-argument/plans/recreation/ExecPlan.md"
       ],
       "assertions": [
-        "Uses explicit argument rate USD 125/hour rather than the older plan rate",
-        "Reports 18 development hours and USD 2250 labor-cost savings",
-        "Does not ask for the supplied wage or currency"
+        "Uses explicit argument rate $125 USD/hour rather than the older plan rate",
+        "Reports 18 development hours and $2,250 USD labor-cost savings",
+        "Does not ask for the supplied wage or currency",
+        "Every priority mentioned in the paragraph includes its substantive meaning and a causal connection, without requiring reference lookup",
+        "Connects USDA direction to strengthen service delivery through AI and advanced technology to AI-assisted development or reporting, without claiming deployed AI or measured mission gains",
+        "Monetary amounts use $<amount> <currency>, with an honest sign or additional-cost wording for negative savings"
       ]
     },
     {
       "id": 8,
       "name": "invalid-hourly-wage",
       "prompt": "Invoke accomplishment-report with --hourly-wage unknown USD for plans/recreation/ExecPlan.md.",
-      "expected_output": "Ask for a valid numeric hourly wage. Do not silently substitute the older USD 100/hour rate from the plan or finalize a cost claim.",
+      "expected_output": "Ask for a valid numeric hourly wage. Do not silently substitute the older $100 USD/hour rate from the plan or finalize a cost claim.",
       "files": [
         "evals/fixtures/wage-argument/plans/recreation/ExecPlan.md"
       ],

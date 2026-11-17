@@ -26,15 +26,13 @@ Before every commit, the commit creator must activate the `commit` skill and fol
 
 Before each new assignment, including agent reuse, run the router CLI. Save its invocation, unchanged JSON result, and intended dispatch arguments in the assignment's coordination record.
 
-Apply the selected route automatically, subject to explicit user constraints and required host approvals. The parent validates dispatch:
+Apply the selected route within user constraints, host permissions, context limits, and applicable restrictions.
 
 - Require `route_available: true`, except for an exact user-selected model. Apply that override through host controls; leave unknown catalog tier, price, and capability unresolved.
-- Confirm model-control support, permission, context fit, applicable restrictions, and live acceptance. For `explicit`, confirm effort-control support, permission, and acceptance of the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
-- Validate fallbacks identically, preserving effort policy and capability floor. Whole-model unavailability excludes every effort for that model; reassess from known facts without collecting an inventory.
+- Dispatch the assignment with the exact model ID, even if omitted from a descriptive model list. Honor enforced allowlists. For `explicit`, pass the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
+- Use the dispatch result to establish live acceptance. If blocked, identify the specific model, effort, capability, or permission issue. Apply the same checks to any permitted fallback, preserving effort policy and capability floor. A model-wide rejection rules out every effort for that model.
 
-Dispatch only after all required checks pass and the dispatch arguments match the validated route. Otherwise, report the specific blocker, distinguishing permission from availability or capability. Record any user override or fallback separately from the CLI result.
-
-After dispatch, record actual arguments and the returned agent ID. Routine routing needs no separate user confirmation.
+Record actual arguments and the returned agent ID or blocker. Record overrides and fallbacks separately from the CLI result. Routine routing needs no separate user confirmation.
 
 ## Runtime enforcement
 

@@ -33,12 +33,22 @@ Write `.agents/skills/verify-<app>/SKILL.md` with YAML frontmatter (`name: verif
 
 ## 3. Seed the feature map
 
-Create `.agents/skills/verify-<app>/features/README.md` plus one file per user-facing feature you can identify (aim for the top 3-5 to start, from routes, commands, menus, or docs). Follow the shape in [`references/feature-map-example/`](references/feature-map-example/), with a README index and one file per feature. Each file answers, from the user's point of view: what the feature is, how to reach it, how to drive it with the harness, and what observable end state proves it works. The four H2s are `Sub-features`, `How to get to it (user POV)`, `Driving it with <harness>`, and `Gotchas`. If the seed data lacks a precondition that a journey needs, the journey reports a failure and the reason goes in that feature's `Gotchas`. Never weaken the journey to make it pass. The map is the repo's maintained verification source; a proof that drives one convenient entry point is incomplete when the map lists others.
+For a new map, create `.agents/skills/verify-<app>/features/README.md` and seed it with up to five primary user-facing features identified from routes, commands, menus, or docs. On refresh, retain valid local recipes, evidence instructions, and existing coverage. Update affected entries and add newly requested coverage. Use one file per mapped feature. Follow the shape in [`references/feature-map-example/`](references/feature-map-example/), with a README index and one file per feature. Each file answers, from the user's point of view: what the feature is, how to reach it, how to drive it with the harness, and what observable end state proves it works. The four H2s are `Sub-features`, `How to get to it (user POV)`, `Driving it with <harness>`, and `Gotchas`. If the seed data lacks a precondition that a journey needs, the journey reports a failure and the reason goes in that feature's `Gotchas`. Never weaken the journey to make it pass. The map is the repo's maintained verification source; a proof that drives one convenient entry point is incomplete when the map lists others.
 
-## 4. Prove the generated skill before handing it over
+## 4. Install the maintenance loop
+
+Install the complete `maintain-verification-skill` bundle into `.agents/skills/maintain-verification-skill/` in the target project. Resolve its source from the available skill's location or the sibling bundle beside this generator (the published source is `skills/default/maintain-verification-skill`). Copy its resources and provider metadata as well as `SKILL.md`; preserve its invocation controls. If no complete source is available, report setup as incomplete instead of writing a substitute or a dangling rule. Keep identical installed files unchanged; inspect and reconcile differing local files without overwriting customizations.
+
+Add this rule to the target project's root `AGENTS.md`, substituting the generated skill's actual name and path. Create the file when absent; preserve unrelated instructions and merge an equivalent existing rule instead of duplicating it:
+
+> When updating `verify-<app>` after its feature map changes, activate the `maintain-verification-skill` skill at `.agents/skills/maintain-verification-skill/SKILL.md` and follow its maintenance pass. If the host requires explicit user invocation, request `/maintain-verification-skill` before proceeding with that update.
+
+Read back the installed bundle and rule. Confirm the rule names the actual generated skill and the companion exists at its linked path. Installation is part of generation, not an optional follow-up.
+
+## 5. Prove the generated skill before handing it over
 
 Run its own instructions end to end once: launch, doctor, drive ONE mapped feature (one is enough; the map exists so later runs can cover the rest), capture evidence, clean up. After cleanup, confirm the evidence still exists at the named location — a cleanup that eats the proof fails this step. Fix what fails, and run the generated cleanup after every failed iteration too, so broken attempts don't strand processes and ports. A generated skill that was never executed is a draft, not a deliverable. If you proved it in a stand-in for the real target (a container in place of a fresh VM, a local stack in place of a remote one), list every setup step the stand-in did that the target will not. Those steps stay unverified until a run on the real target covers them.
 
-## 5. Offer the maintenance loop
+## 6. Report the maintenance loop
 
-Point the user at `/maintain-verification-skill` for keeping the map honest as the app changes. Suggest a cadence only if they ask.
+Report the generated verification skill, installed maintenance bundle, and `AGENTS.md` rule. Point the user at `/maintain-verification-skill` for keeping the map honest as the app changes. Suggest a cadence only if they ask.

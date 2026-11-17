@@ -11,6 +11,12 @@
 
 ## Investigations
 
+33. [x] Update the `accomplishment-report` skill to format saved labor costs as `$<amount> <currency>` instead of `<currency> <amount>`, and always connect any agency priority that mentions AI because AI is always used when this skill is activated. Updated the guidance and examples for currency formatting and AI-priority connections.
+
+34. [x] Update `create-verification-skill` to install `skills/default/maintain-verification-skill`, and add an `AGENTS.md` rule requiring `maintain-verification-skill` when updating the installed verify skill after its feature maps change. Verified companion installation and the maintenance rule in a disposable project, including repeat installation.
+
+35. [x] Improve `skills/forest-service/accomplishment-report`: when the concise accomplishment paragraph references agency priorities, include the priority's substantive text or a faithful plain-language description, never only its number or identifier (for example, "USDA strategic goal 6"). The paragraph must clearly explain the alignment without requiring readers to look up references. Update the skill's guidance and examples, and verify generated paragraphs remain concise and understandable on their own. Verified standalone priority descriptions in three generated paragraphs of 42-86 words.
+
 29. [x] Investigate and fix `execplan-implement` blocking before implementation when router-selected subagent model controls are unavailable under session permissions. Reported blocker: "Required workflow needs router-selected subagent model controls unavailable under this session's permissions. Your requested workflow required model-controlled subagents, but I lacked authorization to select their models." Identify the requirement causing the block and make the workflow honor available permissions without requiring unauthorized model selection. `delegate-to-subagents` does not cause this issue. Reported by copilot cli agent. - Archived at user request 2026-11-17.
 
 18. [x] Incorporate relevant brain principles into code review skills. - Archived at user request 2026-11-12.

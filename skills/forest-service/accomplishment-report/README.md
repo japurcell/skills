@@ -14,6 +14,8 @@ For a scenario with `follow_up_prompt`, first capture the initial response, then
 
 For each scenario, inspect the paragraph, calculation notes, and action transcript against every assertion. Verify the destination and preservation of existing content. Recalculate savings independently, check that missing wage leads to a question followed by a saved report once answered, and confirm that incomplete work produces no report. Treat unavailable output as failed, not a passing absence check.
 
+For money and alignment changes, compare creation, negative-savings revision, and zero-savings outputs against an explicit old-skill snapshot. Check `$<amount> <currency>` formatting, honest negative-cost wording, and a process-level connection to each available AI priority even without positive savings. Read each paragraph without its notes: every referenced priority must explain its substance and connection to the work. Record paragraph word counts and assess concision without imposing an arbitrary word limit. Treat existing baseline compliance as preservation, not an improvement claim.
+
 Before running, confirm each rate and hour estimate required by the rubric is present in the prompt or fixture. Keep missing inputs intentional in clarification scenarios.
 
 Executing agents receive only the prompt and fixture files. Keep `expected_output` and assertions out of their context; provide them only to graders after the run is complete.

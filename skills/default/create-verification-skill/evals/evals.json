@@ -1,0 +1,26 @@
+{
+  "skill_name": "create-verification-skill",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Generate verification setup for this Hello CLI project. Follow the supplied create-verification-skill bundle, preserve project instructions, and retain execution evidence outside cleanup state.",
+      "expected_output": "A proven verify-hello skill, complete local maintain-verification-skill bundle including provider metadata, and a root AGENTS.md rule requiring the companion after feature-map changes.",
+      "files": [],
+      "assertions": ["The generated journey runs the real CLI and retains successful evidence after cleanup.", "The companion's SKILL.md and agents/openai.yaml match the source bundle.", "The root rule names the actual verify skill and installed maintenance path while preserving existing instructions."]
+    },
+    {
+      "id": 2,
+      "prompt": "Refresh this project's generated verification setup after adding a CLI command. It already has the maintenance bundle and an equivalent root rule. The existing map has six valid local recipes with custom evidence paths. Preserve them and reconcile existing setup.",
+      "expected_output": "Updated feature coverage with a single maintenance rule and no unnecessary companion rewrites.",
+      "files": [],
+      "assertions": ["The new command is mapped and a real mapped journey is executed.", "An equivalent existing maintenance rule is reused without duplication.", "All six existing recipes and their evidence paths survive the refresh.", "Identical companion files remain unchanged."]
+    },
+    {
+      "id": 3,
+      "prompt": "Generate verification setup using the supplied generator-only bundle; no maintain-verification-skill source or installed copy is available. Preserve project instructions.",
+      "expected_output": "Explicitly incomplete maintenance setup without an invented companion or dangling AGENTS.md rule.",
+      "files": [],
+      "assertions": ["The missing complete companion source is reported as incomplete setup.", "No substitute maintain-verification-skill is authored.", "AGENTS.md does not point at a nonexistent companion."]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 ---
 name: subagent-model-router
-description: Route subagent work to the cheapest capable model. Use when asked to use subagents from a tier or when the user says "use a [fast|standard|premium] subagent".
+description: Select a subagent model and effort policy using task requirements and catalog pricing. Use when the user requests a fast, standard, or premium subagent.
 compatibility: Requires python3
 ---
 
@@ -22,7 +22,7 @@ Classify the assigned responsibility, not the agent's title or the artifact it t
 
 Assess the assigned task's risks and difficulty independently; do not inherit another agent's model, effort, or tier.
 
-When material planning and coding are separable, route them as separate tasks. Supply supported task risks and diagnosed failures. Set `task.prior_important_miss` for a known relevant miss and `task.selected_tier` when escalating a previous route for this same task.
+When material planning and coding are separable, route them as separate tasks. Supply supported task risks and diagnosed failures. Set `task.prior_important_miss` for a known relevant miss. Use `task.selected_tier` as the minimum tier when the user requests a tier or when escalating a previous route for the same task.
 
 Set capability-related failure flags only when supplied evidence identifies a model limitation. A failed test, missing dependency, permission denial, or unavailable model alone does not establish one.
 
@@ -38,6 +38,6 @@ Run the CLI with the classified task and supplied constraints, for example: `pyt
 
 ## Return the result
 
-Return the CLI's JSON result unchanged. When this skill is activated, the caller must use the CLI's selected model and effort policy, subject to explicit user overrides and host validation. Report blockers instead of silently substituting another configuration. `route_available` describes catalog fit, not dispatchability. The caller owns host validation, exact user model overrides, fallback selection, dispatch, and recording its dispatch decision separately from this result.
+Return the CLI's JSON result unchanged. `route_available` reports catalog fit. The caller dispatches the selected model and effort policy, honoring explicit user overrides and enforced host restrictions. Even if tool help omits the model ID, use the actual dispatch result to establish live acceptance. The caller reports blockers, selects any permitted fallback, and records its dispatch decision separately.
 
 Load [maintenance.md](reference/maintenance.md) only when updating snapshots or investigating historical exclusions.
