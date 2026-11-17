@@ -11,17 +11,17 @@ Scope is the canonical `skills/default/ablate-ai-layer/` bundle, focused tests a
 ## Progress
 
 - [x] (2026-11-17) [milestone-0] Inspect canonical source, current tests, pilot evidence, and approved experiment records; select interfaces and bounded ownership.
-- [ ] [milestone-0] T0: Commit this plan on the integration branch before implementation.
-- [ ] [milestone-1] T1: Reproduce loss through the public CLI with a fake runner and retain failing evidence before code edits.
-- [ ] [milestone-1] T1: Implement durable raw streams and focused public CLI coverage in one worker worktree; verify its complete contract.
-- [ ] [milestone-1] T2: Update capture gate, full-stream grading guidance, and schema documentation in an independent worker worktree.
-- [ ] [milestone-2] T3: Integrate workers and verify the combined CLI, schema, shutdown, cleanup, and documentation contract.
+- [x] (2026-11-17) [milestone-0] T0: Commit this plan on the integration branch before implementation.
+- [x] (2026-11-17) [milestone-1] T1: Reproduce loss through the public CLI with a fake runner and retain failing evidence before code edits.
+- [x] (2026-11-17) [milestone-1] T1: Implement durable raw streams and focused public CLI coverage in one worker worktree; verify its complete contract.
+- [x] (2026-11-17) [milestone-1] T2: Update capture gate, full-stream grading guidance, and schema documentation in an independent worker worktree.
+- [x] (2026-11-17) [milestone-2] T3: Integrate workers and verify the combined CLI, schema, shutdown, cleanup, and documentation contract.
 - [ ] [milestone-3] T4: Run independent Standards and Spec reviews against the fixed repair baseline; repair and reverify findings in at most three review rounds.
 - [ ] [milestone-3] T5: Reflect, persist durable guidance if needed, verify navigation, and remove this plan only after zero unresolved findings.
 
 ## Surprises & Discoveries
 
-- `run_agent` currently streams into anonymous temporary text files, then returns decoded contents only on normal completion. `run_one` slices `result_text` at 4,000 characters and `stderr_tail` at 600. Exceptions bypass stream extraction, so timeout and cancellation lose their streams entirely.
+- Before the repair, `run_agent` streamed into anonymous temporary text files, then returns decoded contents only on normal completion. `run_one` slices `result_text` at 4,000 characters and `stderr_tail` at 600. Exceptions bypass stream extraction, so timeout and cancellation lose their streams entirely.
 - The pilot had two successful nonempty diffs, but both result previews stop at exactly 4,000 characters mid-JSONL. `/tmp/skills-ablation-coordination/pilot-gate-report.md` records the failed capture gate. That is a harness failure, not an arm finding.
 - `run_one` already stages `git add -A` against a setup tree, so new/untracked files enter its diff and `files_changed`. Preserve and test that behavior rather than adding an unrelated file-manifest subsystem.
 - `stop_group` verifies group disappearance even when its leader exits; `ShutdownUnconfirmed` retains the worktree. Raw capture changes must preserve this ownership boundary.
@@ -37,7 +37,7 @@ Scope is the canonical `skills/default/ablate-ai-layer/` bundle, focused tests a
 
 ## Outcomes & Retrospective
 
-Planning source inspection is complete; implementation and acceptance are pending. No model calls or implementation edits occurred during drafting. Current next action is T0 plan commit, then parent dispatches T1/T2. Stop and report unresolved findings after the bounded review process; never delete the plan while a required check or finding is unresolved. Experiment completion is a later parent-owned phase and cannot be claimed from repair tests.
+T0 plan commit `e901eda0df0b7923cd088b23a45ec840e4d23f3c` preceded implementation. T1 source commit `ecf94b11ed517da7777a5b13e367083c085fbda5` and T2 documentation commit `c51ea10a2c9b12e9b698df174f6f3f4464ab4141` are integrated as `0a02aa14` and `d1e3cd74`. Workers passed their scoped checks. T1 red evidence records the public `test_full_streams_survive_cleanup` failing with missing `stdout_path` before the fix. T3 integrated proof passed: the exact red reproducer now passes, all 16 CLI tests pass, syntax/skill/diff checks pass, and retained external artifacts prove byte equality, final markers, and lifecycle completion. Independent review and final acceptance remain pending. No model calls occurred. Stop and report unresolved findings after the bounded review process; never delete the plan while a required check or finding is unresolved. Experiment completion is a later parent-owned phase and cannot be claimed from repair tests.
 
 ## Context and Orientation
 
@@ -51,15 +51,19 @@ Runtime instructions live in `skills/default/ablate-ai-layer/SKILL.md`; maintain
 
 ### Milestone 0: Establish a committed repair contract
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Completed T0 contract and proof: plan-only commit `e901eda0df0b7923cd088b23a45ec840e4d23f3c`, verified before workers began; readiness evidence is retained externally. The following describes completed work, not a pending instruction.
 
 Task T0 has no prerequisites. Its inputs are inspected source and the failed pilot gate. The integration coordinator creates branch `fix/ablation-full-transcripts` from the clean fixed baseline, commits only this plan and its curated index link, and records branch/base/plan commit in `/tmp/skills-ablation-coordination/harness-fix/readiness.md`. Acceptance is a clean plan-only commit before any source edit. No worker may implement until the parent confirms this checkpoint.
 
 ### Milestone 1: Deliver complete durable capture and its usage contract
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Completed T1/T2 contract: public red reproduction failed before source edits; T1 passed 16 CLI tests and syntax/diff checks, and T2 passed quick_validate and link/schema checks. Commits are recorded in Outcomes. Evidence: `/tmp/skills-ablation-coordination/harness-fix/t1/red.txt`, `t1/commit.txt`, and `t2/report.md`. The following is the completed delivery contract retained for integration/review, not pending worker instructions.
 
 Task T1 requires T0 and a parent dispatch under execplan-implement. One worker owns only `skills/default/ablate-ai-layer/scripts/run_ablation.py` and `scripts/test_ablation.py` within that bundle, in its own worktree. Activate tdd before source design/edits. Reproduce through the public CLI first: a disposable repo with AGENTS.md and a fake runner that creates a new result file, writes more than 4,000 characters to stdout, ends with a unique final marker, and writes stderr. Assert complete files exist and match emitted bytes. Before the fix this must fail because no durable raw files exist; retain the command, exit, and decisive assertion under external harness-fix evidence. This is the red gate, not an expected green test.
 
@@ -73,8 +77,10 @@ Task T2 also requires T0 and may run alongside T1 because it owns only `skills/d
 
 ### Milestone 2: Prove the combined result
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Completed integrated proof: the exact red test passes (1 test), all 16 public CLI tests pass in 7.169s, syntax checks pass, quick_validate reports Skill is valid!, and diff checks pass. Retained public-case artifacts prove exact 5,013-byte stdout and 710-byte stderr in both arms, both final markers, 4,000-character previews with flags, new.txt in each diff, absent runner groups, removed worktrees, and a clean fixture repository. Integrated documentation schema and local links/anchors pass. Evidence: `/tmp/skills-ablation-coordination/harness-fix/t3/checks.json`, `docs-contract.json`, and `public-case/proof.json`. The following is the completed integration contract, not pending instructions.
 
 Task T3 requires T1 and T2. Integration coordinator cherry-picks scoped worker commits into the integration branch, resolves only overlapping contract issues, and runs the focused public suite on the integrated tree. Inspect retained external reproduction evidence and rerun its exact public fake-runner scenario against integrated source. Compare bytes, metadata, final markers, diff new-file behavior, and worktree/process absence after completion. Run quick_validate and syntax checks. Review documentation against actual field names and behavior, including timeout, cancellation, --keep-worktrees, failure diagnostics, and JSON parse fallback. Passing isolated worker tests or a clean merge does not establish this milestone. Record commands, counts, exits, and limitations here.
 
@@ -89,7 +95,7 @@ Task T5 requires T4 with zero unresolved findings. Activate reflect at code sess
 
 ## Concrete Steps
 
-Next unfinished action: integration coordinator completes T0 by committing this plan and its index link using the commit skill, recording the resulting SHA externally, and notifying parent. Parent then dispatches the bounded T1 and T2 tasks with separate worktrees and explicit ownership. Workers are not alone and must preserve others' edits. Parent alone activates execplan-implement; workers activate relevant source/document skills.
+Next unfinished action: parent dispatches T4 independent Standards and Spec reviews using the pinned review packet under `/tmp/skills-ablation-coordination/harness-fix/review/`, base `fd6059d37881dab58109cf1cff1429ad54ce9592`, and the target recorded there. T3 integration proof is complete and committed; T1/T2 integrated without conflicts. Preserve unrelated todo commit `31fa1cc03667e795639dd5199974caba0c3be2cf`, which is listed separately in the packet. No paid runs, plan deletion, or review dispatch occurred in T3.
 
 From the repository or worker root, focused validation commands are:
 
@@ -98,7 +104,7 @@ From the repository or worker root, focused validation commands are:
     rtk proxy env PYTHONPATH=scripts/vendor python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/ablate-ai-layer
     rtk git diff --check
 
-Expected results are exit 0, unittest OK, and validator success. Actual results are pending. Aggregate test-all execution is unnecessary for an unchanged registry and isolated bundle; broaden only if integration reveals cross-bundle effects. Offline tests require Python 3, Git, and POSIX process groups. Missing prerequisites are reported as unverified failures, not passing skips.
+Observed T3 results: exit 0 for all listed commands, exact reproducer OK (1 test), full suite OK (16 tests), and Skill is valid! from quick_validate. Evidence is retained under external `harness-fix/t3/`. Aggregate test-all execution is unnecessary for an unchanged registry and isolated bundle; broaden only if integration reveals cross-bundle effects. Offline tests require Python 3, Git, and POSIX process groups. Missing prerequisites are reported as unverified failures, not passing skips.
 
 ## Validation and Acceptance
 
@@ -117,3 +123,5 @@ No external library is needed. Resolve `out` once in `main`, pass it to `run_one
 ## Artifacts and Notes
 
 Original experiment baseline: `fd6059d37881dab58109cf1cff1429ad54ce9592`. Integration branch: `fix/ablation-full-transcripts`. Failed pilot evidence: `/tmp/skills-ablation-coordination/pilot-gate-report.md`. Approved probe/config evidence: `/tmp/skills-ablation-coordination/preparation-report.md`, `task.md`, `pilot-invocation.txt`, and `remaining-invocation.txt`. Harness-fix readiness and future test/review evidence belong under `/tmp/skills-ablation-coordination/harness-fix/`. These external files supplement the inline contract and do not authorize extra spend or changes to approved runner settings.
+
+Integration evidence note: an extra external fixture verifier initially compared literal `/tmp` against resolved `/private/tmp`; correcting the verifier to resolve the base path established containment without a product change or rerun. The public harness itself returned 0 on that first invocation. This was an evidence-check path alias issue, not a harness failure.
