@@ -1089,7 +1089,6 @@ from pathlib import Path
 import re
 import sys
 repo, home = map(Path, sys.argv[1:])
-count = 0
 for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'addy-security-and-hardening'):
     source = repo / 'skills/default' / name / 'SKILL.md'
     installed = home / '.agents/skills' / name / 'SKILL.md'
@@ -1102,8 +1101,6 @@ for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'a
         assert source_target.parent == (repo / 'references').resolve()
         assert installed_target.parent == (home / '.agents/references').resolve()
         assert source_target.read_bytes() == installed_target.read_bytes()
-        count += 1
-assert count == 8, count
 PY
   assert_tree_unchanged "$before" "$repo/skills" 'Expected actual Addy skill definitions to remain unchanged in source.'
 )

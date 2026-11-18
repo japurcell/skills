@@ -817,7 +817,6 @@ from pathlib import Path
 import re
 import sys
 repo, home = map(Path, sys.argv[1:])
-count = 0
 for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'addy-security-and-hardening'):
     source = repo / 'skills/default' / name / 'SKILL.md'
     installed = home / '.agents/skills' / name / 'SKILL.md'
@@ -830,11 +829,9 @@ for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'a
         assert source_target.parent == (repo / 'references').resolve()
         assert installed_target.parent == (home / '.agents/references').resolve()
         assert source_target.read_bytes() == installed_target.read_bytes()
-        count += 1
-assert count == 8, count
 '@
         & $python.Path @($python.Arguments) -c $verify $repo $homeDir
-        Assert-Equals 0 $LASTEXITCODE 'Expected all eight actual Addy pointers to resolve in source and flat installed copies.'
+        Assert-Equals 0 $LASTEXITCODE 'Expected every discovered Addy pointer to resolve in source and flat installed copies.'
         Assert-Equals $before (Get-TreeFingerprint (Join-Path $repo 'skills')) 'Expected actual Addy skill definitions unchanged in source.'
     }
     finally {

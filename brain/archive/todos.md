@@ -11,6 +11,8 @@
 
 ## Investigations
 
+36. [x] Audited the maintained tests for vacuous assertions, implementation coupling, and unrealistic mocks. The [audit report](../audits/2026-11-18-test-suite.md) documents seven findings, disposable experiments, and recommended improvements.
+
 33. [x] Update the `accomplishment-report` skill to format saved labor costs as `$<amount> <currency>` instead of `<currency> <amount>`, and always connect any agency priority that mentions AI because AI is always used when this skill is activated. Updated the guidance and examples for currency formatting and AI-priority connections.
 
 34. [x] Update `create-verification-skill` to install `skills/default/maintain-verification-skill`, and add an `AGENTS.md` rule requiring `maintain-verification-skill` when updating the installed verify skill after its feature maps change. Verified companion installation and the maintenance rule in a disposable project, including repeat installation.

@@ -22,7 +22,7 @@ test_rtk_argument_vector_is_copilot() {
   arguments="$workdir/rtk.arguments"
 
   mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
-printf "%s\\n" "$*" > "$RTK_ARGUMENTS_FILE"
+printf "%s\\0" "$@" > "$RTK_ARGUMENTS_FILE"
 printf "%s\\n" "{}"'
 
   run_rtk_hook \
@@ -31,8 +31,11 @@ printf "%s\\n" "{}"'
     "PATH=$workdir/bin:$PATH" \
     "RTK_ARGUMENTS_FILE=$arguments" >/dev/null
 
-  assert_equals "hook copilot" "$(<"$arguments")" \
-    "Expected the Copilot wrapper to invoke exactly 'rtk hook copilot'."
+  python3 - "$arguments" <<'PY'
+import pathlib
+import sys
+assert pathlib.Path(sys.argv[1]).read_bytes().split(b"\0")[:-1] == [b"hook", b"copilot"]
+PY
 }
 
 test_rtk_rewrite_maps_ask_to_allow() {

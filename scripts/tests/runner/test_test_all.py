@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise the repository test runner through its public CLI."""
 
+import json
 import os
 from pathlib import Path
 import shlex
@@ -52,10 +53,17 @@ class TestTestAll(unittest.TestCase):
             path.chmod(0o755)
         pwsh = bin_dir / "pwsh"
         pwsh.write_text(
-            f"#!{sys.executable}\nimport sys\n"
-            "if '-Command' in sys.argv:\n    print('7')\n"
-            "else:\n    print('scripts/tests/installers/test-install.ps1')\n"
-            "    print('SKIP: host-specific junction test', file=sys.stderr)\n",
+            f"#!{sys.executable}\nimport json, pathlib, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args == ['-NoProfile', '-NonInteractive', '-Command', '$PSVersionTable.PSVersion.Major']:\n"
+            "    print('7')\n"
+            "elif len(args) == 3 and args[:2] == ['-NoProfile', '-File']:\n"
+            "    script = pathlib.Path(args[2])\n"
+            "    if not script.is_file():\n        raise SystemExit(f'missing PowerShell script: {script}')\n"
+            "    with open('pwsh-invocations.jsonl', 'a') as log:\n        log.write(json.dumps(str(script)) + '\\n')\n"
+            "    print(script)\n"
+            "    if script.name == 'test-install.ps1':\n        print('SKIP: host-specific junction test', file=sys.stderr)\n"
+            "else:\n    raise SystemExit(f'unsupported PowerShell invocation: {args!r}')\n",
             encoding="utf-8",
         )
         pwsh.chmod(0o755)
@@ -158,6 +166,11 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("0 failed", result.stderr)
         self.assertIn("scripts/tests/runner/test_test_all.py", result.stdout)
+        invocations = [json.loads(line) for line in (root / "pwsh-invocations.jsonl").read_text().splitlines()]
+        self.assertCountEqual(invocations, [
+            "scripts/tests/installers/test-install.ps1",
+            "scripts/tests/hooks/test-lifecycle-messages-windows.ps1",
+        ])
         for flag in ("--unknown", "--li"):
             with self.subTest(flag=flag):
                 result = self.run_fixture(root, env, flag)

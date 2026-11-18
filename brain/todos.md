@@ -11,8 +11,6 @@
 
 ## Investigations
 
-36. [ ] Audit this repository's maintained test suite for tautological assertions, excessive coupling to implementation structure, and mocks that diverge from real dependency or user-facing behavior. Identify affected tests or groups with concrete evidence, explain what defects they could miss or which harmless changes would break them, and recommend behavior-focused replacements or improvements. This item is an investigation; report findings before changing tests.
-
 37. [ ] Research and implement risk-based code review tiering for this repository's agent review workflows. Start with the [video reference at 15:47](https://youtu.be/f6OVURAlYXI?list=TLPQMTcxMTIwMjZ2swN18k_drQ&t=947), inspect the existing review skills and model-routing policy, and define risk criteria, review tiers, required checks, and escalation rules. Implement the resulting policy in the relevant workflows and validate representative low-risk, high-risk, and ambiguous changes without weakening required safety checks.
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.

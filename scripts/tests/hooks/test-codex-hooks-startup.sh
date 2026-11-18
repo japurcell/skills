@@ -92,16 +92,38 @@ assert_failure_response() {
   HOME="$home_dir" python3 "$HOOK" >"$stdout_file" 2>"$stderr_file" <<<"$input" || status=$?
   assert_equals '0' "$status" 'failure hook exit status'
 
-  python3 - "$stdout_file" "$expected_reason" <<'PY'
+  assert_failure_output "$stdout_file" "$expected_reason"
+}
+
+assert_failure_output() {
+  local output_file="$1" expected_reason="$2"
+  python3 - "$output_file" "$expected_reason" <<'PY'
 import json
 import pathlib
 import sys
-
 payload = json.loads(pathlib.Path(sys.argv[1]).read_bytes().decode("utf-8"))
 assert payload["continue"] is False
 assert sys.argv[2] in payload["stopReason"]
-assert payload["stopReason"].startswith("load-required-skills: blocked;") and "systemMessage" not in payload
+assert payload["stopReason"].startswith("load-required-skills: blocked;")
+assert "systemMessage" not in payload
 PY
+}
+
+run_configured_hook() {
+  local hook="$1" files_json="$2" output="$3" launcher="$workdir/configured-hook-launcher.py"
+  cat >"$launcher" <<'PY'
+import importlib.util
+import json
+import pathlib
+import sys
+hook = pathlib.Path(sys.argv[1]).resolve()
+spec = importlib.util.spec_from_file_location("required_skill_hook_fixture", hook)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+module.required_skill_files = json.loads(sys.argv[2])
+raise SystemExit(module.main())
+PY
+  python3 "$launcher" "$hook" "$files_json" >"$output"
 }
 
 test_rejects_invalid_events_and_missing_skills() {
@@ -160,43 +182,23 @@ PY
 test_skill_path_and_content_boundaries() {
   reset_workdir
   mkdir -p "$workdir/home/.agents/skills/caveman" "$workdir/outside"
-  printf 'safe body\n' > "$workdir/home/.agents/skills/caveman/SKILL.md"
   printf 'outside body\n' > "$workdir/outside/SKILL.md"
-  ln -s "$workdir/outside/SKILL.md" "$workdir/home/.agents/skills/caveman/escaped.md"
 
-  local configured="$workdir/configured-hook.py"
-  cp "$HOOK" "$configured"
-  python3 - "$configured" "$workdir/outside/SKILL.md" <<'PY'
-import pathlib
-import sys
-path = pathlib.Path(sys.argv[1])
-text = path.read_text(encoding="utf-8")
-path.write_text(text.replace('required_skill_files = ["caveman/SKILL.md"]', f'required_skill_files = [{sys.argv[2]!r}]'), encoding="utf-8")
-PY
-  local original_hook="$HOOK"
-  HOOK="$configured"
-  assert_failure_response "$workdir/home" '{"hook_event_name":"SessionStart","source":"startup"}' 'safe relative path'
-
-  cp "$original_hook" "$configured"
-  python3 - "$configured" <<'PY'
-import pathlib
-import sys
-path = pathlib.Path(sys.argv[1])
-text = path.read_text(encoding="utf-8")
-path.write_text(text.replace('required_skill_files = ["caveman/SKILL.md"]', 'required_skill_files = ["caveman/escaped.md"]'), encoding="utf-8")
-PY
+  ln -s "$workdir/outside/SKILL.md" "$workdir/home/.agents/skills/caveman/SKILL.md"
   assert_failure_response "$workdir/home" '{"hook_event_name":"SessionStart","source":"startup"}' 'escapes the skills directory'
 
-  cp "$original_hook" "$configured"
-  python3 - "$configured" <<'PY'
-import pathlib
-import sys
-path = pathlib.Path(sys.argv[1])
-text = path.read_text(encoding="utf-8")
-path.write_text(text.replace('required_skill_files = ["caveman/SKILL.md"]', 'required_skill_files = ["../outside/SKILL.md"]'), encoding="utf-8")
-PY
-  assert_failure_response "$workdir/home" '{"hook_event_name":"SessionStart","source":"startup"}' 'safe relative path'
-  HOOK="$original_hook"
+  local configured_output="$workdir/configured-output.json"
+  HOME="$workdir/home" run_configured_hook "$HOOK" '["../outside/SKILL.md"]' "$configured_output" <<'JSON'
+{"hook_event_name":"SessionStart","source":"startup"}
+JSON
+  assert_failure_output "$configured_output" 'safe relative path'
+
+  local absolute_path_json
+  absolute_path_json="$(python3 -c 'import json,sys; print(json.dumps([sys.argv[1]]))' "$workdir/outside/SKILL.md")"
+  HOME="$workdir/home" run_configured_hook "$HOOK" "$absolute_path_json" "$configured_output" <<'JSON'
+{"hook_event_name":"SessionStart","source":"startup"}
+JSON
+  assert_failure_output "$configured_output" 'safe relative path'
 }
 
 test_open_stdin_and_audit_failure_are_fail_open() {
@@ -247,15 +249,7 @@ PY
   printf 'first\n' > "$skill"
   mkdir -p "$workdir/home/.agents/skills/other"
   printf 'second\n' > "$workdir/home/.agents/skills/other/SKILL.md"
-  local configured="$workdir/multi-hook.py"
-  cp "$HOOK" "$configured"
-  python3 - "$configured" <<'PY'
-import pathlib
-import sys
-path = pathlib.Path(sys.argv[1])
-path.write_text(path.read_text(encoding="utf-8").replace('required_skill_files = ["caveman/SKILL.md"]', 'required_skill_files = ["caveman/SKILL.md", "other/SKILL.md"]'), encoding="utf-8")
-PY
-  HOME="$workdir/home" python3 "$configured" > "$workdir/multi.json" <<'JSON'
+  HOME="$workdir/home" run_configured_hook "$HOOK" '["caveman/SKILL.md", "other/SKILL.md"]' "$workdir/multi.json" <<'JSON'
 {"hook_event_name":"SessionStart","source":"startup"}
 JSON
   python3 - "$workdir/multi.json" <<'PY'

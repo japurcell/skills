@@ -368,8 +368,13 @@ class AblationCliTests(unittest.TestCase):
                 os.kill(entry["pid"], 0)
             self.assertFalse(Path(entry["cwd"]).exists())
         summary = json.loads((out / "summary.json").read_text())
-        self.assertTrue(all("timed out" in r["note"] for r in summary["runs"]))
-        for run in summary["runs"]:
+        runs = summary["runs"]
+        expected_runs = {(arm, 1) for arm in ("control", "stripped")}
+        self.assertEqual(len(runs), len(expected_runs), runs)
+        self.assertEqual({(run["arm"], run["index"]) for run in runs}, expected_runs, runs)
+        for run in runs:
+            with self.subTest(arm=run["arm"], index=run["index"]):
+                self.assertIn("timed out", run["note"])
             self.assert_streams(run, b'before-timeout\n', b'timeout-error\n')
             self.assertTrue(run["shutdown_confirmed"])
             self.assertEqual(run["cleanup_status"], "removed")

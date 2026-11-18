@@ -160,6 +160,14 @@ class WorkflowGradingTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads((run / "grading.json").read_text())
 
+    def assert_observed_workflow_rejected(self, grading, reason):
+        expectation = next(
+            item for item in grading["expectations"]
+            if item["text"] == "Observed workflow evidence is complete and readable."
+        )
+        self.assertFalse(expectation["passed"], grading)
+        self.assertIn(reason, expectation["evidence"])
+
     def test_observed_failure_repair_revalidation_and_commit_pass(self):
         iteration, run = self.prepare()
         self.assertEqual(self.validate(run).returncode, 1)
@@ -226,16 +234,35 @@ class WorkflowGradingTests(unittest.TestCase):
                 self.assertGreater(grading["summary"]["failed"], 0, grading)
 
     def test_missing_and_malformed_observations_fail_grading(self):
-        for content in (None, "", "not json", "[]\n", '{"kind":"validation","message":[]}\n'):
-            with self.subTest(content=content):
-                iteration, run = self.prepare()
-                events = run / "events.jsonl"
-                if content is None:
+        iteration, run = self.prepare()
+        self.assertEqual(self.validate(run).returncode, 1)
+        self.repair(run)
+        self.assertEqual(self.validate(run).returncode, 0)
+        self.commit(run)
+        valid = self.grade(iteration, run)
+        self.assertEqual(valid["summary"]["failed"], 0, valid)
+
+        events = run / "events.jsonl"
+        valid_events = events.read_bytes()
+        cases = (
+            ("missing", None, "No such file"),
+            ("empty", b"", "missing or malformed observation events"),
+            ("invalid JSON line", b"not json\n", "Expecting value"),
+            ("array record", b"[]\n", "missing or malformed observation events"),
+            ("invalid fields", b'{"kind":"validation","message":[]}\n',
+             "each observation needs a known kind and string message"),
+        )
+        for label, malformed, reason in cases:
+            with self.subTest(case=label):
+                if malformed is None:
                     events.unlink()
+                elif malformed == b"":
+                    events.write_bytes(malformed)
                 else:
-                    events.write_text(content)
+                    events.write_bytes(valid_events + malformed)
                 grading = self.grade(iteration, run)
-                self.assertGreater(grading["summary"]["failed"], 0, grading)
+                self.assert_observed_workflow_rejected(grading, reason)
+                events.write_bytes(valid_events)
 
     def test_bad_event_field_types_fail_without_crashing(self):
         iteration, run = self.prepare()
@@ -248,7 +275,9 @@ class WorkflowGradingTests(unittest.TestCase):
         records[1]["message"] = []
         events.write_text("".join(json.dumps(record) + "\n" for record in records))
         grading = self.grade(iteration, run)
-        self.assertGreater(grading["summary"]["failed"], 0, grading)
+        self.assert_observed_workflow_rejected(
+            grading, "each observation needs a known kind and string message"
+        )
 
     def test_expected_coauthor_requires_observed_option_and_committed_trailer(self):
         author = "Codex <noreply@openai.com>"

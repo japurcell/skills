@@ -22,7 +22,7 @@ test_rtk_argument_vector_is_gemini() {
   arguments="$workdir/rtk.arguments"
 
   mock_bin "$workdir" "rtk" '#!/usr/bin/env bash
-printf "%s\\n" "$*" > "$RTK_ARGUMENTS_FILE"
+printf "%s\\0" "$@" > "$RTK_ARGUMENTS_FILE"
 printf "%s\\n" "{}"'
 
   run_rtk_hook \
@@ -31,8 +31,11 @@ printf "%s\\n" "{}"'
     "PATH=$workdir/bin:$PATH" \
     "RTK_ARGUMENTS_FILE=$arguments" >/dev/null
 
-  assert_equals "hook gemini" "$(<"$arguments")" \
-    "Expected the Gemini wrapper to invoke exactly 'rtk hook gemini'."
+  python3 - "$arguments" <<'PY'
+import pathlib
+import sys
+assert pathlib.Path(sys.argv[1]).read_bytes().split(b"\0")[:-1] == [b"hook", b"gemini"]
+PY
 }
 
 test_gemini_rtk_rewrite_preserves_decisions() {
@@ -73,6 +76,24 @@ printf "%s\\n" "$RTK_RESPONSE"'
   )"
   assert_equals '{"permissionDecision":"ask_user"}' "$(jq -c . <<<"$output")" \
     "Expected Gemini to preserve ask_user decisions from RTK."
+
+  output="$(
+    RTK_RESPONSE='{"permissionDecision":"ask"}' run_rtk_hook \
+      "$audit_log" \
+      '{"session_id":"rtk-ask","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+  assert_equals '{"permissionDecision":"ask"}' "$(jq -c . <<<"$output")" \
+    "Expected Gemini to preserve a top-level ask decision from RTK."
+
+  output="$(
+    RTK_RESPONSE='{"hookSpecificOutput":{"permissionDecision":"ask"}}' run_rtk_hook \
+      "$audit_log" \
+      '{"session_id":"rtk-ask-nested","tool_name":"run_shell_command"}' \
+      "PATH=$workdir/bin:$PATH"
+  )"
+  assert_equals '{"hookSpecificOutput":{"permissionDecision":"ask"}}' "$(jq -c . <<<"$output")" \
+    "Expected Gemini to preserve a nested ask decision from RTK."
 }
 
 test_gemini_settings_register_rtk_rewrite_hook() {

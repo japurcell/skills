@@ -8,6 +8,7 @@ CLI commands, lifecycle operations, and scheduling loops run in environments whe
 
 ## The Pattern
 
+- Derive each step from the state that exists. Read current state, compare it with the goal, and apply only the difference. Make leftovers such as locks, temporary files, or partial records recognizable as stale using evidence valid at every possible crash point. For file replacement, write to a temporary path and rename it into place.
 - **Self-healing locks:** Merge lockfile with PID-based stale lock detection ensures orphaned locks from crashed processes are automatically recovered.
 
 ## The Test
@@ -26,3 +27,5 @@ If any answer is "it depends on what state was left behind," the operation needs
 - Complements [principles/fix-root-causes](fix-root-causes.md) by making state self-correcting rather than requiring debugging
 - Distinct from [principles/encode-lessons-in-structure](encode-lessons-in-structure.md) (which is about how to encode rules, not operation design)
 - Distinct from [principles/boundary-discipline](boundary-discipline.md) (which is about where validation lives, not convergence behavior)
+
+[Upstream principle-make-operations-idempotent](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-make-operations-idempotent/SKILL.md)

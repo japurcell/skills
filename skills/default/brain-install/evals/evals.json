@@ -10,7 +10,7 @@
         "evals/fixtures/fresh"
       ],
       "assertions": [
-        "Starter brain files and fourteen principle notes exist with valid navigation.",
+        "Starter brain files exist, every bundled principle note is installed, and all principle notes are reachable through the curated index.",
         "All six local skills and both exact AGENTS sections are present.",
         "No provider hook configurations or global files were created.",
         "Report records a verified unchanged rerun and does not claim unrun live/native checks."

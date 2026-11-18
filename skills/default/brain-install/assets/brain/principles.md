@@ -13,11 +13,16 @@
 
 - [principles/boundary-discipline](principles/boundary-discipline.md)
 - [principles/make-operations-idempotent](principles/make-operations-idempotent.md)
+- [principles/model-the-domain](principles/model-the-domain.md)
+- [principles/separate-before-serializing-shared-state](principles/separate-before-serializing-shared-state.md)
+- [principles/type-system-discipline](principles/type-system-discipline.md)
 
 ## Verification
 
 - [principles/prove-it-works](principles/prove-it-works.md)
 - [principles/fix-root-causes](principles/fix-root-causes.md)
+- [principles/explain-the-number](principles/explain-the-number.md)
+- [principles/sequence-verifiable-units](principles/sequence-verifiable-units.md)
 
 ## Delegation
 
@@ -28,3 +33,5 @@
 ## Meta
 
 - [principles/encode-lessons-in-structure](principles/encode-lessons-in-structure.md)
+- [principles/build-the-lever](principles/build-the-lever.md)
+- [principles/minimize-reader-load](principles/minimize-reader-load.md)

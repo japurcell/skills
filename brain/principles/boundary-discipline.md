@@ -10,6 +10,7 @@ Validation scattered throughout a codebase is noisy, redundant, and gives a fals
 
 - **At boundaries** (CLI args, TOML config, external APIs, NDJSON protocol): validate, return `error`, handle defensively.
 - **Inside the system**: typed data, `return err` propagation, no re-validation. Trust the types.
+- Keep transport and framework types out of public interfaces. Translate them into domain types at the appropriate boundary.
 
 ## Applications
 
@@ -35,3 +36,5 @@ Before adding a validation check, ask: **"Is this data crossing a system boundar
 Before putting logic in a hook, event listener, or framework integration point, ask: **"Can this be a pure function that the shell just calls?"** If yes, extract it.
 
 See also [principles/foundational-thinking](foundational-thinking.md)
+
+[Upstream principle-boundary-discipline](https://github.com/cursor/plugins/blob/35a90942a7f02e1ebbc2443643179815f2147954/pstack/skills/principle-boundary-discipline/SKILL.md)

@@ -23,7 +23,7 @@ At the code level, simplicity preserves options:
 - **No placeholder source files** - create files only when there's real code
 - **Well-tested** - test behavior and edge cases, not line coverage. See [principles/prove-it-works](prove-it-works.md).
 
-**Concurrency corollary:** Before sharing state between actors, ask: "What happens if another actor modifies this concurrently?" If the answer isn't "nothing", isolate.
+For concurrent writers, apply [Separate Before Serializing Shared State](separate-before-serializing-shared-state.md).
 
 ## Scaffold First
 

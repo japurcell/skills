@@ -4,6 +4,7 @@
 - Missing prerequisites are errors, never passing skips. Record command, OS, interpreter/provider version, exit status, and decisive result. The aggregate runner supports macOS/Linux; native Windows uses dedicated workflows.
 - Label hypotheses as candidates until an artifact supports them. When stronger certainty is requested, obtain a new relevant file view, search, or validation result. Verify a removed branch with one targeted search; repeat tests only for changed source, failures, or unresolved concerns.
 - Preserve failing cases and evidence; never weaken surviving tests to claim success.
+- For the [test-quality checks](../principles/prove-it-works.md#code--features), run the named test against disposable copies and record the observed pass or specific failure in the audit evidence. Keep the maintained fixture pointed at the shipped code.
 - For targeted skill evaluations, start with the smallest matched pilot that can answer the question on the required providers. Inspect its raw responses and artifacts directly before building custom automation or scaling repetitions; expand only when the pilot identifies a verification gap or a need for more observations.
 
 ## Select by changed area

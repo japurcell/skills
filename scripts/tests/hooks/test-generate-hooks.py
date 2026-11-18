@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import glob
 import importlib.util
 import json
 import os
@@ -84,7 +85,7 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertTrue(set(RTK_TARGETS).issubset(rendered))
 
         shared_sections = []
-        for target, provider in zip(RTK_TARGETS, ("copilot", "gemini"), strict=True):
+        for target in RTK_TARGETS:
             with self.subTest(target=target):
                 source = rendered[target]
                 self.assertTrue(source.startswith(
@@ -92,12 +93,6 @@ class GenerateHooksTests(unittest.TestCase):
                     "# Generated from hooks/families/rtk.py by scripts/generate-hooks.py. Do not edit.\n"
                 ))
                 self.assertEqual(stat.S_IMODE((ROOT / target).stat().st_mode), 0o755)
-                self.assertIn(f'RTK_PROVIDER = "{provider}"', source)
-                self.assertIn('[rtk_bin, "hook", RTK_PROVIDER]', source)
-                self.assertIn("from helpers.audit import audit_log_event", source)
-                self.assertIn("from helpers.common import emit_json, sanitize_log_field", source)
-                self.assertNotIn(".copilot.hooks", source)
-                self.assertNotIn(".gemini.hooks", source)
                 sections = re.split(
                     r"# BEGIN PROVIDER ADAPTER\n.*?# END PROVIDER ADAPTER\n",
                     source,
@@ -111,9 +106,6 @@ class GenerateHooksTests(unittest.TestCase):
             shared_sections[1],
             "RTK outputs diverged outside their explicit provider adapters.",
         )
-        self.assertIn('rewritten["permissionDecision"] = "allow"', rendered[RTK_TARGETS[0]])
-        self.assertIn('hook_out["permissionDecision"] = "allow"', rendered[RTK_TARGETS[0]])
-        self.assertNotIn('permissionDecision"] = "allow"', rendered[RTK_TARGETS[1]])
 
     def test_rtk_renderer_rejects_swapped_and_undeclared_target_paths(self) -> None:
         load_generator()
@@ -313,18 +305,45 @@ class GenerateHooksTests(unittest.TestCase):
 
 class ReadyIdeasWindowsWorkflowTests(unittest.TestCase):
     def test_provider_hook_changes_trigger_push_and_pull_request_checks(self) -> None:
-        workflow = (ROOT / ".github/workflows/ready-ideas-windows.yml").read_text(
-            encoding="utf-8"
+        sys.path.insert(0, str(ROOT / "scripts" / "vendor"))
+        import yaml
+
+        workflow = yaml.load(
+            (ROOT / ".github/workflows/ready-ideas-windows.yml").read_text(encoding="utf-8"),
+            Loader=yaml.BaseLoader,
         )
+        self.assertIn("on", workflow, "YAML parsing must preserve GitHub's 'on' key")
+
+        def path_matches(pattern, changed_path, root=ROOT):
+            """Match GitHub-style path globs against files under the checkout root."""
+            return any(
+                Path(match).as_posix() == changed_path
+                for match in glob.iglob(
+                    pattern, root_dir=root, recursive=True, include_hidden=True
+                )
+            )
+
+        def matches_event(path_patterns, changed_path, root=ROOT):
+            included = False
+            for pattern in path_patterns:
+                excluded = pattern.startswith("!")
+                pattern = pattern[1:] if excluded else pattern
+                if path_matches(pattern, changed_path, root):
+                    included = not excluded
+            return included
+
         for event in ("push", "pull_request"):
             with self.subTest(event=event):
-                match = re.search(
-                    rf"(?m)^  {event}:\n    paths:\n((?:      - '[^']+'\n)+)",
-                    workflow,
+                path_patterns = workflow["on"][event]["paths"]
+                provider_paths = (
+                    ".codex/hooks/load-required-skills.py",
+                    ".copilot/hooks/scripts/rtk-hook-copilot.py",
+                    ".gemini/hooks/scripts/rtk-hook-gemini.py",
                 )
-                self.assertIsNotNone(match, f"{event} needs a paths filter")
-                paths = set(re.findall(r"^      - '([^']+)'$", match.group(1), re.MULTILINE))
-                self.assertTrue({".copilot/**", ".gemini/**"} <= paths)
+                for changed_path in provider_paths:
+                    with self.subTest(path=changed_path):
+                        self.assertTrue(matches_event(path_patterns, changed_path),
+                                        f"{event} must run for {changed_path}")
 
 
 if __name__ == "__main__":

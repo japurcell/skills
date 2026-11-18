@@ -14,6 +14,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 - Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
+- Start with one implementer and assign each implementer one task at a time. Reuse an idle implementer when its model and effort satisfy the pre-dispatch gate and its prior context helps with the task. If no suitable implementer is idle, a single independent ready task is enough to start another when capacity allows.
 - Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Link the relevant plan section or research note. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
