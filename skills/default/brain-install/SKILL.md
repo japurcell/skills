@@ -34,6 +34,8 @@ An existing root index is a preservation checkpoint before **any** installer wri
 
 Resolve each reported content conflict concretely. Preserve existing todos, principles, notes, skills, and unrelated settings. For an eligible seed note, curated index, or skill file that should remain unchanged, repeat `--keep-existing repository/relative/path`. Verify retained skill files remain compatible with their callers. Keep choices are per invocation; repeat them on retry. Required AGENTS sections, selected provider registrations, and generated `brain/index.md` cannot be skipped this way.
 
+Preserve repository-specific obligations, not entire outdated implementations. For each differing installed skill or helper, compare it with the bundle and merge applicable upstream changes while retaining local requirements. For skill files, use `--keep-existing` only after reconciliation, or record the specific update being deferred and obtain user approval.
+
 For a populated codebase, plans, audits, or archive directory without an index, create a curated `index.md` linking its existing content, then retain it with `--keep-existing`. Empty starter indexes are only for empty directories.
 
 For differing AGENTS sections, helper payloads, or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Exact known registrations differing only in their Python executable prefix are automatically upgraded to the canonical PATH command; changed handler code or fields remain conflicts. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
@@ -54,6 +56,7 @@ Continue any remaining semantic migration after mechanical installation. Activat
 
 - Inspect installed files, the two AGENTS sections, curated navigation, and generated `brain/index.md`. Every new brain note must be reachable. Confirm the empty starter backlog did not replace an existing backlog.
 - Reconcile the obligation audit with actual destinations, conditions, scope, exclusions, approvals, and legacy reference repairs. Retire old guidance/loading hooks only after this proof.
+- Installer success and idempotence do not prove an upgrade is complete. Account for each bundled skill/helper change as applied, already present, inapplicable with evidence, or explicitly deferred with approval.
 - Exercise the installed manual indexer using its documented JSON-stdin command. Inspect stderr and expected index links; the hooks' zero exit code alone does not prove success.
 - Inspect selected hook registrations and run their commands with representative provider input where possible. Preserve unrelated handlers, unselected providers, and global configuration. Provider trust review remains a native provider action; do not bypass it.
 - Repeat inspection with the same choices, including index acknowledgement after reviewing its current contents. Identical files should remain unchanged. Report retained custom files and any compatibility limits.
