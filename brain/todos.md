@@ -11,8 +11,6 @@
 
 ## Investigations
 
-37. [ ] Research risk-based code review tiering for this repository's agent review workflows. Start with the [video reference at 15:47](https://youtu.be/f6OVURAlYXI?list=TLPQMTcxMTIwMjZ2swN18k_drQ&t=947). Find other prior and relevant work from openai and anthropic articles, documentation, and open source projects before architecting a solution. Inspect the existing review skills and define risk criteria, review tiers, required checks, and escalation rules. Sketch 2-3 approaches and dispatch an astra subagent to critique, grade, and rank them. Present me with the findings and recommended approach.
-
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
 
 

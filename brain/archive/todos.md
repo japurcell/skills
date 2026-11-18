@@ -11,6 +11,8 @@
 
 ## Investigations
 
+37. [x] Researched risk-based code review, compared three approaches with an independent Astra critique, and completed the [shadow pilot](../audits/2026-11-18-review-tiering-pilot.md). The experiment closed with the four-reviewer default retained. [Findings and proposed checks](../audits/2026-11-18-review-tiering.md)
+
 36. [x] Audited the maintained tests for vacuous assertions, implementation coupling, and unrealistic mocks. The [audit report](../audits/2026-11-18-test-suite.md) documents seven findings, disposable experiments, and recommended improvements.
 
 33. [x] Update the `accomplishment-report` skill to format saved labor costs as `$<amount> <currency>` instead of `<currency> <amount>`, and always connect any agency priority that mentions AI because AI is always used when this skill is activated. Updated the guidance and examples for currency formatting and AI-priority connections.
