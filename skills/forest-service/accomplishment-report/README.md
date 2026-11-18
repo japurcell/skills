@@ -1,6 +1,6 @@
 # Accomplishment report maintenance
 
-This opt-in Forest Service skill produces one concise, copy-ready accomplishment paragraph and brief calculation notes for a completed ExecPlan. It activates `exec-plans` for plan interpretation and `agency-priorities` for supported alignment. Its description enables model invocation at closeout; it does not install a filesystem hook or change the shared planning skill.
+This opt-in Forest Service skill produces one concise, copy-ready accomplishment paragraph and brief calculation notes for a completed implementation plan. It activates `agency-priorities` for supported alignment. Its description enables model invocation at closeout; it does not install a filesystem hook or change the shared planning skill.
 
 ## Invocation
 

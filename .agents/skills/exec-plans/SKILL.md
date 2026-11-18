@@ -1,6 +1,6 @@
 ---
 name: exec-plans
-description: Mandatory when starting, resuming, executing, orchestrating, reading, modifying, discussing, or touching any 'exec-plan', 'ExecPlan', 'execution plan', '*ExecPlan*.md', or '*exec-plan*.md' file. Always use for complex tasks across multiple layers, multiple scripts, system-wide refactors, multi-milestone features, or phased work without a plan. Load before inspecting or editing ExecPlan files.
+description: Mandatory when creating or modifying any 'exec-plan', 'ExecPlan', 'execution plan', '*ExecPlan*.md', or '*exec-plan*.md' file. Use for new features, multi-file refactors, or architectural changes - not small fixes. Load before inspecting or editing ExecPlan files.
 ---
 
 # Execution Plans (ExecPlans)
@@ -9,11 +9,49 @@ An ExecPlan is the working contract for a feature or other multi-step change. Wr
 
 ## Invocation and pre-code gate
 
-Load this skill before inspecting or editing an existing ExecPlan. Reuse its instructions within the same agent context; reload only when they change or are no longer available in context. If work needs a plan, create the file at the requested location before the first code edit. When no location is specified, use the project's established plan location; if none exists, create `brain/<feature-slug>/ExecPlan.md`. Verify that the file exists before changing implementation code. Saying that you will write a plan later does not satisfy this gate.
+Load this skill before inspecting or editing an existing ExecPlan. Reuse its instructions within the same agent context; reload only when they change or are no longer available in context. If work [needs a plan](#triage-complexity), create the file at the requested location before the first code edit. When no location is specified, use the project's established plan location; if none exists, create `brain/<feature-slug>/ExecPlan.md`. Verify that the file exists before changing implementation code. Saying that you will write a plan later does not satisfy this gate.
 
-When drafting or restructuring a plan, read the [annotated outline](references/outline.md) and adapt it using the relevant source and supplied requirements. Resolve ordinary ambiguities from the available evidence or exploring the codebase; then record the choice and rationale in the plan. If ambiguities remain, ask the user for clarification to close every gap. When asking the user questions, use the host's structured input tool with concrete options when available, or concise direct questions otherwise. Provide your recommendation for each question. Close gaps in behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (no more than four at a time). Stop only when the remaining decisions are resolved or the user explicitly delegates them to your discretion. Do not leave key implementation decisions for a novice reader to guess.
+When drafting or restructuring a plan, read the [annotated outline](references/outline.md) and adapt it using the relevant source and supplied requirements. Resolve ordinary ambiguities from the available evidence or by [gathering context with subagents](#gather-context-with-subagents); then record the choice and rationale in the plan. If ambiguities remain, ask the user for clarification to close every gap. When asking the user questions, use the host's structured input tool with concrete options when available, or concise direct questions otherwise. Provide your recommendation for each question. Close gaps in behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (no more than four at a time). Stop only when the remaining decisions are resolved or the user explicitly delegates them to your discretion. Do not leave key implementation decisions for a novice reader to guess.
 
 When executing, proceed to the next planned milestone without asking the user for routine next steps. Resolve ordinary implementation ambiguities autonomously within the agreed scope. Honor explicit stopping points, required approvals, and owner-only actions; when one blocks progress, record the missing decision or permission and continue independent authorized work. Follow the project's commit workflow.
+
+## Triage Complexity
+
+Before starting any planning work, assess whether this task actually needs a plan:
+
+**Trivially small (1-2 files, obvious approach):**
+
+Tell the user this task doesn't need a plan and suggest implementing directly without the plan skill. **Stop here — do not implement.**
+
+**Needs planning (proceed to [Load Principles](#load-principles)):**
+
+- The change spans 3+ files or introduces new architecture
+- There are multiple valid approaches and the user should weigh in
+- The task has unclear scope or cross-cutting concerns
+- The user explicitly asks for a plan
+
+## Load Principles
+
+Read `brain/principles.md`. Follow every link and read each linked principle file. These principles govern all plan decisions - cite them by name in the plan overview.
+
+**Do NOT skip this. Do NOT use memorized principle content — always read fresh.**
+
+## Gather Context with Subagents
+
+Finding _facts_ is your job, never the user's. When a question needs a fact from the environment (filesystem, tools, etc.) or external sources, activate the `delegate-to-subagents` skill and dispatch a subagent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the subagent to report.
+
+Dispatch exploration subagents to:
+
+- Read existing code in affected areas
+- Identify patterns, conventions, and dependencies
+- Map architecture relevant to the change
+- Find tests, types, and related infrastructure
+
+Dispatch research subagents to gather facts from external sources. Resolved by a subagent that activates the `research` skill. Use when knowledge outside the current working directory is required.
+
+Run multiple background subagents in parallel when investigating independent areas.
+
+## Collaborate on the architecture
 
 ## Write a self-contained plan
 
@@ -31,6 +69,20 @@ A milestone is a delivery and acceptance outcome, not automatically one task. A 
 Name files with full repository-relative paths, identify the exact functions or modules to edit, and say where new files belong. Explain how affected areas fit together. State environment assumptions and provide reasonable alternatives when commands or results vary by environment. Carry task-specific facts and decisions from references or prior plans into the active plan so the reader can execute its contract. Link reusable guidance at its canonical location in the repository's durable documentation instead of copying it into the plan.
 
 Design steps to be repeatable. Explain how to detect and recover from a partial failure, including safe retries and backups or fallbacks for destructive work. Prefer additive, testable changes that can be validated before replacing existing behavior.
+
+### Collaborate on the architecture
+
+For architectural decisions, trace every system the change touches, then sketch 2-3 different shapes for it (types, signatures, module boundaries). Before you pick one, dispatch a fresh subagent and instruct it to: activate the `codebase-design` skill and critique, grade, and rank your designs. Use that feedback to pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. If the best design isn't obvious, ask the user to pick.
+
+Record each design considered in the plan's `Decision Log`. State which was chosen and why. This prevents premature commitment and documents the design space explored by applying exhaust-the-design-space.md.
+
+### Redesign check
+
+For changes touching existing code, apply redesign-from-first-principles:
+
+> "If we were building this from scratch with this requirement, what would we build?"
+
+Don't bolt changes onto existing designs - redesign holistically.
 
 ## Validation and observable acceptance
 

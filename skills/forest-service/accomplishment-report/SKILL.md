@@ -1,14 +1,14 @@
 ---
 name: accomplishment-report
-description: Create a concise Forest Service executive accomplishment report when all work in an ExecPlan is completed, or update its existing report. Use at ExecPlan closeout and when asked to report completed work, agency alignment, and estimated AI-assisted versus human-only time and cost savings.
-argument-hint: '[--hourly-wage <amount> <currency>]'
+description: Create a concise Forest Service executive accomplishment report when all work in an implementation plan is completed, or update its existing report. Use at plan closeout and when asked to report completed work, agency alignment, and estimated AI-assisted versus human-only time and cost savings.
+argument-hint: "[--hourly-wage <amount> <currency>]"
 ---
 
 # Accomplishment Report
 
 ## Confirm scope and completion
 
-1. Activate the `exec-plans` skill before reading a plan. Identify the exact ExecPlan from the task or repository context; ask only if multiple targets remain plausible.
+1. Identify the exact plan from the task or repository context; ask only if multiple targets remain plausible.
 2. Read the plan, repository overview, relevant changes, and acceptance evidence. Confirm every in-scope task and milestone is complete and acceptance is met. Checked boxes do not override unresolved tests, verification, or owner actions. If work remains, explain the gap and stop without generating a report or changing the plan. Reporting does not create a circular completion gate.
 3. Write to `<plan-directory>/accomplishment-report.md`. Update an existing report in place and preserve supported human edits, including owner notes, verbatim and separate from generated prose. Identify the plan. If the path belongs to another plan, ask how to resolve the collision. Do not create dated duplicates or modify implementation files.
 
