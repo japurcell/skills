@@ -13,8 +13,8 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 **Subagent management rules:**
 
 - Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
-- **Implementer subagents** should be run in the background where possible for maximum concurrency.
-- Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
+- **Implementer subagents** should run in the background when their tasks can progress independently.
+- Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Link the relevant plan section or research note. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
 
@@ -53,9 +53,9 @@ Record actual arguments and the returned agent ID or blocker. Record overrides a
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - merges the integration branch tip into its own branch before reporting done
 
-5. Once an **implementer subagent** completes, have the same **integration coordinator subagent** merge its work to the integration branch.
+5. When an implementer finishes, send the tested base and task revisions, checks performed and any interface change to the persistent integration coordinator. Have it merge the task into the integration branch and record the integration revision, verification results and unresolved dependencies in the existing plan checkpoint. A replacement coordinator can resume from that checkpoint.
 
-6. If this changes the **frontier** of available tasks, kick off more **implementer subagents** to work on the new tasks. This allows for maximum concurrency.
+6. Recompute the **frontier** after each merge. Start ready tasks that unblock dependent work first. If completed branches are accumulating faster than integration or CI can verify them, slow new starts until verification catches up.
 
 7. Once all tickets are complete, follow the [code review fix cycle](#code-review-fix-cycle).
 
@@ -67,7 +67,9 @@ Record actual arguments and the returned agent ID or blocker. Record overrides a
 
 Call the Skill tool with `code-review-biaxis` on the integration branch. Track all issues raised by the code review as new tasks in the ExecPlan **frontier**, then fix them in a single **implementer subagent**. Repeat _code review → fix cycle_ until no issues remain for a maximum of three iterations. Report all unresolved issues.
 
-For each repeat of the cycle, prefer reusing the code review and implementer subagents from the previous iteration when they match the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent. Keep the two review axes independent.
+For a narrow fix, prefer the original implementer when its investigation still applies. A reviewer can resume to recheck a specific finding. When a review calls for independent discovery, start a fresh reviewer with the relevant spec or standards, the diff and verification evidence. Keep the two review axes independent.
+
+Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise dispatch a fresh agent.
 
 ## Gotchas
 

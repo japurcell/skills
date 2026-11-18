@@ -12,9 +12,10 @@ You - the parent - owns routing, scheduling, user questions, and completion veri
 
 Use background agents so you can stay in active dialogue with the user.
 
-Run independent work in parallel and dependent work in waves. Serialize edits to shared files.
+Keep steps that depend on the same working context in one bounded assignment. Split independent slices when they can run concurrently or need separate judgments. Serialize edits to shared files.
+If workers cover different slices, verify every required slice. If they attempt the same problem, decide before dispatch whether to accept the first verified result or compare all candidates.
 
-Routine communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers. There is an exception: relay every subagent question requiring human input through the parent's user-facing question tool immediately.
+Keep routine messages sparse. When one worker produces an artifact another consumes, have them exchange a sample and flag interface changes to the affected owner. Relay every question requiring human input through the parent's user-facing question tool immediately.
 
 ## Dispatch loop
 
@@ -23,8 +24,10 @@ Activate the `subagent-model-router` skill to learn how to use the router CLI.
 While you pursue the long-running goal and maintain dialogue with the user, you will continuously identify subtasks to make progress until the goal is achieved. For each subtask:
 
 - Define scope, file ownership, acceptance criteria, and required completion evidence.
-- Brief exploration workers with the needed context, acceptance criteria, and known negative cases; use context pointers where those facts are already available.
-- Follow the [pre-dispatch gate](#pre-dispatch-gate). Prefer an existing agent only when it has the task context needed by the subtask and matches the final dispatchable route: the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise, dispatch a fresh agent.
+- Put constraints and known negative cases that change the worker's decisions in the brief. Point to the relevant file, section, commit or research note for supporting detail.
+- Follow the [pre-dispatch gate](#pre-dispatch-gate). Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`.
+- Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
+- Ask for the result, evidence pointer and any open decision that affects another task. Retrieve the underlying evidence when verifying a claim or resolving a disagreement.
 
 ### Pre-dispatch gate
 
