@@ -95,6 +95,37 @@ class SkillWorkflowTests(unittest.TestCase):
                       for line in manifest.read_text(encoding="utf-8").splitlines()]
         self.assertCountEqual(manifested, extracted)
 
+    def test_copilot_session_history(self):
+        sessions = Path(self.environment["HOME"]) / ".copilot/session-state"
+        for name, context in (("matching", {"cwd": str(self.project)}),
+                              ("different", {"cwd": str(self.root)}), ("missing", {})):
+            session = sessions / name
+            session.mkdir(parents=True)
+            rows = [
+                {"type": "session.start", "data": {"context": context}},
+                {"type": "user.message", "data": {"content": "Keep the original prompt.",
+                                                  "transformedContent": "Injected prompt context."}},
+                {"type": "user.message", "data": {"source": "system", "content": "System instructions."}},
+                {"type": "assistant.message", "data": {"content": "Here is the answer."}},
+                {"type": "tool.execution_complete", "data": {"content": "Private tool output."}},
+            ]
+            history = "\n".join(map(json.dumps, rows))
+            (session / "events.jsonl").write_text(history, encoding="utf-8")
+            (session / "artifact.jsonl").write_text(history, encoding="utf-8")
+        for label, options, count in (("filtered", ["--cwd", self.project], 1),
+                                      ("unfiltered", [], 3)):
+            output = self.root / label
+            self.run_cli(EXTRACTOR, output, "--copilot-dir", sessions, "--min-size", "0", *options)
+            files = list(output.glob("*.txt"))
+            self.assertEqual(len(files), count)
+            if label == "filtered":
+                self.assertEqual(files[0].read_text(encoding="utf-8"),
+                                 f"[PROVIDER]: copilot\n[CWD]: {self.project}\n"
+                                 f"[SOURCE_FILE]: {sessions / 'matching/events.jsonl'}\n\n"
+                                 "[USER]: Keep the original prompt.\n\n[ASSISTANT]: Here is the answer.\n")
+                manifest = output / "batches/batch_0.txt"
+                self.assertEqual(Path(manifest.read_text(encoding="utf-8").strip()), files[0])
+
     def test_unfiltered_extraction_keeps_all_attribution_cases(self):
         sources = self.write_histories()
         output = self.root / "unfiltered"

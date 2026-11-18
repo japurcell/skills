@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Extract user and assistant messages from Claude and Codex conversation JSONL files.
+"""Extract user and assistant messages from Claude, Codex, and GitHub Copilot CLI conversation JSONL files.
 
 Usage:
   extract-conversations.py <output-dir> --claude-dir DIR [--codex-dir DIR] [options]
   extract-conversations.py <output-dir> --codex-dir DIR [--claude-dir DIR] [options]
+  extract-conversations.py <output-dir> --copilot-dir DIR [options]
 
 Options:
   --claude-dir DIR   Claude project conversation directory (repeatable)
   --codex-dir DIR    Codex sessions root directory (repeatable, recursive)
+  --copilot-dir DIR  GitHub Copilot CLI session-state root
   --cwd PATH         Include only conversations from this working directory
   --batches N        Number of batch manifests to create (default: 5)
   --from YYYY-MM-DD  Include conversations modified on or after this date
@@ -23,7 +25,7 @@ Output:
   <output-dir>/000_<provider>_<name>.txt  - extracted messages per conversation
   <output-dir>/batches/batch_0.txt ... batch_N.txt - file lists for each batch
 
-Inputs are confined to ~/.claude/projects and ~/.codex/sessions. Output must
+Inputs are confined to ~/.claude/projects, ~/.codex/sessions, and ~/.copilot/session-state. Output must
 be below an existing private ruminate-* workspace in the platform temporary
 directory. HOME, temporary configuration, and the trees must remain trusted
 and stable; path checks do not prevent hostile concurrent ancestor swaps.
@@ -294,24 +296,24 @@ def extract_codex_texts(content: Any) -> list[str]:
     return _extract_texts(content, lambda item_type: item_type in {"input_text", "output_text", "text"})
 
 
-def append_message(messages: list[str], role: str, text: str, max_len: int) -> None:
+def append_message(messages: list[str], role: str, text: str) -> None:
     clean = text.strip()
     if not clean or len(clean) <= 10:
         return
     if clean.startswith("<system-reminder>") and clean.endswith("</system-reminder>"):
         return
     if role == "user":
-        messages.append(f"[USER]: {text[:max_len]}")
+        messages.append(f"[USER]: {text[:3000]}")
         return
     if role == "assistant":
-        messages.append(f"[ASSISTANT]: {text[:max_len]}")
+        messages.append(f"[ASSISTANT]: {text[:800]}")
 
 
-def extract_messages(fpath: str, root: Path) -> tuple[str, str, list[str]]:
+def extract_messages(fpath: str, root: Path, *, copilot: bool) -> tuple[str, str, list[str]]:
     """Extract messages from one conversation JSONL file.
 
     Returns (provider, cwd, messages), where provider is one of:
-    claude, codex, unknown.
+    claude, codex, copilot, unknown.
     """
     provider = "unknown"
     cwd = ""
@@ -328,6 +330,23 @@ def extract_messages(fpath: str, root: Path) -> tuple[str, str, list[str]]:
                 continue
 
             entry_type = entry.get("type", "")
+
+            if copilot:
+                data = entry.get("data")
+                if not isinstance(data, dict) or entry.get("agentId"):
+                    continue
+                if entry_type == "session.start" and not cwd:
+                    context = data.get("context")
+                    if isinstance(context, dict) and isinstance(context.get("cwd"), str):
+                        cwd = context["cwd"]
+                elif entry_type in ("user.message", "assistant.message"):
+                    role = entry_type.split(".")[0]
+                    content = data.get("content")
+                    if role == "user" and data.get("source") not in (None, "user"):
+                        continue
+                    if isinstance(content, str):
+                        append_message(messages, role, content)
+                continue
 
             if isinstance(entry.get("cwd"), str) and not cwd:
                 cwd = entry["cwd"]
@@ -349,7 +368,7 @@ def extract_messages(fpath: str, root: Path) -> tuple[str, str, list[str]]:
                 if not isinstance(msg, dict):
                     continue
                 for text in extract_claude_texts(msg.get("content", "")):
-                    append_message(messages, entry_type, text, 3000 if entry_type == "user" else 800)
+                    append_message(messages, entry_type, text)
                 continue
 
             if entry_type != "response_item":
@@ -366,9 +385,9 @@ def extract_messages(fpath: str, root: Path) -> tuple[str, str, list[str]]:
                 continue
             provider = "codex"
             for text in extract_codex_texts(payload.get("content", "")):
-                append_message(messages, role, text, 3000 if role == "user" else 800)
+                append_message(messages, role, text)
 
-    return provider, cwd, messages
+    return "copilot" if copilot else provider, cwd, messages
 
 
 def contained_source(path: Path, root: Path) -> Path:
@@ -415,7 +434,7 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
-        description="Extract messages from Claude and Codex conversation JSONL files."
+        description="Extract messages from Claude, Codex, and GitHub Copilot CLI conversation JSONL files."
     )
     parser.add_argument(
         "output_dir", help="Output below a private ruminate-* workspace in the platform temporary directory",
@@ -428,6 +447,7 @@ def main() -> None:
         "--codex-dir", action="append", default=[],
         help="Literal directory beneath ~/.codex/sessions (recursive)",
     )
+    parser.add_argument("--copilot-dir", help="GitHub Copilot CLI history root (~/.copilot/session-state)")
     parser.add_argument("--cwd", help="Only include conversations where detected cwd matches this path")
     parser.add_argument("--batches", type=int, default=5, help="Number of batch manifests (default: 5)")
     parser.add_argument(
@@ -445,8 +465,8 @@ def main() -> None:
     parser.add_argument("--min-size", type=int, default=500, help="Minimum file size in bytes (default: 500)")
     args = parser.parse_args()
 
-    if not args.claude_dir and not args.codex_dir:
-        parser.error("at least one input source is required (--claude-dir or --codex-dir)")
+    if not args.claude_dir and not args.codex_dir and not args.copilot_dir:
+        parser.error("at least one input source is required (--claude-dir, --codex-dir, or --copilot-dir)")
     if args.batches <= 0:
         parser.error("--batches must be positive")
     if args.min_size < 0:
@@ -468,6 +488,21 @@ def run(args: argparse.Namespace) -> None:
     codex_dirs = [source_root(root, home / ".codex/sessions") for root in args.codex_dir]
     output, workspace = output_root(args.output_dir)
     sources = discover_files(claude_dirs, codex_dirs)
+
+    copilot_root = home / ".copilot/session-state"
+    if args.copilot_dir:
+        root = Path(source_root(args.copilot_dir, copilot_root))
+        if root != copilot_root:
+            raise PathPolicyError(f"expected Copilot session-state root: {copilot_root}")
+        for session in root.iterdir():
+            if session.name.startswith(".") or session.is_symlink() or not session.is_dir():
+                continue
+            history = session / "events.jsonl"
+            if history.exists() or history.is_symlink():
+                source = contained_source(history, root)
+                if not source.is_file():
+                    raise PathPolicyError(f"source must be a regular file: {history}")
+                sources[str(source)] = root
 
     files = []
     for fpath in sources:
@@ -497,14 +532,15 @@ def run(args: argparse.Namespace) -> None:
     provider_counts: dict[str, int] = {"claude": 0, "codex": 0, "unknown": 0}
 
     for idx, fpath in enumerate(files):
-        provider, cwd, messages = extract_messages(fpath, sources[fpath])
+        provider, cwd, messages = extract_messages(fpath, sources[fpath], copilot=sources[fpath] == copilot_root)
         if args.cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
             continue
         if not messages:
             continue
 
         provider_counts[provider] = provider_counts.get(provider, 0) + 1
-        fname = os.path.basename(fpath).replace(".jsonl", "")
+        path = Path(fpath)
+        fname = path.parent.name if provider == "copilot" else path.name.replace(".jsonl", "")
         out_path = f"{args.output_dir}/{idx:03d}_{provider}_{fname}.txt"
         destination = output / f"{idx:03d}_{provider}_{fname}.txt"
         output_file(destination, workspace)
@@ -536,7 +572,8 @@ def run(args: argparse.Namespace) -> None:
         f"{len(extracted)} conversations with content "
         f"(claude={provider_counts.get('claude', 0)}, "
         f"codex={provider_counts.get('codex', 0)}, "
-        f"unknown={provider_counts.get('unknown', 0)})",
+        + (f"copilot={provider_counts.get('copilot', 0)}, " if args.copilot_dir else "")
+        + f"unknown={provider_counts.get('unknown', 0)})",
         file=sys.stderr,
     )
 

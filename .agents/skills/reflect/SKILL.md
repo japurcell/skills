@@ -9,7 +9,7 @@ Review the conversation and persist learnings - to `brain/`, to skill files, or 
 
 ## Process
 
-Track the review in the active plan when one exists; otherwise use the available planning tools or a short checklist.
+Track the review in the active plan or a short checklist. Keep session-end reflection pending until the last fix, verification, and delegated review are complete. If work resumes after a reflection, review what happened since that pass before the final reply.
 
 1. **Scan the conversation** for:
    - Mistakes made and corrections received
@@ -19,7 +19,7 @@ Track the review in the active plan when one exists; otherwise use the available
    - Decisions made and their rationale
    - Friction in skill execution, orchestration, or delegation
    - Repeated manual steps that could be automated or encoded
-2. **Identify lessons** that will matter in a future session. If none qualify, finish here.
+2. **Identify lessons** that will matter in a future session. If none qualify, go directly to the summary.
 3. **Route and persist each remaining learning** during this reflection. Before a brain write, read `brain/index.md` and the relevant topic notes. Write only what those notes do not already cover; keep reusable guidance in indexed topic notes, skill instructions, or structural enforcement. An existing active plan may link to the saved guidance when useful to its task.
 4. **Reconcile navigation** using the brain skill after a brain write. Hooks own the root inventory.
 
@@ -57,10 +57,13 @@ Follow-up work that can't be done during reflection - bugs, non-trivial rewrites
 
 ## Summary
 
-```
+Mark reflection complete once you can fill in this summary for the final reply. Use `None` for empty categories. If all four are empty, explain why in the Brain entry.
+
+```markdown
 ## Reflect Summary
-- Brain: [files created/updated, one-line each]
-- Skills: [skill files modified, one-line each]
-- Structural: [rules/scripts/checks added]
+
+- Brain: [notes updated and lessons captured]
+- Skills: [skills updated and lessons captured]
+- Structural: [rules, scripts, or checks added and why]
 - Todos: [follow-up items filed]
 ```

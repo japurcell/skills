@@ -29,12 +29,14 @@ Find available supported provider roots:
    `~/.claude/projects/-<cwd-with-dashes-replacing-slashes>/`
 2. Codex sessions root:
    `~/.codex/sessions/`
+3. GitHub Copilot CLI session history:
+   `~/.copilot/session-state/<session-id>/events.jsonl`. Pass the `session-state` directory.
 
-The bundled extractor supports Claude and Codex JSONL formats only. Other provider histories require a separate supported extraction route; do not pass unsupported options to this script.
+Other provider formats require a separate extraction route.
 
 ### 3. Extract conversations
 
-Run the extraction script to parse both JSONL formats into readable text and split into batches:
+Run the extraction script to parse session logs into readable text and split into batches:
 
 ```python
 from pathlib import Path
@@ -46,11 +48,12 @@ subprocess.run([
     "<temporary-directory>/extracted",
     "--claude-dir", str(Path.home() / ".claude/projects/<project-slug>"),
     "--codex-dir", str(Path.home() / ".codex/sessions"),
+    "--copilot-dir", str(Path.home() / ".copilot/session-state"),
     "--cwd", str(Path.cwd()), "--batches", "2",
 ], check=True)
 ```
 
-Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
+Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations across all providers: ~1 batch per 20 conversations, minimum 2, maximum 10.
 
 Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
 
