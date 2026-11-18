@@ -43,6 +43,16 @@ Review the generated plan against these additional assertions:
 
 Run a separate fresh-worker reading with only the generated plan and selected task. Request its first authorized action, prerequisites, exact first check, completion condition, and stopping boundary without product edits. Record every additional document it needs. Missing critical context fails this review even if every required heading is present.
 
+## Size boundary and resumed conversion
+
+Use disposable copies of a plan with two milestones, a completed prerequisite decision and an open task that links to the decision's heading. Pad with historical observations to reach the specified byte size. Review each case independently.
+
+1. At creation, measure a 12,288-byte plan. It stays at its original path as one file.
+2. At creation, finalize a 12,289-byte plan with work remaining. Repeat independently at the first resumed checkpoint. In both runs, verify that the original path is the entry, milestone detail moved into linked files, and each routine file is at most 12,288 bytes. Read the entry alone for the next action and owner. Follow the assignment and its cited prerequisite to recover the decision, steps and acceptance criteria.
+3. Move the prerequisite heading during conversion. After removing the old heading, resolve the task's link to the decision at its new location. Check all final file and fragment targets, retained evidence and open work. Repeat the checkpoint and check for duplicate records and broken links.
+4. Use a plan whose open-task index alone exceeds 12,288 bytes. Verify the entry still gives the next action and owner, every task and dependency remains reachable, and every routine index page fits the budget.
+5. Resume an oversized plan whose only remaining action is recording completion. Verify that it can be closed in place. A dormant plan elsewhere in the project should remain untouched.
+
 ## Deterministic suite maintenance
 
 Run from the repository root after grader changes:

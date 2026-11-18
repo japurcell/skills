@@ -15,7 +15,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 - Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
 - Start with one implementer and assign each implementer one task at a time. Reuse an idle implementer when its model and effort satisfy the pre-dispatch gate and its prior context helps with the task. If no suitable implementer is idle, a single independent ready task is enough to start another when capacity allows.
-- Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Link the relevant plan section or research note. Send interface changes to affected owners as soon as they are known.
+- Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
 
@@ -44,17 +44,17 @@ Record actual arguments and the returned agent ID or blocker. Record overrides a
 
 ## Steps
 
-1. Activate the `exec-plans` skill, then read the plan, milestones, and tasks to understand the task graph.
+1. Activate the `exec-plans` skill and identify the next authorized action from the entry file. If the graph spans files, consult only the linked index sections needed to schedule affected tasks. Open implementation detail only for selected work and its explicit prerequisites. Apply the skill's size check at each checkpoint.
 
 2. (optional) Use an **exploration subagent** to conduct any exploration required by the tasks - relevant codebase files or external documentation. Brief it with the needed context, acceptance criteria, and known negative cases, using context pointers where those facts are already available. Ensure the exploration subagent can save files - it should save its markdown notes in a directory next to the plan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
-3. If current branch is `main` or `master`, create a new **integration branch**. Start the background **integration coordinator** and verify follow-up messaging as above. Instruct it to activate the `exec-plans` skill and reconcile its required plan sections before reporting a checkpoint complete.
+3. If current branch is `main` or `master`, create a new **integration branch**. Start the background **integration coordinator** and verify follow-up messaging as above. Instruct it to activate the `exec-plans` skill. For a split plan, include each worker's task file in its integration base revision before dispatch.
 
 4. Use **implementer subagents** to implement each task, each in its own worktree on its own branch. Each implementer subagent:
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - merges the integration branch tip into its own branch before reporting done
 
-5. When an implementer finishes, send the tested base and task revisions, checks performed and any interface change to the persistent integration coordinator. Have it merge the task into the integration branch and record the integration revision, verification results and unresolved dependencies in the existing plan checkpoint. A replacement coordinator can resume from that checkpoint.
+5. Each implementer records results, evidence and blockers in its assigned file when the plan is split. Send the tested base and task revisions, checks and interface changes to the coordinator for integration. For a single-file plan, the coordinator reconciles the required sections and records the integration revision, verification results and unresolved dependencies in the checkpoint. For a split plan, it reports that evidence to the parent, who reconciles the milestone and shared entry together at the checkpoint. A replacement coordinator resumes from the checkpoint and the links for its assignment.
 
 6. Recompute the **frontier** after each merge. Start ready tasks that unblock dependent work first. If completed branches are accumulating faster than integration or CI can verify them, slow new starts until verification catches up.
 

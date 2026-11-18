@@ -177,6 +177,19 @@
       ]
     },
     {
+      "id": 15,
+      "eval_name": "parallel-workers-in-split-plan",
+      "prompt": "Describe the reads and writes for resuming ExportPlan.md. Its index shows two ready tasks in M2, one requiring the decision at M1#encoding. M2 currently holds both task descriptions. An integration coordinator and two workers are available. Outline dispatch and the first integrated checkpoint, including file ownership. Do not execute the workflow.",
+      "expected_output": "Select ready work from the entry. Create separate task files before dispatch on the common base. Give each worker the entry, its assignment and its own prerequisite links. Workers update their task files, the coordinator reports integrated evidence and the parent reconciles the shared checkpoint.",
+      "files": [],
+      "assertions": [
+        "Parent can choose the next action from the entry without opening unrelated milestones.",
+        "Both workers start from a base containing separate task files and receive only relevant plan links.",
+        "The worker needing the encoding decision receives its direct prerequisite link.",
+        "Workers write local evidence, the coordinator reports integration proof and the parent updates shared state."
+      ]
+    },
+    {
       "id": 14,
       "eval_name": "model-choice-and-routing-authorization",
       "prompt": "Give a read-only dispatch decision using execplan-implement and subagent-model-router; do not dispatch, edit, or claim a route was run. Evaluate each case independently. (A) The user authorizes implementation, delegation, and the routing controls needed by the skill, but names no model and has no model preference; the router selects a model omitted from the descriptive list in tool help. The model field accepts strings, no enforced allowlist excludes it, and dispatch has yet to be attempted. (B) The user explicitly names an exact model; host policy permits it and live acceptance is confirmed. (C) The selected model is available, but the caller is forbidden from setting the required model control. (D) The caller may set the control, but the selected model is reported unavailable live. For each, say whether to ask the user for a model, what to do next, and how to name any blocker. State the effort rule for routine implementation versus material planning with an explicit user effort request.",

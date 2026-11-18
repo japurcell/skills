@@ -51,7 +51,19 @@ Dispatch research subagents to gather facts from external sources. Resolved by a
 
 Run multiple background subagents in parallel when investigating independent areas.
 
-## Collaborate on the architecture
+## Size and reading scope
+
+Start with one Markdown file. At creation and each implementation checkpoint, measure the entry and any new or changed files on routine reading paths (for example, `wc -c < "$plan_file"`). Split files exceeding **12 KiB (12,288 bytes)**. Apply this rule to an oversized existing plan at its first resumed checkpoint. Skip conversion if only recording completion remains.
+
+Keep the original entry path. For a split plan, create a sibling directory named after the file stem, for example `ExportPlan.md` and `ExportPlan/milestone-1.md`. Treat the entry and its linked milestone and task files as one self-contained ExecPlan.
+
+- **Entry file.** State the objective, governing constraints, next authorized action, owner and direct assignment link. If blocked, identify the blocker and who can clear it. Summarize milestone status, acceptance and dependencies. Keep the full open-task index here while it fits. When it grows too large, place task IDs, states, prerequisite edges and links in their owning milestones. Group larger indexes behind bounded, linked pages as needed. Keep the next action and decisions that govern it visible in the entry, with direct links to supporting detail.
+- **Milestone files.** Give each milestone one file for its contract, implementation steps, granular Progress and integration proof. Before dispatch, give independently assigned tasks their own linked files. Other tasks can stay under milestone headings until the milestone exceeds the budget.
+- **Task files.** Keep the assignment, instructions, acceptance criteria and current result together. Link directly to any prerequisite result or shared decision the worker needs, using a heading anchor where appropriate. Workers read the entry, their assignment and its explicit prerequisites. They update only their assigned plan file. The parent updates shared status, dependencies and the next action at checkpoints.
+
+Extract tasks from an oversized milestone. Move accumulated evidence or history out of an oversized task, retaining its current instructions, acceptance criteria and concise proof. If active instructions alone exceed the budget, split independently verifiable steps or link the specific contract sections they require. Archive completed summaries under the evidence preservation rules below. After restructuring, measure the resulting files and repeat until each routine file fits.
+
+Before removing original detail, verify that each open task, decision, acceptance criterion and unique piece of evidence has a retained home. After the moves and removals, resolve plan links from their referring files and check fragments against the final headings. Update references to moved targets. Verify that a fresh parent can identify the next action and owner from the entry alone and that a worker can execute and validate it using only the entry, assignment and cited prerequisites.
 
 ## Write a self-contained plan
 
@@ -96,7 +108,7 @@ When several tasks contribute to a milestone, name their shared invariants and t
 
 ## Required living sections
 
-Every ExecPlan keeps these sections current:
+Every ExecPlan keeps these sections current. In a split plan, keep shared state in the entry and local detail in its owning milestone or task file. Apply the outline across those files.
 
 - `Purpose / Big Picture` explains the user outcome and how to observe it.
 - `Progress` records completed work, current work, and the next action in a milestone-tagged checklist.
