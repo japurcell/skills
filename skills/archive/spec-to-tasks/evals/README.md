@@ -3,8 +3,8 @@
 Run the public CLI from the repository root:
 
 ```sh
-rtk proxy python3 skills/default/spec-to-tasks/evals/grade_benchmark.py <iteration-dir>
-rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/task-grader-pycache python3 -m unittest discover -s skills/default/spec-to-tasks/evals -p test_grade_benchmark.py
+rtk proxy python3 skills/archive/spec-to-tasks/evals/grade_benchmark.py <iteration-dir>
+rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/task-grader-pycache python3 -m unittest discover -s skills/archive/spec-to-tasks/evals -p test_grade_benchmark.py
 ```
 
 Use one `iteration-N/eval-*/eval_metadata.json` beside configuration directories,
@@ -66,4 +66,4 @@ validate every timing value or check whether a supplied duration was measured.
 
 ## Grader changes
 
-Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change.
+Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change.

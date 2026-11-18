@@ -8,7 +8,7 @@ ownership.
 Run the public CLI suite from the repository root:
 
 ```sh
-python3 skills/default/ablate-ai-layer/scripts/test_ablation.py
+python3 skills/archive/ablate-ai-layer/scripts/test_ablation.py
 ```
 
 Tests use disposable Git repositories and local fake runners, with no agent API

@@ -3750,21 +3750,21 @@
       "id": "A065",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/references/task-schema.md#Updating existing tasks",
+        "destination": "skills/archive/spec-to-tasks/references/task-schema.md#Updating existing tasks",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/references/task-schema.md",
+              "path": "skills/archive/spec-to-tasks/references/task-schema.md",
               "line": 110,
               "excerpt": "Read the existing definitions and completion evidence before changing the manifest. Preserve stable IDs, notes and historical evidence. Reconcile completion against the current contract in prerequisite order:"
             },
             {
-              "path": "skills/default/spec-to-tasks/references/task-schema.md",
+              "path": "skills/archive/spec-to-tasks/references/task-schema.md",
               "line": 113,
               "excerpt": "2. Retain `passes: true` only when that evidence still covers the current contract. A wording correction or reference relocation that leaves the verified meaning unchanged does not reopen the task."
             },
             {
-              "path": "skills/default/spec-to-tasks/references/task-schema.md",
+              "path": "skills/archive/spec-to-tasks/references/task-schema.md",
               "line": 115,
               "excerpt": "4. Reassess downstream tasks transitively. Reopen a passed dependent when its proof relies on a changed or now-unverified guarantee; preserve completion where the consumed guarantees and proof remain valid. Unrelated tasks retain their recorded state."
             }
@@ -3793,23 +3793,23 @@
       "id": "A066",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 54,
               "excerpt": "The public CLI tests use synthetic command records, including a hypothetical"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 56,
               "excerpt": "not command provenance, available tooling or product execution."
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -3836,21 +3836,21 @@
       "id": "A067",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/SKILL.md#Workflow",
+        "destination": "skills/archive/spec-to-tasks/SKILL.md#Workflow",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 42,
               "excerpt": "8. Build an explicit dependency graph. Each `dependsOn` edge must name an outcome or artifact the dependent task needs, or enforce mandatory source order. Reading an existing task definition does not require that task's implementation to pass. A dependent task is eligible only after every listed prerequisite passes. Keep recommended order in priority only. Priority is an ordering hint, not authorization to bypass prerequisites. Reject unknown IDs, self-edges, duplicate edges, and cycles. No dependency edge does not prove that tasks can safely run concurrently."
             },
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 43,
               "excerpt": "9. Use implementation tasks for end-to-end behavior. Add `integration` tasks or checks when separate tasks must compose to preserve shared invariants. Make the integration proof explicit, link it to the current source contract, and depend on the contributing work. Passing component tasks alone does not pass the integrated behavior."
             },
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 45,
               "excerpt": "11. Define verification before saving. Include at least one required check that directly establishes the task outcome, an explicit typecheck classification for every task, and each other relevant check. Use known repository commands and observable expected results. If a required check is manual, give a concrete procedure and expected evidence. If verification is unresolved because of a host or access blocker, retain any known command; use `command: null` only when no command is known. An unresolved check cannot count as passed and the manifest is not ready. Do not invent commands or reclassify a failing applicable check as inapplicable."
             }
@@ -3879,21 +3879,21 @@
       "id": "A068",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/SKILL.md",
+        "destination": "skills/archive/spec-to-tasks/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 8,
               "excerpt": "Turn a spec into a `tasks.json` manifest with explicit prerequisites, source coverage, worker context, task type, and applicable verification. Keep each assignment small enough to understand while preserving its full behavior and acceptance contract."
             },
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 46,
               "excerpt": "12. Apply [validation.md](references/validation.md), then save `tasks.json`. Complete coverage and manifest reviews whose inputs already exist during authoring; create later review tasks only when their evidence depends on future work. Do not claim readiness if context is missing, the graph is invalid, or a required check remains unresolved."
             },
             {
-              "path": "skills/default/spec-to-tasks/SKILL.md",
+              "path": "skills/archive/spec-to-tasks/SKILL.md",
               "line": 58,
               "excerpt": "After saving, report the task count, output path, and readiness. Say `ready` only when references resolve, each task has the context it needs, the dependency graph is valid, and no required verification remains unresolved. If a required check is unresolved, report `needs follow-up` and identify it. If missing source or context or an invalid graph prevents a valid manifest, do not save it; state that it was not saved and what must be resolved."
             }
@@ -3922,21 +3922,21 @@
       "id": "A069",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/prd-ralph/references/intake.md",
+        "destination": "skills/archive/prd-ralph/references/intake.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 8,
               "excerpt": "- Apply the producer's complete contract to every task, including completed tasks. Reject missing required fields, invalid reference/check shapes, invalid task types, and missing required outcome or explicit typecheck classification, even when every pass flag is true. Preserve existing IDs, pass flags, notes, and completion evidence; report invalid input without rewriting it."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 10,
               "excerpt": "- Before trusting a completed task, confirm its recorded evidence covers the current contract under [Updating existing tasks](../../spec-to-tasks/references/task-schema.md#updating-existing-tasks). Read task notes, existing progress evidence and relevant artifacts as needed. Resolve the supplied `progress_file` or default `<dirname(prd_file)>/progress.txt` before the completion shortcut; an absent progress file blocks only when needed evidence is unavailable elsewhere. If a retained pass lacks coverage, block before selection or all-complete detection and name the tasks needing reconciliation. Preserve the input flags and historical evidence; intake does not rewrite task history or treat new acceptance as already verified."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 20,
               "excerpt": "Caller-supplied `commit: false` permits a verification or decision task to pass with real recorded evidence and no fabricated repository changes, subject to the normal zero-session-commit audit. Default `commit: true` still requires one real scoped commit. If no committable task changes exist, block; do not create an empty commit or silently disable commit. Durable evidence documents are valid only when actually required by the task."
             }
@@ -3965,21 +3965,21 @@
       "id": "A070",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/prd-ralph/references/intake.md#Validate before execution",
+        "destination": "skills/archive/prd-ralph/references/intake.md#Validate before execution",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 8,
               "excerpt": "- Apply the producer's complete contract to every task, including completed tasks. Reject missing required fields, invalid reference/check shapes, invalid task types, and missing required outcome or explicit typecheck classification, even when every pass flag is true. Preserve existing IDs, pass flags, notes, and completion evidence; report invalid input without rewriting it."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 9,
               "excerpt": "- Validate all reference paths and check working directories as repository-relative, resolve them against the repository root, and reject escaping paths. Load each referenced section and confirm mapped requirements exist. For inline references, consume supplied content with both path and section null. Missing critical source/context or contradictory requirements blocks before execution."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 10,
               "excerpt": "- Before trusting a completed task, confirm its recorded evidence covers the current contract under [Updating existing tasks](../../spec-to-tasks/references/task-schema.md#updating-existing-tasks). Read task notes, existing progress evidence and relevant artifacts as needed. Resolve the supplied `progress_file` or default `<dirname(prd_file)>/progress.txt` before the completion shortcut; an absent progress file blocks only when needed evidence is unavailable elsewhere. If a retained pass lacks coverage, block before selection or all-complete detection and name the tasks needing reconciliation. Preserve the input flags and historical evidence; intake does not rewrite task history or treat new acceptance as already verified."
             }
@@ -4008,21 +4008,21 @@
       "id": "A071",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/prd-ralph/references/intake.md",
+        "destination": "skills/archive/prd-ralph/references/intake.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 8,
               "excerpt": "- Apply the producer's complete contract to every task, including completed tasks. Reject missing required fields, invalid reference/check shapes, invalid task types, and missing required outcome or explicit typecheck classification, even when every pass flag is true. Preserve existing IDs, pass flags, notes, and completion evidence; report invalid input without rewriting it."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 10,
               "excerpt": "- Before trusting a completed task, confirm its recorded evidence covers the current contract under [Updating existing tasks](../../spec-to-tasks/references/task-schema.md#updating-existing-tasks). Read task notes, existing progress evidence and relevant artifacts as needed. Resolve the supplied `progress_file` or default `<dirname(prd_file)>/progress.txt` before the completion shortcut; an absent progress file blocks only when needed evidence is unavailable elsewhere. If a retained pass lacks coverage, block before selection or all-complete detection and name the tasks needing reconciliation. Preserve the input flags and historical evidence; intake does not rewrite task history or treat new acceptance as already verified."
             },
             {
-              "path": "skills/default/prd-ralph/references/intake.md",
+              "path": "skills/archive/prd-ralph/references/intake.md",
               "line": 14,
               "excerpt": "Pass flags determine graph eligibility. Before dependent execution, inspect available notes, progress evidence, relevant durable artifacts and current state for the guarantees the selected task actually needs. A passed prerequisite's prose may contain a required decision, integration invariant, or owner condition; carry that constraint into execution. Missing critical evidence or an unmet current guarantee blocks. Report discrepancies without resetting earlier progress or inventing completion evidence."
             }
@@ -4051,21 +4051,21 @@
       "id": "A072",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/prd-ralph-loop/SKILL.md",
+        "destination": "skills/archive/prd-ralph-loop/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/SKILL.md",
+              "path": "skills/archive/prd-ralph-loop/SKILL.md",
               "line": 11,
               "excerpt": "Dispatch fresh workers until the validated manifest is complete or work is blocked. Workers own intake, selection, execution, verification, progress, and commit audits."
             },
             {
-              "path": "skills/default/prd-ralph-loop/SKILL.md",
+              "path": "skills/archive/prd-ralph-loop/SKILL.md",
               "line": 19,
               "excerpt": "- `prd_file`: required path to the task manifest; if absent, ask and stop."
             },
             {
-              "path": "skills/default/prd-ralph-loop/SKILL.md",
+              "path": "skills/archive/prd-ralph-loop/SKILL.md",
               "line": 44,
               "excerpt": "Stay blind: do not read `prd_file` or any progress file during orchestration, even to select a task or infer completion. Do not activate the `prd-ralph` skill yourself or implement product changes. Workers validate the manifest before interpreting all-complete flags."
             }
@@ -4094,21 +4094,21 @@
       "id": "A073",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 3,
               "excerpt": "description: \"Use only when the user explicitly invokes dotnet-upgrade to research, plan, execute, or verify a .NET version upgrade.\""
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 25,
               "excerpt": "3. **Plan and obtain approval.** Respect the target's existing plan format/location; otherwise use `docs/dotnet-upgrade/<route>/`, initially `net8-to-net10`. The [standalone plan template](assets/templates/execplan.md) includes concrete scope, dependency strategy, stages, commands, checks, rollback and owner boundaries. Before migration edits, require approval of that concrete plan and refreshed necessary evidence. If either is missing, report the missing gate and stop at permitted advice/research/planning. Material scope, dependency strategy, staging, risk or owner changes require revised evidence and renewed approval."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 28,
               "excerpt": "6. **Capture lessons without shared mutation.** Use [candidate lessons](assets/templates/candidate-lessons.md) in the target project. Record applicability, evidence limits and proposed source destination. Obtain explicit approval before updating authoritative skill source; never silently modify installed copies or the personal skills repository."
             }
@@ -4137,21 +4137,21 @@
       "id": "A074",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md#Select the scope and load only what is needed",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md#Select the scope and load only what is needed",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 13,
               "excerpt": "Identify the requested phase: discovery, research, planning, approved execution, or verification. Read the target's agent instructions and engineering rules before acting. A read-only advice request authorizes a response, not file creation. Invocation or an initial upgrade request alone does not approve migration."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 15,
               "excerpt": "Read [the general playbook](references/playbook.md) for the selected phase. For .NET 8-to-10, read [the route index](references/routes/net8-to-net10/index.md), then only categories relevant to actual target usage. Assess both .NET 9 and 10 changes even when choosing a direct upgrade. For other routes, stay in discovery/research until route-specific guidance has been researched and reviewed; do not substitute this route."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 19,
               "excerpt": "Use compatible `dotnet` and `official-sources` skills when available. Their absence does not block this bundled procedure or its templates. Do not automatically invoke `code-modernization`. Client discovery and invocation caveats belong in [client usage](references/client-usage.md); load it only for client or optional installation questions. No root README or `evals/` file is required at runtime."
             }
@@ -4180,21 +4180,21 @@
       "id": "A075",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 15,
               "excerpt": "Read [the general playbook](references/playbook.md) for the selected phase. For .NET 8-to-10, read [the route index](references/routes/net8-to-net10/index.md), then only categories relevant to actual target usage. Assess both .NET 9 and 10 changes even when choosing a direct upgrade. For other routes, stay in discovery/research until route-specific guidance has been researched and reviewed; do not substitute this route."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 24,
               "excerpt": "2. **Research and decide.** Refresh necessary primary sources for the target versions, support policy, crossed-version breaking changes, migration guides and package constraints. Record exact URLs, retrieval dates, relevant version and target usage in the [compatibility matrix](assets/templates/compatibility-matrix.md). Keep authoritative evidence separate from inference and observed results. Choose stages deliberately; an intermediate local checkpoint need not be a production deployment. Offline work may produce marked drafts with dated sources and unknowns, not execution authority."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 32,
               "excerpt": "State the requested phase, route, evidence freshness, concrete-plan approval status, observed results, unresolved gates and owners. Label offline drafts and unverified claims. Historical versions and security decisions are not defaults. Local completion is not deployment completion, document review is not runtime testing, and invocation metadata is not universal client enforcement."
             }
@@ -4223,21 +4223,21 @@
       "id": "A076",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 11,
-              "excerpt": "    rtk proxy python3 -m json.tool skills/default/dotnet-upgrade/references/provenance/source-map.json"
+              "excerpt": "    rtk proxy python3 -m json.tool skills/archive/dotnet-upgrade/references/provenance/source-map.json"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -4266,21 +4266,21 @@
       "id": "A077",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 24,
               "excerpt": "2. **Research and decide.** Refresh necessary primary sources for the target versions, support policy, crossed-version breaking changes, migration guides and package constraints. Record exact URLs, retrieval dates, relevant version and target usage in the [compatibility matrix](assets/templates/compatibility-matrix.md). Keep authoritative evidence separate from inference and observed results. Choose stages deliberately; an intermediate local checkpoint need not be a production deployment. Offline work may produce marked drafts with dated sources and unknowns, not execution authority."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 25,
               "excerpt": "3. **Plan and obtain approval.** Respect the target's existing plan format/location; otherwise use `docs/dotnet-upgrade/<route>/`, initially `net8-to-net10`. The [standalone plan template](assets/templates/execplan.md) includes concrete scope, dependency strategy, stages, commands, checks, rollback and owner boundaries. Before migration edits, require approval of that concrete plan and refreshed necessary evidence. If either is missing, report the missing gate and stop at permitted advice/research/planning. Material scope, dependency strategy, staging, risk or owner changes require revised evidence and renewed approval."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 27,
               "excerpt": "5. **Verify and report.** Use [stage evidence](assets/templates/stage-evidence.md) to record each revision's selected SDK/packages, dated commands/environment, actual results, failures and deferred owners. Keep earlier evidence tied to its revision; repeat affected checks after later changes. Report local readiness and deployment readiness separately. Deferral never turns a gate green. Recovery follows the approved plan, not an assumed safe database downgrade."
             }
@@ -4309,21 +4309,21 @@
       "id": "A078",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 25,
               "excerpt": "3. **Plan and obtain approval.** Respect the target's existing plan format/location; otherwise use `docs/dotnet-upgrade/<route>/`, initially `net8-to-net10`. The [standalone plan template](assets/templates/execplan.md) includes concrete scope, dependency strategy, stages, commands, checks, rollback and owner boundaries. Before migration edits, require approval of that concrete plan and refreshed necessary evidence. If either is missing, report the missing gate and stop at permitted advice/research/planning. Material scope, dependency strategy, staging, risk or owner changes require revised evidence and renewed approval."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 32,
               "excerpt": "State the requested phase, route, evidence freshness, concrete-plan approval status, observed results, unresolved gates and owners. Label offline drafts and unverified claims. Historical versions and security decisions are not defaults. Local completion is not deployment completion, document review is not runtime testing, and invocation metadata is not universal client enforcement."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 36,
               "excerpt": "For changes to this bundle's documents, provenance or paper scenarios, first read [authoring validation](references/authoring-validation.md); its document-only acceptance scope overrides generic skill checks. The [historical document review](references/document-review.md) records evidence and limits, not runtime certification."
             }
@@ -4352,16 +4352,16 @@
       "id": "A079",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 17,
               "excerpt": "## Separate authorization"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 19,
               "excerpt": "Document authoring does not authorize bundle installation, account-wide installers, trial migrations, live evaluations or changes to shared knowledge. Obtain separate authorization for those actions. Invocation alone does not approve migration: concrete-plan approval and refreshed necessary evidence remain required, with renewed approval for material scope or strategy changes."
             }
@@ -4390,16 +4390,16 @@
       "id": "A080",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 17,
               "excerpt": "## Separate authorization"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 19,
               "excerpt": "Document authoring does not authorize bundle installation, account-wide installers, trial migrations, live evaluations or changes to shared knowledge. Obtain separate authorization for those actions. Invocation alone does not approve migration: concrete-plan approval and refreshed necessary evidence remain required, with renewed approval for material scope or strategy changes."
             }
@@ -4428,16 +4428,16 @@
       "id": "A081",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 17,
               "excerpt": "## Separate authorization"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 19,
               "excerpt": "Document authoring does not authorize bundle installation, account-wide installers, trial migrations, live evaluations or changes to shared knowledge. Obtain separate authorization for those actions. Invocation alone does not approve migration: concrete-plan approval and refreshed necessary evidence remain required, with renewed approval for material scope or strategy changes."
             }
@@ -4466,16 +4466,16 @@
       "id": "A082",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Separate authorization",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 17,
               "excerpt": "## Separate authorization"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 19,
               "excerpt": "Document authoring does not authorize bundle installation, account-wide installers, trial migrations, live evaluations or changes to shared knowledge. Obtain separate authorization for those actions. Invocation alone does not approve migration: concrete-plan approval and refreshed necessary evidence remain required, with renewed approval for material scope or strategy changes."
             }
@@ -4504,21 +4504,21 @@
       "id": "A083",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 24,
               "excerpt": "2. **Research and decide.** Refresh necessary primary sources for the target versions, support policy, crossed-version breaking changes, migration guides and package constraints. Record exact URLs, retrieval dates, relevant version and target usage in the [compatibility matrix](assets/templates/compatibility-matrix.md). Keep authoritative evidence separate from inference and observed results. Choose stages deliberately; an intermediate local checkpoint need not be a production deployment. Offline work may produce marked drafts with dated sources and unknowns, not execution authority."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 26,
               "excerpt": "4. **Execute within the approved boundary.** Follow real target commands and engineering rules in staged, reviewable changes. Preserve observable business behavior, public contracts and data semantics. Test affected behavior using existing tools; compilation alone does not prove startup, authentication, provider persistence, executed database migration, timezone behavior, published assets or deployment. Use isolated disposable resources, bounded readiness and owned-process cleanup. Never suppress errors, weaken failing tests, infer success from fallbacks, or copy accepted security exceptions without target-owner decisions."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 28,
               "excerpt": "6. **Capture lessons without shared mutation.** Use [candidate lessons](assets/templates/candidate-lessons.md) in the target project. Record applicability, evidence limits and proposed source destination. Obtain explicit approval before updating authoritative skill source; never silently modify installed copies or the personal skills repository."
             }
@@ -4547,21 +4547,21 @@
       "id": "A084",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/document-review.md",
+        "destination": "skills/archive/dotnet-upgrade/references/document-review.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 25,
               "excerpt": "All six entries in `evals/evals.json` were reviewed as paper authoring scenarios only. They state the intended boundaries: no migration edits without approval and fresh necessary evidence; unsupported routes remain research; absent companion skills or the original checkout do not break bundled guidance; deployment deferral is not verification; candidate lessons do not silently mutate shared guidance; and routine C# work does not automatically start the upgrade workflow. No model, eval runner or benchmark was invoked, so these are not runtime results."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 27,
               "excerpt": "The `dotnet-upgrade` entry retains `disable-model-invocation: true`. Its `agents/openai.yaml` sidecar exactly matches the `guidance-review` sidecar, `policy.allow_implicit_invocation: false`; the comparable frontmatter field is also present in `guidance-review`. This is a metadata comparison only. The Codex sidecar behavior is documented by its cited source; equivalent recognition and enforcement in Copilot CLI and Gemini CLI remain unverified. The workflow does not automatically invoke `code-modernization`."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 56,
               "excerpt": "It returned 45 paths. These checks verify document/data structure and navigation, not migration behavior."
             }
@@ -4590,21 +4590,21 @@
       "id": "A085",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/SKILL.md",
+        "destination": "skills/archive/dotnet-upgrade/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 26,
               "excerpt": "4. **Execute within the approved boundary.** Follow real target commands and engineering rules in staged, reviewable changes. Preserve observable business behavior, public contracts and data semantics. Test affected behavior using existing tools; compilation alone does not prove startup, authentication, provider persistence, executed database migration, timezone behavior, published assets or deployment. Use isolated disposable resources, bounded readiness and owned-process cleanup. Never suppress errors, weaken failing tests, infer success from fallbacks, or copy accepted security exceptions without target-owner decisions."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 27,
               "excerpt": "5. **Verify and report.** Use [stage evidence](assets/templates/stage-evidence.md) to record each revision's selected SDK/packages, dated commands/environment, actual results, failures and deferred owners. Keep earlier evidence tied to its revision; repeat affected checks after later changes. Report local readiness and deployment readiness separately. Deferral never turns a gate green. Recovery follows the approved plan, not an assumed safe database downgrade."
             },
             {
-              "path": "skills/default/dotnet-upgrade/SKILL.md",
+              "path": "skills/archive/dotnet-upgrade/SKILL.md",
               "line": 32,
               "excerpt": "State the requested phase, route, evidence freshness, concrete-plan approval status, observed results, unresolved gates and owners. Label offline drafts and unverified claims. Historical versions and security decisions are not defaults. Local completion is not deployment completion, document review is not runtime testing, and invocation metadata is not universal client enforcement."
             }
@@ -4633,21 +4633,21 @@
       "id": "A086",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/document-review.md",
+        "destination": "skills/archive/dotnet-upgrade/references/document-review.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 1,
               "excerpt": "# .NET Upgrade Bundle Document Review"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 60,
               "excerpt": "No `.NET` command, application migration, trial project, package/archive operation, installation, live model, benchmark, database, image, external service or client invocation was run. No cross-project migration was attempted. `quick_validate.py` was not run or changed; the requested frontmatter property remains an intentional known incompatibility, not a passing validator result. This review does not refresh upstream vendor evidence or certify client enforcement. Copilot/Gemini versions and their treatment of the metadata remain unverified; external deployment owners' gates remain unverified as documented in the case study."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 62,
               "excerpt": "The bundle is accepted for documented coverage and workflow consistency only. That acceptance is not evidence that a different project will migrate successfully or that all three clients enforce explicit-only invocation."
             }
@@ -5015,21 +5015,21 @@
       "id": "A095",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": ".agents/skills/exec-plans/evals/authoring-scenarios.md#Deterministic suite maintenance",
+        "destination": "skills/default/exec-plans/evals/authoring-scenarios.md#Deterministic suite maintenance",
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 46,
               "excerpt": "## Deterministic suite maintenance"
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 52,
               "excerpt": "The three deterministic scenarios cover novice creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Keep their own fixtures, assertions, grader and public CLI tests independently usable. Use canonical iteration directories with one eval metadata file beside configuration runs. Exit 0 means grades were written, including failed assertions; inspect `expectations` and `summary.failed`. Invalid invocation or input errors exit nonzero."
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 54,
               "excerpt": "Retain valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions and contradictory proof. Review conditional, comma-separated, coordinated and contrasting claims for independent factual assertions; wording checks remain scenario heuristics. Review the qualitative cases above manually for feasibility, both-path validation, prerequisites, shared invariants, integrated proof, owner boundaries and exact commands. Keep instruction coverage separate from sampled agent-performance claims."
             }
@@ -5144,21 +5144,21 @@
       "id": "A098",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+        "destination": "skills/default/exec-plans/evals/authoring-scenarios.md",
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 5,
               "excerpt": "## Prototype and migration planning"
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 26,
               "excerpt": "Use the same create-plan project and prototype/migration brief. Add this instruction to the authoring prompt for both baseline and revised runs:"
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 54,
               "excerpt": "Retain valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions and contradictory proof. Review conditional, comma-separated, coordinated and contrasting claims for independent factual assertions; wording checks remain scenario heuristics. Review the qualitative cases above manually for feasibility, both-path validation, prerequisites, shared invariants, integrated proof, owner boundaries and exact commands. Keep instruction coverage separate from sampled agent-performance claims."
             }
@@ -5187,21 +5187,21 @@
       "id": "A099",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+        "destination": "skills/default/exec-plans/evals/authoring-scenarios.md",
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 40,
               "excerpt": "4. It names the shared invariant, combined list/stream proof, and responsible integration task or milestone check. Passing individual worker tests or a clean merge cannot close acceptance."
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 44,
               "excerpt": "Run a separate fresh-worker reading with only the generated plan and selected task. Request its first authorized action, prerequisites, exact first check, completion condition, and stopping boundary without product edits. Record every additional document it needs. Missing critical context fails this review even if every required heading is present."
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 54,
               "excerpt": "Retain valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions and contradictory proof. Review conditional, comma-separated, coordinated and contrasting claims for independent factual assertions; wording checks remain scenario heuristics. Review the qualitative cases above manually for feasibility, both-path validation, prerequisites, shared invariants, integrated proof, owner boundaries and exact commands. Keep instruction coverage separate from sampled agent-performance claims."
             }
@@ -5311,21 +5311,21 @@
       "id": "A102",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": ".agents/skills/exec-plans/evals/authoring-scenarios.md#Deterministic suite maintenance",
+        "destination": "skills/default/exec-plans/evals/authoring-scenarios.md#Deterministic suite maintenance",
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 48,
               "excerpt": "Run from the repository root after grader changes:"
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 50,
-              "excerpt": "    rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/execplan-grader-pycache python3 -m unittest discover -s .agents/skills/exec-plans/evals -p test_grade_benchmark.py"
+              "excerpt": "    rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/execplan-grader-pycache python3 -m unittest discover -s skills/default/exec-plans/evals -p test_grade_benchmark.py"
             },
             {
-              "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+              "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
               "line": 52,
               "excerpt": "The three deterministic scenarios cover novice creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Keep their own fixtures, assertions, grader and public CLI tests independently usable. Use canonical iteration directories with one eval metadata file beside configuration runs. Exit 0 means grades were written, including failed assertions; inspect `expectations` and `summary.failed`. Invalid invocation or input errors exit nonzero."
             }
@@ -5612,18 +5612,18 @@
       "id": "A109",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Grader changes",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Grader changes",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5650,21 +5650,21 @@
       "id": "A110",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -5693,18 +5693,18 @@
       "id": "A111",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Grader changes",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Grader changes",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5731,18 +5731,18 @@
       "id": "A112",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Grader changes",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Grader changes",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5769,18 +5769,18 @@
       "id": "A113",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Grader changes",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Grader changes",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5807,18 +5807,18 @@
       "id": "A114",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Grader changes",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Grader changes",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5845,23 +5845,23 @@
       "id": "A115",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 64,
               "excerpt": "object timing retains its supplied total_duration_seconds. The grader does not"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5888,23 +5888,23 @@
       "id": "A116",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 29,
               "excerpt": "File references resolve from the repository containing this grader, not from the"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 67,
               "excerpt": "## Grader changes"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5931,23 +5931,23 @@
       "id": "A117",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 62,
               "excerpt": "missing runtime metrics are unavailable, not measured zero."
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 65,
               "excerpt": "validate every timing value or check whether a supplied duration was measured."
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -5974,23 +5974,23 @@
       "id": "A118",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 54,
               "excerpt": "The public CLI tests use synthetic command records, including a hypothetical"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 56,
               "excerpt": "not command provenance, available tooling or product execution."
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -6017,21 +6017,21 @@
       "id": "A119",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -6060,21 +6060,21 @@
       "id": "A120",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -6103,21 +6103,21 @@
       "id": "A121",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -6146,21 +6146,21 @@
       "id": "A122",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -6189,21 +6189,21 @@
       "id": "A123",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
+        "destination": "skills/archive/prd-ralph-loop/evals/README.md#Ralph loop evaluation maintenance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 1,
               "excerpt": "# Ralph loop evaluation maintenance"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 3,
               "excerpt": "Load when changing orchestration guidance or its grader. Run from the repository root after relevant changes:"
             },
             {
-              "path": "skills/default/prd-ralph-loop/evals/README.md",
+              "path": "skills/archive/prd-ralph-loop/evals/README.md",
               "line": 7,
               "excerpt": "Score simulated outputs against frozen expectations; never read the current skill as the grading oracle. Verify exact completion, blind continuation, retained selected-task identity and prerequisite/commit evidence, blocked stops, forwarded constraints, consistent decision fields, malformed decisions and unavailable metrics. Inspect failed expectations even when the CLI exits 0. Synthetic outputs establish grading behavior, not product execution."
             }
@@ -6232,23 +6232,23 @@
       "id": "A124",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/spec-to-tasks/evals/README.md#Task manifest evaluations",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md#Task manifest evaluations",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 22,
               "excerpt": "[Completion reconciliation scenarios](update-scenarios.md) cover unchanged"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 61,
               "excerpt": "documentation verification. Review artifact quality before comparing efficiency;"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 69,
-              "excerpt": "Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
+              "excerpt": "Run `rtk proxy python3 skills/archive/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change."
             }
           ]
         },
@@ -6383,21 +6383,21 @@
       "id": "A128",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/spec-to-tasks/evals/README.md",
+        "destination": "skills/archive/spec-to-tasks/evals/README.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 38,
               "excerpt": "and lifecycle current authority plus an integration assignment. Backend scope"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 50,
               "excerpt": "prerequisites, required context, boundary justification, decision authority,"
             },
             {
-              "path": "skills/default/spec-to-tasks/evals/README.md",
+              "path": "skills/archive/spec-to-tasks/evals/README.md",
               "line": 60,
               "excerpt": "refusal, current authority, integration, unavailable tooling, and honest"
             }
@@ -6426,21 +6426,21 @@
       "id": "A129",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 12,
-              "excerpt": "    rtk proxy python3 -m json.tool skills/default/dotnet-upgrade/evals/evals.json"
+              "excerpt": "    rtk proxy python3 -m json.tool skills/archive/dotnet-upgrade/evals/evals.json"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6469,21 +6469,21 @@
       "id": "A130",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6512,23 +6512,23 @@
       "id": "A131",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 11,
-              "excerpt": "    rtk proxy python3 -m json.tool skills/default/dotnet-upgrade/references/provenance/source-map.json"
+              "excerpt": "    rtk proxy python3 -m json.tool skills/archive/dotnet-upgrade/references/provenance/source-map.json"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 12,
-              "excerpt": "    rtk proxy python3 -m json.tool skills/default/dotnet-upgrade/evals/evals.json"
+              "excerpt": "    rtk proxy python3 -m json.tool skills/archive/dotnet-upgrade/evals/evals.json"
             }
           ]
         },
@@ -6599,21 +6599,21 @@
       "id": "A133",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6642,21 +6642,21 @@
       "id": "A134",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6685,21 +6685,21 @@
       "id": "A135",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6728,21 +6728,21 @@
       "id": "A136",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6771,21 +6771,21 @@
       "id": "A137",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6814,21 +6814,21 @@
       "id": "A138",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6857,21 +6857,21 @@
       "id": "A139",
       "final_disposition": {
         "verdict": "preserved-after-restoration",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 13,
-              "excerpt": "    rtk git diff --check -- skills/default/dotnet-upgrade/"
+              "excerpt": "    rtk git diff --check -- skills/archive/dotnet-upgrade/"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -6944,21 +6944,21 @@
       "id": "A141",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
+        "destination": "skills/archive/dotnet-upgrade/references/authoring-validation.md#Document-only acceptance",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 5,
               "excerpt": "## Document-only acceptance"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 7,
               "excerpt": "Keep general procedure distinct from dated route research and historical project decisions. Reconcile substantive reference changes with `references/provenance/source-map.json`. Review ledger destinations, bundled navigation, evidence scope, exact invocation controls and all six paper scenarios. Use [the retained document review](document-review.md) as historical acceptance evidence, not runtime or client-enforcement proof."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+              "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
               "line": 15,
               "excerpt": "Do not run `quick_validate.py`, archive packaging, live models, benchmarks, trial upgrades, application commands or installers as document-review acceptance gates. A retained historical frontmatter incompatibility is not a passing validator result. JSON parsing and whitespace checks do not prove cross-project execution, refreshed vendor evidence or live client enforcement."
             }
@@ -7203,21 +7203,21 @@
       "id": "A147",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": "skills/default/dotnet-upgrade/references/document-review.md",
+        "destination": "skills/archive/dotnet-upgrade/references/document-review.md",
         "evidence": {
           "current": [
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 1,
               "excerpt": "# .NET Upgrade Bundle Document Review"
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 56,
               "excerpt": "It returned 45 paths. These checks verify document/data structure and navigation, not migration behavior."
             },
             {
-              "path": "skills/default/dotnet-upgrade/references/document-review.md",
+              "path": "skills/archive/dotnet-upgrade/references/document-review.md",
               "line": 60,
               "excerpt": "No `.NET` command, application migration, trial project, package/archive operation, installation, live model, benchmark, database, image, external service or client invocation was run. No cross-project migration was attempted. `quick_validate.py` was not run or changed; the requested frontmatter property remains an intentional known incompatibility, not a passing validator result. This review does not refresh upstream vendor evidence or certify client enforcement. Copilot/Gemini versions and their treatment of the metadata remain unverified; external deployment owners' gates remain unverified as documented in the case study."
             }
@@ -11411,21 +11411,21 @@
       "id": "A246",
       "final_disposition": {
         "verdict": "preserved",
-        "destination": ".agents/skills/exec-plans/SKILL.md",
+        "destination": "skills/default/exec-plans/SKILL.md",
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 99,
               "excerpt": "Use this annotated outline and adapt detail to the work. The file-reporting example shows how a milestone, tasks, and Progress entries relate. Its paths and commands describe a hypothetical Python CLI; replace them and the instructional placeholders with verified project facts."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 145,
               "excerpt": "    completion. State remaining work and useful lessons. Distinguish"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 202,
               "excerpt": "    #### Milestone integration check"
             }
@@ -14952,17 +14952,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 6,
               "excerpt": "# Execution Plans (ExecPlans)"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 12,
               "excerpt": "Load this skill before inspecting or editing an existing ExecPlan. If work needs a plan, create the file at the requested location before the first code edit. When no location is specified, use the project's established plan location; if none exists, create `brain/<feature-slug>/ExecPlan.md`. Verify that the file exists before changing implementation code. Saying that you will write a plan later does not satisfy this gate."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 69,
               "excerpt": "During a migration, keep old and new implementations alongside one another when that reduces risk or preserves working tests. Specify how to validate both paths on the same relevant inputs, what differences are acceptable, and what evidence permits switching the default. Describe how to retire the old path safely with tests and a recovery strategy. Prefer additive changes followed by removal only after the replacement has met its acceptance criteria."
             }
@@ -14996,17 +14996,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 253,
               "excerpt": "    ## Artifacts and Notes"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 256,
               "excerpt": "    acceptance. Link larger evidence artifacts with an explanation of what"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 260,
               "excerpt": "Keep the required living sections present throughout the work. Add `Artifacts and Notes` only when transcripts, outputs, or other evidence materially help the next contributor."
             }
@@ -15040,17 +15040,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 69,
               "excerpt": "During a migration, keep old and new implementations alongside one another when that reduces risk or preserves working tests. Specify how to validate both paths on the same relevant inputs, what differences are acceptable, and what evidence permits switching the default. Describe how to retire the old path safely with tests and a recovery strategy. Prefer additive changes followed by removal only after the replacement has met its acceptance criteria."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 215,
               "excerpt": "    explain both-path validation and the gate for switching or retiring a path."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 232,
               "excerpt": "    ## Idempotence and Recovery"
             }
@@ -15084,17 +15084,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 31,
               "excerpt": "A milestone is a delivery and acceptance outcome, not automatically one task. A **task** is an independently assignable unit of work with explicit prerequisites, required inputs and current design context, an outcome, verification, and a stopping boundary. Before dispatch, assess its behavioral scope, unresolved decisions, coupled state, and verification burden. Keep each task bounded by splitting independently deliverable behaviors into separate tasks. Preserve necessary negative cases and indivisible correctness rules. A difficult but inseparable task needs clear reasoning risks and entry points, not reduced acceptance. Resolve a design uncertainty through a bounded decision or feasibility task before dependent implementation."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 220,
               "excerpt": "    State exact commands and working directories, followed by short expected"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 234,
               "excerpt": "    State which steps can be repeated safely. Give retry, cleanup, backup,"
             }
@@ -15128,17 +15128,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 75,
               "excerpt": "Replace outdated statements wherever they appear in active sections. A correction only in a new note is insufficient. Update the sections affected by the change, including milestone states and Progress, Concrete Steps, Validation and Acceptance, Decision Log, Outcomes, and the next action. When scope or approach changes, also update the purpose, acceptance, dependencies, and remaining milestones as needed."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 83,
               "excerpt": "The active plan is the single place to learn current requirements, decisions, status, safety limits, and next steps. Keep pending recovery instructions, security and authorization boundaries, owner actions, and external validation inline in active sections whenever they constrain the work. State who must act, what approval is required, what has or has not happened, and the condition for recovery. Never rely on an old transcript or a separate history file to establish current permission or status."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 260,
               "excerpt": "Keep the required living sections present throughout the work. Add `Artifacts and Notes` only when transcripts, outputs, or other evidence materially help the next contributor."
             }
@@ -15172,17 +15172,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 59,
               "excerpt": "Each milestone has matching Progress entries tagged `[milestone-X]`; split partially completed work into completed and remaining steps. A completed milestone uses `Status: done`, `Acceptance: met`, and checked entries such as `- [x] (YYYY-MM-DD) [milestone-X] ...`. Open or in-progress work keeps its remaining entries unchecked. Update the milestone's status, acceptance, and every affected Progress entry in the same edit. Do not mark work done without evidence that its acceptance is met."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 77,
               "excerpt": "In Concrete Steps, lead with the next unfinished, authorized action. Remove completed implementation instructions or label them explicitly completed. A completed milestone and an unqualified instruction to implement it cannot remain current together. Keep past command results as verification evidence rather than presenting them as work still to do."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 170,
               "excerpt": "    tasks. The milestone requires matching outcomes from the integrated"
             }
@@ -15216,17 +15216,17 @@
         "evidence": {
           "current": [
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 260,
               "excerpt": "Keep the required living sections present throughout the work. Add `Artifacts and Notes` only when transcripts, outputs, or other evidence materially help the next contributor."
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 262,
               "excerpt": "## Maintaining this skill"
             },
             {
-              "path": ".agents/skills/exec-plans/SKILL.md",
+              "path": "skills/default/exec-plans/SKILL.md",
               "line": 264,
               "excerpt": "For definition or grader maintenance, read [authoring evaluation and public CLI checks](evals/authoring-scenarios.md). It distinguishes deterministic cases from qualitative document review and sampled performance evidence."
             }

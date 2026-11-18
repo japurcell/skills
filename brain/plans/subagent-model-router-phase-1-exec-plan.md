@@ -1,6 +1,6 @@
 # Phase 1: Establish evidence-based routing and evaluate Terra low against Luna high
 
-This ExecPlan is a living document governed by `.agents/skills/exec-plans/SKILL.md`. Its path is `brain/plans/subagent-model-router-phase-1-exec-plan.md`. Keep Progress, milestone states, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized.
+This ExecPlan is a living document governed by `skills/default/exec-plans/SKILL.md`. Its path is `brain/plans/subagent-model-router-phase-1-exec-plan.md`. Keep Progress, milestone states, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized.
 
 ## Purpose / Big Picture
 

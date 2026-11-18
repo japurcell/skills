@@ -1,6 +1,6 @@
 # Phase 2: Evaluate broader model-and-effort tradeoffs for the router
 
-This ExecPlan is a living document governed by `.agents/skills/exec-plans/SKILL.md`. Its path is `brain/plans/subagent-model-router-phase-2-exec-plan.md`. Keep Progress, milestone states, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized.
+This ExecPlan is a living document governed by `skills/default/exec-plans/SKILL.md`. Its path is `brain/plans/subagent-model-router-phase-2-exec-plan.md`. Keep Progress, milestone states, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized.
 
 ## Purpose / Big Picture
 

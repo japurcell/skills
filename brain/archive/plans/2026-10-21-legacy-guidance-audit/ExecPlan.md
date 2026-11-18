@@ -4,7 +4,7 @@
 
 Audit each obligation from the legacy knowledge system against the current brain and skills. Restore current guidance that was lost or weakened, preferably in a matching skill. Preserve the deliberate removal of ingestion, OKF metadata, old directory layouts, and semantic maintenance hooks. Do not commit, stage, install globally, or change unrelated runtime behavior.
 
-This plan follows `.agents/skills/exec-plans/SKILL.md`. The repository is `/Users/adam/.codex/worktrees/6578/skills`. The initial worktree is clean at `378f49c40abcadf34e765a8a4d5a6fd580008ba6`.
+This plan follows `skills/default/exec-plans/SKILL.md`. The repository is `/Users/adam/.codex/worktrees/6578/skills`. The initial worktree is clean at `378f49c40abcadf34e765a8a4d5a6fd580008ba6`.
 
 ## Progress
 

@@ -19,7 +19,7 @@
         "env",
         "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
         "python3",
-        "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"
+        "skills/archive/spec-to-tasks/evals/test_grade_benchmark.py"
       ],
       "exit_code": 0,
       "output": "......................................\n----------------------------------------------------------------------\nRan 38 tests in 4.736s\n\nOK\n"
@@ -31,7 +31,7 @@
         "env",
         "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
         "python3",
-        "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"
+        "skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py"
       ],
       "exit_code": 0,
       "output": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.692s\n\nOK\n"
@@ -67,7 +67,7 @@
         "unittest",
         "discover",
         "-s",
-        ".agents/skills/exec-plans/evals",
+        "skills/default/exec-plans/evals",
         "-p",
         "test_grade_benchmark.py"
       ],
@@ -78,12 +78,12 @@
   "authoring-structure-checks": [
     {
       "check": "owned Markdown file and links",
-      "path": ".agents/skills/exec-plans/SKILL.md",
+      "path": "skills/default/exec-plans/SKILL.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+      "path": "skills/default/exec-plans/evals/authoring-scenarios.md",
       "result": "pass"
     },
     {
@@ -108,12 +108,12 @@
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/dotnet-upgrade/SKILL.md",
+      "path": "skills/archive/dotnet-upgrade/SKILL.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+      "path": "skills/archive/dotnet-upgrade/references/authoring-validation.md",
       "result": "pass"
     },
     {
@@ -138,22 +138,22 @@
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/prd-ralph-loop/SKILL.md",
+      "path": "skills/archive/prd-ralph-loop/SKILL.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/prd-ralph-loop/evals/README.md",
+      "path": "skills/archive/prd-ralph-loop/evals/README.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/prd-ralph/SKILL.md",
+      "path": "skills/archive/prd-ralph/SKILL.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/prd-ralph/references/verification.md",
+      "path": "skills/archive/prd-ralph/references/verification.md",
       "result": "pass"
     },
     {
@@ -168,12 +168,12 @@
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/spec-to-tasks/SKILL.md",
+      "path": "skills/archive/spec-to-tasks/SKILL.md",
       "result": "pass"
     },
     {
       "check": "owned Markdown file and links",
-      "path": "skills/default/spec-to-tasks/evals/README.md",
+      "path": "skills/archive/spec-to-tasks/evals/README.md",
       "result": "pass"
     },
     {
@@ -203,7 +203,7 @@
         "python3",
         "-m",
         "json.tool",
-        "skills/default/dotnet-upgrade/references/provenance/source-map.json"
+        "skills/archive/dotnet-upgrade/references/provenance/source-map.json"
       ],
       "exit_code": 0
     },
@@ -215,7 +215,7 @@
         "python3",
         "-m",
         "json.tool",
-        "skills/default/dotnet-upgrade/evals/evals.json"
+        "skills/archive/dotnet-upgrade/evals/evals.json"
       ],
       "exit_code": 0
     },
@@ -261,7 +261,7 @@
       "output": "Skill is valid!\n"
     },
     {
-      "path": ".agents/skills/exec-plans/SKILL.md",
+      "path": "skills/default/exec-plans/SKILL.md",
       "exit": 0,
       "output": "Skill is valid!\n"
     },
@@ -301,12 +301,12 @@
       "output": "Skill is valid!\n"
     },
     {
-      "path": "skills/default/prd-ralph-loop/SKILL.md",
+      "path": "skills/archive/prd-ralph-loop/SKILL.md",
       "exit": 0,
       "output": "Skill is valid!\n"
     },
     {
-      "path": "skills/default/prd-ralph/SKILL.md",
+      "path": "skills/archive/prd-ralph/SKILL.md",
       "exit": 0,
       "output": "Skill is valid!\n"
     },
@@ -321,7 +321,7 @@
       "output": "Skill is valid!\n"
     },
     {
-      "path": "skills/default/spec-to-tasks/SKILL.md",
+      "path": "skills/archive/spec-to-tasks/SKILL.md",
       "exit": 0,
       "output": "Skill is valid!\n"
     },

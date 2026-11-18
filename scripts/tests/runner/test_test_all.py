@@ -107,10 +107,10 @@ class TestTestAll(unittest.TestCase):
             if path.name != "test-rtk-stable-windows.ps1"
         }
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
-        expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
-        expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
+        expected.add("skills/archive/spec-to-tasks/evals/test_grade_benchmark.py")
+        expected.add("skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py")
         expected.add("skills/default/subagent-model-router/scripts/test_route.py")
-        expected.add("skills/default/ablate-ai-layer/scripts/test_ablation.py")
+        expected.add("skills/archive/ablate-ai-layer/scripts/test_ablation.py")
         expected.add("skills/default/commit/evals/test_validate_message.py")
         expected.add("skills/default/commit/evals/test_grade_benchmark.py")
         listed = {

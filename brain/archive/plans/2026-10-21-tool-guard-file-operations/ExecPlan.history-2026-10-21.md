@@ -6,7 +6,7 @@ This snapshot preserves superseded planning states and unique evidence. It is ba
 
 # Make Tool Guardian file operations reliable and its policy easier to understand
 
-This is the living ExecPlan at `docs/tool-guard-file-operations/ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md` and the applicable repository instructions. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized with actual evidence.
+This is the living ExecPlan at `docs/tool-guard-file-operations/ExecPlan.md`. Follow `skills/default/exec-plans/SKILL.md` and the applicable repository instructions. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective synchronized with actual evidence.
 
 ## Purpose / Big Picture
 
