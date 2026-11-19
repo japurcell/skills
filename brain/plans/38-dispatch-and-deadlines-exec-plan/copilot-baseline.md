@@ -23,6 +23,8 @@ Both `combined-tools` sessions exited 0. Native events show both parents launche
 
 The helper rejected the delegate parent's expired registration. Its test-clock option then allowed the parent to enforce a different timeline. ExecPlan used parent-owned timers and did act on silence. The historical five-minute prompts came from Copilot's recurring host schedule. These controlled misses and that historical schedule have different mechanisms.
 
+The eight ordinary two-worker sessions in `combined-tools`, `n1-clock-old`, `n1-clock-new` and `delivery-control` took 206 to 366 seconds each. Their individual durations sum to about 34 provider-session minutes. Pairs ran concurrently. These times exclude setup, the original fleet pilot and the separate gate comparison. See the [native lifecycle replay](../../../scripts/tests/orchestration/native-lifecycle.md) for the disposable project and commands.
+
 ## Worker restriction control for P1
 
 In `worker-control`, the required profile declared only `claude-haiku-5.5`. Copilot accepted the explicit `gpt-6-luna` override and ran worker `6d1cb489` on it. Treat the profile alone as insufficient evidence of exclusion in this version. In `hook-control` a disposable repository `preToolUse` policy denied the same native `task` call before launch. The matching call started and completed `claude-haiku-5.5` worker `6ac48eeb`. P1 can use that verified worker-specific restriction for every pair, with identical policy bytes in old and new. This reproduces the known-exclusion decision under native enforcement. The source of the remote account's original selection error remains unknown. [GitHub hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference)

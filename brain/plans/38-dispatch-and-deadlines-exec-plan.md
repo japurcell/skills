@@ -26,6 +26,7 @@ On `feat/todo-38-dispatch-deadlines`, the wording evaluator runs [W1](38-dispatc
 - [x] (2026-11-18) [milestone-2] S1 at `af044126` passes 17 scheduler CLI tests. New ordinary assignments are quiet until expiry. Explicit intervals and active version 2 records retain their old behavior.
 - [x] (2026-11-18) [milestone-2] E1 at `b1a63dd2` passes six controlled tests, including rejection of a quiet-time lookup and transfer while a separate writer is active.
 - [x] (2026-11-18) [milestone-2] Integrated R1 at `5f2892ab`. Both caller hashes match the tested sources. The combined checkout passed 17 scheduler tests, six controlled tests and skill-source validation. Native acceptance belongs to milestone 4.
+- [ ] [milestone-2] [E2, fail missing evidence](38-dispatch-and-deadlines-exec-plan/missing-evidence.md), after three empty-input false positives reproduced in the public grader.
 - [ ] [milestone-3] W1 shorter candidate and challenger, P1 six matched Copilot pairs.
 - [x] (2026-11-18) [milestone-4] First Copilot N1 trials exposed a delayed native notification and a late checkpoint. Both original traces retained.
 - [ ] [milestone-4] R2 wait guidance, N1 native acceptance and I1 integrated verdict, review and backlog reconciliation.
@@ -35,7 +36,7 @@ On `feat/todo-38-dispatch-deadlines`, the wording evaluator runs [W1](38-dispatc
 | Milestone | Status | Acceptance |
 | --- | --- | --- |
 | [1. Historical and native baselines](38-dispatch-and-deadlines-exec-plan/baselines.md) | done | met |
-| [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | done | met |
+| [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | in progress | not met |
 | [3. Controlled and live dispatch comparison](38-dispatch-and-deadlines-exec-plan/dispatch.md) | in progress | not met |
 | [4. Integrated native acceptance and review](38-dispatch-and-deadlines-exec-plan/native-and-close.md) | in progress | not met |
 
