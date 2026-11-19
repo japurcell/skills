@@ -59,14 +59,12 @@ def has_required_skill_shape() -> tuple[bool, str]:
 def has_commit_message_shape(commit_message: str, commit_type: str, subject: str) -> tuple[bool, str]:
     try:
         header, _, trailers = _validator.parse_message(commit_message)
-        _validator.validate_trailers(trailers.copy(), None)
+        _validator.validate_trailers(trailers, None)
     except ValueError as error:
         return False, str(error)
     header_pattern = rf"^{re.escape(commit_type)}(?:\([^()\s]+\))?: {re.escape(subject)}$"
     if re.fullmatch(header_pattern, header) is None:
         return False, header
-    if not any(line.startswith("Co-authored-by: ") for line in trailers):
-        return False, "missing Co-authored-by trailer"
     return True, header
 
 
@@ -176,7 +174,7 @@ def eval_zero(result: dict) -> list[dict]:
             branch or "<missing branch>",
         ),
         expectation("Uses commit type feat.", result.get("commit_type") == "feat", result.get("commit_type", "<missing>")),
-        expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
+        expectation("Uses commit message shape with Summary, Rationale, Tests, and valid optional trailers.", commit_ok, commit_evidence),
         expectation("Uses the scenario issue and contributor trailers.", *expected_trailers(result, "single-file-on-main")),
         expectation(
             "Plans a push but no PR.",
@@ -205,7 +203,7 @@ def eval_one(result: dict, fixture_name: str) -> list[dict]:
             result.get("branch", "<missing branch>"),
         ),
         expectation("Uses commit type fix.", result.get("commit_type") == "fix", result.get("commit_type", "<missing>")),
-        expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
+        expectation("Uses commit message shape with Summary, Rationale, Tests, and valid optional trailers.", commit_ok, commit_evidence),
         expectation("Uses the scenario issue and contributor trailers.", *expected_trailers(result, fixture_name)),
         expectation(
             "Plans both push and PR creation.",

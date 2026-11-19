@@ -428,9 +428,13 @@ def inventory(vault, verify=False):
 
 
 def direct_main():
-    parser = argparse.ArgumentParser(description="Reindex an explicit repository's brain vault.")
-    parser.add_argument("root", type=Path)
-    parser.add_argument("--verify", action="store_true")
+    parser = argparse.ArgumentParser(
+        description="Rebuild ROOT/brain/index.md from the vault's Markdown inventory.",
+        epilog=("Indexing and verification read no stdin and emit no stdout. Diagnostics go to stderr. "
+                "Exit 0 on success, 1 on indexing or verification failure, and 2 for invalid arguments."),
+    )
+    parser.add_argument("root", type=Path, metavar="ROOT", help="project directory containing the brain vault")
+    parser.add_argument("--verify", action="store_true", help="check the existing index without updating it")
     args = parser.parse_args()
     try:
         if sys.version_info < (3, 12):
