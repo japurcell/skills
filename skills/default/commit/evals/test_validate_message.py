@@ -2,6 +2,7 @@
 """Exercise the bundled commit-message checker through its public CLI."""
 
 import subprocess
+import json
 import sys
 import tempfile
 import unittest
@@ -124,6 +125,30 @@ class MessageCliTests(unittest.TestCase):
         )
         result = self.check_message(message)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_validator_and_grader_agree_on_summary_bullets(self):
+        author = COPILOT.removeprefix("Co-authored-by: ")
+        grader = SCRIPT.parents[1] / "evals" / "grade_benchmark.py"
+        for bullet, expected in (("- Support permitted host defaults.", True),
+                                 ("- Support permitted host defaults.\n  Confirm both output lines.", True),
+                                 ("- ", False)):
+            with self.subTest(bullet=bullet), tempfile.TemporaryDirectory() as directory:
+                message = MESSAGE.replace("- Support permitted host defaults.", bullet)
+                valid = self.check_message(message, "--co-author", author)
+                run = Path(directory) / "eval-0" / "config" / "run-1"
+                (run / "outputs").mkdir(parents=True)
+                (run.parent.parent / "eval_metadata.json").write_text('{"eval_id": 0}')
+                (run / "outputs" / "result.json").write_text(json.dumps({
+                    "commit_message": message, "commit_type": "fix",
+                    "subject": "preserve inherited dispatch",
+                }))
+                graded = subprocess.run([sys.executable, str(grader), directory],
+                                        capture_output=True, text=True, timeout=5)
+                self.assertEqual(graded.returncode, 0, graded.stderr)
+                checks = json.loads((run / "grading.json").read_text())["expectations"]
+                shape = next(item for item in checks if item["text"].startswith("Uses commit message shape"))
+                self.assertEqual(valid.returncode == 0, expected, valid.stderr)
+                self.assertEqual(shape["passed"], expected, shape)
 
     def test_trailer_authorization_and_layout(self):
         cases = (
