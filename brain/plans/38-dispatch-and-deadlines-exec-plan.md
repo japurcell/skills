@@ -8,9 +8,11 @@ Prove It Works and Boundary Discipline govern what a host trace establishes. Mod
 
 ## Next action and task graph
 
-The parent starts [S1, helper baseline and repair](38-dispatch-and-deadlines-exec-plan/scheduler.md), and the native operators start [B1, Copilot baseline](38-dispatch-and-deadlines-exec-plan/copilot-baseline.md) and [B2, Codex baseline](38-dispatch-and-deadlines-exec-plan/codex-baseline.md). Their common prerequisite, the architecture review below, is complete. These three tasks can proceed independently. Each native assignment stops at its own baseline. The integration branch is `feat/todo-38-dispatch-deadlines`. The verified coordinator follow-up handle from the first attempt is `/root/codex`.
+The scheduler implementer completed [S1, helper baseline and repair](38-dispatch-and-deadlines-exec-plan/scheduler.md). The native operators are running [B1, Copilot baseline](38-dispatch-and-deadlines-exec-plan/copilot-baseline.md) and [B2, Codex baseline](38-dispatch-and-deadlines-exec-plan/codex-baseline.md). Each native assignment stops at its own baseline. The integration branch is `feat/todo-38-dispatch-deadlines`. The verified coordinator follow-up handle is `/root/codex`.
 
 [E1, controlled behavior](38-dispatch-and-deadlines-exec-plan/controlled.md) and [W1, candidate screening](38-dispatch-and-deadlines-exec-plan/wording.md) also depend on the design review. E1 owns the orchestration fixtures, W1 owns distinct wording fixtures in the same test directory. P1 requires W1, E1 and the Copilot baseline. N1 runs only for a host/caller needing new proof. I1 verifies and reconciles the combined result. See [P1, N1 and I1 assignments](38-dispatch-and-deadlines-exec-plan/native-and-close.md). Each receives a separate assignment when its prerequisites have evidence. The parent updates this entry after verifying results.
+
+[R1, caller lifecycle instructions](38-dispatch-and-deadlines-exec-plan/runtime.md) owns the caller-side changes exposed by S1, E1 and the old native cases. W1 and P1 own the dispatch wording. N1 uses the integrated lifecycle changes. These assignments can test the two behaviors independently.
 
 ## Decision Log
 
@@ -23,8 +25,10 @@ The parent starts [S1, helper baseline and repair](38-dispatch-and-deadlines-exe
 ## Progress
 
 - [x] (2026-11-18) [milestone-1] Pinned `7fc651a7702735f0b13d1f50695a8ef0ddc96477`, verified the historical archive checksum, analysis and negative tests, and reviewed architecture before renewed dispatch.
-- [ ] [milestone-1] B1 and B2 baseline evidence plus helper reproduction in S1.
-- [ ] [milestone-2] S1 helper behavior, E1 continuity/reporting/transfer cases and negative controls.
+- [x] (2026-11-18) [milestone-1] Parent and S1 worker independently reproduced a status-only `progress_reminder` at 300 seconds and `deadline_expired` at 600 seconds through the old public helper. Baseline suites passed 11 scheduler and 26 router tests.
+- [ ] [milestone-1] Complete B1 and B2 native baseline evidence.
+- [x] (2026-11-18) [milestone-2] S1 at `af044126` passes 17 scheduler CLI tests. New ordinary assignments are quiet until expiry. Explicit intervals and active version 2 records retain their old behavior.
+- [ ] [milestone-2] E1 continuity/reporting/transfer cases and negative controls. R1 caller instructions and verification.
 - [ ] [milestone-3] W1 shorter candidate and challenger, P1 six matched Copilot pairs.
 - [ ] [milestone-4] N1 and I1 integrated verdict, review and backlog reconciliation.
 
@@ -37,7 +41,7 @@ From the repo root verify `rtk git rev-parse HEAD` and the old revision above. C
 
 ## Milestone 2. Verify lifecycle, continuity and status
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 The delegate source is `skills/default/delegate-to-subagents/scripts/scheduler.py`. Test via its CLI and `scripts/test_scheduler.py` in the same skill. The ExecPlan caller's runtime-enforcement section owns its registry policy. Demonstrate early completion, quiet time, deadline expiry, bounded grace, one extension and separate worker/write shutdown checks before transfer. Exercise both same-task delivery of a setup fact and fresh-worker recovery with the environment, pinned revision and prior evidence. Compare two status reports for owner, revision, completed evidence, blocker, deadline and next action. The second uses stable references instead of reconstructing history. Use the same grader on an unnecessary five-minute status lookup and a legitimate expiry.
