@@ -30,6 +30,25 @@ def run_scheduler(state, *args, ok=True):
 
 
 class ControlledOrchestrationTests(unittest.TestCase):
+    def test_turn_requires_assignment_timing_and_action_observations(self):
+        errors = grade_turn({"before": {}, "after": {}})
+        details = "\n".join(errors)
+        for evidence in ("assignment id", "phase", "deadline", "observation time", "action list"):
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, details)
+
+    def test_transfer_requires_known_worker_and_writer_states(self):
+        self.assertIn("worker state", " ".join(grade_transfer(None, False, True)))
+        self.assertIn("writer state", " ".join(grade_transfer(False, None, True)))
+
+    def test_continuity_requires_worker_ids_fact_and_handoff_context(self):
+        report = {"owner": "owner", "pinned_revision": "r7", "completed_evidence": ["run-4"],
+                  "blocker": "none", "deadline": 50, "next_action": "review"}
+        errors = "\n".join(grade_continuity(report, report, {}, {}, {}))
+        for evidence in ("worker id", "setup fact", "replacement worker id", "environment", "revision", "evidence"):
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, errors)
+
     def test_transfer_waits_for_worker_and_outstanding_writer_processes(self):
         with tempfile.TemporaryDirectory() as directory:
             state = Path(directory) / "state.json"

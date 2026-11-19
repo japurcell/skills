@@ -1,18 +1,55 @@
 """Independent assertions for controlled scheduler/worker observations."""
 
+import math
+
 REPORT_FIELDS = {"owner", "pinned_revision", "completed_evidence", "blocker", "deadline", "next_action"}
+
+
+def _present(mapping, key):
+    return key in mapping and mapping[key] is not None and mapping[key] != ""
+
+
+def _finite_number(value):
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
 
 
 def grade_turn(observation):
     """Grade observable outcome fields; never trust a fixture's pass flag."""
     errors = []
+    if not isinstance(observation, dict):
+        return ["missing scheduler observation"]
     before = observation.get("before")
     after = observation.get("after")
     if not isinstance(before, dict) or not isinstance(after, dict):
         errors.append("missing before/after scheduler state")
         return errors
+
+    for label, state in (("before", before), ("after", after)):
+        if not _present(state, "id"):
+            errors.append(f"missing assignment id in {label} scheduler state")
+        if not _present(state, "phase"):
+            errors.append(f"missing scheduler phase in {label} state")
+        if not _finite_number(state.get("deadline")):
+            errors.append(f"missing or invalid deadline in {label} scheduler state")
+        if state.get("phase") in ("checkpoint", "decision") and not _finite_number(state.get("phase_deadline")):
+            errors.append(f"missing or invalid phase deadline in {label} scheduler state")
+    if not _finite_number(observation.get("at")):
+        errors.append("missing or invalid observation time")
+    actions = observation.get("actions")
+    if not isinstance(actions, list):
+        errors.append("missing or invalid action list")
+    elif any(not isinstance(action, dict) for action in actions):
+        errors.append("action list contains a non-object observation")
+    if errors:
+        return errors
+
     phase = before.get("phase")
-    now = observation.get("at", 0)
+    now = observation["at"]
     deadline_event = None
     if phase == "running" and now >= before.get("deadline", float("inf")):
         deadline_event = "deadline_expired"
@@ -29,7 +66,7 @@ def grade_turn(observation):
             errors.append("unnecessary parent status lookup before deadline")
     else:
         expected_id = before.get("id")
-        events = [a for a in observation.get("actions", []) if a.get("type") == deadline_event and a.get("assignment") == expected_id]
+        events = [a for a in actions if a.get("type") == deadline_event and a.get("assignment") == expected_id]
         if not events:
             errors.append("correct phase deadline action missing")
     if observation.get("dispatches"):
@@ -41,6 +78,12 @@ def grade_turn(observation):
 
 def grade_transfer(worker_alive, writer_alive, transfer_emitted):
     errors = []
+    if not isinstance(worker_alive, bool):
+        errors.append("worker state is unknown")
+    if not isinstance(writer_alive, bool):
+        errors.append("writer state is unknown")
+    if errors:
+        return errors
     if transfer_emitted and (worker_alive or writer_alive):
         errors.append("ownership transfer while worker or writer remains active")
     if not transfer_emitted and not worker_alive and not writer_alive:
@@ -50,12 +93,61 @@ def grade_transfer(worker_alive, writer_alive, transfer_emitted):
 
 def grade_continuity(first, second, worker_observation, replacement_observation, expected):
     errors = []
-    if worker_observation.get("worker_id") != expected.get("worker_id") or worker_observation.get("known_fact_returned") != expected.get("known_fact"):
+    observation_fields = (
+        ("same-worker", worker_observation, {"worker_id": "worker id", "known_fact_returned": "setup fact"}),
+        ("replacement", replacement_observation, {
+            "worker_id": "replacement worker id",
+            "environment": "handoff environment",
+            "pinned_revision": "handoff revision",
+            "evidence": "handoff evidence",
+        }),
+    )
+    for label, observation, fields in observation_fields:
+        if not isinstance(observation, dict):
+            errors.append(f"missing {label} observation")
+            continue
+        for key, description in fields.items():
+            if not _present(observation, key):
+                errors.append(f"missing {description}")
+
+    expected_fields = {
+        "worker_id": "expected worker id",
+        "known_fact": "expected setup fact",
+        "replacement_id": "expected replacement worker id",
+        "environment": "expected handoff environment",
+        "pinned_revision": "expected handoff revision",
+        "evidence": "expected handoff evidence",
+    }
+    if not isinstance(expected, dict):
+        errors.append("missing expected continuity values")
+        expected = {}
+    for key, description in expected_fields.items():
+        if not _present(expected, key):
+            errors.append(f"missing {description}")
+
+    same_worker = worker_observation if isinstance(worker_observation, dict) else {}
+    replacement = replacement_observation if isinstance(replacement_observation, dict) else {}
+    if (
+        _present(same_worker, "worker_id")
+        and _present(expected, "worker_id")
+        and same_worker["worker_id"] != expected["worker_id"]
+    ):
+        errors.append("same-worker ID mismatch")
+    if (
+        _present(same_worker, "known_fact_returned")
+        and _present(expected, "known_fact")
+        and same_worker["known_fact_returned"] != expected["known_fact"]
+    ):
         errors.append("same-worker follow-up did not recover the known setup fact")
-    if replacement_observation.get("worker_id") != expected.get("replacement_id"):
+    if (
+        _present(replacement, "worker_id")
+        and _present(expected, "replacement_id")
+        and replacement["worker_id"] != expected["replacement_id"]
+    ):
         errors.append("replacement worker identity mismatch")
-    if any(replacement_observation.get(k) != expected.get(k) for k in ("environment", "pinned_revision", "evidence")):
-        errors.append("replacement handoff lacks required context")
+    for key in ("environment", "pinned_revision", "evidence"):
+        if _present(replacement, key) and _present(expected, key) and replacement[key] != expected[key]:
+            errors.append(f"replacement handoff {key} mismatch")
     for report in (first, second):
         if not isinstance(report, dict) or set(report) != REPORT_FIELDS:
             errors.append("report must contain exactly the six continuity fields")
