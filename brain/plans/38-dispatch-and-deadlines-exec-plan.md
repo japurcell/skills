@@ -8,7 +8,7 @@ Prove It Works and Boundary Discipline govern what a host trace establishes. Mod
 
 ## Next action and task graph
 
-The operator is running the [P2 required-profile comparison](38-dispatch-and-deadlines-exec-plan/paired-dispatch.md#p2-preserve-the-worker-profile-as-well-as-the-model). The native operator owns [N2 writer shutdown](38-dispatch-and-deadlines-exec-plan/writer-shutdown.md). After these runs, the integration coordinator owns [I1](38-dispatch-and-deadlines-exec-plan/integration.md). The user authorized both caller skills, router instructions and synthetic fixtures for authenticated Codex and Copilot evaluations. The historical remote trace and credentials stay local.
+The native operator owns [N2 writer shutdown](38-dispatch-and-deadlines-exec-plan/writer-shutdown.md). After the heartbeat runs, the integration coordinator owns [I1](38-dispatch-and-deadlines-exec-plan/integration.md). The user authorized both caller skills, router instructions and synthetic fixtures for authenticated Codex and Copilot evaluations. The historical remote trace and credentials stay local.
 
 ## Decision Log
 
@@ -31,7 +31,7 @@ The operator is running the [P2 required-profile comparison](38-dispatch-and-dea
 - [x] (2026-11-18) [milestone-2] Integrated 9ac6517c, nine controlled checks and 17 scheduler checks. [E2, fail missing evidence](38-dispatch-and-deadlines-exec-plan/missing-evidence.md), after three empty-input false positives reproduced in the public grader.
 - [x] (2026-11-18) [milestone-3] W1 observed 23/23 for each baseline, short and challenger caller after hardening the trace grader. Deleting the original effort condition failed the reuse case in both callers (22/23 each).
 - [x] (2026-11-18) [milestone-3] P1 ran six native pairs. Both arms avoided the excluded model on all six attempts. Old callers selected the required worker profile 6/6, the shorter callers 4/6.
-- [ ] [milestone-3] P2 tests a shared Copilot profile-field example before publication.
+- [x] (2026-11-18) [milestone-3] P2 passed 6/6 native dispatches against 6/6 for baseline. Published at 519609fd. All three integrated smokes selected the correct profile and model. The first delegate smoke had malformed saved JSON and the repeat passed.
 - [x] (2026-11-18) [milestone-4] First Copilot N1 trials exposed a delayed native notification and a late checkpoint. Both original traces retained.
 - [x] (2026-11-18) [milestone-4] R2 wait guidance integrated at c66ae7a8. Both Codex replays produced the expected bytes.
 - [x] (2026-11-18) [milestone-4] All four caller/host combinations demonstrated quiet waiting, early closure and real silent-worker enforcement. R3 Copilot had a 2.909-second wait delivery lag and acted within grace.
@@ -43,12 +43,12 @@ The operator is running the [P2 required-profile comparison](38-dispatch-and-dea
 | --- | --- | --- |
 | [1. Historical and native baselines](38-dispatch-and-deadlines-exec-plan/baselines.md) | done | met |
 | [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | done | met |
-| [3. Controlled and live dispatch comparison](38-dispatch-and-deadlines-exec-plan/dispatch.md) | in progress | not met |
+| [3. Controlled and live dispatch comparison](38-dispatch-and-deadlines-exec-plan/dispatch.md) | done | met |
 | [4. Integrated native acceptance and review](38-dispatch-and-deadlines-exec-plan/native-and-close.md) | in progress | not met |
 
 ## Concrete steps, validation and recovery
 
-Next, finish P2 and N2 using their frozen inputs and update the native evidence. At integration, from the repository root run `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`, `rtk proxy python3 skills/default/subagent-model-router/scripts/test_route.py`, `rtk proxy python3 -m unittest discover -s scripts/tests/orchestration`, `rtk proxy python3 scripts/validate-skill-sources.py skills` and `rtk git diff --check`. The new controlled suite must execute actual tests. A zero-test run means evidence is missing. Expected verdicts, native setup steps and stopping conditions are in the linked assignments. Record exact native invocations after the first valid run.
+Next, finish N2, preserve its independent writer observations, then run I1. At integration, from the repository root run `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`, `rtk proxy python3 skills/default/subagent-model-router/scripts/test_route.py`, `rtk proxy python3 -m unittest discover -s scripts/tests/orchestration`, `rtk proxy python3 scripts/validate-skill-sources.py skills` and `rtk git diff --check`. The new controlled suite must execute actual tests. A zero-test run means evidence is missing. Expected verdicts, native setup steps and stopping conditions are in the linked assignments. Record exact native invocations after the first valid run.
 
 Use fresh run directories, identify old and new sources by Git revision or content hash and preserve previous partial runs on retry. No global installation or policy change is required. If the sandbox restricts legitimate vendor connections, request approval for the scoped native action. If the provider then requires owner authentication, record that prerequisite and proceed with offline work. Earlier startup artifacts are under `/private/tmp/todo38-1795057091956/{copilot,codex}`.
 
@@ -58,4 +58,4 @@ The supplied metadata trace has 25 prompts from a recurring five-minute Copilot 
 
 ## Outcomes & Retrospective
 
-The historical trace, four native scheduling baselines and four post-change lifecycle demonstrations are verified. The deterministic lifecycle and routing controls pass. P1 found two wrong-profile dispatches despite the correct model. P2 and N2 investigate native profile selection and writer shutdown. The calibrated project hook reproduces a known exclusion, while the original remote account's picker configuration is unknown.
+The historical trace, four native scheduling baselines and four post-change lifecycle demonstrations are verified. The deterministic lifecycle and routing controls pass. P1 found two wrong-profile dispatches despite the correct model. The P2 revision restored correct profile selection in every matched run. N2 measures native writer shutdown. The calibrated project hook reproduces a known exclusion, while the original remote account's picker configuration is unknown.

@@ -71,6 +71,10 @@ rtk copilot --trust-folder --no-auto-update --disable-builtin-mcps --no-ask-user
 
 In CLI 1.0.114 track native `task` arguments, `subagent.started`, `subagent.completed`, `system.notification`, the parent's bounded wait, checkpoint and follow-up. The host can deliver an idle notification after the child has already completed. Record both timestamps. Reconcile the durable deadline, helper event when applicable, native parent action, and worker's result. A process exit of zero alone does not establish the lifecycle outcome.
 
+## Compare a wait timeout with writer shutdown
+
+For an active writer, record the registered deadline, the first expiry action, the stop request, the native terminal event, the last heartbeat and an independent process-exit observation. Report these intervals separately. A Codex 0.170.0 child produced 24 more writes after its turn was interrupted. The final write arrived 23.719 seconds after the interruption. The parent retained ownership until it confirmed the writer had exited. Ordinary Copilot delegation exposes a status read and worker messaging. GitHub documents killing a selected worker through the interactive task view. When the parent lacks a stop control or cannot verify descendant shutdown, keep ownership with that worker and record the missing observation. [Codex worker tools](https://github.com/openai/codex/blob/rust-v0.170.0/codex-rs/core/src/tools/handlers/multi_agents_spec.rs) · [Copilot task controls](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/speed-up-task-completion#monitoring-progress)
+
 ## Acceptance
 
 There must be two overlapping real workers. Verify QUICK's result, early closure and re-arming for the remaining deadline. During quiet time, check for gratuitous status reads, repeated setup or another dispatch. Require a real silent-worker deadline and a bounded response. Permit at most one extension based on a timely ETA. When ownership transfers, verify both the old worker and any write-producing operations have stopped. Report missing observations as unknown. Keep failed attempts, setup failures and successful host/caller combinations separately identifiable.
