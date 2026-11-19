@@ -1,7 +1,7 @@
 # M2. Direct brain reindex
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -49,8 +49,8 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 - [x] (2026-11-19) [milestone-2] T2b verified at `658ab7e8` and integrated at `ebb09bb4`. The public installer rejects the extra link and preserves both files.
 - [x] (2026-11-19) [milestone-2] T2c passed on macOS with integrated M7, generated-output freshness, standalone hooks and disposable Bash and PowerShell installs.
 - [x] (2026-11-19) [milestone-2] The native Windows direct command preserved the prior index under denied directory writes with a writable lock. [Windows permission check](https://github.com/japurcell/skills/actions/runs/44493917647/job/135456168341)
-- [ ] [milestone-2] Verify additional Markdown autolinks through the retained-helper path.
+- [x] (2026-11-19) [milestone-2] Integrated `ec29aa73` at `2c890896`. Retained-helper installation rejects unexpected autolinks and duplicate targets while accepting reordered and relabeled inventory. See the [fixture results](2b-retained-index.md).
 
 ## Candidate evidence
 
-On macOS the worker recorded the direct command adding and removing a note, retaining the mtime of a current index and refusing a nested root without its own vault. At uid 501 a held lock and an unwritable vault with a writable lock both failed. The candidate record reports installer and hook suites with four and one skips respectively, and 15 current generator outputs. The worker reran the direct test after adding the removal assertion. The coordinator separately observed the extra-link false success through the installed retained-helper path. Native Windows and integrated proof are outstanding.
+On macOS the worker recorded the direct command adding and removing a note, retaining the mtime of a current index and refusing a nested root without its own vault. At uid 501 a held lock and an unwritable vault with a writable lock both failed. The candidate record reports installer and hook suites with four and one skips respectively, and 15 current generator outputs. The worker reran the direct test after adding the removal assertion. The coordinator separately observed the extra-link false success through the installed retained-helper path. The native permission check and integrated retained-helper results are recorded above.

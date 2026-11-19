@@ -21,7 +21,7 @@ The approved design baseline is `069b3f22`. The original plan is `66e3a80e`, the
 - [x] (2026-11-19) [milestone-1] [Commit message validation](ExecPlan/1-commit-validation.md). Integrated independent intent and attribution checks. Both suites passed at `92a8c0a0`.
 - [x] (2026-11-19) [milestone-2] Direct command and installer candidate available in `7f16d86b`. Reproduced an extra-link false success on that revision.
 - [x] (2026-11-19) [milestone-2] Repaired the retained-index verifier and integrated M2 at `ebb09bb4`. Freshness and installer checks passed on macOS.
-- [ ] [milestone-2] [Direct reindex](ExecPlan/2-direct-reindex.md). Native directory permission checks passed. Verify retained-index autolinks before closeout.
+- [x] (2026-11-19) [milestone-2] [Direct reindex](ExecPlan/2-direct-reindex.md). Native directory permissions and the retained-helper target inventory passed. Both original files survived failed verification.
 - [x] (2026-11-19) [milestone-3] Frozen public-process fixture passed against reference and candidate on macOS at `886dea6a`.
 - [x] (2026-11-19) [milestone-3] [Hook event input](ExecPlan/3-hook-input.md). The shipped pipe test passed on macOS and Windows, including exact forwarded bytes.
 - [x] (2026-11-19) [milestone-4] Query and standalone timer ordering integrated at `b386efe`.
@@ -69,4 +69,4 @@ The coordinator schedules direct-index permissions (M2), event pipes (M3), junct
 
 ## Outcomes & Retrospective
 
-M1, M3, M5 and M6 are complete. All seven implementation streams have merged through `2a9fb67a`. The Windows run passed the relocated M7 workflow and three of four ACL cases. Its remaining negative fixture detected that its own setup created a private file. M2 has a retained-index autolink repair and M4 has native delivery trials in progress. The original M1, M2 and M7 worktrees and branches have been removed after clean-status and ancestry checks.
+M1, M2, M3, M5 and M6 are complete. M7 is testing a corrected negative ACL fixture and the standard-user runner on Windows. M4 is completing authenticated timing trials. The repository test registry now includes the two new public suites. All implementation changes through `82737aed` are on the local topic. The original M1, M2, M3, M5, M6 and M7 worktrees and the retained-index repair worktree have been removed.
