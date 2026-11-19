@@ -7,22 +7,9 @@ description: Mandatory when creating or modifying any 'exec-plan', 'ExecPlan', '
 
 An ExecPlan is the working contract for a feature or other multi-step change. Write it for a novice who has the current working tree and this plan, but no memory of earlier conversations or plans. The plan must explain what to do, how to verify it, and what remains current at every checkpoint.
 
-## Invocation and pre-code gate
-
-Load this skill before inspecting or editing an ExecPlan. If a required read is truncated, retrieve the omitted sections in smaller ranges before relying on it. This includes the outline and linked principles. Reuse complete, current reads already in context.
-
-If work [needs a plan](#triage-complexity), save it at the requested location, the project's established plan location, or otherwise `brain/<feature-slug>/ExecPlan.md`. Before the first implementation edit or dispatch of a planned task (including a baseline trial), inspect the saved plan for the following evidence.
-
-1. **Design evidence.** For each architectural choice governing the task, find the alternatives, the [fresh reviewer's ranking](#collaborate-on-the-architecture), and the reason for the selection in the Decision Log. Check which implementation choices remain open even when the user has approved the acceptance criteria.
-2. **A ready task.** Find the task’s prerequisites and their evidence, owner, inputs, expected outcome, verification and stopping point in the plan. Put missing details there before briefing the worker. Give each worker only its ready assignment, even when it will own later milestones.
-
-Use [planning-time exploration](#gather-context-with-subagents) and design review to fill gaps. Once the applicable checks pass, proceed within the existing authorization.
-
-When drafting or restructuring a plan, read the [annotated outline](references/outline.md) and adapt it using the relevant source and supplied requirements. Resolve ordinary ambiguities from the available evidence or by [gathering context with subagents](#gather-context-with-subagents); then record the choice and rationale in the plan. If ambiguities remain, ask the user for clarification to close every gap. When asking the user questions, use the host's structured input tool with concrete options when available, or concise direct questions otherwise. Provide your recommendation for each question. Close gaps in behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (no more than four at a time). Stop only when the remaining decisions are resolved or the user explicitly delegates them to your discretion. Do not leave key implementation decisions for a novice reader to guess.
-
-When executing, proceed to the next planned milestone without asking the user for routine next steps. Resolve ordinary implementation ambiguities autonomously within the agreed scope. Honor explicit stopping points, required approvals, and owner-only actions; when one blocks progress, record the missing decision or permission and continue independent authorized work. Follow the project's commit workflow.
-
 ## Triage Complexity
+
+Load this skill in full before inspecting or editing an ExecPlan.
 
 Before starting any planning work, assess whether this task actually needs a plan:
 
@@ -30,18 +17,35 @@ Before starting any planning work, assess whether this task actually needs a pla
 
 Tell the user this task doesn't need a plan and suggest implementing directly without the plan skill. **Stop here — do not implement.**
 
-**Needs planning (proceed to [Load Principles](#load-principles)):**
+**Needs planning (proceed to [Read before drafting](#read-before-drafting)):**
 
 - The change spans 3+ files or introduces new architecture
 - There are multiple valid approaches and the user should weigh in
 - The task has unclear scope or cross-cutting concerns
 - The user explicitly asks for a plan
 
-## Load Principles
+## Read before drafting
 
-Read `brain/principles.md`. Follow every link and read each linked principle file. These principles govern all plan decisions - cite them by name in the plan overview.
+Before choosing an approach or writing any part of an ExecPlan, the plan author must personally read the following in full, even when the user has already approved the design.
 
-**Do NOT skip this. Do NOT use memorized principle content — always read fresh.**
+1. Read this skill, its [annotated outline](references/outline.md), and applicable project planning instructions.
+2. Activate `codebase-design` and read its entire `SKILL.md`. The architecture reviewer also activates it during the later review.
+3. Read `brain/principles.md` fresh for this plan. Follow every principle link in the index and read each file from beginning to end.
+
+Check the returned text for each required file. If a read is summarized or a batch omits its middle, retrieve the missing contents in smaller ranges until you have seen every section. Reuse complete reads from this planning pass. A reviewer’s summary or a successful command with clipped output leaves the read incomplete.
+
+Adapt the outline using the relevant source and supplied requirements. Cite the governing principles by name in the plan overview. Resolve ordinary ambiguities from the available evidence or by [gathering context with subagents](#gather-context-with-subagents), then record the choice and rationale in the plan. If ambiguities remain, ask the user for clarification to close every gap. When asking the user questions, use the host's structured input tool with concrete options when available, or concise direct questions otherwise. Provide your recommendation for each question. Close gaps in behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (no more than four at a time). Stop only when the remaining decisions are resolved or the user explicitly delegates them to your discretion. Do not leave key implementation decisions for a novice reader to guess.
+
+## Before implementation
+
+Save the plan at the requested location, the project's established plan location, or otherwise `brain/<feature-slug>/ExecPlan.md`. Before the first implementation edit or dispatch of a planned task (including a baseline trial), inspect the saved plan for the following evidence.
+
+1. **Design evidence.** For each architectural choice governing the task, find the alternatives, the [fresh reviewer's ranking](#collaborate-on-the-architecture), and the reason for the selection in the Decision Log. Check which implementation choices remain open even when the user has approved the acceptance criteria.
+2. **A ready task.** Find the task’s prerequisites and their evidence, owner, inputs, expected outcome, verification and stopping point in the plan. Put missing details there before briefing the worker. Give each worker only its ready assignment, even when it will own later milestones.
+
+Use [planning-time exploration](#gather-context-with-subagents) and design review to fill gaps. Once the applicable checks pass, proceed within the existing authorization.
+
+When executing, proceed to the next planned milestone without asking the user for routine next steps. Resolve ordinary implementation ambiguities autonomously within the agreed scope. Honor explicit stopping points, required approvals, and owner-only actions; when one blocks progress, record the missing decision or permission and continue independent authorized work. Follow the project's commit workflow.
 
 ## Gather Context with Subagents
 

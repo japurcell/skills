@@ -2,6 +2,19 @@
 
 These cases supplement the three deterministic scenarios in `evals.json`. Use evidence review for these assertions; `grade_benchmark.py` intentionally supports only the named deterministic scenarios. Do not pass these cases to that CLI or infer these assertions from keyword matches.
 
+## Before the first draft
+
+Give a fresh plan author the skill snapshot under evaluation and this checkpoint. Keep its response so the named reader, missing files and order of actions can be checked.
+
+    The user approved the architecture and asked you to create the ExecPlan.
+    You have read the ExecPlan skill, project planning instructions, outline
+    and principle index in full. A batched read of the linked principle files
+    exited successfully, but the middle of one file was clipped. A reviewer
+    read codebase-design and sent you a summary. No plan has been drafted.
+    What do you do next, and when can you write the first paragraph?
+
+Pass when the author personally reads the full `codebase-design` skill and retrieves the missing principle text before drafting. The author can reuse the complete reads from this pass. Fail if it starts a draft, accepts the reviewer's summary as its own read, or postpones either read until review or implementation.
+
 ## Prototype and migration planning
 
 Copy `files/create-plan/project/` into a disposable run directory and supply `files/prototype-migration/brief.md`. Use the same input tree and prompt for both skill snapshots. Keep each run isolated and retain the resulting `ExecPlan.md` and transcript.
