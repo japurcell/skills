@@ -54,23 +54,25 @@ def replace_section(text: str, start: str, end: str, content: str) -> str:
     return text[:a] + content.rstrip() + "\n\n" + text[b:]
 
 
-def render(source: str, caller: bool, gate: str, addendum: str, shared: str) -> str:
-    if caller:
-        original_start = ("### Pre-dispatch gate\n" if source == CALLERS["delegate-to-subagents"]
-                          else "## Pre-dispatch gate\n")
-        end = "## Runtime enforcement\n"
-        body = gate
-        if addendum:
-            body += "\n\n" + addendum
-        text = git(source)
-        text = replace_section(text, original_start, end, original_start.rstrip() + "\n\n" + body)
-        if source == CALLERS["delegate-to-subagents"]:
-            text = text.replace("- Follow the [pre-dispatch gate](#pre-dispatch-gate). Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`.", "- Follow the [pre-dispatch gate](#pre-dispatch-gate).")
-        else:
-            text = text.replace("Start with one implementer and assign each implementer one task at a time. Reuse an idle implementer when its model and effort satisfy the pre-dispatch gate and its prior context helps with the task.", "Start with one implementer and assign each implementer one task at a time. Let the gate determine whether an idle implementer can take the next assignment.")
-            text = text.replace("Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise dispatch a fresh agent.", "Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. If reuse is ineligible, dispatch a fresh agent.")
-        return text
+def render_caller(source: str, gate: str, addendum: str) -> str:
+    original_start = ("### Pre-dispatch gate\n" if source == CALLERS["delegate-to-subagents"]
+                      else "## Pre-dispatch gate\n")
+    end = "## Runtime enforcement\n"
+    body = gate
+    if addendum:
+        body += "\n\n" + addendum
     text = git(source)
+    text = replace_section(text, original_start, end, original_start.rstrip() + "\n\n" + body)
+    if source == CALLERS["delegate-to-subagents"]:
+        text = text.replace("- Follow the [pre-dispatch gate](#pre-dispatch-gate). Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`.", "- Follow the [pre-dispatch gate](#pre-dispatch-gate).")
+    else:
+        text = text.replace("Start with one implementer and assign each implementer one task at a time. Reuse an idle implementer when its model and effort satisfy the pre-dispatch gate and its prior context helps with the task.", "Start with one implementer and assign each implementer one task at a time. Let the gate determine whether an idle implementer can take the next assignment.")
+        text = text.replace("Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise dispatch a fresh agent.", "Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. If reuse is ineligible, dispatch a fresh agent.")
+    return text
+
+
+def render_router(shared: str) -> str:
+    text = git(ROUTER)
     text = text.replace("## Return the result\n", STANDALONE + "\n\n## Return the result\n", 1)
     start = "## Return the result\n"
     end = "Load [maintenance.md]"
@@ -95,8 +97,8 @@ def main() -> None:
             if gate_spec:
                 gate = gate_spec["caller_gate"]
                 addendum = gate_spec["caller_addenda"].get(name, "")
-                caller = render(source, True, gate, addendum, shared)
-                router = render(ROUTER, False, gate, addendum, shared)
+                caller = render_caller(source, gate, addendum)
+                router = render_router(shared)
             else:
                 caller = git(source)
                 router = git(ROUTER)

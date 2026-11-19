@@ -79,7 +79,7 @@ ROUTE_OUTPUT = {
 }
 
 
-def native_events(model="claude-haiku-5.5", success=True):
+def native_events(model="claude-haiku-5.5", success=True, *, include_subagent_events=True):
     events = [
         {"type": "tool.execution_start", "timestamp": "2026-11-19T03:00:00Z", "data": {
             "toolName": "shell", "toolCallId": "policy", "arguments": {"command": "policy38"}}},
@@ -98,7 +98,7 @@ def native_events(model="claude-haiku-5.5", success=True):
             "toolName": "task", "toolCallId": "task-1", "model": "gpt-6-luna",
             "arguments": {"agent_type": "check-total", "model": model, "prompt": "private prompt must not be retained"}}},
     ]
-    if model == "claude-haiku-5.5" and success:
+    if model == "claude-haiku-5.5" and success and include_subagent_events:
         events.extend([
             {"type": "subagent.started", "timestamp": "2026-11-19T03:00:05Z", "agentId": "child-1", "data": {
                 "toolCallId": "task-1", "agentName": "check-total", "agentType": "custom", "model": model}},
@@ -177,8 +177,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_synchronous_task_unknown_identity_text_is_not_a_worker_id_or_blocker(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         after["worker_id"] = "not exposed by task tool"
         after["observed_worker_model"] = "claude-haiku-5.5 (requested; runtime model not separately reported)"
         after["blocker"] = "Task tool exposed no worker ID; result completed successfully."
@@ -193,8 +192,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_matching_child_assistant_message_proves_output_after_dispatch_receipt(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         task_result = next(event for event in events if event.get("type") == "tool.execution_complete"
                            and event.get("data", {}).get("toolCallId") == "task-1")
         worker_id = "1995fa43-34c1-41e8-86d9-96bc063fa0ba"
@@ -217,8 +215,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_child_assistant_output_counts_only_for_matching_child_id(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         task_result = next(event for event in events if event.get("type") == "tool.execution_complete"
                            and event.get("data", {}).get("toolCallId") == "task-1")
         worker_id = "1995fa43-34c1-41e8-86d9-96bc063fa0ba"
@@ -321,8 +318,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_background_worker_result_is_matched_by_agent_id(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         completion = next(event for event in events if event.get("type") == "tool.execution_complete" and event.get("data", {}).get("toolCallId") == "task-1")
         completion["data"]["result"] = {"content": "Agent started in background with agent_id: 1995fa43-34c1-41e8-86d9-96bc063fa0ba"}
         events.extend([
@@ -377,8 +373,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_synchronous_result_without_public_worker_identity_is_unavailable_not_failure(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         del events[6]["data"]["arguments"]["model"]
         after["worker_id"] = None
         after["observed_worker_model"] = None
@@ -392,8 +387,7 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_constrained_english_fallback_record_is_reported_without_claiming_native_exposure(self):
         manifest, router, before, after, policy_reads = run_records()
-        events = native_events()
-        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        events = native_events(include_subagent_events=False)
         del events[6]["data"]["arguments"]["model"]
         after["worker_id"] = None
         after["observed_worker_model"] = None

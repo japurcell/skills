@@ -26,8 +26,7 @@ def grade_turn(observation):
     before = observation.get("before")
     after = observation.get("after")
     if not isinstance(before, dict) or not isinstance(after, dict):
-        errors.append("missing before/after scheduler state")
-        return errors
+        return ["missing before/after scheduler state"]
 
     for label, state in (("before", before), ("after", after)):
         if not _present(state, "id"):
@@ -127,27 +126,25 @@ def grade_continuity(first, second, worker_observation, replacement_observation,
 
     same_worker = worker_observation if isinstance(worker_observation, dict) else {}
     replacement = replacement_observation if isinstance(replacement_observation, dict) else {}
-    if (
-        _present(same_worker, "worker_id")
-        and _present(expected, "worker_id")
-        and same_worker["worker_id"] != expected["worker_id"]
-    ):
+    def differs(observed, key, expected_key):
+        return (_present(observed, key) and _present(expected, expected_key)
+                and observed[key] != expected[expected_key])
+
+    if differs(same_worker, "worker_id", "worker_id"):
         errors.append("same-worker ID mismatch")
-    if (
-        _present(same_worker, "known_fact_returned")
-        and _present(expected, "known_fact")
-        and same_worker["known_fact_returned"] != expected["known_fact"]
-    ):
+    if differs(same_worker, "known_fact_returned", "known_fact"):
         errors.append("same-worker follow-up did not recover the known setup fact")
-    if (
-        _present(replacement, "worker_id")
-        and _present(expected, "replacement_id")
-        and replacement["worker_id"] != expected["replacement_id"]
-    ):
+    if differs(replacement, "worker_id", "replacement_id"):
         errors.append("replacement worker identity mismatch")
     for key in ("environment", "pinned_revision", "evidence"):
-        if _present(replacement, key) and _present(expected, key) and replacement[key] != expected[key]:
+        if differs(replacement, key, key):
             errors.append(f"replacement handoff {key} mismatch")
+    errors.extend(_grade_reports(first, second))
+    return errors
+
+
+def _grade_reports(first, second):
+    errors = []
     for report in (first, second):
         if not isinstance(report, dict) or set(report) != REPORT_FIELDS:
             errors.append("report must contain exactly the six continuity fields")

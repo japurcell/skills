@@ -12,9 +12,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-BASE = "7fc651a7702735f0b13d1f50695a8ef0ddc96477"
 CALLERS = {"delegate-to-subagents", "execplan-implement"}
 ARMS = {"baseline", "short", "challenger", "challenger2"}
+
+
 def prepare(arm: str, caller: str, project: Path, rendered_root: Path) -> None:
     if project.exists():
         raise RuntimeError(f"refusing to overwrite actor project: {project}")

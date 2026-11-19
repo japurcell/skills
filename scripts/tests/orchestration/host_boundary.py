@@ -12,7 +12,6 @@ import uuid
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
 PROJECT = Path(os.environ.get("W1_PROJECT", ".")).resolve()
 DATA = PROJECT / ".w1" / "cases.json"
 EVENTS = PROJECT / ".w1" / "events.jsonl"
@@ -58,6 +57,96 @@ def catalog_tier(model: str, floor: str | None = None) -> str | None:
     return min(matching, key=TIER_RANK.get) if matching else None
 
 
+def dispatch(case, args, started_ns) -> int:
+    case_id = args[0]
+    route = latest_route(case_id)
+    if len(args) < 3 or args[1] != "--model":
+        print("usage: dispatch38 CASE --model MODEL [--effort LEVEL]", file=sys.stderr)
+        return 2
+    model = args[2]
+    effort = None
+    if "--effort" in args:
+        effort = args[args.index("--effort") + 1]
+    policy = case["host"]
+    simulator = case["simulator"]
+    if route.get("route_available"):
+        expected = {route.get("model")}
+        fallback = route.get("fallback")
+        if isinstance(fallback, dict):
+            expected.add(fallback.get("model"))
+        if model not in expected:
+            result = "wrong_model"
+        else:
+            result = None
+    elif policy.get("exact_user_model") == model:
+        result = None
+    else:
+        result = "route_unavailable_without_exact_override"
+    if result is None and model in policy.get("known_disallowed_models", []):
+        result = "host_restriction"
+    if result is None and not policy.get("model_control", False):
+        result = "missing_model_control"
+    selected_route = route
+    fallback_tier = None
+    if isinstance(route.get("fallback"), dict) and model == route["fallback"].get("model"):
+        selected_route = {**route, **route["fallback"]}
+        fallback_tier = catalog_tier(model, route.get("floor"))
+        if fallback_tier is None:
+            result = "fallback_below_capability_floor"
+    if result is None and route.get("effort_policy") == "explicit":
+        expected_effort = policy.get("user_effort") or selected_route.get("reasoning_effort")
+        if not policy.get("effort_control", False):
+            result = "missing_effort_control"
+        elif effort != expected_effort:
+            result = "wrong_effort"
+    elif result is None and effort is not None:
+        result = "unexpected_effort_under_host_default"
+    if result is None and policy.get("availability") == "unknown":
+        previous = [row for row in (json.loads(line) for line in EVENTS.read_text().splitlines())
+                    if row["case_id"] == case_id and row["kind"] == "dispatch" and row["model"] == model]
+        if any(row["result"] == "model_wide_rejection" for row in previous):
+            result = "retry_forbidden"
+    if result is None:
+        result = simulator.get("dispatch_outcomes", {}).get(model, "host_rejection")
+    worker_id = f"w1-{uuid.uuid5(uuid.NAMESPACE_DNS, case_id).hex[:12]}" if result == "worker_completed" else None
+    event = {"kind": "dispatch", "case_id": case_id, "argv": ["dispatch38", *args],
+             "call_started_ns": started_ns,
+             "route": route, "model": model, "effort": effort,
+             "fallback_tier": fallback_tier, "result": result, "worker_id": worker_id}
+    record(event)
+    print(json.dumps(event, sort_keys=True))
+    return 0
+
+
+def reuse_worker(case, args, started_ns) -> int:
+    case_id = args[0]
+    route = latest_route(case_id)
+    policy = case["host"]
+    reuse = policy.get("reuse")
+    if not reuse:
+        print("case has no existing worker", file=sys.stderr)
+        return 2
+    selected_model = route.get("model") or policy.get("exact_user_model")
+    selected_effort = (policy.get("user_effort") or route.get("reasoning_effort")) \
+        if route.get("effort_policy") == "explicit" else None
+    if "--worker" not in args:
+        print("usage: reuse38 CASE --worker WORKER_ID", file=sys.stderr)
+        return 2
+    worker_id = args[args.index("--worker") + 1]
+    event = {"kind": "reuse", "case_id": case_id, "argv": ["reuse38", *args],
+             "call_started_ns": started_ns,
+             "route": route, "selected_model": selected_model, "selected_effort": selected_effort,
+             "existing_worker_id": reuse["existing_worker_id"],
+             "existing_model": reuse["existing_model"], "existing_effort": reuse.get("existing_effort"),
+             "useful_context": reuse["useful_context"],
+             "original_effort_override": reuse.get("original_effort_override", False),
+             "requested_worker_id": worker_id, "result": "worker_reused",
+             "host_enforces_reuse_eligibility": False}
+    record(event)
+    print(json.dumps(event, sort_keys=True))
+    return 0
+
+
 def main() -> int:
     started_ns = time.time_ns()
     command = Path(sys.argv[0]).name
@@ -101,88 +190,9 @@ def main() -> int:
         print(json.dumps(policy, sort_keys=True))
         return 0
     if command == "dispatch38":
-        route = latest_route(case_id)
-        if len(args) < 3 or args[1] != "--model":
-            print("usage: dispatch38 CASE --model MODEL [--effort LEVEL]", file=sys.stderr)
-            return 2
-        model = args[2]
-        effort = None
-        if "--effort" in args:
-            effort = args[args.index("--effort") + 1]
-        policy = case["host"]
-        simulator = case["simulator"]
-        if route.get("route_available"):
-            expected = {route.get("model")}
-            fallback = route.get("fallback")
-            if isinstance(fallback, dict):
-                expected.add(fallback.get("model"))
-            if model not in expected:
-                result = "wrong_model"
-            else:
-                result = None
-        elif policy.get("exact_user_model") == model:
-            result = None
-        else:
-            result = "route_unavailable_without_exact_override"
-        if result is None and model in policy.get("known_disallowed_models", []):
-            result = "host_restriction"
-        if result is None and not policy.get("model_control", False):
-            result = "missing_model_control"
-        selected_route = route
-        fallback_tier = None
-        if isinstance(route.get("fallback"), dict) and model == route["fallback"].get("model"):
-            selected_route = {**route, **route["fallback"]}
-            fallback_tier = catalog_tier(model, route.get("floor"))
-            if fallback_tier is None:
-                result = "fallback_below_capability_floor"
-        if result is None and route.get("effort_policy") == "explicit":
-            expected_effort = policy.get("user_effort") or selected_route.get("reasoning_effort")
-            if not policy.get("effort_control", False):
-                result = "missing_effort_control"
-            elif effort != expected_effort:
-                result = "wrong_effort"
-        elif result is None and effort is not None:
-            result = "unexpected_effort_under_host_default"
-        if result is None and policy.get("availability") == "unknown":
-            previous = [row for row in (json.loads(line) for line in EVENTS.read_text().splitlines())
-                        if row["case_id"] == case_id and row["kind"] == "dispatch" and row["model"] == model]
-            result = "retry_forbidden" if previous and any(row["result"] == "model_wide_rejection" for row in previous) else result
-        if result is None:
-            result = simulator.get("dispatch_outcomes", {}).get(model, "host_rejection")
-        worker_id = f"w1-{uuid.uuid5(uuid.NAMESPACE_DNS, case_id).hex[:12]}" if result == "worker_completed" else None
-        event = {"kind": "dispatch", "case_id": case_id, "argv": ["dispatch38", *args],
-                 "call_started_ns": started_ns,
-                 "route": route, "model": model, "effort": effort,
-                 "fallback_tier": fallback_tier, "result": result, "worker_id": worker_id}
-        record(event)
-        print(json.dumps(event, sort_keys=True))
-        return 0
+        return dispatch(case, args, started_ns)
     if command == "reuse38":
-        route = latest_route(case_id)
-        policy = case["host"]
-        reuse = policy.get("reuse")
-        if not reuse:
-            print("case has no existing worker", file=sys.stderr)
-            return 2
-        selected_model = route.get("model") or policy.get("exact_user_model")
-        selected_effort = (policy.get("user_effort") or route.get("reasoning_effort")) \
-            if route.get("effort_policy") == "explicit" else None
-        if "--worker" not in args:
-            print("usage: reuse38 CASE --worker WORKER_ID", file=sys.stderr)
-            return 2
-        worker_id = args[args.index("--worker") + 1]
-        event = {"kind": "reuse", "case_id": case_id, "argv": ["reuse38", *args],
-                 "call_started_ns": started_ns,
-                 "route": route, "selected_model": selected_model, "selected_effort": selected_effort,
-                 "existing_worker_id": reuse["existing_worker_id"],
-                 "existing_model": reuse["existing_model"], "existing_effort": reuse.get("existing_effort"),
-                 "useful_context": reuse["useful_context"],
-                 "original_effort_override": reuse.get("original_effort_override", False),
-                 "requested_worker_id": worker_id, "result": "worker_reused",
-                 "host_enforces_reuse_eligibility": False}
-        record(event)
-        print(json.dumps(event, sort_keys=True))
-        return 0
+        return reuse_worker(case, args, started_ns)
     print(f"unknown boundary command: {command}", file=sys.stderr)
     return 2
 

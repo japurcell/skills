@@ -127,22 +127,27 @@ def events(assignments, now):
     return [event for a in assignments.values() if (event := advance(a, now))]
 
 
+def phase_deadline(assignment):
+    phase = assignment['phase']
+    if phase in ('running', 'extended'):
+        return assignment['deadline']
+    if phase in ('checkpoint', 'decision'):
+        return assignment['phase_deadline']
+    return None
+
+
 def next_event_time(assignments):
     """Return the next timer transition, ignoring completed and stopped assignments."""
     due_times = []
     for a in assignments.values():
         if a['status'] != 'active':
             continue
-        phase = a['phase']
-        if phase == 'running':
-            due_times.append(a['deadline'])
-        elif phase in ('checkpoint', 'decision'):
-            due_times.append(a['phase_deadline'])
-        elif phase == 'extended':
-            due_times.append(a['deadline'])
-        if phase in ('running', 'extended') and 'next_checkpoint' in a:
+        deadline = phase_deadline(a)
+        if deadline is not None:
+            due_times.append(deadline)
+        if a['phase'] in ('running', 'extended') and 'next_checkpoint' in a:
             due_times.append(a['next_checkpoint'])
-    return min(due_times) if due_times else None
+    return min(due_times, default=None)
 
 
 class StrictParser(argparse.ArgumentParser):
@@ -252,7 +257,8 @@ def main():
                         if a['status'] != 'active':
                             raise ValueError('assignment is not active')
                         # Refuse late actions even if no tick has processed the expiry.
-                        if (a['phase'] in ('checkpoint', 'decision') and now >= a['phase_deadline']) or (a['phase'] == 'extended' and now >= a['deadline']) or (a['phase'] == 'running' and now >= a['deadline']):
+                        deadline = phase_deadline(a)
+                        if deadline is not None and now >= deadline:
                             raise ValueError('deadline expired; run tick for host action')
                     if args.cmd == 'checkpoint':
                         if a['phase'] not in ('running', 'checkpoint', 'extended'):

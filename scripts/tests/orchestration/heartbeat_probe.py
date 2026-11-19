@@ -21,30 +21,28 @@ def parser():
 
 
 def main(argv=None):
-    args = parser().parse_args(argv)
+    cli = parser()
+    args = cli.parse_args(argv)
     if not math.isfinite(args.interval) or args.interval <= 0:
-        parser().error("interval must be a finite positive number")
+        cli.error("interval must be a finite positive number")
     if not math.isfinite(args.duration) or args.duration <= 0:
-        parser().error("duration must be a finite positive number")
+        cli.error("duration must be a finite positive number")
     if args.duration > MAX_DURATION_SECONDS:
-        parser().error(f"maximum duration is {MAX_DURATION_SECONDS:g} seconds")
+        cli.error(f"maximum duration is {MAX_DURATION_SECONDS:g} seconds")
 
     project = Path.cwd().resolve()
     output = args.output.resolve()
     try:
         output.relative_to(project)
     except ValueError:
-        parser().error("output must be inside the current project")
+        cli.error("output must be inside the current project")
     output.parent.mkdir(parents=True, exist_ok=True)
 
     stop_at = time.monotonic() + args.duration
     sequence = 0
     try:
         with output.open("x", encoding="utf-8") as stream:
-            while True:
-                now = time.monotonic()
-                if now >= stop_at:
-                    break
+            while time.monotonic() < stop_at:
                 sequence += 1
                 record = {
                     "sequence": sequence,
@@ -59,7 +57,7 @@ def main(argv=None):
                 if remaining > 0:
                     time.sleep(min(args.interval, remaining))
     except FileExistsError:
-        parser().error("output already exists; use a fresh project path")
+        cli.error("output already exists; use a fresh project path")
     return 0
 
 

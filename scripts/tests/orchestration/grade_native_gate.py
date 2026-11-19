@@ -150,7 +150,7 @@ def summarize_native_events(events):
                            requested_effort=args.get("reasoning_effort", args.get("effort")),
                            tool_args=safe_args)
             elif tool in ("shell", "bash", "powershell"):
-                command = args.get("command", raw_args) if isinstance(args, dict) else raw_args
+                command = args.get("command", raw_args)
                 if isinstance(command, list) and all(isinstance(item, str) for item in command):
                     command = " ".join(command)
                 command = command if isinstance(command, str) else ""
@@ -219,6 +219,53 @@ def summarize_native_events(events):
     return summary
 
 
+def _check_gate_records(before, after, manifest, records):
+    for name, record, schema in (("before", before, GATE_BEFORE), ("after", after, GATE_AFTER)):
+        if not isinstance(record, dict):
+            records.append(f"{name} gate record is missing")
+        elif set(record) != schema:
+            records.append(f"{name} gate record has missing or unexpected fields")
+    if not isinstance(before, dict) or not isinstance(after, dict):
+        return
+    for key in ("assignment_id", "router_argv", "router_request", "router_output"):
+        if before.get(key) != after.get(key):
+            records.append(f"before/after gate record changed {key}")
+    if not before.get("assignment_id"):
+        records.append("gate assignment ID is missing")
+    if _normalized_router_argv(before.get("router_argv")) is None:
+        records.append("router argv is missing or malformed")
+    if not isinstance(before.get("router_request"), dict):
+        records.append("router JSON request is missing")
+    if not isinstance(before.get("intended_child_controls"), dict):
+        records.append("intended child controls are missing")
+    if not isinstance(before.get("parent_controls"), dict):
+        records.append("parent controls are missing")
+    if before.get("assignment_id") != manifest.get("assignment_id"):
+        records.append("actor assignment ID differs from run manifest")
+
+
+def _successful_tool_starts(summary, tool, *evidence_fields):
+    completions = {row.get("call_id"): row for row in summary
+                   if row["type"] == "tool.execution_complete" and row.get("tool") == tool}
+    return [row for row in summary
+            if row["type"] == "tool.execution_start" and row.get("tool") == tool
+            and any(row.get(field) for field in evidence_fields)
+            and completions.get(row.get("call_id"), {}).get("success") is True]
+
+
+def _check_coordination_writes(summary, task_time, task_result, records):
+    writes = _successful_tool_starts(summary, "write", "coordination_write")
+    write_times = [_time(row.get("timestamp")) for row in writes]
+    write_times = [value for value in write_times if value]
+    dispatch_receipt_time = _time(task_result.get("timestamp")) if task_result else task_time
+    before_writes = [value for value in write_times if task_time and value < task_time]
+    after_writes = [value for value in write_times if dispatch_receipt_time and value > dispatch_receipt_time]
+    if not before_writes:
+        records.append("native trace lacks a successful coordination write before dispatch")
+    if dispatch_receipt_time and not after_writes:
+        records.append("native trace lacks a successful coordination write after dispatch receipt")
+
+
 def grade_native_gate(events, manifest, router_records, before, after, policy_records=None, expected_answer=73):
     """Return separate behavior failures, record failures and unavailable observations."""
     behavior, records, unavailable, manual_review = [], [], [], []
@@ -239,31 +286,10 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         records.append("worker-models.json policy is missing or malformed")
         policy = {}
     policy_records = policy_records if isinstance(policy_records, list) else []
-    policy_hash = hashes.get("worker_policy") if isinstance(hashes, dict) else None
     if not manifest.get("parent_model") or "parent_effort" not in manifest:
         records.append("parent model and effort controls, including omission, are required")
 
-    for name, record, schema in (("before", before, GATE_BEFORE), ("after", after, GATE_AFTER)):
-        if not isinstance(record, dict):
-            records.append(f"{name} gate record is missing")
-        elif set(record) != schema:
-            records.append(f"{name} gate record has missing or unexpected fields")
-    if isinstance(before, dict) and isinstance(after, dict):
-        for key in ("assignment_id", "router_argv", "router_request", "router_output"):
-            if before.get(key) != after.get(key):
-                records.append(f"before/after gate record changed {key}")
-        if not before.get("assignment_id"):
-            records.append("gate assignment ID is missing")
-        if _normalized_router_argv(before.get("router_argv")) is None:
-            records.append("router argv is missing or malformed")
-        if not isinstance(before.get("router_request"), dict):
-            records.append("router JSON request is missing")
-        if not isinstance(before.get("intended_child_controls"), dict):
-            records.append("intended child controls are missing")
-        if not isinstance(before.get("parent_controls"), dict):
-            records.append("parent controls are missing")
-        if before.get("assignment_id") != manifest.get("assignment_id"):
-            records.append("actor assignment ID differs from run manifest")
+    _check_gate_records(before, after, manifest, records)
 
     router_records = router_records if isinstance(router_records, list) else []
     if len(router_records) != 1:
@@ -300,10 +326,9 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     if isinstance(argv, list) and any(item in ("--model", "--effort") for item in argv):
         behavior.append("router argv manufactured an explicit model or effort constraint")
 
-    command_starts = [row for row in summary if row.get("type") == "tool.execution_start" and row.get("tool") == "command"]
-    command_completes = {row.get("call_id"): row for row in summary if row.get("type") == "tool.execution_complete" and row.get("tool") == "command"}
-    policy_reads = [row for row in command_starts if row.get("policy_read") and command_completes.get(row.get("call_id"), {}).get("success") is True]
-    router_calls = [row for row in command_starts if row.get("router_call") and command_completes.get(row.get("call_id"), {}).get("success") is True]
+    commands = _successful_tool_starts(summary, "command", "policy_read", "router_call")
+    policy_reads = [row for row in commands if row.get("policy_read")]
+    router_calls = [row for row in commands if row.get("router_call")]
     task_calls = [row for row in summary if row.get("type") == "tool.execution_start" and row.get("tool") == "task"]
     if not policy_reads:
         unavailable.append("native trace does not expose a worker policy read")
@@ -315,7 +340,8 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     first_task_time = _time(task_call.get("timestamp"))
     if policy_reads and first_task_time and not any((_time(row.get("timestamp")) or first_task_time) < first_task_time for row in policy_reads):
         behavior.append("worker policy was not inspected before the model decision")
-    policy_record_time = min((_time(row.get("timestamp")) for row in policy_records if _time(row.get("timestamp"))), default=None)
+    policy_times = (_time(row.get("timestamp")) for row in policy_records)
+    policy_record_time = min((t for t in policy_times if t is not None), default=None)
     if first_task_time and policy_record_time and policy_record_time >= first_task_time:
         behavior.append("policy file was read after the native model decision")
     if router_calls and first_task_time and not any((_time(row.get("timestamp")) or first_task_time) < first_task_time for row in router_calls):
@@ -346,8 +372,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     configured = next((row for row in related if row.get("type") == "subagent.configured"), None)
     completed = next((row for row in related if row.get("type") == "subagent.completed"), None)
     task_result = next((row for row in related if row.get("type") == "tool.execution_complete" and row.get("tool") == "task"), None)
-    launch_result = task_result
-    spawned_id = launch_result.get("worker_id") if launch_result else None
+    spawned_id = task_result.get("worker_id") if task_result else None
     worker_id = (started.get("worker_id") if started else None) or spawned_id
     read_results = [row for row in summary if row.get("type") == "tool.execution_complete" and row.get("tool") == "read_agent" and row.get("success") is True
                     and row.get("worker_id") == worker_id]
@@ -434,27 +459,18 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         elif task_result and task_result.get("success") is False and _explicitly_unavailable(blocker):
             unavailable.append("actor record does not expose the host's launch blocker")
 
-    status = "fail" if behavior or records else "unavailable" if unavailable else "pass"
-    write_starts = [row for row in summary if row.get("type") == "tool.execution_start" and row.get("tool") == "write" and row.get("coordination_write")]
-    write_completes = {row.get("call_id"): row for row in summary if row.get("type") == "tool.execution_complete" and row.get("tool") == "write"}
-    successful_writes = [row for row in write_starts if write_completes.get(row.get("call_id"), {}).get("success") is True]
-    write_times = [_time(row.get("timestamp")) for row in successful_writes]
-    write_times = [value for value in write_times if value]
-    task_time = _time(task_call.get("timestamp"))
-    dispatch_receipt_time = _time(task_result.get("timestamp")) if task_result else task_time
-    before_writes = [value for value in write_times if task_time and value < task_time]
-    after_writes = [value for value in write_times if dispatch_receipt_time and value > dispatch_receipt_time]
-    if not before_writes:
-        records.append("native trace lacks a successful coordination write before dispatch")
-    if dispatch_receipt_time and not after_writes:
-        records.append("native trace lacks a successful coordination write after dispatch receipt")
-    status = "fail" if behavior or records else "unavailable" if unavailable else "pass"
+    _check_coordination_writes(summary, first_task_time, task_result, records)
+    status = "pass"
+    if behavior or records:
+        status = "fail"
+    elif unavailable:
+        status = "unavailable"
     return {"status": status, "behavior_failures": behavior, "record_failures": records,
             "unavailable": unavailable, "manual_review": manual_review, "observed": {
                 "primary_attempts": sum(row.get("model") == primary for row in task_calls),
                 "fallback_attempts": sum(row.get("model") == fallback for row in task_calls),
                 "worker_model": started.get("model") if started else None,
-                "actor_reported_fallback_model": override_model if isinstance(after, dict) else None,
+                "actor_reported_fallback_model": override_model,
                 "worker_effort": configured.get("effort") if configured else None,
                 "answer": observed_answer,
                 "worker_id": started.get("worker_id") if started else spawned_id,

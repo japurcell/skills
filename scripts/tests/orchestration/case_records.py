@@ -12,17 +12,17 @@ def build_records(source: Path) -> list[dict]:
     output = []
     for number in range(1, 17):
         case_id = f"case{number:02d}"
-        own = [event for event in events if event.get("case_id") == case_id]
-        route = next((event for event in own if event.get("kind") == "route"), None)
-        controls = next((event for event in own if event.get("kind") == "host_controls"), None)
-        after = [event for event in own if event.get("kind") in ("dispatch", "reuse")]
+        case_events = [event for event in events if event.get("case_id") == case_id]
+        route = next((event for event in case_events if event.get("kind") == "route"), {})
+        controls = next((event for event in case_events if event.get("kind") == "host_controls"), {})
+        after = [event for event in case_events if event.get("kind") in ("dispatch", "reuse")]
         output.append({
             "case_id": case_id,
             "before": {
-                "router_invocation": route.get("argv") if route else None,
-                "router_input": route.get("input") if route else None,
-                "router_output_unchanged": route.get("result") if route else None,
-                "host_controls": controls.get("controls") if controls else None,
+                "router_invocation": route.get("argv"),
+                "router_input": route.get("input"),
+                "router_output_unchanged": route.get("result"),
+                "host_controls": controls.get("controls"),
             },
             "after": {
                 "actual_dispatch_or_reuse_events": after,

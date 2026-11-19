@@ -160,15 +160,15 @@ def prepare(args):
     for source, target in copy_targets:
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
-        target.chmod(0o700 if target.name == "route38" else 0o600)
+        target.chmod(0o600)
     (project / "bin").mkdir(parents=True, exist_ok=True)
     route38 = project / "bin/route38"
     capture_source = Path(__file__).with_name("route_capture.py")
     shutil.copyfile(capture_source, project / "bin/route_capture.py")
     (project / "bin/route_capture.py").chmod(0o600)
     write_private(route38, _route_launcher(), executable=True)
-    for key, source in policy_files.items():
-        target = project / ".github" / ("hooks" if key != "worker_agent" else "agents") / source.name
+    for source in policy_files.values():
+        target = project / ".github" / source.relative_to(github)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
         target.chmod(0o600)
@@ -273,6 +273,19 @@ def _kill(proc):
         os.killpg(proc.pid, signal.SIGKILL)
 
 
+def read_observed_rows(path):
+    """Keep complete event records even if the session ended mid-write."""
+    rows = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return rows
+
+
 def run_prepared(prepared, args):
     version = subprocess.run([args.copilot, "--version"], capture_output=True, text=True, timeout=15, check=False)
     manifest = prepared["manifest"]
@@ -296,24 +309,9 @@ def run_prepared(prepared, args):
     manifest["finished_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     manifest["native_exit_code"] = exit_code
     write_json(prepared["private"] / "manifest.json", manifest)
-    event_path = prepared["private"] / "events.jsonl"
-    events = []
-    if event_path.is_file():
-        for line in event_path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                try:
-                    events.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
+    events = read_observed_rows(prepared["private"] / "events.jsonl")
     before, after = load_actor_records(prepared["project"])
-    router_log = prepared["private"] / "router-events.jsonl"
-    router_records = []
-    if router_log.is_file():
-        for line in router_log.read_text(encoding="utf-8").splitlines():
-            try:
-                router_records.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    router_records = read_observed_rows(prepared["private"] / "router-events.jsonl")
     policy_path = prepared["private"] / "policy-observations.jsonl"
     policy_records = []
     if policy_path.is_file():
