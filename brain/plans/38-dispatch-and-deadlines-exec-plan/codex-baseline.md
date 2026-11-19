@@ -1,0 +1,5 @@
+# B2. Capture the Codex baseline
+
+Owner: Codex operator and later integration coordinator. Prerequisites: reviewed architecture and 7fc651a7 caller/router sources. Earlier Codex 0.170.0 rejected a non-repository scratch folder. That fixture now has its own Git repository. Inspect `codex features list` and use a disposable project with the provider's normal authentication. Only disposable fixture writes are needed.
+
+Exercise delegate-to-subagents and execplan-implement separately. Each operator uses the pinned skill to delegate a quick job and a silent bounded job. Collect a native worker start, timestamped early completion, quiet waiting, and action on the outstanding worker deadline. Pin actual source, CLI version, session and child IDs, commands, return values and native evidence. Retain traces privately and only summarize benign observations. Missing native events or service access leave the case unresolved. Stop after baseline verdicts or a verified host blocker; no candidate trials. Relay exact recovery conditions to parent.

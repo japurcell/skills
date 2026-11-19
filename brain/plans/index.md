@@ -1,5 +1,7 @@
 # Plans
 
+- [Verify worker dispatch and deadline enforcement](38-dispatch-and-deadlines-exec-plan.md)
+
 - [Model router phase 1: routing policy and initial experiment](subagent-model-router-phase-1-exec-plan.md)
 - [Model router phase 2: expanded experiments](subagent-model-router-phase-2-exec-plan.md)
 
