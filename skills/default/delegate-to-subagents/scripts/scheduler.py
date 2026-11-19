@@ -179,6 +179,7 @@ def parser():
         'confirm-stopped': 'Record verified worker and write shutdown.',
         'transfer': 'Emit permission for the host to transfer ownership.',
         'tick': 'Persist and emit currently due actions.',
+        'next-wake': 'Read the next timer without advancing it.',
         'wait': 'Wait for a due action or a bounded timeout.',
         'list': 'List stored assignments.',
     }
@@ -200,7 +201,7 @@ def parser():
             q.add_argument('--eta', type=float, required=name == 'extend', help='estimated completion Unix timestamp in seconds')
         if name == 'confirm-stopped':
             q.add_argument('--confirmation', required=True, help='literal worker-and-writes-stopped')
-    for name in ('tick', 'wait'):
+    for name in ('tick', 'wait', 'next-wake'):
         q = command(name)
         q.add_argument('--now', type=float, help='override current Unix timestamp in seconds for testing')
         if name == 'wait':
@@ -242,6 +243,18 @@ def main():
                     pause = min(WAIT_POLL_INTERVAL, remaining)
                     if due_at is not None:
                         pause = min(pause, due_at - now)
+                elif args.cmd == 'next-wake':
+                    timers = []
+                    for assignment in assignments.values():
+                        timer = next_timer(assignment, now)
+                        if timer is not None:
+                            due, reason = timer
+                            timers.append((due, reason == 'progress_reminder', assignment['id'], assignment['agent'], reason))
+                    if timers:
+                        due, _, assignment_id, agent, reason = min(timers)
+                        out = {'wake': {'assignment': assignment_id, 'agent': agent, 'due': due, 'reason': reason}}
+                    else:
+                        out = {'wake': None}
                 elif args.cmd == 'register':
                     if not args.id or args.id in assignments or args.deadline <= now or (args.checkpoint is not None and args.checkpoint <= 0) or args.grace < 0:
                         raise ValueError('duplicate ID or invalid deadline/checkpoint/grace')
@@ -297,7 +310,7 @@ def main():
                         a['transferred'] = True
                         out = {'host_action': 'ownership transfer may now be performed by host'}
                 if args.cmd not in ('tick', 'wait'):
-                    if args.cmd != 'list':
+                    if args.cmd not in ('list', 'next-wake'):
                         save(args.state, data)
                     break
             time.sleep(pause)
