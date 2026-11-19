@@ -233,7 +233,7 @@ import secrets
 import stat
 import struct
 from contextlib import ExitStack, contextmanager
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 
 class BrainError(ValueError):
@@ -528,6 +528,29 @@ def writer_lock(vault):
         os.close(descriptor)
 
 
+def inventory_text(text):
+    return re.sub(r"([\\\[\]<`])", r"\\\1", text).replace("\n", " ").replace("\r", " ")
+
+
+def verify_inventory(data, groups):
+    # The inventory format has three line types: blank, plain ATX heading,
+    # or a bullet containing exactly one link. Escapes are literal text.
+    literal = r"(?:\\[^\r\n]|[^\\\[\]<`\r\n])*"
+    heading = re.compile(r"#{1,6}(?:[ \t]" + literal + r")?")
+    entry = re.compile(r"- \[" + literal + r"\]\(<((?:[a-zA-Z0-9._~/-]|%[0-9a-fA-F]{2})+)>\)[ \t]*")
+    actual = []
+    text = data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    for line in text.split("\n"):
+        if not line.strip(" \t") or heading.fullmatch(line):
+            continue
+        match = entry.fullmatch(line)
+        if not match:
+            raise BrainError("invalid index")
+        actual.append(unquote(match[1], errors="strict"))
+    if sorted(actual) != sorted(note for notes in groups.values() for note in notes):
+        raise BrainError("stale index")
+
+
 def inventory(vault, verify=False):
     deadline = time.monotonic() + 2
     groups = {}
@@ -565,10 +588,9 @@ def inventory(vault, verify=False):
         groups.setdefault(relative.parent.as_posix(), []).append(relative.as_posix())
     lines = ["# Brain"]
     for group, notes in sorted(groups.items()):
-        lines.extend(["", "## " + ("Root" if group == "." else group), ""])
+        lines.extend(["", "## " + ("Root" if group == "." else inventory_text(group)), ""])
         for note in notes:
-            stem = note[:-3]
-            label = re.sub(r"([\\\[\]])", r"\\\1", stem).replace("\n", " ").replace("\r", " ")
+            label = inventory_text(note[:-3])
             lines.append("- [" + label + "](<" + quote(note, safe="/") + ">)")
     content = ("\n".join(lines) + "\n").encode("utf-8")
     if len(content) > 512 * 1024 or time.monotonic() > deadline:
@@ -583,26 +605,7 @@ def inventory(vault, verify=False):
     if verify:
         if previous is None:
             raise BrainError("missing index")
-        from urllib.parse import unquote
-        def targets(data):
-            text = data.decode("utf-8")
-            links = []
-            remainder = []
-            for line in text.splitlines():
-                match = re.fullmatch(r"- \[(?:\\.|[^\]])*\]\(<([^>]*)>\)\s*", line)
-                if match:
-                    links.append(match.group(1))
-                    remainder.append("")
-                elif line.startswith("- "):
-                    raise BrainError("invalid index")
-                else:
-                    remainder.append(line)
-            if re.search(r"\]\s*[\[(]|^\s*\[[^]]+\]:|<\s*(?:a\b|https?://|mailto:)",
-                         "\n".join(remainder), re.IGNORECASE | re.MULTILINE):
-                raise BrainError("invalid index")
-            return sorted(unquote(link) for link in links)
-        if targets(previous) != targets(content):
-            raise BrainError("stale index")
+        verify_inventory(previous, groups)
         return content
     if previous == content:
         first = ".brain-index-" + secrets.token_hex(12)
