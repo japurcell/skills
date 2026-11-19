@@ -10,7 +10,9 @@ import sys
 import tempfile
 import time
 
-VERSION = 2
+VERSION = 3
+LEGACY_VERSION = 2
+WAIT_POLL_INTERVAL = 0.1
 
 
 @contextlib.contextmanager
@@ -47,8 +49,9 @@ def load(path):
         return {'version': VERSION, 'assignments': {}}
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
-        if not isinstance(data, dict) or data.get('version') != VERSION or not isinstance(data.get('assignments'), dict):
+        if not isinstance(data, dict) or data.get('version') not in (LEGACY_VERSION, VERSION) or not isinstance(data.get('assignments'), dict):
             raise ValueError('unsupported schema')
+        source_version = data['version']
         for key, a in data['assignments'].items():
             if not isinstance(a, dict) or not isinstance(key, str) or not key or a.get('id') != key:
                 raise ValueError('invalid assignment identity')
@@ -56,14 +59,21 @@ def load(path):
                 raise ValueError('invalid assignment metadata')
             if a.get('status') not in ('active', 'completed', 'cancelled') or a.get('phase') not in ('running', 'checkpoint', 'decision', 'extended', 'stop'):
                 raise ValueError('invalid assignment status or phase')
-            if any(not finite(a.get(k)) for k in ('deadline', 'checkpoint_interval', 'checkpoint_grace', 'next_checkpoint')) or a['checkpoint_interval'] <= 0 or a['checkpoint_grace'] < 0:
+            if any(not finite(a.get(k)) for k in ('deadline', 'checkpoint_grace')) or a['checkpoint_grace'] < 0:
                 raise ValueError('invalid assignment timing')
+            has_interval = 'checkpoint_interval' in a
+            has_next_checkpoint = 'next_checkpoint' in a
+            if has_interval != has_next_checkpoint or (source_version == LEGACY_VERSION and not has_interval):
+                raise ValueError('invalid checkpoint timing')
+            if has_interval and (not finite(a['checkpoint_interval']) or a['checkpoint_interval'] <= 0 or not finite(a['next_checkpoint'])):
+                raise ValueError('invalid checkpoint timing')
             if 'eta' in a and not finite(a['eta']):
                 raise ValueError('invalid assignment ETA')
             if a.get('phase') in ('checkpoint', 'decision') and not finite(a.get('phase_deadline')):
                 raise ValueError('invalid phase deadline')
             if any(not isinstance(a.get(k), bool) for k in ('extension_used', 'stop_confirmed', 'transferred')):
                 raise ValueError('invalid assignment flags')
+        data['version'] = VERSION
         return data
     except (OSError, ValueError, TypeError) as exc:
         raise ValueError(f'malformed state at {path}: {exc}') from exc
@@ -105,7 +115,7 @@ def advance(a, now):
     elif phase == 'extended' and now >= a['deadline']:
         a['phase'] = 'stop'
         event = ('extension_expired', 'request stop; confirm worker and writes stopped before ownership transfer')
-    elif phase in ('running', 'extended') and now >= a['next_checkpoint']:
+    elif phase in ('running', 'extended') and 'next_checkpoint' in a and now >= a['next_checkpoint']:
         a['next_checkpoint'] = add_time(now, a['checkpoint_interval'])
         event = ('progress_reminder', 'request concise progress update')
     if event:
@@ -115,6 +125,24 @@ def advance(a, now):
 
 def events(assignments, now):
     return [event for a in assignments.values() if (event := advance(a, now))]
+
+
+def next_event_time(assignments):
+    """Return the next timer transition, ignoring completed and stopped assignments."""
+    due_times = []
+    for a in assignments.values():
+        if a['status'] != 'active':
+            continue
+        phase = a['phase']
+        if phase == 'running':
+            due_times.append(a['deadline'])
+        elif phase in ('checkpoint', 'decision'):
+            due_times.append(a['phase_deadline'])
+        elif phase == 'extended':
+            due_times.append(a['deadline'])
+        if phase in ('running', 'extended') and 'next_checkpoint' in a:
+            due_times.append(a['next_checkpoint'])
+    return min(due_times) if due_times else None
 
 
 class StrictParser(argparse.ArgumentParser):
@@ -150,7 +178,7 @@ def parser():
     for name in ('id', 'agent', 'task'):
         r.add_argument(name)
     r.add_argument('--deadline', type=float, required=True, help='future Unix timestamp in seconds')
-    r.add_argument('--checkpoint', type=float, required=True, help='progress reminder interval in seconds')
+    r.add_argument('--checkpoint', type=float, help='opt-in progress reminder interval in seconds')
     r.add_argument('--grace', type=float, default=60, help='status and decision grace in seconds (default: 60)')
     r.add_argument('--route', default='', help='coordination metadata')
     r.add_argument('--now', type=float, help='override current Unix timestamp in seconds for testing')
@@ -194,15 +222,25 @@ def main():
                     found = events(assignments, now)
                     elapsed = time.monotonic() - started
                     if args.cmd == 'tick' or found or elapsed >= args.max_wait:
-                        save(args.state, data)
+                        if found:
+                            save(args.state, data)
                         out = {'events': found}
                         if args.cmd == 'wait':
                             out['wait_seconds'] = min(elapsed, args.max_wait)
                         break
+                    remaining = max(0, args.max_wait - elapsed)
+                    due_at = next_event_time(assignments)
+                    until_due = max(0, due_at - now) if due_at is not None else remaining
+                    pause = min(WAIT_POLL_INTERVAL, remaining)
+                    if until_due > 0:
+                        pause = min(pause, until_due)
                 elif args.cmd == 'register':
-                    if not args.id or args.id in assignments or args.deadline <= now or args.checkpoint <= 0 or args.grace < 0:
+                    if not args.id or args.id in assignments or args.deadline <= now or (args.checkpoint is not None and args.checkpoint <= 0) or args.grace < 0:
                         raise ValueError('duplicate ID or invalid deadline/checkpoint/grace')
-                    assignments[args.id] = dict(id=args.id, agent=args.agent, task=args.task, route=args.route, status='active', phase='running', deadline=args.deadline, checkpoint_interval=args.checkpoint, checkpoint_grace=args.grace, next_checkpoint=add_time(now, args.checkpoint), extension_used=False, stop_confirmed=False, transferred=False)
+                    assignment = dict(id=args.id, agent=args.agent, task=args.task, route=args.route, status='active', phase='running', deadline=args.deadline, checkpoint_grace=args.grace, extension_used=False, stop_confirmed=False, transferred=False)
+                    if args.checkpoint is not None:
+                        assignment.update(checkpoint_interval=args.checkpoint, next_checkpoint=add_time(now, args.checkpoint))
+                    assignments[args.id] = assignment
                     out = {'registered': args.id}
                 elif args.cmd == 'list':
                     out = {'assignments': list(assignments.values())}
@@ -221,7 +259,8 @@ def main():
                             raise ValueError('checkpoint unavailable')
                         if args.eta is not None:
                             a['eta'] = args.eta
-                        a['next_checkpoint'] = add_time(now, a['checkpoint_interval'])
+                        if 'checkpoint_interval' in a:
+                            a['next_checkpoint'] = add_time(now, a['checkpoint_interval'])
                         if a['phase'] == 'checkpoint':
                             a['phase'] = 'decision'
                             a['phase_deadline'] = add_time(now, a['checkpoint_grace'])
@@ -249,9 +288,10 @@ def main():
                         a['transferred'] = True
                         out = {'host_action': 'ownership transfer may now be performed by host'}
                 if args.cmd not in ('tick', 'wait'):
-                    save(args.state, data)
+                    if args.cmd != 'list':
+                        save(args.state, data)
                     break
-            time.sleep(min(.1, max(0, args.max_wait - (time.monotonic() - started))))
+            time.sleep(pause)
         print(json.dumps(out, sort_keys=True), flush=True)
         return 0
     except BrokenPipeError:

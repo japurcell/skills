@@ -47,7 +47,7 @@ Record actual arguments and the returned agent ID or blocker. Record overrides a
 
 Use [`scripts/scheduler.py`](scripts/scheduler.py) with a session-specific state file. Read the CLI's `--help` before first use for commands and state behavior.
 
-1. **Register assignments.** Choose and record the assignment ID and deadline based on expected effort and complexity before dispatch. Immediately after dispatch, register the task and returned agent ID before waiting.
+1. **Register assignments.** Choose and record the assignment ID and deadline based on expected effort and complexity before dispatch. Register ordinary work without a periodic progress interval; pass `--checkpoint SECONDS` only when that assignment needs scheduled progress reminders. Immediately after dispatch, register the task and returned agent ID before waiting.
 2. **Service the scheduler.** Call `tick` whenever control returns, including after user interruptions. Use bounded `wait` calls while awaiting work. Independently time out blocking tools.
 3. **Carry out emitted actions.** For status requests, collect status, completed work, blockers, and updated ETA; record a timely `checkpoint`, then choose completion, stopping, or the single ETA-based `extend`. Stop workers when a checkpoint or decision deadline is missed or an extension expires.
 4. **Verify shutdown before transfer.** Confirm the worker and its write-producing operations have stopped before recording `confirm-stopped` and `transfer`; then route and dispatch a fresh replacement. If shutdown is unconfirmed, report the blocker and continue independent work.
