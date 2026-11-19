@@ -1,0 +1,38 @@
+{
+  "baseline_revision": "7fc651a7702735f0b13d1f50695a8ef0ddc96477",
+  "caller_sources": {
+    "delegate-to-subagents": "skills/default/delegate-to-subagents/SKILL.md",
+    "execplan-implement": "skills/default/execplan-implement/SKILL.md",
+    "subagent-model-router": "skills/default/subagent-model-router/SKILL.md"
+  },
+  "counting": {
+    "rule": "whitespace_delimited",
+    "caller_gate_plus_shared_router_dispatch_rules": true
+  },
+  "short": {
+    "id": "short-shared-rules",
+    "caller_gate": "Before each new assignment, including reuse, run the router. Save its invocation and unchanged JSON with intended arguments. Apply its exact model through host controls. For `explicit`, pass the selected effort; for `host_default`, omit effort.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    },
+    "shared_rules": "An exact user-selected model may bypass `route_available: false`; otherwise block. It never overrides an enforced host restriction, and descriptive help omissions are not restrictions. Never call a known-disallowed model. When host availability is unknown, try once. A model-wide rejection forbids retries at every effort. For `explicit`, the user's effort selection overrides the router. Leave unverified availability, tier, cost and capability unknown. Fall back only with at least the routed capability floor and its effort policy, subject to host controls. Reuse only with useful context and matching controls: same model/effort for `explicit`; same model and no original effort override for `host_default`. Missing controls are blockers. Record the unchanged router result, intended and actual arguments, worker ID/blocker, and any override/fallback separately from the worker brief."
+  },
+  "challenger": {
+    "id": "short-minus-known-disallowed-model-block",
+    "removed_clause": "Never call a known-disallowed model.",
+    "caller_gate": "Before each new assignment, including reuse, run the router. Save its invocation and unchanged JSON with intended arguments. Apply its exact model through host controls. For `explicit`, pass the selected effort; for `host_default`, omit effort.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    },
+    "shared_rules": "An exact user-selected model may bypass `route_available: false`; otherwise block. It never overrides an enforced host restriction, and descriptive help omissions are not restrictions. When host availability is unknown, try once. A model-wide rejection forbids retries at every effort. For `explicit`, the user's effort selection overrides the router. Leave unverified availability, tier, cost and capability unknown. Fall back only with at least the routed capability floor and its effort policy, subject to host controls. Reuse only with useful context and matching controls: same model/effort for `explicit`; same model and no original effort override for `host_default`. Missing controls are blockers. Record the unchanged router result, intended and actual arguments, worker ID/blocker, and any override/fallback separately from the worker brief."
+  },
+  "challenger2": {
+    "id": "challenger-minus-host-default-original-effort-override",
+    "removed_clause": "and no original effort override for `host_default`",
+    "caller_gate": "Before each new assignment, including reuse, run the router. Save its invocation and unchanged JSON with intended arguments. Apply its exact model through host controls. For `explicit`, pass the selected effort; for `host_default`, omit effort.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    },
+    "shared_rules": "An exact user-selected model may bypass `route_available: false`; otherwise block. It never overrides an enforced host restriction, and descriptive help omissions are not restrictions. When host availability is unknown, try once. A model-wide rejection forbids retries at every effort. For `explicit`, the user's effort selection overrides the router. Leave unverified availability, tier, cost and capability unknown. Fall back only with at least the routed capability floor and its effort policy, subject to host controls. Reuse only with useful context and matching controls: same model/effort for `explicit`; same model for `host_default`. Missing controls are blockers. Record the unchanged router result, intended and actual arguments, worker ID/blocker, and any override/fallback separately from the worker brief."
+  }
+}

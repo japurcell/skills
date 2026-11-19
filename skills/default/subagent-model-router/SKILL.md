@@ -36,8 +36,10 @@ Add model and effort constraints only when explicitly requested by the user, inc
 
 Run the CLI with the classified task and supplied constraints, for example: `python3 <skill-root>/scripts/route.py --input request.json`.
 
-## Return the result
+Return the CLI's JSON result unchanged.
 
-Return the CLI's JSON result unchanged. `route_available` reports catalog fit. The caller dispatches the selected model and effort policy, honoring explicit user overrides and enforced host restrictions. Even if tool help omits the model ID, use the actual dispatch result to establish live acceptance. The caller reports blockers, selects any permitted fallback, and records its dispatch decision separately.
+## Dispatch controls
+
+Honor enforced worker restrictions, including for user-selected models. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse useful context only on the same model with matching explicit effort or originally omitted host-default effort. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.
 
 Load [maintenance.md](reference/maintenance.md) only when updating snapshots or investigating historical exclusions.

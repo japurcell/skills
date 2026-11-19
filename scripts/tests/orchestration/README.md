@@ -40,3 +40,11 @@ checks. They do not prove host dispatch, notification delivery, native agent
 context retention, native worker cancellation, or that a real host has
 quiesced all writes. Those require a live host run with observable process and
 write evidence. The historical trace is not copied into this fixture.
+
+`render_variants.py <outdir>` also renders the frozen W1 variants and three P2
+profile-preservation arms (`p2-screen`, `p2-deletion`, `p2-final`) from exact
+gate bodies in `fixtures/p2-gates.json`. Its `counts.json` reports whitespace
+word counts and full caller/router SHA-256 hashes. `test_w1.py` pins all six P2
+rendered hashes and counts, while retaining checks for the original P1 arms.
+The checked-in replay suite uses synthetic local fixtures and does not read
+private provider traces or `/private/tmp` artifacts.
