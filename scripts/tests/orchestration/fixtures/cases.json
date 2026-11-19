@@ -1,0 +1,397 @@
+{
+  "cases": [
+    {
+      "id": "case01",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [
+            "gpt-6-luna"
+          ],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case02",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "claude-haiku-5.5"
+          ],
+          "availability": "unknown",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case03",
+      "route": {
+        "task": {
+          "work": "standard"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [],
+          "availability": "unknown",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case04",
+      "route": {
+        "task": {
+          "work": "planning"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": "high",
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6.1-sol"
+          ],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case05",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6-luna"
+          ],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case06",
+      "route": {
+        "task": {
+          "work": "bounded"
+        },
+        "constraints": {
+          "models": [
+            "no-such-catalog-model"
+          ]
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case07",
+      "route": {
+        "task": {
+          "work": "bounded"
+        },
+        "constraints": {
+          "models": [
+            "no-such-catalog-model"
+          ]
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": "gpt-9-user-requested",
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case08",
+      "route": {
+        "task": {
+          "work": "bounded"
+        },
+        "constraints": {
+          "models": [
+            "no-such-catalog-model"
+          ]
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": "gpt-9-user-requested",
+          "known_disallowed_models": [
+            "gpt-9-user-requested"
+          ],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case09",
+      "route": {
+        "task": {
+          "work": "planning"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": false,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6.1-sol"
+          ],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case10",
+      "route": {
+        "task": {
+          "work": "planning"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": false,
+          "help_models": [
+            "gpt-6.1-sol"
+          ],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case11",
+      "route": {
+        "task": {
+          "work": "standard"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [
+            "gpt-6-luna"
+          ],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-5.6-luna"
+          ],
+          "availability": "known",
+          "reuse": null
+        }
+      }
+    },
+    {
+      "id": "case12",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6-luna"
+          ],
+          "availability": "known",
+          "reuse": {
+            "existing_worker_id": "worker-old-x",
+            "existing_model": "gpt-6.1-sol",
+            "existing_effort": null,
+            "original_effort_override": false,
+            "useful_context": true
+          }
+        }
+      }
+    },
+    {
+      "id": "case13",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6-luna"
+          ],
+          "availability": "known",
+          "reuse": {
+            "existing_worker_id": "worker-old-same",
+            "existing_model": "gpt-6-luna",
+            "existing_effort": null,
+            "original_effort_override": false,
+            "useful_context": true
+          }
+        }
+      }
+    },
+    {
+      "id": "case14",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6-luna"
+          ],
+          "availability": "known",
+          "reuse": {
+            "existing_worker_id": "worker-old-override",
+            "existing_model": "gpt-6-luna",
+            "existing_effort": "high",
+            "original_effort_override": true,
+            "useful_context": true
+          }
+        }
+      }
+    },
+    {
+      "id": "case15",
+      "route": {
+        "task": {
+          "work": "planning"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6.1-sol"
+          ],
+          "availability": "known",
+          "reuse": {
+            "existing_worker_id": "worker-old-explicit",
+            "existing_model": "gpt-6.1-sol",
+            "existing_effort": "medium",
+            "original_effort_override": false,
+            "useful_context": true
+          }
+        }
+      }
+    },
+    {
+      "id": "case16",
+      "route": {
+        "task": {
+          "work": "bounded"
+        }
+      },
+      "host": {
+        "public": {
+          "exact_user_model": null,
+          "known_disallowed_models": [],
+          "user_effort": null,
+          "model_control": true,
+          "effort_control": true,
+          "help_models": [
+            "gpt-6-luna"
+          ],
+          "availability": "known",
+          "reuse": {
+            "existing_worker_id": "worker-no-context",
+            "existing_model": "gpt-6-luna",
+            "existing_effort": null,
+            "original_effort_override": false,
+            "useful_context": false
+          }
+        }
+      }
+    }
+  ]
+}
