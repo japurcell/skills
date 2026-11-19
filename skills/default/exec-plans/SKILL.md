@@ -9,7 +9,14 @@ An ExecPlan is the working contract for a feature or other multi-step change. Wr
 
 ## Invocation and pre-code gate
 
-Load this skill before inspecting or editing an existing ExecPlan. Reuse its instructions within the same agent context; reload only when they change or are no longer available in context. If work [needs a plan](#triage-complexity), create the file at the requested location before the first code edit. When no location is specified, use the project's established plan location; if none exists, create `brain/<feature-slug>/ExecPlan.md`. Verify that the file exists before changing implementation code. Saying that you will write a plan later does not satisfy this gate.
+Load this skill before inspecting or editing an ExecPlan. If a required read is truncated, retrieve the omitted sections in smaller ranges before relying on it. This includes the outline and linked principles. Reuse complete, current reads already in context.
+
+If work [needs a plan](#triage-complexity), save it at the requested location, the project's established plan location, or otherwise `brain/<feature-slug>/ExecPlan.md`. Before the first implementation edit or dispatch of a planned task (including a baseline trial), inspect the saved plan for the following evidence.
+
+1. **Design evidence.** For each architectural choice governing the task, find the alternatives, the [fresh reviewer's ranking](#collaborate-on-the-architecture), and the reason for the selection in the Decision Log. Check which implementation choices remain open even when the user has approved the acceptance criteria.
+2. **A ready task.** Find the task’s prerequisites and their evidence, owner, inputs, expected outcome, verification and stopping point in the plan. Put missing details there before briefing the worker. Give each worker only its ready assignment, even when it will own later milestones.
+
+Use [planning-time exploration](#gather-context-with-subagents) and design review to fill gaps. Once the applicable checks pass, proceed within the existing authorization.
 
 When drafting or restructuring a plan, read the [annotated outline](references/outline.md) and adapt it using the relevant source and supplied requirements. Resolve ordinary ambiguities from the available evidence or by [gathering context with subagents](#gather-context-with-subagents); then record the choice and rationale in the plan. If ambiguities remain, ask the user for clarification to close every gap. When asking the user questions, use the host's structured input tool with concrete options when available, or concise direct questions otherwise. Provide your recommendation for each question. Close gaps in behavior, scope boundaries, edge cases, data shapes, error handling, non-goals, and acceptance bar. Batch related questions (no more than four at a time). Stop only when the remaining decisions are resolved or the user explicitly delegates them to your discretion. Do not leave key implementation decisions for a novice reader to guess.
 
@@ -86,7 +93,7 @@ Design steps to be repeatable. Explain how to detect and recover from a partial 
 
 For architectural decisions, trace every system the change touches, then sketch 2-3 different shapes for it (types, signatures, module boundaries). Before you pick one, dispatch a fresh subagent and instruct it to: activate the `codebase-design` skill and critique, grade, and rank your designs. Use that feedback to pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. If the best design isn't obvious, ask the user to pick.
 
-Record each design considered in the plan's `Decision Log`. State which was chosen and why. This prevents premature commitment and documents the design space explored by applying exhaust-the-design-space.md.
+Record the alternatives, the reviewer's ranking and its bearing on the choice in the plan's `Decision Log`.
 
 ### Redesign check
 

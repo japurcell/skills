@@ -45,6 +45,8 @@ Use this annotated outline and adapt detail to the work. The file-reporting exam
     ## Decision Log
 
     Record current decisions and the rationale needed to continue safely.
+    For an architectural decision, identify the alternatives, the fresh
+    reviewer's ranking, and why the selected design meets the requirements.
     Explain substantive changes in scope or approach here.
 
     - Decision: <choice>
