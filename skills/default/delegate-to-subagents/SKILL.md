@@ -25,23 +25,15 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 
 - Define scope, file ownership, acceptance criteria, and required completion evidence.
 - Put constraints and known negative cases that change the worker's decisions in the brief. Point to the relevant file, section, commit or research note for supporting detail.
-- Follow the [pre-dispatch gate](#pre-dispatch-gate). Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`.
+- Follow the [pre-dispatch gate](#pre-dispatch-gate).
 - Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
 - Ask for the result, evidence pointer and any open decision that affects another task. Retrieve the underlying evidence when verifying a claim or resolving a disagreement.
 
 ### Pre-dispatch gate
 
-Before each new assignment, including agent reuse, run the router CLI. Save its invocation, unchanged JSON result, and intended dispatch arguments in the assignment's coordination record.
+For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.
 
-Use a new assignment ID for each new subtask; retain it for status updates and clarifications.
-
-Apply the selected route within user constraints, host permissions, context limits, and applicable restrictions.
-
-- Require `route_available: true`, except for an exact user-selected model. Apply that override through host controls; leave unknown catalog tier, price, and capability unresolved.
-- Dispatch the assignment with the exact model ID, even if omitted from a descriptive model list. Honor enforced allowlists. For `explicit`, pass the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
-- Use the dispatch result to establish live acceptance. If blocked, identify the specific model, effort, capability, or permission issue. Apply the same checks to any permitted fallback, preserving effort policy and capability floor. A model-wide rejection rules out every effort for that model.
-
-Record actual arguments and the returned agent ID or blocker. Record overrides and fallbacks separately from the CLI result. Routine routing needs no separate user confirmation.
+Use a new assignment ID for each subtask and retain it for status updates.
 
 ## Runtime enforcement
 
