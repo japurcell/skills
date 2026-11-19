@@ -1,6 +1,6 @@
 # M1. Commit message validation
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 ## Tasks and prerequisites
@@ -36,5 +36,5 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-1] Prove T1a grammar parity through both CLIs.
+- [x] (2026-11-19) [milestone-1] T1a passed both integrated suites at `059166bf`.
 - [ ] [milestone-1] Complete T1b and run both suites together.

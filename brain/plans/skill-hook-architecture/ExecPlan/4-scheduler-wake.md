@@ -1,6 +1,6 @@
 # M4. Scheduler wake and native completion
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 ## Tasks and prerequisites
@@ -44,6 +44,6 @@ Follow `scripts/tests/orchestration/native-lifecycle.md` with the inverted deadl
 
 ## Progress
 
-- [ ] [milestone-4] Capture the T4a baseline without a candidate dispatch.
+- [x] (2026-11-19) [milestone-4] Captured T4a setup outcome and nine passing local controlled tests. Automatic approval review rejected the authenticated native control before any launch.
 - [ ] [milestone-4] Verify T4b timer selection, read-only state and delayed launch.
 - [ ] [milestone-4] Run T4c candidate trials against the baseline, recording unverified host paths.
