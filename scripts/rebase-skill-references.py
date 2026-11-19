@@ -40,21 +40,41 @@ def artifact_excluded(name: str, is_directory: bool, is_link: bool) -> bool:
     )
 
 
-def filtered_entries(directory: Path):
-    """Do not inspect children whose names alone exclude them for either type."""
+def filtered_entries(directory: Path, *, profile: str = "legacy", root: bool = False):
+    """Classify exclusions before any descent, without following links."""
     with os.scandir(directory) as entries:
         for entry in entries:
-            # A link can match either category, so stat only names whose type matters.
-            if (
-                entry.name in ARTIFACT_POLICY["directory_names"]
-                or entry.name in ARTIFACT_POLICY["file_names"]
-                or entry.name.endswith(ARTIFACT_POLICY["file_suffixes"])
-            ):
-                is_link = entry.is_symlink()
-                is_directory = entry.is_dir(follow_symlinks=False)
-                if artifact_excluded(entry.name, is_directory, is_link):
+            link = is_link_or_junction(Path(entry.path))
+            directory_entry = entry.is_dir(follow_symlinks=False) and not link
+            if artifact_excluded(entry.name, directory_entry, link):
+                continue
+            if profile != "legacy":
+                if root and profile == "overlay" and entry.name in SKILL_EXCLUSIONS:
+                    continue
+                if directory_entry and entry.name in TEST_DIRECTORY_NAMES:
+                    continue
+                if not directory_entry and not link and TEST_SCRIPT_NAME.fullmatch(entry.name):
                     continue
             yield entry
+
+
+def skill_copy_operations(source: Path, destination: Path, *, profile: str = "legacy"):
+    """Emit one ordered, link-safe traversal for either native copier."""
+    if is_link_or_junction(source):
+        yield {"kind": "link", "source": str(source), "destination": str(destination)}
+        return
+    def walk(src: Path, dst: Path, root: bool):
+        yield {"kind": "enter", "source": str(src), "destination": str(dst)}
+        for entry in sorted(filtered_entries(src, profile=profile, root=root), key=lambda item: item.name):
+            child, target = Path(entry.path), dst / entry.name
+            if is_link_or_junction(child):
+                yield {"kind": "link", "source": str(child), "destination": str(target)}
+            elif entry.is_dir(follow_symlinks=False):
+                yield from walk(child, target, False)
+            else:
+                yield {"kind": "file", "source": str(child), "destination": str(target)}
+        yield {"kind": "leave", "source": str(src), "destination": str(dst)}
+    yield from walk(source, destination, True)
 
 
 def reject_linked_ancestors(path: Path) -> None:
@@ -66,8 +86,8 @@ def reject_linked_ancestors(path: Path) -> None:
             raise ValueError(f"Refusing linked destination directory: {component}")
 
 
-def copy_filtered(source_dir: Path, destination_dir: Path, *, replace: bool = False) -> int:
-    """Copy allowed entries with native cp, without following destination links."""
+def copy_filtered(source_dir: Path, destination_dir: Path, *, replace: bool = False, profile: str = "legacy") -> int:
+    """Execute shared traversal with batched native POSIX copies."""
     reject_linked_ancestors(destination_dir.parent)
     source_real = source_dir.resolve()
     source_is_link = is_link_or_junction(source_dir)
@@ -91,60 +111,58 @@ def copy_filtered(source_dir: Path, destination_dir: Path, *, replace: bool = Fa
     reject_linked_ancestors(destination_dir)
     changed_modes = []
     succeeded = False
+    batch = []
+    batch_dir = None
+    size = 0
 
     def writable(path: Path) -> None:
-        details = path.lstat()
-        mode = _checked_write_access_mode(path, details)
+        mode = _checked_write_access_mode(path, path.lstat())
         if not mode & stat.S_IWUSR:
             path.chmod(mode | stat.S_IWUSR)
             changed_modes.append((path, mode))
 
-    def copy_directory(source: Path, destination: Path) -> None:
-        if destination.exists():
-            if not destination.is_dir() or is_link_or_junction(destination):
-                raise ValueError(f"Refusing linked or non-directory destination: {destination}")
-            writable(destination)
-        else:
-            destination.mkdir()
-        directories, batch = [], []
-        size = 0
-
-        def flush() -> None:
-            nonlocal size
-            if batch:
-                subprocess.run(["cp", "-Rp", "--", *batch, str(destination)], check=True)
-                batch.clear()
-                size = 0
-
-        for entry in filtered_entries(source):
-            target = destination / entry.name
-            if entry.is_dir(follow_symlinks=False) and not is_link_or_junction(Path(entry.path)):
-                directories.append((Path(entry.path), target))
-                continue
-            if is_link_or_junction(target):
-                remove_pruned_path(target)
-            elif target.exists():
-                details = target.lstat()
-                if stat.S_ISDIR(details.st_mode):
-                    raise ValueError(f"Refusing directory in place of destination file: {target}")
-                if stat.S_ISREG(details.st_mode):
-                    _checked_write_access_mode(target, details)
-                    if details.st_nlink > 1:
-                        target.unlink()
-                    else:
-                        writable(target)
-            argument = entry.path
-            if batch and size + len(os.fsencode(argument)) > 65536:
-                flush()
-            batch.append(argument)
-            size += len(os.fsencode(argument)) + 1
-        flush()
-        for child_source, child_destination in directories:
-            copy_directory(child_source, child_destination)
-        shutil.copystat(source, destination, follow_symlinks=False)
+    def flush() -> None:
+        nonlocal size
+        if batch:
+            subprocess.run(["cp", "-Rp", "--", *batch, str(batch_dir)], check=True)
+            batch.clear()
+            size = 0
 
     try:
-        copy_directory(source_dir, destination_dir)
+        for operation in skill_copy_operations(source_dir, destination_dir, profile=profile):
+            source, destination = Path(operation["source"]), Path(operation["destination"])
+            kind = operation["kind"]
+            if kind == "enter":
+                flush()
+                if destination.exists():
+                    if not destination.is_dir() or is_link_or_junction(destination):
+                        raise ValueError(f"Refusing linked or non-directory destination: {destination}")
+                    writable(destination)
+                else:
+                    destination.mkdir()
+            elif kind == "leave":
+                flush()
+                shutil.copystat(source, destination, follow_symlinks=False)
+            else:
+                if is_link_or_junction(destination):
+                    remove_pruned_path(destination)
+                elif destination.exists():
+                    details = destination.lstat()
+                    if stat.S_ISDIR(details.st_mode):
+                        raise ValueError(f"Refusing directory in place of destination file: {destination}")
+                    if stat.S_ISREG(details.st_mode):
+                        _checked_write_access_mode(destination, details)
+                        if details.st_nlink > 1:
+                            destination.unlink()
+                        else:
+                            writable(destination)
+                argument = str(source)
+                if batch and (batch_dir != destination.parent or size + len(os.fsencode(argument)) > 65536):
+                    flush()
+                batch_dir = destination.parent
+                batch.append(argument)
+                size += len(os.fsencode(argument)) + 1
+        flush()
         succeeded = True
         return 0
     finally:
@@ -413,6 +431,8 @@ def main() -> int:
     parser.add_argument("--source-dir", type=Path)
     parser.add_argument("--destination-dir", type=Path)
     parser.add_argument("--print-artifact-policy", action="store_true", help="Print the shared exclusion policy as JSON.")
+    parser.add_argument("--emit-copy-operations", action="store_true", help="Emit the shared native copy operations as JSON.")
+    parser.add_argument("--profile", choices=("legacy", "overlay", "replace"), default="legacy")
     parser.add_argument("--copy-filtered", action="store_true", help="Copy the skill using the shared artifact exclusions.")
     parser.add_argument("--replace-destination", action="store_true", help="Replace the destination before a filtered copy.")
     parser.add_argument("--references-source", type=Path)
@@ -436,6 +456,9 @@ def main() -> int:
         return 0
     if args.source_dir is None or args.destination_dir is None:
         parser.error("--source-dir and --destination-dir are required")
+    if args.emit_copy_operations:
+        print(json.dumps(list(skill_copy_operations(args.source_dir, args.destination_dir, profile=args.profile))))
+        return 0
     if args.copy_filtered and args.copy_command:
         parser.error("--copy-filtered and --copy-command cannot be combined")
     if args.replace_destination and not args.copy_filtered:
@@ -443,7 +466,7 @@ def main() -> int:
     if (args.references_source is None) != (args.references_destination is None):
         parser.error("--references-source and --references-destination must be used together")
     if args.copy_filtered:
-        status = copy_filtered(args.source_dir, args.destination_dir, replace=args.replace_destination)
+        status = copy_filtered(args.source_dir, args.destination_dir, replace=args.replace_destination, profile=args.profile)
         if status:
             return status
     if args.copy_command:

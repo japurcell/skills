@@ -110,6 +110,7 @@ copy_skills() {
       --references-source "$REFERENCES_SRC" \
       --references-destination "$REFERENCES_DEST" \
       --prune \
+      --profile overlay \
       --copy-filtered
   done < <(find "$SKILLS_SRC/$category" -mindepth 1 -maxdepth 1 -print0)
 }

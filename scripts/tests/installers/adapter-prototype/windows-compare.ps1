@@ -1,4 +1,4 @@
-# Native Windows qualification. No fixture condition is skipped.
+# Native Windows public-installer qualification. No fixture condition is skipped.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if (-not $IsWindows) { throw 'This fixture requires native Windows.' }
@@ -25,9 +25,8 @@ $sourceJunction = Join-Path $source 'junction'
 New-Item -ItemType Junction -Path $sourceJunction -Target $external | Out-Null
 Assert-Equals 'Junction' (Get-Item -Force -LiteralPath $sourceJunction).LinkType 'Source junction was not created.'
 $before = Get-TreeFingerprint $external
-$env:ADAPTER_SCAN_TRACE = Join-Path $workdir 'scandir.jsonl'
 $homes = @{}
-foreach ($name in @('public', 'prototype')) {
+foreach ($name in @('public')) {
     $homeDir = Join-Path $workdir $name
     $dest = Join-Path $homeDir '.agents/skills/alpha'
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
@@ -37,15 +36,8 @@ foreach ($name in @('public', 'prototype')) {
     Assert-Equals 'SymbolicLink' (Get-Item -Force -LiteralPath (Join-Path $dest 'replace.txt')).LinkType 'Destination symlink was not created.'
     $homes[$name] = $homeDir
     foreach ($iteration in 1..2) {
-        if ($name -eq 'public') {
-            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue '0'
-            if ($result.ExitCode -ne 0) { throw "Public install failed: $($result.Stderr -join "`n")" }
-        } else {
-            & python (Join-Path $PSScriptRoot 'copy.py') $source $dest
-            if ($LASTEXITCODE -ne 0) { throw 'Prototype copy failed.' }
-            & python (Join-Path $repo 'scripts/rebase-skill-references.py') --source-dir $source --destination-dir $dest --prune
-            if ($LASTEXITCODE -ne 0) { throw 'Prototype prune failed.' }
-        }
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue '0'
+        if ($result.ExitCode -ne 0) { throw "Public install failed: $($result.Stderr -join "`n")" }
         $junction = Get-Item -Force -LiteralPath (Join-Path $dest 'junction')
         Assert-Equals 'Junction' $junction.LinkType 'Installed junction lost its type.'
         Assert-Equals $external $junction.Target 'Installed junction target changed.'
@@ -58,24 +50,17 @@ foreach ($name in @('public', 'prototype')) {
         Write-Host "$name iteration $iteration passed: junction=$($junction.Target), file=replace.txt, cache absent"
     }
 }
-if ((Get-Content -Raw -LiteralPath $env:ADAPTER_SCAN_TRACE).Contains('__pycache__')) { throw 'Prototype enumerated an excluded cache.' }
-Remove-Item Env:ADAPTER_SCAN_TRACE
 # A destination directory junction must cause failure without changing the external tree.
-foreach ($name in @('public', 'prototype')) {
+foreach ($name in @('public')) {
     $homeDir = $homes[$name]
     $dest = Join-Path $homeDir '.agents/skills/alpha'
     Remove-Item -LiteralPath (Join-Path $dest 'blocked') -Recurse -Force
     New-Item -ItemType Junction -Path (Join-Path $dest 'blocked') -Target $external | Out-Null
-    if ($name -eq 'public') {
-        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue '0'
-        $code = $result.ExitCode
-    } else {
-        & python (Join-Path $PSScriptRoot 'copy.py') $source $dest
-        $code = $LASTEXITCODE
-    }
+    $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue '0'
+    $code = $result.ExitCode
     if ($code -eq 0) { throw "$name accepted a linked destination directory." }
     Assert-Equals 'Junction' (Get-Item -Force -LiteralPath (Join-Path $dest 'blocked')).LinkType 'Failure removed destination junction.'
     Assert-Equals $before (Get-TreeFingerprint $external) 'Failure modified external target.'
     Write-Host "$name failure recovery passed: exit=$code, destination junction and external fingerprint preserved"
 }
-Write-Host "PASS: native Windows adapter comparison; retained fixture: $workdir"
+Write-Host "PASS: native Windows public skill copy; retained fixture: $workdir"
