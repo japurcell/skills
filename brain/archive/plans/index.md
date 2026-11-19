@@ -15,3 +15,4 @@
 - [Scanner, Guardian, and event-emitter hook retirement](2026-11-11-retire-hooks/ExecPlan.md)
 - [Hook observability retirement](2026-11-11-retire-observability/ExecPlan.md)
 - [Worker dispatch, deadline and writer-shutdown evaluations](38-dispatch-and-deadlines/exec-plan.md)
+- [Skill and hook architecture](skill-hook-architecture/ExecPlan.md)

@@ -482,6 +482,7 @@ copy_skills() {
       --source-dir "$source_dir" \
       --destination-dir "$target_dir" \
       --copy-filtered \
+      --profile replace \
       --replace-destination \
       --prune-test-files
     rewrite_name_field "$skill_file" "$base_name" "${PREFIX}${base_name}"

@@ -42,6 +42,9 @@ def load_generator():
     return module
 
 
+TARGET_COUNT = len(load_generator().targets())
+
+
 def snapshot(root: Path) -> dict[str, tuple[bytes, int]]:
     return {
         path.relative_to(root).as_posix(): (path.read_bytes(), stat.S_IMODE(path.stat().st_mode))
@@ -154,7 +157,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (14 files).\n")
+        self.assertEqual(fresh.stdout, f"Generated hooks are current ({TARGET_COUNT} files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -212,7 +215,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (14 files).\n")
+        self.assertEqual(result.stdout, f"Generated hooks are current ({TARGET_COUNT} files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -237,7 +240,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (14 files).\n")
+        self.assertEqual(second.stdout, f"Generated hooks already current ({TARGET_COUNT} files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -301,6 +304,177 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(result.returncode, 130)
         self.assertEqual(before, snapshot(ROOT))
         self.assertFalse(lock.exists())
+
+
+class LaunchPublicationTests(unittest.TestCase):
+    def test_missing_registration_is_detected_and_repaired_without_losing_siblings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            path = copy / ".gemini/settings.json"
+            document = json.loads(path.read_text())
+            sibling = {"name": "other", "type": "command", "command": "echo other"}
+            document["hooks"]["SessionStart"][0]["hooks"].insert(0, sibling)
+            document["hooks"]["AfterTool"] = []
+            path.write_text(json.dumps(document))
+            script = copy / "scripts/generate-hooks.py"
+            check = subprocess.run([sys.executable, str(script), "--check"], capture_output=True, text=True)
+            self.assertEqual(check.returncode, 1, check.stdout + check.stderr)
+            write = subprocess.run([sys.executable, str(script), "--write"], capture_output=True, text=True)
+            self.assertEqual(write.returncode, 0, write.stdout + write.stderr)
+            result = json.loads(path.read_text())
+            self.assertEqual(result["hooks"]["SessionStart"][0]["hooks"][0], sibling)
+            self.assertEqual(len(result["hooks"]["AfterTool"]), 1)
+
+    def test_read_only_check_modes_and_multi_file_rollback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            paths = [copy / ".github/hooks/hooks.json", copy / ".gemini/settings.json"]
+            for path in paths:
+                document = json.loads(path.read_text())
+                document["hooks"][next(iter(document["hooks"]))] = []
+                path.write_text(json.dumps(document))
+                path.chmod(0o640)
+            before = [(path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths]
+            script = copy / "scripts/generate-hooks.py"
+            check = subprocess.run([sys.executable, str(script), "--check"], capture_output=True, text=True)
+            self.assertEqual(check.returncode, 1, check.stdout + check.stderr)
+            self.assertEqual(before, [(p.read_bytes(), stat.S_IMODE(p.stat().st_mode)) for p in paths])
+            env = os.environ.copy()
+            env["GENERATE_HOOKS_TEST_FAIL_AFTER_REPLACEMENTS"] = "1"
+            failed = subprocess.run([sys.executable, str(script), "--write"], env=env, capture_output=True, text=True)
+            self.assertEqual(failed.returncode, 2, failed.stdout + failed.stderr)
+            self.assertEqual(before, [(p.read_bytes(), stat.S_IMODE(p.stat().st_mode)) for p in paths])
+            written = subprocess.run([sys.executable, str(script), "--write"], capture_output=True, text=True)
+            self.assertEqual(written.returncode, 0, written.stderr)
+            self.assertEqual([stat.S_IMODE(p.stat().st_mode) for p in paths], [0o640, 0o640])
+            after = [p.read_bytes() for p in paths]
+            again = subprocess.run([sys.executable, str(script), "--write"], capture_output=True, text=True)
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertEqual(after, [p.read_bytes() for p in paths])
+
+    def test_rollback_preserves_external_edit_after_publication(self):
+        generator = load_generator()
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            paths = [copy / ".github/hooks/hooks.json", copy / ".gemini/settings.json"]
+            for path in paths:
+                document = json.loads(path.read_text())
+                document["hooks"][next(iter(document["hooks"]))] = []
+                path.write_text(json.dumps(document))
+            original_replace = os.replace
+            def replace(source, destination):
+                if destination == paths[1]:
+                    raise OSError("later failure")
+                original_replace(source, destination)
+                if destination == paths[0]:
+                    destination.write_bytes(destination.read_bytes() + b" ")
+            with mock.patch.object(generator.os, "replace", side_effect=replace):
+                with self.assertRaisesRegex(generator.GenerateError, "rollback"):
+                    generator.write_outputs(copy, generator.render_all(copy))
+            self.assertTrue(paths[0].read_bytes().endswith(b" "))
+            self.assertEqual(len(json.loads(paths[0].read_text())["hooks"]["sessionStart"]), 1)
+
+    def test_writer_reads_registration_after_acquiring_lock(self):
+        generator = load_generator()
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            path = copy / ".github/hooks/hooks.json"
+            document = json.loads(path.read_text())
+            document["hooks"]["sessionStart"] = []
+            path.write_text(json.dumps(document))
+            original_lock = generator._create_lock
+            def lock(root):
+                document = json.loads(path.read_text())
+                document["externalSetting"] = "preserve"
+                path.write_text(json.dumps(document))
+                return original_lock(root)
+            with mock.patch.object(generator, "_create_lock", side_effect=lock):
+                generator.write_outputs(copy, generator.render_all(copy))
+            self.assertEqual(json.loads(path.read_text())["externalSetting"], "preserve")
+
+    def test_conflicts_and_equivalent_interpreters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            path = copy / ".codex/hooks.json"
+            original = json.loads(path.read_text())
+            script = copy / "scripts/generate-hooks.py"
+            for kind in ("duplicate", "metadata"):
+                document = json.loads(json.dumps(original))
+                entry = document["hooks"]["SessionStart"][0]
+                if kind == "duplicate":
+                    document["hooks"]["SessionStart"].append(entry)
+                else:
+                    entry["hooks"][0]["timeout"] = 42
+                path.write_text(json.dumps(document))
+                before = path.read_bytes()
+                result = subprocess.run([sys.executable, str(script), "--write"], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("conflict", result.stderr.lower())
+                self.assertEqual(path.read_bytes(), before)
+            document = json.loads(json.dumps(original))
+            handler = document["hooks"]["SessionStart"][0]["hooks"][0]
+            for field in ("command", "commandWindows"):
+                handler[field] = handler[field].replace("python -I", "python3 -I", 1)
+            path.write_text(json.dumps(document))
+            result = subprocess.run([sys.executable, str(script), "--write"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(path.read_text()), original)
+
+    def test_concurrent_edit_is_preserved_and_earlier_replacement_rolled_back(self):
+        generator = load_generator()
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory) / "repo"
+            shutil.copytree(ROOT, copy, ignore=shutil.ignore_patterns(".git", "__pycache__"))
+            paths = [copy / ".github/hooks/hooks.json", copy / ".gemini/settings.json"]
+            for path in paths:
+                document = json.loads(path.read_text())
+                document["hooks"][next(iter(document["hooks"]))] = []
+                path.write_text(json.dumps(document))
+            before = paths[0].read_bytes()
+            original_stage = generator._stage
+            injected = False
+            def stage(path, data, mode):
+                nonlocal injected
+                result = original_stage(path, data, mode)
+                if path == paths[1] and not injected:
+                    injected = True
+                    path.write_bytes(path.read_bytes() + b" ")
+                return result
+            with mock.patch.object(generator, "_stage", side_effect=stage):
+                with self.assertRaisesRegex(generator.GenerateError, "Concurrent edit"):
+                    generator.write_outputs(copy, generator.render_all(copy))
+            self.assertEqual(paths[0].read_bytes(), before)
+            self.assertTrue(paths[1].read_bytes().endswith(b" "))
+            self.assertFalse((copy / generator.LOCK_NAME).exists())
+
+
+class LaunchRegistrationOracleTests(unittest.TestCase):
+    def test_frozen_registrations_and_negative_drift_control(self) -> None:
+        checker = ROOT / "scripts/tests/hooks/check-launch-registrations.py"
+        positive = subprocess.run([sys.executable, str(checker), "--root", str(ROOT)],
+                                  text=True, capture_output=True, check=False)
+        self.assertEqual(positive.returncode, 0, positive.stdout + positive.stderr)
+        self.assertIn("6 documents, 20 commands", positive.stdout)
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory)
+            fixture = json.loads((ROOT / "scripts/tests/hooks/launch-registrations-069b3f22.json").read_text())
+            for name in fixture:
+                destination = copy / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, destination)
+            path = copy / ".github/hooks/hooks.json"
+            document = json.loads(path.read_text())
+            document["hooks"]["sessionStart"][0]["timeoutSec"] = 6
+            path.write_text(json.dumps(document))
+            negative = subprocess.run([sys.executable, str(checker), "--root", str(copy)],
+                                      text=True, capture_output=True, check=False)
+            self.assertNotEqual(negative.returncode, 0)
+            self.assertIn(".github/hooks/hooks.json", negative.stderr)
 
 
 class ReadyIdeasWindowsWorkflowTests(unittest.TestCase):

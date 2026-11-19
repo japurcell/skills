@@ -32,6 +32,8 @@ SUITES = (
     ("python3", "scripts/tests/hooks/test-probe-provider-hook-delivery.py"),
     ("python3", "scripts/tests/hooks/test-generate-hooks.py"),
     ("python3", "scripts/tests/hooks/test-brain-hooks.py"),
+    ("python3", "scripts/tests/hooks/test-input-baseline.py"),
+    ("python3", "scripts/tests/installers/test-skill-copy-policy.py"),
     ("python3", "scripts/tests/installers/test-rtk-stable.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/tests/installers/test-install.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/tests/hooks/test-lifecycle-messages-windows.ps1"),

@@ -23,7 +23,7 @@ import secrets
 import stat
 import struct
 from contextlib import ExitStack, contextmanager
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 
 class BrainError(ValueError):
@@ -318,7 +318,30 @@ def writer_lock(vault):
         os.close(descriptor)
 
 
-def inventory(vault):
+def inventory_text(text):
+    return re.sub(r"([\\\[\]<`])", r"\\\1", text).replace("\n", " ").replace("\r", " ")
+
+
+def verify_inventory(data, groups):
+    # The inventory format has three line types: blank, plain ATX heading,
+    # or a bullet containing exactly one link. Escapes are literal text.
+    literal = r"(?:\\[^\r\n]|[^\\\[\]<`\r\n])*"
+    heading = re.compile(r"#{1,6}(?:[ \t]" + literal + r")?")
+    entry = re.compile(r"- \[" + literal + r"\]\(<((?:[a-zA-Z0-9._~/-]|%[0-9a-fA-F]{2})+)>\)[ \t]*")
+    actual = []
+    text = data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+    for line in text.split("\n"):
+        if not line.strip(" \t") or heading.fullmatch(line):
+            continue
+        match = entry.fullmatch(line)
+        if not match:
+            raise BrainError("invalid index")
+        actual.append(unquote(match[1], errors="strict"))
+    if sorted(actual) != sorted(note for notes in groups.values() for note in notes):
+        raise BrainError("stale index")
+
+
+def inventory(vault, verify=False):
     deadline = time.monotonic() + 2
     groups = {}
     pending = [((), ())]
@@ -355,10 +378,9 @@ def inventory(vault):
         groups.setdefault(relative.parent.as_posix(), []).append(relative.as_posix())
     lines = ["# Brain"]
     for group, notes in sorted(groups.items()):
-        lines.extend(["", "## " + ("Root" if group == "." else group), ""])
+        lines.extend(["", "## " + ("Root" if group == "." else inventory_text(group)), ""])
         for note in notes:
-            stem = note[:-3]
-            label = re.sub(r"([\\\[\]])", r"\\\1", stem).replace("\n", " ").replace("\r", " ")
+            label = inventory_text(note[:-3])
             lines.append("- [" + label + "](<" + quote(note, safe="/") + ">)")
     content = ("\n".join(lines) + "\n").encode("utf-8")
     if len(content) > 512 * 1024 or time.monotonic() > deadline:
@@ -370,7 +392,27 @@ def inventory(vault):
             previous = stream.read(512 * 1024 + 1)
         if len(previous) > 512 * 1024:
             raise BrainError("existing index too large")
-    if previous != content:
+    if verify:
+        if previous is None:
+            raise BrainError("missing index")
+        verify_inventory(previous, groups)
+        return content
+    if previous == content:
+        first = ".brain-index-" + secrets.token_hex(12)
+        second = ".brain-index-" + secrets.token_hex(12)
+        owned = []
+        try:
+            descriptor = vault.open_file(first, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            owned.append(first)
+            os.close(descriptor)
+            descriptor = vault.open_file(second, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            owned.append(second)
+            os.close(descriptor)
+            vault.replace(first, second)
+        finally:
+            for name in owned:
+                vault.unlink(name)
+    else:
         name = ".brain-index-" + secrets.token_hex(12)
         descriptor = vault.open_file(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
         try:
@@ -385,7 +427,36 @@ def inventory(vault):
     return content
 
 
+def direct_main():
+    parser = argparse.ArgumentParser(
+        description="Rebuild ROOT/brain/index.md from the vault's Markdown inventory.",
+        epilog=("Indexing and verification read no stdin and emit no stdout. Diagnostics go to stderr. "
+                "Exit 0 on success, 1 on indexing or verification failure, and 2 for invalid arguments."),
+    )
+    parser.add_argument("root", type=Path, metavar="ROOT", help="project directory containing the brain vault")
+    parser.add_argument("--verify", action="store_true", help="check the existing index without updating it")
+    args = parser.parse_args()
+    try:
+        if sys.version_info < (3, 12):
+            raise BrainError("Python 3.12 or newer is required")
+        root = args.root.resolve(strict=True)
+        if not root.is_dir():
+            raise BrainError("root is not a directory")
+        path = root / "brain"
+        info = path.lstat()
+        if linked(info) or not stat.S_ISDIR(info.st_mode):
+            raise BrainError("invalid vault")
+        with Directory(path, info) as directory, writer_lock(directory):
+            inventory(directory, verify=args.verify)
+        return 0
+    except (BrainError, OSError, ValueError, UnicodeError) as error:
+        print("brain: " + str(error) + "; previous index preserved", file=sys.stderr)
+        return 1
+
+
 def main():
+    if DIRECT:
+        return direct_main()
     if sys.version_info < (3, 12):
         print("brain: Python 3.12 or newer is required", file=sys.stderr)
         sys.stdout.buffer.write(b"{}\n")
@@ -463,4 +534,31 @@ def render(provider, target):
             "# Generated from hooks/families/brain.py by scripts/generate-hooks.py. Do not edit.\n"
             + IMPORTS + INPUT_PREAMBLE + INPUT_READER
             + "INJECT = " + repr(target.output_path.name == "inject-brain.py") + "\n"
+            + "DIRECT = " + repr(target.output_path.name == "reindex.py") + "\n"
             + RUNTIME)
+
+
+def registrations(provider):
+    """Build the project launch registrations for a provider."""
+    paths = {"copilot": ".github/hooks/scripts", "gemini": ".gemini/hooks/scripts", "codex": ".codex/hooks"}
+    events = {"copilot": ("sessionStart", "postToolUse"), "gemini": ("SessionStart", "AfterTool"), "codex": ("SessionStart", "PostToolUse")}
+    result = {}
+    for event, name in zip(events[provider], ("inject-brain", "auto-index-brain")):
+        path = paths[provider] + "/" + name + ".py"
+        command = ("python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); "
+                   "d=next((d for d in ds if (d/'.git').exists()),None); "
+                   f"d=d if d is not None else next(d for d in ds if (d/'{path}').is_file()); "
+                   f"p=d/'{path}'; sys.argv=[str(p),'--provider','{provider}']; runpy.run_path(str(p),run_name='__main__')\"")
+        if provider == "copilot":
+            entry = {"type": "command", "bash": command, "powershell": command, "timeoutSec": 5}
+        elif provider == "gemini":
+            entry = {"hooks": [{"name": name, "type": "command", "command": command, "timeout": 5000}]}
+        else:
+            handler = {"type": "command", "command": command, "commandWindows": command, "timeout": 5}
+            if name == "inject-brain":
+                handler["additionalContextLimit"] = 0
+            entry = {"hooks": [handler]}
+            if name == "inject-brain":
+                entry["matcher"] = "startup|resume|clear|compact|fork"
+        result[event] = (name, entry)
+    return result

@@ -57,24 +57,13 @@ Use standard Markdown links with destinations relative to the file containing th
 
 First update the relevant curated entrypoint for every indexed category affected by additions, moves, or removals: `brain/principles.md`, `brain/plans/index.md`, `brain/audits/index.md`, `brain/archive/index.md`, or any other category's index. Maintain links through nested curated indexes to each affected note. Keep curated indexes link-only and scannable, with human prose in topic notes.
 
-Then let the brain hooks reconcile the machine-owned `brain/index.md`. The indexer normally links a category's existing `index.md` without traversing its contents; `brain/codebase/` is the exception. It does not repair curated links. If hooks are unavailable, run the bundled indexer manually with Python 3.12+. From the target repository root, run this Python snippet, replacing `<brain-skill-path>` with this skill's directory:
+Then let the brain hooks reconcile the machine-owned `brain/index.md`. The indexer normally links a category's existing `index.md` without traversing its contents; `brain/codebase/` is the exception. It does not repair curated links. If hooks are unavailable, run the direct command with Python 3.12+ from the target repository root:
 
-```python
-import json
-from pathlib import Path
-import subprocess
-import sys
-
-result = subprocess.run(
-    [sys.executable, "-I", "-S", "-B",
-     "<brain-skill-path>/scripts/auto-index-brain.py", "--provider", "codex"],
-    input=json.dumps({"cwd": str(Path.cwd()), "hook_event_name": "PostToolUse"}),
-    text=True, capture_output=True,
-)
-print(result.stderr, end="")
+```bash
+python3 <brain-skill-path>/scripts/reindex.py .
 ```
 
-The `codex` payload is a manual invocation format; Codex need not be installed. Check diagnostics and the expected generated root links: hooks can exit zero after reporting a nonblocking error. Verify every added or moved note is reachable from `brain/index.md` by following its Markdown links through any curated indexes; a root link to the category alone is insufficient. After removals, check affected curated indexes for broken links. Correct navigation before treating the write as complete.
+It reports failure with a nonzero exit. Verify every added or moved note is reachable from `brain/index.md` by following its Markdown links through any curated indexes; a root link to the category alone is insufficient. After removals, check affected curated indexes for broken links. Correct navigation before treating the write as complete.
 
 ## Durability Test
 

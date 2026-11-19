@@ -19,6 +19,7 @@ class GeneratedTarget:
 def targets() -> tuple[GeneratedTarget, ...]:
     """Return the explicit provider and bundled-hook ownership inventory."""
     return (
+        GeneratedTarget("required_skills", "codex", PurePosixPath(".codex/hooks/load-required-skills.py")),
         GeneratedTarget("common", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/common.py")),
         GeneratedTarget("common", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/common.py")),
         GeneratedTarget("audit", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/audit.py")),
@@ -32,5 +33,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/auto-index-brain.py")),
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/inject-brain.py")),
         GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py")),
+        GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts/reindex.py")),
         GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/hooks/inject-brain.py")),
     )

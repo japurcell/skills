@@ -70,6 +70,82 @@ class RepositoryParityTests(unittest.TestCase):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_relocated_reindex_help_explains_the_command_without_accessing_a_vault(self):
+        script = self.bundle / "assets/skills/brain/scripts/reindex.py"
+        result = subprocess.run(
+            [sys.executable, "-I", "-S", "-B", str(script), str(self.target), "--help"],
+            cwd=self.target, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        help_text = " ".join(result.stdout.lower().split())
+        for term in ("brain/index.md", "project directory", "without updating", "stdin", "stdout", "stderr",
+                     "0 on success", "1 on indexing or verification failure", "2 for invalid arguments"):
+            self.assertIn(term, help_text)
+        self.assertEqual(list(self.target.iterdir()), [])
+
+    def test_installed_direct_reindex_updates_new_note(self):
+        self.run_install("--apply")
+        (self.target / "brain/new.md").write_text("new", encoding="utf-8")
+        script = self.target / ".agents/skills/brain/scripts/reindex.py"
+        result = subprocess.run([sys.executable, str(script), str(self.target)], capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("new.md", (self.target / "brain/index.md").read_text())
+        before = (self.target / "brain/index.md").stat().st_mtime_ns
+        self.assertEqual(subprocess.run([sys.executable, str(script), str(self.target)]).returncode, 0)
+        self.assertEqual((self.target / "brain/index.md").stat().st_mtime_ns, before)
+        (self.target / "brain/new.md").unlink()
+        self.assertEqual(subprocess.run([sys.executable, str(script), str(self.target)]).returncode, 0)
+        self.assertNotIn("new.md", (self.target / "brain/index.md").read_text())
+        nested = self.target / "nested"
+        nested.mkdir()
+        self.assertNotEqual(subprocess.run([sys.executable, str(script), str(nested)], capture_output=True).returncode, 0)
+
+    def test_retained_noop_indexer_cannot_accept_stale_inventory(self):
+        self.run_install("--apply")
+        script = self.target / ".agents/skills/brain/scripts/auto-index-brain.py"
+        script.write_text("print('{}')\n", encoding="utf-8")
+        (self.target / "brain/new.md").write_text("new", encoding="utf-8")
+        self.run_install("--apply", "--index-reviewed", "--keep-existing",
+                         ".agents/skills/brain/scripts/auto-index-brain.py", expected=1)
+        self.assertEqual(script.read_text(), "print('{}')\n")
+
+    def test_retained_noop_indexer_rejects_extra_link_anywhere(self):
+        self.run_install("--apply")
+        folder = self.target / "brain/codebase/[draft] notes"
+        folder.mkdir()
+        (folder / "review `v1`.md").touch()
+        self.run_install("--apply", "--index-reviewed")
+        script = self.target / ".agents/skills/brain/scripts/auto-index-brain.py"
+        script.write_text("print('{}')\n", encoding="utf-8")
+        index = self.target / "brain/index.md"
+        lines = index.read_text(encoding="utf-8").splitlines()
+        links = [line for line in lines if line.startswith("- [")]
+        self.assertTrue(any("review%20%60v1%60.md" in line for line in links))
+        links.reverse()
+        links[0] = r"- [a different \[label\] with a \\ path" + links[0][links[0].index("]("):]
+        valid = r"# Custom heading with a \[tag\]" + "\n\n" + "\n".join(links) + "\n"
+        index.write_text(valid, encoding="utf-8")
+        arguments = ("--apply", "--index-reviewed", "--keep-existing",
+                     ".agents/skills/brain/scripts/auto-index-brain.py")
+        self.run_install(*arguments)
+        before_script = script.read_bytes()
+        invalid = {
+            "prose link": valid + "\n[extra](outside-inventory.md)\n",
+            "email autolink": valid + "\n<person@example.org>\n",
+            "heading autolink": valid + "## Contact <ftp://example.org/foo>\n",
+            "label autolink": valid.replace("- [a different", "- [<person@example.org> different"),
+            "duplicate target": valid + links[1] + "\n",
+        }
+        for case, document in invalid.items():
+            with self.subTest(case=case):
+                index.write_text(document, encoding="utf-8")
+                before_index = index.read_bytes()
+                result = self.run_install(*arguments, expected=1)
+                self.assertIn("verif", (result.stdout + result.stderr).lower())
+                self.assertEqual(index.read_bytes(), before_index)
+                self.assertEqual(script.read_bytes(), before_script)
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -100,7 +176,7 @@ class InstallerTests(unittest.TestCase):
     def directory_link(self, link, destination):
         if os.name == "nt":
             result = subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(link), str(destination)],
-                                    capture_output=True, text=True, check=False)
+                                    capture_output=True, check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         else:
             link.symlink_to(destination, target_is_directory=True)

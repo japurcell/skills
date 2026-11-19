@@ -3,11 +3,13 @@
 import json
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import unquote
@@ -33,7 +35,7 @@ class SkillWorkflowTests(unittest.TestCase):
 
     def run_cli(self, script, *arguments, payload=None, expected=0):
         result = subprocess.run(
-            [sys.executable, "-I", "-S", "-B", str(script), *map(str, arguments)],
+            [sys.executable, "-I", "-S", "-B", "-X", "utf8", str(script), *map(str, arguments)],
             cwd=self.project, env=self.environment,
             input=None if payload is None else json.dumps(payload),
             capture_output=True, text=True, encoding="utf-8", timeout=15, check=False,
@@ -95,6 +97,99 @@ class SkillWorkflowTests(unittest.TestCase):
                       for line in manifest.read_text(encoding="utf-8").splitlines()]
         self.assertCountEqual(manifested, extracted)
 
+    def test_project_batches_group_six_into_four_and_keep_legacy_grouping(self):
+        self.claude.mkdir(parents=True)
+        for index in range(6):
+            source = self.claude / f"{index}.jsonl"
+            source.write_text(json.dumps({"cwd": str(self.project), "type": "user",
+                                          "message": {"content": f"Synthetic message {index}."}}))
+            os.utime(source, (100 + index, 100 + index))
+        options = ["--claude-dir", self.claude, "--min-size", "0", "--batches", "4"]
+        legacy = self.root / "legacy"
+        result = self.run_cli(EXTRACTOR, legacy, *options)
+        self.assertEqual(result.stdout.strip(), str(legacy))
+        self.assertEqual([len(p.read_text().splitlines()) for p in sorted((legacy / "batches").iterdir())],
+                         [2, 2, 2])
+        current = self.run_cli(EXTRACTOR, self.root / "current", "--project", self.project, *options)
+        result = json.loads(current.stdout)
+        self.assertEqual(result["accepted_count"], 6)
+        groups = [Path(p).read_text().splitlines() for p in result["manifests"]]
+        self.assertEqual(list(map(len, groups)), [2, 2, 1, 1])
+        self.assertEqual([Path(path).name for group in groups for path in group],
+                         [f"{i:03d}_claude_{5-i}.txt" for i in range(6)])
+
+    def test_project_sizes_batches_after_filtering_and_preserves_source_order(self):
+        self.claude.mkdir(parents=True)
+        def write_source(name, metadata, text):
+            source = self.claude / f"{name}.jsonl"
+            source.write_text(json.dumps({"type": "user", **metadata, "message": {"content": text}}),
+                              encoding="utf-8")
+            return source
+
+        write_source("unrelated", {"cwd": str(self.root)}, "A different project conversation.")
+        write_source("missing", {}, "A conversation without attribution.")
+        write_source("unusable", {"cwd": str(self.project)}, "tiny")
+        count = 0
+        for n, override, sizes in ((0, None, []), (1, None, [1]), (2, None, [1, 1]),
+                                   (4, 20, [1] * 4), (41, None, [14, 14, 13]), (250, None, [25] * 10)):
+            with self.subTest(conversations=n, requested=override):
+                for index in range(count, n):
+                    source = write_source(str(index), {"cwd": str(self.project)}, f"Accepted message {index}.")
+                    os.utime(source, (100 + index, 100 + index))
+                count = n
+                override_args = [] if override is None else ["--batches", override]
+                run = self.run_cli(EXTRACTOR, self.root / "output", "--project", self.project,
+                                   "--claude-dir", self.claude, "--min-size", 0, *override_args)
+                result = json.loads(run.stdout)
+                groups = [Path(p).read_text(encoding="utf-8").splitlines() for p in result["manifests"]]
+                self.assertEqual(result["accepted_count"], n)
+                self.assertEqual(list(map(len, groups)), sizes)
+                self.assertEqual([Path(p).name.split("_claude_")[1] for group in groups for p in group],
+                                 [f"{i}.txt" for i in reversed(range(n))])
+
+    def test_repeated_and_overlapping_project_runs_publish_disjoint_complete_files(self):
+        self.write_histories()
+        output = self.root / "output"
+        def run():
+            result = self.run_cli(EXTRACTOR, output, "--project", self.project, "--codex-dir", self.codex,
+                                  "--min-size", 0)
+            return json.loads(result.stdout)
+
+        first = run()
+        with ThreadPoolExecutor(max_workers=3) as workers:
+            tasks = [workers.submit(run) for _ in range(3)]
+            results = [first] + [task.result() for task in tasks]
+        run_dirs = set()
+        for result in results:
+            self.assertEqual(result["accepted_count"], 1)
+            manifest, = map(Path, result["manifests"])
+            self.assertTrue(manifest.is_absolute())
+            run_dir = manifest.parent.parent
+            self.assertEqual(run_dir.parent, output)
+            self.assertNotIn(run_dir, run_dirs)
+            run_dirs.add(run_dir)
+            extract, = map(Path, manifest.read_text(encoding="utf-8").splitlines())
+            self.assertEqual(extract.parent, run_dir)
+            self.assertIn("Synthetic codex matching conversation.", extract.read_text(encoding="utf-8"))
+            if os.name != "nt":
+                self.assertEqual(stat.S_IMODE(run_dir.stat().st_mode), 0o700)
+
+    @unittest.skipIf(os.name == "nt", "POSIX per-process file size limit")
+    def test_failed_project_output_write_has_no_success_result(self):
+        import resource
+
+        self.write_histories()
+        output = self.root / "extracted"
+        result = subprocess.run(
+            [sys.executable, "-I", "-S", "-B", str(EXTRACTOR), str(output), "--project",
+             str(self.project), "--codex-dir", str(self.codex), "--min-size", "0"],
+            preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_FSIZE, (1, 1)),
+            cwd=self.project, env=self.environment, capture_output=True, timeout=15,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, b"")
+        self.assertTrue(any(output.glob("run-*/*.txt")))
+
     def test_copilot_session_history(self):
         sessions = Path(self.environment["HOME"]) / ".copilot/session-state"
         for name, context in (("matching", {"cwd": str(self.project)}),
@@ -126,6 +221,35 @@ class SkillWorkflowTests(unittest.TestCase):
                 manifest = output / "batches/batch_0.txt"
                 self.assertEqual(Path(manifest.read_text(encoding="utf-8").strip()), files[0])
 
+    def test_project_discovery_skips_missing_roots_and_respects_explicit_selection(self):
+        output = self.root / "extracted"
+        def project_result(*args):
+            result = self.run_cli(EXTRACTOR, output, "--project", self.project, "--min-size", 0, *args)
+            return json.loads(result.stdout)
+
+        self.assertEqual(project_result(), {"accepted_count": 0, "manifests": []})
+        self.claude = self.claude.parent / re.sub(r"[^a-zA-Z0-9]", "-", str(self.project))
+        self.write_histories()
+        session = Path(self.environment["HOME"]) / ".copilot/session-state/session"
+        session.mkdir(parents=True)
+        rows = [{"type": "session.start", "data": {"context": {"cwd": str(self.project)}}},
+                {"type": "user.message", "data": {"content": "Project-specific synthetic message."}}]
+        (session / "events.jsonl").write_text("\n".join(map(json.dumps, rows)), encoding="utf-8")
+        result = project_result()
+        self.assertEqual(result["accepted_count"], 3)
+        providers = [Path(p).read_text(encoding="utf-8").splitlines()[0]
+                     for manifest in result["manifests"]
+                     for p in Path(manifest).read_text(encoding="utf-8").splitlines()]
+        self.assertCountEqual(providers, [f"[PROVIDER]: {p}" for p in ("claude", "copilot", "codex")])
+        selected = project_result("--codex-dir", self.codex)
+        self.assertEqual(selected["accepted_count"], 1)
+        selected_path = Path(selected["manifests"][0]).read_text(encoding="utf-8").strip()
+        self.assertIn("[PROVIDER]: codex", Path(selected_path).read_text(encoding="utf-8"))
+        failed = self.run_cli(EXTRACTOR, output, "--project", self.project,
+                              "--codex-dir", self.codex / "missing", expected=2)
+        self.assertEqual(failed.stdout, "")
+        self.assertIn("unavailable", failed.stderr)
+
     def test_unfiltered_extraction_keeps_all_attribution_cases(self):
         sources = self.write_histories()
         output = self.root / "unfiltered"
@@ -140,6 +264,47 @@ class SkillWorkflowTests(unittest.TestCase):
             self.assertIn(f"[USER]: Synthetic {provider} {attribution} conversation.", text)
             if attribution in ("missing", "empty"):
                 self.assertNotIn("[CWD]:", text)
+
+    def test_relocated_documented_invocation_only_supplies_current_worker_inputs(self):
+        relocated = self.root / "portable ruminate"
+        shutil.copytree(EXTRACTOR.parents[1], relocated)
+        output = self.root / "extracted"
+        stale = output / "batches/batch_0.txt"
+        stale.parent.mkdir(parents=True, mode=0o700)
+        output.chmod(0o700)
+        stale.write_text("stale manifest")
+        source = self.codex / "session.jsonl"
+        source.parent.mkdir(parents=True)
+        records = [{"type": "session_meta", "payload": {"cwd": str(self.project)}},
+                   {"type": "response_item", "payload": {"type": "message", "role": "user",
+                                                        "content": "Synthetic history. " * 40}}]
+        source.write_text("\n".join(map(json.dumps, records)), encoding="utf-8")
+        doc = (relocated / "SKILL.md").read_text(encoding="utf-8")
+        snippet = next(block for block in re.findall(r"```python\n(.*?)```", doc, re.S)
+                       if "extract-conversations.py" in block)
+        caller = self.root / "caller.py"
+        observed = self.root / "extractor-stdout.json"
+        snippet = snippet.replace('"<ruminate-skill-path>/scripts/extract-conversations.py"',
+                                  repr(str(relocated / "scripts/extract-conversations.py")))
+        snippet = snippet.replace('"<temporary-directory>/extracted"', repr(str(output)))
+        caller.write_text(snippet
+                          + f"\nPath({str(observed)!r}).write_text(completed.stdout, encoding='utf-8')\n",
+                          encoding="utf-8")
+        first = self.run_cli(caller)
+        worker_inputs = first.stdout.splitlines()
+        published = json.loads(observed.read_text(encoding="utf-8"))
+        self.assertEqual(published["accepted_count"], 1)
+        self.assertEqual(worker_inputs, published["manifests"])
+        self.assertEqual(len(worker_inputs), 1)
+        self.assertNotEqual(Path(worker_inputs[0]), stale)
+        self.assertTrue(Path(worker_inputs[0]).is_file())
+        source.unlink()
+        self.assertEqual(self.run_cli(caller).stdout, "")
+        self.assertEqual(json.loads(observed.read_text(encoding="utf-8"))["manifests"], [])
+        source.parent.rmdir()
+        source.parent.touch()  # An invalid default root stops extraction.
+        failed = self.run_cli(caller, expected=1)
+        self.assertEqual(failed.stdout, "")
 
     def test_empty_cwd_filters_to_current_directory(self):
         self.write_histories()
@@ -189,28 +354,36 @@ class SkillWorkflowTests(unittest.TestCase):
         self.write_histories()
         output = self.root / "extracted"
         output.mkdir(mode=0o700)
-        # Replace the inheritable entries with private, non-inheritable ones.
-        subprocess.run(["icacls", str(output), "/grant:r", "*S-1-3-4:F",
-                        "*S-1-5-18:F", "*S-1-5-32-544:F"],
-                       check=True, capture_output=True)
+        # Replace the entire DACL: Python 3.13 mkdir(0o700) supplies explicit
+        # inheritable ACEs that icacls /grant:r need not replace.
         # Only the child's duplicated impersonation token is changed.
         bootstrap = r'''
-import ctypes, runpy, sys
+import ctypes, os, runpy, sys
 from ctypes import wintypes as w
 a = ctypes.WinDLL("advapi32", use_last_error=True)
 k = ctypes.WinDLL("kernel32", use_last_error=True)
 p, d = ctypes.c_void_p, w.DWORD
 k.GetCurrentProcess.restype = p
+k.LocalFree.argtypes = [p]
+k.LocalFree.restype = p
 a.OpenProcessToken.argtypes = [p, d, ctypes.POINTER(p)]
 a.DuplicateTokenEx.argtypes = [p, d, p, d, d, ctypes.POINTER(p)]
 a.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [w.LPCWSTR, d, ctypes.POINTER(p), ctypes.POINTER(d)]
 a.GetSecurityDescriptorDacl.argtypes = [p, ctypes.POINTER(w.BOOL), ctypes.POINTER(p), ctypes.POINTER(w.BOOL)]
 a.SetTokenInformation.argtypes = [p, d, p, d]
 a.SetThreadToken.argtypes = [p, p]
+a.SetFileSecurityW.argtypes = [w.LPCWSTR, d, p]
 def check(ok):
     if not ok:
         raise ctypes.WinError(ctypes.get_last_error())
 token, duplicate, descriptor, acl = p(), p(), p(), p()
+# Protected, explicit and non-inheritable: retain ownership and access, but
+# let the thread token's default DACL determine new-file security.
+check(a.ConvertStringSecurityDescriptorToSecurityDescriptorW(
+    "D:P(A;;FA;;;OW)(A;;FA;;;SY)(A;;FA;;;BA)", 1, ctypes.byref(descriptor), None))
+check(a.SetFileSecurityW(sys.argv[2], 0x80000004, descriptor))
+k.LocalFree(descriptor)
+descriptor = p()
 check(a.OpenProcessToken(k.GetCurrentProcess(), 0xA, ctypes.byref(token)))
 check(a.DuplicateTokenEx(token, 0x8C, None, 2, 2, ctypes.byref(duplicate)))
 check(a.ConvertStringSecurityDescriptorToSecurityDescriptorW("D:(A;;FA;;;WD)", 1, ctypes.byref(descriptor), None))
@@ -218,6 +391,24 @@ present, defaulted = w.BOOL(), w.BOOL()
 check(a.GetSecurityDescriptorDacl(descriptor, ctypes.byref(present), ctypes.byref(acl), ctypes.byref(defaulted)))
 check(a.SetTokenInformation(duplicate, 6, ctypes.byref(acl), ctypes.sizeof(acl)))
 check(a.SetThreadToken(None, duplicate))
+# Prove the token default actually reaches a newly created file. An inheritable
+# parent ACE would override the default DACL and invalidate this experiment.
+probe = os.path.join(sys.argv[2], "acl-probe")
+with open(probe, "wb"):
+    pass
+security, dacl, sddl = p(), p(), p()
+a.GetNamedSecurityInfoW.argtypes = [w.LPWSTR, d, d, p, p, ctypes.POINTER(p), p, ctypes.POINTER(p)]
+a.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [p, d, d, ctypes.POINTER(p), p]
+error = a.GetNamedSecurityInfoW(probe, 1, 4, None, None, ctypes.byref(dacl), None, ctypes.byref(security))
+if error:
+    raise OSError(error, "cannot inspect ACL probe")
+check(a.ConvertSecurityDescriptorToStringSecurityDescriptorW(security, 1, 4, ctypes.byref(sddl), None))
+acl_text = ctypes.wstring_at(sddl)
+if ";;;WD)" not in acl_text and ";;;S-1-1-0)" not in acl_text:
+    raise RuntimeError("new-file ACL probe lacks Everyone: " + acl_text)
+k.LocalFree(sddl)
+k.LocalFree(security)
+os.unlink(probe)
 sys.argv = sys.argv[1:]
 runpy.run_path(sys.argv[0], run_name="__main__")
 '''
@@ -230,7 +421,9 @@ runpy.run_path(sys.argv[0], run_name="__main__")
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("private", result.stderr)
         self.assertEqual(result.stdout, "")
-        self.assertTrue(all(path.stat().st_size == 0 for path in output.rglob("*.txt")))
+        created = list(output.rglob("*.txt"))
+        self.assertTrue(created, "expected the extractor to create an unsafe file")
+        self.assertTrue(all(path.stat().st_size == 0 for path in created))
 
     def test_repeated_roots_deduplicate_and_claude_discovery_stays_nonrecursive(self):
         self.write_histories()

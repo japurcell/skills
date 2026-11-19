@@ -13,7 +13,7 @@ def issue_id(value):
     return value.removeprefix("#")
 
 
-def validate(message):
+def parse_message(message):
     lines = message.replace("\r\n", "\n").split("\n")
     if not lines or not re.fullmatch(
         r"(?:docs|test|fix|feat|refactor|perf|chore)(?:\([^()\s]+\))?: \S.*", lines[0]
@@ -22,31 +22,40 @@ def validate(message):
     if len(lines) < 2 or lines[1] != "":
         raise ValueError("separate the subject and body with a real blank line")
     position = 2
+    sections = {}
     for section in ("Summary:", "Rationale:", "Tests:"):
         if position >= len(lines) or lines[position] != section:
             raise ValueError(f"expected {section} on its own line")
         position += 1
         count = 0
+        section_lines = []
         while position < len(lines) and lines[position].strip():
             line = lines[position]
             if line.startswith("- ") and line[2:].strip():
                 count += 1
             elif not (count and line.startswith("  ") and line.strip()):
                 raise ValueError(f"use nonempty bullets in {section}")
+            section_lines.append(line)
             position += 1
+        sections[section] = section_lines
         if not count:
             raise ValueError(f"add at least one bullet to {section}")
         while position < len(lines) and not lines[position].strip():
             position += 1
-    return lines[position:]
+    trailers = lines[position:]
+    return lines[0], sections, trailers
+
+
+def validate(message):
+    return parse_message(message)[2]
 
 
 def validate_trailers(lines, args):
     while lines and not lines[-1].strip():
         lines.pop()
     authors = []
-    expected_authors = list(dict.fromkeys(args.co_author))
-    issues = list(dict.fromkeys(args.issue))
+    expected_authors = list(dict.fromkeys(args.co_author)) if args else []
+    issues = list(dict.fromkeys(args.issue)) if args else []
     last_issue = -1
     issue_or_author = False
     session_seen = False
@@ -61,17 +70,18 @@ def validate_trailers(lines, args):
             session_seen = True
         elif match := re.fullmatch(r"(Refs|Fixes) #([1-9][0-9]*)", line):
             issue_or_author = True
-            if match[2] not in args.issue:
+            if args and match[2] not in args.issue:
                 raise ValueError(f"verify issue #{match[2]} and pass --issue {match[2]}, or remove its trailer")
-            position = issues.index(match[2])
-            if position <= last_issue:
-                raise ValueError("deduplicate issue trailers and keep their input order")
-            last_issue = position
-            if match[1] == "Fixes" and match[2] not in args.fixes:
+            if args:
+                position = issues.index(match[2])
+                if position <= last_issue:
+                    raise ValueError("deduplicate issue trailers and keep their input order")
+                last_issue = position
+            if args and match[1] == "Fixes" and match[2] not in args.fixes:
                 raise ValueError(f"use Refs unless the user intends to close issue #{match[2]}; then pass --fixes {match[2]}")
         elif re.fullmatch(r"Co-authored-by: [^<>]+ <[^<>\s]+@[^<>\s]+>", line):
             issue_or_author = True
-            if line.removeprefix("Co-authored-by: ") not in args.co_author:
+            if args and line.removeprefix("Co-authored-by: ") not in args.co_author:
                 raise ValueError("verify the contributor and pass --co-author 'Name <email>', or remove its trailer")
             if line in authors:
                 raise ValueError("remove duplicate co-author trailers")

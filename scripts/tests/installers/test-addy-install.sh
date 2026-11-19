@@ -447,10 +447,18 @@ test_artifacts_do_not_publish_or_create_dependencies() {
   printf 'beta' > "$workdir/src/skills/alpha/__pycache__/dependency.pyc"
   printf 'gamma' > "$workdir/dependency.txt"
   ln -s "$workdir/dependency.txt" "$workdir/src/skills/alpha/notes.md"
+  mkdir -p "$workdir/src/skills/alpha/evals"
+  printf 'readme' > "$workdir/src/skills/alpha/README.md"
+  printf 'evaluation' > "$workdir/src/skills/alpha/evals/case.json"
   printf 'retired' > "$workdir/dest/skills/addy-alpha/retired.txt"
   ADDY_AGENTS_DEST="$workdir/dest/agents" ADDY_SKILLS_DEST="$workdir/dest/skills" ADDY_REFERENCES_DEST="$workdir/dest/references" run_local_source_install "$workdir" --skills alpha >/dev/null
   [[ ! -e "$workdir/dest/skills/addy-alpha/__pycache__" && ! -e "$workdir/dest/skills/addy-beta" ]] || return 1
-  [[ -f "$workdir/src/skills/alpha/__pycache__/dependency.pyc" && -f "$workdir/dest/skills/addy-gamma/SKILL.md" && ! -e "$workdir/dest/skills/addy-alpha/retired.txt" ]]
+  [[ -f "$workdir/src/skills/alpha/__pycache__/dependency.pyc" && -f "$workdir/dest/skills/addy-gamma/SKILL.md" && ! -e "$workdir/dest/skills/addy-alpha/retired.txt" ]] || return 1
+  [[ "$(<"$workdir/dest/skills/addy-alpha/README.md")" == readme && "$(<"$workdir/dest/skills/addy-alpha/evals/case.json")" == evaluation ]] || return 1
+  [[ "$(readlink "$workdir/dest/skills/addy-alpha/notes.md")" == "$workdir/dependency.txt" ]] || return 1
+  printf 'destination only' > "$workdir/dest/skills/addy-alpha/destination-only.txt"
+  ADDY_AGENTS_DEST="$workdir/dest/agents" ADDY_SKILLS_DEST="$workdir/dest/skills" ADDY_REFERENCES_DEST="$workdir/dest/references" run_local_source_install "$workdir" --skills alpha >/dev/null
+  [[ ! -e "$workdir/dest/skills/addy-alpha/destination-only.txt" && -f "$workdir/dest/skills/addy-alpha/README.md" && -f "$workdir/dest/skills/addy-alpha/evals/case.json" ]]
 }
 
 main() {
