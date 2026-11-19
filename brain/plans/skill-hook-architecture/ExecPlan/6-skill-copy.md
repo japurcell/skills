@@ -1,7 +1,7 @@
 # M6. Skill tree copying
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -40,6 +40,6 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-6] Qualify T6a through an actual Windows junction and POSIX mode fixture.
-- [ ] [milestone-6] Switch T6b callers and verify each reinstall, exclusion and readback.
-- [ ] [milestone-6] Run disposable installed-asset journeys on the integrated revision.
+- [x] (2026-11-19) [milestone-6] Real Windows junction and POSIX mode qualification passed before switching. [Windows prototype run](https://github.com/japurcell/skills/actions/runs/44493917647/job/135456168341)
+- [x] (2026-11-19) [milestone-6] Integrated shared traversal and both profiles at `1b34cefc`. Bash, Addy and PowerShell reinstall and readback passed on macOS.
+- [x] (2026-11-19) [milestone-6] The production Windows installer passed the junction and destination-preservation checks at `a482bbc0`. The [local evidence](6b-migration.md) records disposable real-asset selection, refresh and provider configuration. [Windows run](https://github.com/japurcell/skills/actions/runs/44496566199/job/135465141445)

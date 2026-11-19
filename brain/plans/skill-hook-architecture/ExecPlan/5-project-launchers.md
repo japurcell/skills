@@ -1,7 +1,7 @@
 # M5. Project brain launch registrations
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -43,5 +43,5 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 ## Progress
 
 - [x] (2026-11-19) [milestone-5] Independent T5a fixture integrated at `eb949e2`. The six documents and 20 decoded commands agree with baseline `069b3f22`.
-- [ ] [milestone-5] Implement T5b identity matching, generation and conditional recovery.
-- [ ] [milestone-5] Validate current registrations from nested and non-Git projects and installed portable files.
+- [x] (2026-11-19) [milestone-5] Integrated the publication owner at `615111b3`. Nineteen generator tests passed, including ambiguity, conditional rollback and retry.
+- [x] (2026-11-19) [milestone-5] All 20 frozen commands matched across six documents. Nested and non-Git launches and disposable installed configuration readbacks passed. See the [publication results](5b-launch-publish.md).

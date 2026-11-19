@@ -48,7 +48,8 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 - [x] (2026-11-19) [milestone-2] Reproduced successful installation with an extra non-inventory link on the candidate.
 - [x] (2026-11-19) [milestone-2] T2b verified at `658ab7e8` and integrated at `ebb09bb4`. The public installer rejects the extra link and preserves both files.
 - [x] (2026-11-19) [milestone-2] T2c passed on macOS with integrated M7, generated-output freshness, standalone hooks and disposable Bash and PowerShell installs.
-- [ ] [milestone-2] Qualify native Windows permission behavior.
+- [x] (2026-11-19) [milestone-2] The native Windows direct command preserved the prior index under denied directory writes with a writable lock. [Windows permission check](https://github.com/japurcell/skills/actions/runs/44493917647/job/135456168341)
+- [ ] [milestone-2] Verify additional Markdown autolinks through the retained-helper path.
 
 ## Candidate evidence
 
