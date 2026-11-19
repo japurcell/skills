@@ -16,7 +16,6 @@ _validator = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_validator)
 
 
-COPILOT_TRAILER = "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
 REQUIRED_HEADINGS = [
     "## Overview",
     "## When to Use",
@@ -118,6 +117,43 @@ def build_grading(run_dir: Path, expectations: list[dict]) -> dict:
     }
 
 
+def expected_trailers(result: dict, fixture_name: str) -> tuple[bool, str]:
+    fixture = read_json(Path(__file__).resolve().parent / "files" / fixture_name / "input.json")
+    inputs = fixture.get("inputs", {})
+    issues = inputs.get("issue_numbers")
+    fixes = inputs.get("fixes")
+    author = inputs.get("co_author")
+    if not isinstance(issues, list) or not isinstance(fixes, list) or not isinstance(author, str):
+        return False, "missing scenario issue or contributor expectations"
+    expected = [f"{'Fixes' if issue.lstrip('#') in fixes else 'Refs'} #{issue.lstrip('#')}" for issue in issues]
+    expected.append(f"Co-authored-by: {author}")
+    try:
+        _, _, trailers = _validator.parse_message(result.get("commit_message", ""))
+        _validator.validate_trailers(trailers.copy(), None)
+    except (TypeError, ValueError) as error:
+        return False, str(error)
+    actual = [line for line in trailers if line.startswith(("Refs ", "Fixes ", "Co-authored-by: "))]
+    return actual == expected, f"expected {expected}; observed {actual}"
+
+
+def pr_issue_intent(body: str, fixture_name: str) -> tuple[bool, str]:
+    fixture = read_json(Path(__file__).resolve().parent / "files" / fixture_name / "input.json")
+    inputs = fixture.get("inputs", {})
+    issues, fixes = inputs.get("issue_numbers"), inputs.get("fixes")
+    if not isinstance(body, str) or not isinstance(issues, list) or not isinstance(fixes, list):
+        return False, "missing PR body or scenario issue expectations"
+    # Closing keywords can appear anywhere in the body, including beside neutral references.
+    reference = r"(?:(?:https://github\.com/[\w.-]+/[\w.-]+/issues/)|(?:[\w.-]+/[\w.-]+)?#)[1-9][0-9]*"
+    directives = re.findall(
+        rf"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+(?:issues?\s+)?({reference}(?:\s*(?:,|and)\s*{reference})*)",
+        body, re.IGNORECASE,
+    )
+    closing = [re.search(r"([1-9][0-9]*)$", ref)[1] for directive in directives
+               for ref in re.findall(reference, directive, re.IGNORECASE)]
+    mentioned = all(re.search(rf"(?:#|/issues/){re.escape(issue.lstrip('#'))}\b", body) for issue in issues)
+    return mentioned and closing == fixes, f"expected closing issues {fixes}; observed {closing}; all issues mentioned: {mentioned}"
+
+
 def eval_zero(result: dict) -> list[dict]:
     skill_ok, skill_evidence = has_required_skill_shape()
     commit_ok, commit_evidence = has_commit_message_shape(
@@ -141,11 +177,7 @@ def eval_zero(result: dict) -> list[dict]:
         ),
         expectation("Uses commit type feat.", result.get("commit_type") == "feat", result.get("commit_type", "<missing>")),
         expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
-        expectation(
-            "Uses Refs #123 and the default Copilot trailer.",
-            "Summary:" in result.get("commit_message", "") and "Rationale:" in result.get("commit_message", "") and "Tests:" in result.get("commit_message", "") and "Refs #123" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
-            result.get("commit_message", "<missing commit_message>"),
-        ),
+        expectation("Uses the scenario issue and contributor trailers.", *expected_trailers(result, "single-file-on-main")),
         expectation(
             "Plans a push but no PR.",
             result.get("should_push") is True and result.get("should_create_pr") is False,
@@ -154,7 +186,7 @@ def eval_zero(result: dict) -> list[dict]:
     ]
 
 
-def eval_one(result: dict) -> list[dict]:
+def eval_one(result: dict, fixture_name: str) -> list[dict]:
     commit_ok, commit_evidence = has_commit_message_shape(
         result.get("commit_message", ""),
         result.get("commit_type", ""),
@@ -174,21 +206,14 @@ def eval_one(result: dict) -> list[dict]:
         ),
         expectation("Uses commit type fix.", result.get("commit_type") == "fix", result.get("commit_type", "<missing>")),
         expectation("Uses commit message shape with Summary, Rationale, Tests, and trailer block.", commit_ok, commit_evidence),
-        expectation(
-            "Uses Fixes #456 and the default Copilot trailer.",
-            "Summary:" in result.get("commit_message", "") and "Rationale:" in result.get("commit_message", "") and "Tests:" in result.get("commit_message", "") and "Fixes #456" in result.get("commit_message", "") and COPILOT_TRAILER in result.get("commit_message", ""),
-            result.get("commit_message", "<missing commit_message>"),
-        ),
+        expectation("Uses the scenario issue and contributor trailers.", *expected_trailers(result, fixture_name)),
         expectation(
             "Plans both push and PR creation.",
             result.get("should_push") is True and result.get("should_create_pr") is True,
             json.dumps({"should_push": result.get("should_push"), "should_create_pr": result.get("should_create_pr")}),
         ),
-        expectation(
-            "Sets the PR title to the commit subject and includes the issue in the body.",
-            result.get("pr_title") == result.get("subject") and "Fixes #456" in result.get("pr_body", ""),
-            json.dumps({"pr_title": result.get("pr_title"), "subject": result.get("subject"), "pr_body": result.get("pr_body")}),
-        ),
+        expectation("Sets the PR title to the commit subject.", result.get("pr_title") == result.get("subject") and bool(result.get("subject")), str(result.get("pr_title"))),
+        expectation("Uses the authorized PR issue intent.", *pr_issue_intent(result.get("pr_body"), fixture_name)),
     ]
 
 
@@ -482,7 +507,9 @@ def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
     if eval_id == 0:
         return eval_zero(result)
     if eval_id == 1:
-        return eval_one(result)
+        return eval_one(result, "staged-bugfix-pr")
+    if eval_id == 15:
+        return eval_one(result, "staged-bugfix-pr-close")
     if eval_id == 2:
         return eval_two(result)
     if eval_id == 3:

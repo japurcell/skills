@@ -7,7 +7,8 @@
     "base_branch": "main",
     "feature_branch": null,
     "co_author": "Copilot <223556219+Copilot@users.noreply.github.com>",
-    "create_pr": true
+    "create_pr": true,
+    "fixes": []
   },
   "git_state": {
     "in_repo": true,

@@ -69,6 +69,84 @@ class WorkflowGradingTests(unittest.TestCase):
         process.stderr.close()
         self.assertEqual(process.wait(timeout=10), 0, stderr)
 
+    def grade_dry_run(self, eval_id, result):
+        with tempfile.TemporaryDirectory() as directory:
+            iteration = Path(directory)
+            evaluation = iteration / "eval-test"
+            run = evaluation / "with_skill" / "run-1"
+            (run / "outputs").mkdir(parents=True)
+            (evaluation / "eval_metadata.json").write_text(json.dumps({"eval_id": eval_id}))
+            (run / "outputs" / "result.json").write_text(json.dumps(result))
+            command = subprocess.run([sys.executable, str(GRADER), str(iteration)],
+                                     capture_output=True, text=True, timeout=5)
+            self.assertEqual(command.returncode, 0, command.stderr)
+            return json.loads((run / "grading.json").read_text())
+
+    def dry_run_result(self):
+        return {
+            "status": "commit", "selected_paths": ["src/rate_limit.py", "tests/test_rate_limit.py"],
+            "branch": "fix/rate-limit-backoff", "commit_type": "fix", "subject": "repair backoff",
+            "commit_message": "fix: repair backoff\n\nSummary:\n- Repair retry timing.\n\nRationale:\n- Avoid failures.\n\nTests:\n- Run tests.\n\nRefs #456\nCo-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n",
+            "should_push": True, "should_create_pr": True, "pr_title": "repair backoff",
+            "pr_body": "Related to #456.",
+        }
+
+    def test_reference_only_pr_passes_without_closing_the_issue(self):
+        grading = self.grade_dry_run(1, self.dry_run_result())
+        self.assertEqual(grading["summary"]["failed"], 0, grading)
+
+    def test_explicit_closure_and_independent_negative_cases(self):
+        reference = self.dry_run_result()
+        close = dict(reference, commit_message=reference["commit_message"].replace("Refs #456", "Fixes #456"),
+                     pr_body="Fixes #456")
+        self.assertEqual(self.grade_dry_run(15, close)["summary"]["failed"], 0)
+        cases = (
+            (1, dict(reference, pr_body="Related to #456. Fixes #456")),
+            (1, dict(reference, pr_body="Related to #456. Closes: #456")),
+            (1, dict(reference, pr_body="Related to #456 and closes issue #456")),
+            (1, dict(reference, pr_body="Related to #456. Fixes https://github.com/org/repo/issues/456")),
+            (1, dict(reference, commit_message=reference["commit_message"].replace("Refs #456", "Fixes #456"))),
+            (15, dict(close, commit_message=close["commit_message"].replace("Fixes #456\n", "").replace("- Repair retry timing.", "- Fixes #456."))),
+            (1, dict(reference, commit_message=reference["commit_message"].replace("Copilot <223556219+Copilot@users.noreply.github.com>", "Other <other@example.com>"))),
+            (1, dict(reference, commit_message=reference["commit_message"] + "Co-authored-by: Other <other@example.com>\n")),
+            (1, dict(reference, commit_message=reference["commit_message"].replace("Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>\n", ""))),
+            (1, dict(reference, subject="different subject", pr_title="different subject")),
+            (15, dict(close, pr_body="Fixes #456 and closes #999")),
+            (15, dict(close, pr_body="Fixes #456, #999")),
+        )
+        for eval_id, result in cases:
+            with self.subTest(eval_id=eval_id, result=result):
+                grading = self.grade_dry_run(eval_id, result)
+                self.assertGreater(grading["summary"]["failed"], 0, grading)
+
+    def test_invoice_scenario_requires_actual_reference_and_exact_contributor(self):
+        message = self.dry_run_result()["commit_message"].replace("fix: repair backoff", "feat: export invoices").replace("Refs #456", "Refs #123")
+        result = {"status": "commit", "selected_paths": ["src/invoice/export_csv.py"],
+                  "branch": "feat/123-export", "commit_type": "feat", "subject": "export invoices",
+                  "commit_message": message, "should_push": True, "should_create_pr": False}
+        checks = self.grade_dry_run(0, result)["expectations"]
+        trailer_check = next(check for check in checks if check["text"] == "Uses the scenario issue and contributor trailers.")
+        self.assertTrue(trailer_check["passed"], trailer_check)
+        missing = message.replace("Refs #123\n", "").replace("- Repair retry timing.", "- Refs #123.")
+        grading = self.grade_dry_run(0, dict(result, commit_message=missing))
+        trailer_check = next(check for check in grading["expectations"] if check["text"] == "Uses the scenario issue and contributor trailers.")
+        self.assertFalse(trailer_check["passed"], trailer_check)
+
+    def test_intent_scenarios_match_their_input_authorizations(self):
+        scenarios = json.loads((SKILL / "evals/evals.json").read_text())["evals"]
+        for eval_id, fixture, expected_fixes, trailer in (
+            (1, "staged-bugfix-pr", [], "Refs #456"),
+            (15, "staged-bugfix-pr-close", ["456"], "Fixes #456"),
+        ):
+            with self.subTest(eval_id=eval_id):
+                scenario = next(item for item in scenarios if item["id"] == eval_id)
+                source = f"evals/files/{fixture}/input.json"
+                self.assertEqual(scenario["files"], [source])
+                self.assertIn(source, scenario["prompt"])
+                self.assertIn(trailer, scenario["expected_output"])
+                inputs = json.loads((SKILL / source).read_text())["inputs"]
+                self.assertEqual(inputs["fixes"], expected_fixes)
+
     def prepare(self, fixture=None):
         temporary = tempfile.TemporaryDirectory(prefix="commit-workflow-")
         self.addCleanup(temporary.cleanup)
