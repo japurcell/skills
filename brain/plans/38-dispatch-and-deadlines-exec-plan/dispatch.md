@@ -11,3 +11,4 @@ Acceptance: not met
 - [ ] [milestone-3] Preserve exact W1 text, total words per caller plus shared rules, hashes and observed decisions. Identify the shortest tested survivor.
 - [ ] [milestone-3] Prove the native grader with a real smoke run and negative controls.
 - [ ] [milestone-3] Record P1's twelve runs, compare attempts and record completeness, and apply the qualifying wording to the two callers and router. Confirm the router implementation and catalog are unchanged.
+- [ ] [milestone-3] In P1 the parent used a display name on a generic worker. [P2](paired-dispatch.md#p2-preserve-the-worker-profile-as-well-as-the-model) tests an explicit native profile control.
