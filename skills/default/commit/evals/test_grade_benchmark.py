@@ -95,6 +95,24 @@ class WorkflowGradingTests(unittest.TestCase):
         grading = self.grade_dry_run(1, self.dry_run_result())
         self.assertEqual(grading["summary"]["failed"], 0, grading)
 
+    def test_authorless_draft_passes_format_but_fails_scenario_attribution(self):
+        result = self.dry_run_result()
+        body = result["commit_message"].partition("Refs #456")[0].rstrip()
+        for trailer, options in (("", []), ("\n\nRefs #456", ["--issue", "456"])):
+            with self.subTest(trailer=trailer), tempfile.TemporaryDirectory() as directory:
+                result["commit_message"] = body + trailer + "\n"
+                draft = Path(directory) / "message.txt"
+                draft.write_text(result["commit_message"], encoding="utf-8")
+                valid = subprocess.run([sys.executable, str(SKILL / "scripts/validate_message.py"), str(draft),
+                                        *options], capture_output=True, text=True, timeout=5)
+                self.assertEqual(valid.returncode, 0, valid.stderr)
+                checks = self.grade_dry_run(1, result)["expectations"]
+                shape = next(check for check in checks if check["text"].startswith("Uses commit message shape"))
+                attribution = next(check for check in checks
+                                   if check["text"] == "Uses the scenario issue and contributor trailers.")
+                self.assertTrue(shape["passed"], shape)
+                self.assertFalse(attribution["passed"], attribution)
+
     def test_explicit_closure_and_independent_negative_cases(self):
         reference = self.dry_run_result()
         close = dict(reference, commit_message=reference["commit_message"].replace("Refs #456", "Fixes #456"),

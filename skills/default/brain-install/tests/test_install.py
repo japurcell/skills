@@ -70,6 +70,20 @@ class RepositoryParityTests(unittest.TestCase):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_relocated_reindex_help_explains_the_command_without_accessing_a_vault(self):
+        script = self.bundle / "assets/skills/brain/scripts/reindex.py"
+        result = subprocess.run(
+            [sys.executable, "-I", "-S", "-B", str(script), str(self.target), "--help"],
+            cwd=self.target, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=5,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        help_text = " ".join(result.stdout.lower().split())
+        for term in ("brain/index.md", "project directory", "without updating", "stdin", "stdout", "stderr",
+                     "0 on success", "1 on indexing or verification failure", "2 for invalid arguments"):
+            self.assertIn(term, help_text)
+        self.assertEqual(list(self.target.iterdir()), [])
+
     def test_installed_direct_reindex_updates_new_note(self):
         self.run_install("--apply")
         (self.target / "brain/new.md").write_text("new", encoding="utf-8")
