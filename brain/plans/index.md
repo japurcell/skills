@@ -1,6 +1,5 @@
 # Plans
 
-- [Verify worker dispatch and deadline enforcement](38-dispatch-and-deadlines-exec-plan.md)
 - [Runtime limits for dispatched subagents](scheduler-research.md)
 
 - [Model router phase 1: routing policy and initial experiment](subagent-model-router-phase-1-exec-plan.md)

@@ -15,6 +15,7 @@
 | Hook input/output, forwarding, and diagnostic audit behavior | [Hook tests](hook-testing.md) |
 | Installed provider event delivery/visible messages | [Live-hook evidence](live-hook-testing.md) |
 | Skills, graders, evaluation artifacts | [Repository validation commands](../../skills/default/create-skill/README.md#evaluation-and-validation-workflow) and [evaluation evidence](../../skills/default/create-skill/references/validation.md) |
+| Subagent routing, deadlines and shutdown | Run the [offline controls](../../scripts/tests/orchestration/README.md). Use the [native dispatch replay](../../scripts/tests/orchestration/native-gate.md) for worker selection and the [two-worker lifecycle replay](../../scripts/tests/orchestration/native-lifecycle.md) for deadline and last-write evidence. |
 | Shell/Python helper scripts | [Script validation and fixtures](script-testing.md) |
 | Bash/PowerShell installers and agent conversion | [Installer validation](installer-testing.md) |
 | User-facing installation and installed assets | Activate the `verify-skills` skill |

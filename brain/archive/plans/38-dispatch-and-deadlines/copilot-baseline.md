@@ -23,7 +23,7 @@ Both `combined-tools` sessions exited 0. Native events show both parents launche
 
 The helper rejected the delegate parent's expired registration. Its test-clock option then allowed the parent to enforce a different timeline. ExecPlan used parent-owned timers and did act on silence. The historical five-minute prompts came from Copilot's recurring host schedule. These controlled misses and that historical schedule have different mechanisms.
 
-The eight ordinary two-worker sessions in `combined-tools`, `n1-clock-old`, `n1-clock-new` and `delivery-control` took 206 to 366 seconds each. Their individual durations sum to about 34 provider-session minutes. Pairs ran concurrently. These times exclude setup, the original fleet pilot and the separate gate comparison. See the [native lifecycle replay](../../../scripts/tests/orchestration/native-lifecycle.md) for the disposable project and commands.
+The eight ordinary two-worker sessions in `combined-tools`, `n1-clock-old`, `n1-clock-new` and `delivery-control` took 206 to 366 seconds each. Their individual durations sum to about 34 provider-session minutes. Pairs ran concurrently. These times exclude setup, the original fleet pilot and the separate gate comparison. See the [native lifecycle replay](../../../../scripts/tests/orchestration/native-lifecycle.md) for the disposable project and commands.
 
 ## Worker restriction control for P1
 

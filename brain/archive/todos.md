@@ -11,6 +11,8 @@
 
 ## Investigations
 
+38. [x] Verified deadline-driven coordination and dispatch on Codex and Copilot. Exercised transfer, compact reporting, same-worker continuity and replacement handoff in controlled tests. All four native writer trials retained ownership while writes continued after the stop action. The user excluded user-only invocation guidance. Completed on 2026-11-18. [Plan and host evidence](plans/38-dispatch-and-deadlines/exec-plan.md)
+
 37. [x] Researched risk-based code review, compared three approaches with an independent Astra critique, and completed the [shadow pilot](../audits/2026-11-18-review-tiering-pilot.md). The experiment closed with the four-reviewer default retained. [Findings and proposed checks](../audits/2026-11-18-review-tiering.md)
 
 36. [x] Audited the maintained tests for vacuous assertions, implementation coupling, and unrealistic mocks. The [audit report](../audits/2026-11-18-test-suite.md) documents seven findings, disposable experiments, and recommended improvements.

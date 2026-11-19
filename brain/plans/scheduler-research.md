@@ -1,6 +1,6 @@
 # Runtime limits for dispatched subagents
 
-Research for [todo 38's dispatch and deadlines plan](38-dispatch-and-deadlines-exec-plan.md), checked 2026-11-18. The locally installed versions were Codex CLI 0.170.0 and GitHub Copilot CLI 1.0.114. Evidence comes from documentation and source inspection. The subsequent [native writer measurements](38-dispatch-and-deadlines-exec-plan/writer-shutdown.md) record when a worker stopped writing after a stop request or turn interruption.
+Research for [todo 38's dispatch and deadlines plan](../archive/plans/38-dispatch-and-deadlines/exec-plan.md), checked 2026-11-18. The locally installed versions were Codex CLI 0.170.0 and GitHub Copilot CLI 1.0.114. Evidence comes from documentation and source inspection. The subsequent [native writer measurements](../archive/plans/38-dispatch-and-deadlines/writer-shutdown.md) record when a worker stopped writing after a stop request or turn interruption.
 
 ## Controls available to a dispatching skill
 
