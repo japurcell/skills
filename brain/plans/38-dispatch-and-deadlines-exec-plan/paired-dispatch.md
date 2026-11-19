@@ -1,0 +1,5 @@
+# P1. Run six matched native dispatch pairs
+
+P1 owner: Copilot operator. Requires passing W1 candidate, E1 grading criteria and B1 host/fixture evidence. Run three fresh matched old/new pairs for each caller on the reported unavailable-model case. Hold parent settings, router, catalog, task, restriction and candidate identity fixed within pairs. Keep raw trace, source hashes, actual argv and native result. Missing data is unknown. Preserve all failures. Stop after six pairs and their counts or a verified blocker.
+
+The [B1 calibration](copilot-baseline.md#worker-restriction-control-for-p1) establishes the restriction. Use the same read-only arithmetic worker and project hook in each arm. Keep the worker policy available before dispatch, the unchanged router command available as `route38`, and both experiment arms free of hints that give the answer. Record every native `task` attempt, even one denied before a child exists. Grade the task arguments against the actual router response, policy and observed child. Report gate behavior separately from the completeness of the parent's coordination record.

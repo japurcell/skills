@@ -8,15 +8,7 @@ Prove It Works and Boundary Discipline govern what a host trace establishes. Mod
 
 ## Next action and task graph
 
-The coordinator integrated [S1, helper repair](38-dispatch-and-deadlines-exec-plan/scheduler.md), E1 and R1 at `5f2892ab`. The native operators use the [Copilot](38-dispatch-and-deadlines-exec-plan/copilot-baseline.md) and [Codex](38-dispatch-and-deadlines-exec-plan/codex-baseline.md) baseline evidence to replay the affected pairings. The integration branch is `feat/todo-38-dispatch-deadlines`. The verified coordinator follow-up handle is `/root/codex`.
-
-[E1, controlled behavior](38-dispatch-and-deadlines-exec-plan/controlled.md) and [W1, candidate screening](38-dispatch-and-deadlines-exec-plan/wording.md) also depend on the design review. E1 owns the orchestration fixtures, W1 owns distinct wording fixtures in the same test directory. P1 requires W1, E1 and the Copilot baseline. N1 runs only for a host/caller needing new proof. I1 verifies and reconciles the combined result. See [P1, N1 and I1 assignments](38-dispatch-and-deadlines-exec-plan/native-and-close.md). Each receives a separate assignment when its prerequisites have evidence. The parent updates this entry after verifying results.
-
-[R1, caller lifecycle instructions](38-dispatch-and-deadlines-exec-plan/runtime.md) owns the caller-side changes exposed by S1, E1 and the old native cases. W1 and P1 own the dispatch wording. N1 uses the integrated lifecycle changes. These assignments can test the two behaviors independently.
-
-[P0, reproducible native fixture](38-dispatch-and-deadlines-exec-plan/native-fixture.md) packages the verified B1 restriction and result reader while W1 screens the wording. The Copilot operator uses both outputs for P1.
-
-[R2, completion delivery during a deadline wait](38-dispatch-and-deadlines-exec-plan/wait-delivery.md) follows the first N1 Copilot misses. A native child can complete while the parent blocks on the helper, before the host delivers its notification. Replay after changing that wait decision.
+On `feat/todo-38-dispatch-deadlines`, the wording evaluator runs [W1](38-dispatch-and-deadlines-exec-plan/wording.md) while the native-eval implementer finishes [P0](38-dispatch-and-deadlines-exec-plan/native-fixture.md). The Copilot operator then runs [P1](38-dispatch-and-deadlines-exec-plan/paired-dispatch.md). In parallel the runtime implementer addresses [R2](38-dispatch-and-deadlines-exec-plan/wait-delivery.md) and the host operators run [N1](38-dispatch-and-deadlines-exec-plan/native-replay.md). The verified integration coordinator `/root/codex` owns [I1](38-dispatch-and-deadlines-exec-plan/integration.md). The milestone files below link every assignment and its prerequisites.
 
 ## Decision Log
 
@@ -38,33 +30,14 @@ The coordinator integrated [S1, helper repair](38-dispatch-and-deadlines-exec-pl
 - [x] (2026-11-18) [milestone-4] First Copilot N1 trials exposed a delayed native notification and a late checkpoint. Both original traces retained.
 - [ ] [milestone-4] R2 wait guidance, N1 native acceptance and I1 integrated verdict, review and backlog reconciliation.
 
-## Milestone 1. Establish comparable baselines
+## Milestone contracts and integration evidence
 
-Status: done
-Acceptance: met
-
-From the repo root verify `rtk git rev-parse HEAD` and the old revision above. Commit `b7874592` changed the planning skill only. Git showed no difference in the three target skills. Each operator records the active CLI version, source identities, normal provider-managed session and evidence directory. Missing auth, rejected sandbox access and missing host events remain distinct from semantic failures. Store no credentials or private application data. B1 and B2 end with a recorded host verdict or blocker. A blocker leaves the affected live acceptance open.
-
-## Milestone 2. Verify lifecycle, continuity and status
-
-Status: done
-Acceptance: met
-
-The delegate source is `skills/default/delegate-to-subagents/scripts/scheduler.py`. Test via its CLI and `scripts/test_scheduler.py` in the same skill. The ExecPlan caller's runtime-enforcement section owns its registry policy. Demonstrate early completion, quiet time, deadline expiry, bounded grace, one extension and separate worker/write shutdown checks before transfer. Exercise both same-task delivery of a setup fact and fresh-worker recovery with the environment, pinned revision and prior evidence. Compare two status reports for owner, revision, completed evidence, blocker, deadline and next action. The second uses stable references instead of reconstructing history. Use the same grader on an unnecessary five-minute status lookup and a legitimate expiry.
-
-## Milestone 3. Compare gates
-
-Status: in progress
-Acceptance: not met
-
-Run W1 against the frozen gate, short shared rule and shorter challenger. P1 uses actual Copilot router and dispatch events for both callers. A model name in the worker prompt, a worker ID alone, or a recreated JSON event does not establish the effective settings. Publish winning text only on applicable passing evidence. Full scope and [earlier research](../../docs/subagent-dispatch-research.md) supplement the assignment.
-
-## Milestone 4. Validate the combined revision
-
-Status: in progress
-Acceptance: not met
-
-Each of four skill/host pairings must show real early completion, quiet waiting, and action at the remaining deadline. A passing baseline counts. Repeat affected cases after a fix, retain every failure and classify it. Run the focused suites and independent standards and spec reviews. Keep todo 38 open until the controlled cases, live runs and wording verdict meet the agreed bar.
+| Milestone | Status | Acceptance |
+| --- | --- | --- |
+| [1. Historical and native baselines](38-dispatch-and-deadlines-exec-plan/baselines.md) | done | met |
+| [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | done | met |
+| [3. Controlled and live dispatch comparison](38-dispatch-and-deadlines-exec-plan/dispatch.md) | in progress | not met |
+| [4. Integrated native acceptance and review](38-dispatch-and-deadlines-exec-plan/native-and-close.md) | in progress | not met |
 
 ## Concrete steps, validation and recovery
 
