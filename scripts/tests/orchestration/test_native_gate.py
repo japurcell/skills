@@ -112,6 +112,70 @@ class NativeGateGraderTests(unittest.TestCase):
         self.assertEqual(verdict["observed"]["primary_attempts"], 0)
         self.assertEqual(verdict["observed"]["fallback_attempts"], 1)
 
+    def test_exact_router_shell_string_matches_the_captured_argv(self):
+        manifest, router, before, after, policy_reads = run_records()
+        before["router_argv"] = "route38 --input route-request.json"
+        after["router_argv"] = before["router_argv"]
+        verdict = grade_native_gate(native_events(), manifest, router, before, after, policy_reads)
+        self.assertFalse(any("router argv" in item or "actual router invocation" in item
+                             for item in verdict["record_failures"]))
+
+    def test_synchronous_task_unknown_identity_text_is_not_a_worker_id_or_blocker(self):
+        manifest, router, before, after, policy_reads = run_records()
+        events = native_events()
+        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        after["worker_id"] = "not exposed by task tool"
+        after["observed_worker_model"] = "claude-haiku-5.5 (requested; runtime model not separately reported)"
+        after["blocker"] = "Task tool exposed no worker ID; result completed successfully."
+        after["actual_args"].update(description="Compute arithmetic assignment",
+                                     prompt="Return only the integer result.", worker_output="73")
+        verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
+        self.assertEqual(verdict["observed"]["answer"], 73)
+        self.assertIsNone(verdict["observed"]["worker_id"])
+        self.assertFalse(verdict["behavior_failures"])
+        self.assertFalse(verdict["record_failures"])
+        self.assertEqual(verdict["status"], "unavailable")
+
+    def test_matching_child_assistant_message_proves_output_after_dispatch_receipt(self):
+        manifest, router, before, after, policy_reads = run_records()
+        events = native_events()
+        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        task_result = next(event for event in events if event.get("type") == "tool.execution_complete"
+                           and event.get("data", {}).get("toolCallId") == "task-1")
+        worker_id = "1995fa43-34c1-41e8-86d9-96bc063fa0ba"
+        task_result["data"]["result"] = {"content": f"Agent started in background with agent_id: {worker_id}"}
+        after["worker_id"] = worker_id
+        events.extend([
+            {"type": "tool.execution_start", "timestamp": "2026-11-19T03:00:08.500Z", "data": {
+                "toolName": "apply_patch", "toolCallId": "write-after-receipt",
+                "arguments": "*** Begin Patch\n*** Update File: /private/tmp/run/project/coordination.json\n*** End Patch"}},
+            {"type": "tool.execution_complete", "timestamp": "2026-11-19T03:00:08.600Z", "data": {
+                "toolCallId": "write-after-receipt", "success": True}},
+            {"type": "assistant.message", "timestamp": "2026-11-19T03:00:09Z", "agentId": worker_id,
+             "data": {"content": "73"}},
+        ])
+        verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
+        self.assertEqual(verdict["observed"]["answer"], 73)
+        self.assertEqual(verdict["observed"]["worker_id"], worker_id)
+        self.assertFalse(any("after worker completion" in item for item in verdict["record_failures"]))
+        self.assertFalse(verdict["behavior_failures"])
+
+    def test_child_assistant_output_counts_only_for_matching_child_id(self):
+        manifest, router, before, after, policy_reads = run_records()
+        events = native_events()
+        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        task_result = next(event for event in events if event.get("type") == "tool.execution_complete"
+                           and event.get("data", {}).get("toolCallId") == "task-1")
+        worker_id = "1995fa43-34c1-41e8-86d9-96bc063fa0ba"
+        task_result["data"]["result"] = {"content": f"Agent started in background with agent_id: {worker_id}"}
+        after["worker_id"] = worker_id
+        events.append({"type": "assistant.message", "timestamp": "2026-11-19T03:00:10Z",
+                       "agentId": "another-worker", "data": {"content": "73"}})
+        verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
+        self.assertIsNone(verdict["observed"]["answer"])
+        summary = summarize_native_events(events)
+        self.assertNotIn({"type": "assistant.message", "worker_id": "another-worker", "answer": 73}, summary)
+
     def test_rejected_primary_attempt_fails_even_when_the_hook_denies_it(self):
         manifest, router, before, after, policy_reads = run_records()
         events = native_events("gpt-6-luna", success=False)
@@ -278,7 +342,10 @@ class NativeGateGraderTests(unittest.TestCase):
         del events[6]["data"]["arguments"]["model"]
         after["worker_id"] = None
         after["observed_worker_model"] = None
-        after["override_fallback"] = "I used the routed fallback model claude-haiku-5.5."
+        after["override_fallback"] = (
+            "Policy restriction required claude-haiku-5.5 instead of routed gpt-6-luna; "
+            "effort omitted as host-default."
+        )
         verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
         self.assertEqual(verdict["observed"]["actor_reported_fallback_model"], "claude-haiku-5.5")
         self.assertFalse(verdict["behavior_failures"])
@@ -287,9 +354,10 @@ class NativeGateGraderTests(unittest.TestCase):
 
     def test_unverifiable_fallback_prose_is_reported_for_manual_review(self):
         manifest, router, before, after, policy_reads = run_records()
-        after["override_fallback"] = "I selected the safer option."
+        after["override_fallback"] = "I did not use the routed fallback model claude-haiku-5.5."
         verdict = grade_native_gate(native_events(), manifest, router, before, after, policy_reads)
         self.assertTrue(verdict["manual_review"])
+        self.assertIsNone(verdict["observed"]["actor_reported_fallback_model"])
         self.assertFalse(verdict["behavior_failures"])
 
 

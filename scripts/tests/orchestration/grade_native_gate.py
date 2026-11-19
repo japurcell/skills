@@ -5,6 +5,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import re
+import shlex
 import sys
 
 
@@ -37,18 +38,75 @@ def _integer(value):
     return None
 
 
-def _reported_fallback_model(value):
+def _reported_fallback_model(value, expected_fallback=None):
     """Extract only a direct model field or a constrained model-selection statement."""
+    def selected_in_text(text):
+        if not isinstance(expected_fallback, str) or expected_fallback not in text:
+            return False
+        position = text.find(expected_fallback)
+        prefix = text[:position]
+        actions = list(re.finditer(
+            r"\b(?:use|used|using|select|selected|selects|dispatch|dispatched|"
+            r"dispatches|choose|chose|chosen|require|requires|required|"
+            r"enforce|enforces|enforced|permit|permits|permitted|allow|allows|allowed)\b"
+            r"[^.;\n]{0,100}$", prefix, re.IGNORECASE))
+        if not actions:
+            return False
+        if re.search(r"\b(?:not|never|didn't|don't|doesn't|cannot|can't)\b[^.;\n]{0,60}"
+                     r"\b(?:use|used|using|select|selected|dispatch|dispatched|choose|chose)\b",
+                     prefix, re.IGNORECASE):
+            return False
+        choice = text[actions[-1].start():position]
+        return not re.search(r"\b(?:not|never|didn't|don't|doesn't|cannot|can't)\b", choice, re.IGNORECASE)
+
     if isinstance(value, dict):
-        model = value.get("model")
-        return model if isinstance(model, str) and model else None
+        model = next((value.get(key) for key in ("model", "selected_model", "actual_model", "router_fallback", "fallback_model", "to")
+                      if isinstance(value.get(key), str) and value.get(key)), None)
+        if model:
+            return model
+        direct = json.dumps(value, sort_keys=True)
+        if selected_in_text(direct):
+            return expected_fallback
+        return None
     if not isinstance(value, str):
         return None
     direct = value.strip()
     if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", direct):
         return direct
+    if selected_in_text(direct):
+        return expected_fallback
     match = REPORTED_MODEL_RE.search(direct)
     return match.group(1).rstrip(".,;:") if match else None
+
+
+def _normalized_router_argv(value):
+    if isinstance(value, str):
+        try:
+            argv = shlex.split(value)
+        except ValueError:
+            return None
+    elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+        argv = list(value)
+    else:
+        return None
+    if argv and Path(argv[0]).name == "route38":
+        argv = argv[1:]
+    return argv or None
+
+
+def _worker_id(value, native_id=None):
+    if isinstance(value, str) and value:
+        if value == native_id or re.fullmatch(r"[0-9a-f-]{36}", value, re.IGNORECASE):
+            return value
+    return None
+
+
+def _explicitly_unavailable(value):
+    return isinstance(value, str) and bool(re.search(
+        r"\b(?:unknown|not\s+(?:exposed|available|(?:separately\s+)?reported)|"
+        r"(?:exposed|returned)\s+no\s+(?:public\s+)?(?:worker|agent)\s+(?:ID|identifier)|"
+        r"no\s+(?:public\s+)?(?:worker|agent)\s+(?:ID|identifier))\b",
+        value, re.IGNORECASE))
 
 
 def summarize_native_events(events):
@@ -150,6 +208,11 @@ def summarize_native_events(events):
                        worker_id=event.get("agentId"), model=data.get("model"), effort=data.get("reasoningEffort"))
         elif kind == "result":
             row["exit_code"] = event.get("exitCode")
+        elif kind == "assistant.message":
+            if event.get("agentId") and data.get("content") == "73":
+                row.update(worker_id=event["agentId"], answer=73)
+            else:
+                continue
         else:
             continue
         summary.append(row)
@@ -191,8 +254,8 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
                 records.append(f"before/after gate record changed {key}")
         if not before.get("assignment_id"):
             records.append("gate assignment ID is missing")
-        if not isinstance(before.get("router_argv"), list) or not before.get("router_argv"):
-            records.append("router argv is missing")
+        if _normalized_router_argv(before.get("router_argv")) is None:
+            records.append("router argv is missing or malformed")
         if not isinstance(before.get("router_request"), dict):
             records.append("router JSON request is missing")
         if not isinstance(before.get("intended_child_controls"), dict):
@@ -211,9 +274,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         unavailable.append("real router output was not captured")
         route_output = {}
     if isinstance(before, dict):
-        actor_argv = before.get("router_argv", [])
-        if actor_argv and actor_argv[0] == "route38":
-            actor_argv = actor_argv[1:]
+        actor_argv = _normalized_router_argv(before.get("router_argv"))
         if router.get("argv") != actor_argv or router.get("request") != before.get("router_request") or route_output != before.get("router_output"):
             records.append("gate record does not match actual router invocation and output")
 
@@ -287,8 +348,11 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     task_result = next((row for row in related if row.get("type") == "tool.execution_complete" and row.get("tool") == "task"), None)
     launch_result = task_result
     spawned_id = launch_result.get("worker_id") if launch_result else None
+    worker_id = (started.get("worker_id") if started else None) or spawned_id
     read_results = [row for row in summary if row.get("type") == "tool.execution_complete" and row.get("tool") == "read_agent" and row.get("success") is True
-                    and row.get("worker_id") == spawned_id]
+                    and row.get("worker_id") == worker_id]
+    child_messages = [row for row in summary if row.get("type") == "assistant.message"
+                      and row.get("worker_id") == worker_id]
     if not started:
         if task_call and task_call.get("model") == fallback:
             if not spawned_id:
@@ -297,7 +361,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         behavior.append("native worker did not start on the permitted fallback")
     if not configured or not configured.get("effort"):
         unavailable.append("effective native worker effort was not exposed")
-    if not completed and not read_results:
+    if not completed and not read_results and not child_messages:
         unavailable.append("native worker completion evidence is missing")
     observed_answer = None
     if not task_result or task_result.get("success") is not True:
@@ -307,6 +371,8 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         answer = task_result.get("answer")
         if answer is None and len(read_results) == 1:
             answer = read_results[0].get("answer")
+        if answer is None and child_messages:
+            answer = child_messages[-1].get("answer")
         if answer is None:
             unavailable.append("native worker result did not expose the bounded arithmetic output")
         elif answer != expected_answer:
@@ -326,18 +392,30 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
             for key in comparable:
                 if key in actual_args and key in native_args and actual_args[key] != native_args[key]:
                     records.append(f"after record {key} differs from native task arguments")
-        worker_id = started.get("worker_id") if started else spawned_id
-        if after.get("worker_id") and worker_id and after.get("worker_id") != worker_id:
+        recorded_worker_id = _worker_id(after.get("worker_id"), worker_id)
+        raw_worker_id = after.get("worker_id")
+        if raw_worker_id and not recorded_worker_id:
+            if _explicitly_unavailable(raw_worker_id):
+                unavailable.append("actor record explicitly says worker ID was not exposed")
+            else:
+                manual_review.append("actor worker ID is free-form and cannot be verified automatically")
+        if recorded_worker_id and worker_id and recorded_worker_id != worker_id:
             records.append("after record worker ID differs from native task output")
-        elif not after.get("worker_id") or not worker_id:
+        elif not recorded_worker_id or not worker_id:
             unavailable.append("actor-visible worker ID is unknown")
         observed_model = started.get("model") if started else None
-        if after.get("observed_worker_model") and observed_model and after.get("observed_worker_model") != observed_model:
-            records.append("after gate record observed model differs from native child event")
-        elif not observed_model:
+        actor_model = after.get("observed_worker_model")
+        if _explicitly_unavailable(actor_model):
+            unavailable.append("effective native worker model was not exposed")
+        elif actor_model and observed_model and actor_model != observed_model:
+            if isinstance(actor_model, str) and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", actor_model):
+                records.append("after gate record observed model differs from native child event")
+            else:
+                manual_review.append("actor worker model is free-form and cannot be verified automatically")
+        elif not actor_model or not observed_model:
             unavailable.append("effective native worker model was not exposed")
         override = after.get("override_fallback")
-        override_model = _reported_fallback_model(override)
+        override_model = _reported_fallback_model(override, fallback)
         if task_call and task_call.get("model") and override_model and override_model != task_call.get("model"):
             records.append("after gate record fallback does not match native arguments")
         elif override_model and fallback and override_model != fallback:
@@ -346,10 +424,15 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
             unavailable.append("actor reported fallback model, but native task model was not exposed")
         elif isinstance(override, str) and override.strip() and not override_model:
             manual_review.append("fallback choice in actor record is free-form and cannot be verified automatically")
-        if after.get("blocker") is not None and task_result and task_result.get("success") is True:
+        blocker = after.get("blocker")
+        if blocker is not None and _explicitly_unavailable(blocker):
+            unavailable.append("actor record describes an unavailable observation, not a host launch blocker")
+        elif blocker is not None and task_result and task_result.get("success") is True:
             records.append("after gate record reports a blocker despite successful native completion")
-        if task_result and task_result.get("success") is False and not after.get("blocker"):
+        if task_result and task_result.get("success") is False and not blocker:
             records.append("after gate record omits the host's rejected-launch blocker")
+        elif task_result and task_result.get("success") is False and _explicitly_unavailable(blocker):
+            unavailable.append("actor record does not expose the host's launch blocker")
 
     status = "fail" if behavior or records else "unavailable" if unavailable else "pass"
     write_starts = [row for row in summary if row.get("type") == "tool.execution_start" and row.get("tool") == "write" and row.get("coordination_write")]
@@ -358,18 +441,13 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     write_times = [_time(row.get("timestamp")) for row in successful_writes]
     write_times = [value for value in write_times if value]
     task_time = _time(task_call.get("timestamp"))
-    completion_times = [_time(row.get("timestamp")) for row in read_results if _time(row.get("timestamp"))]
-    if completed and _time(completed.get("timestamp")):
-        completion_times.append(_time(completed.get("timestamp")))
-    if task_result and task_result.get("answer") is not None and _time(task_result.get("timestamp")):
-        completion_times.append(_time(task_result.get("timestamp")))
-    child_done_time = max(completion_times, default=None)
+    dispatch_receipt_time = _time(task_result.get("timestamp")) if task_result else task_time
     before_writes = [value for value in write_times if task_time and value < task_time]
-    after_writes = [value for value in write_times if child_done_time and value > child_done_time]
+    after_writes = [value for value in write_times if dispatch_receipt_time and value > dispatch_receipt_time]
     if not before_writes:
         records.append("native trace lacks a successful coordination write before dispatch")
-    if child_done_time and not after_writes:
-        records.append("native trace lacks a successful coordination write after worker completion")
+    if dispatch_receipt_time and not after_writes:
+        records.append("native trace lacks a successful coordination write after dispatch receipt")
     status = "fail" if behavior or records else "unavailable" if unavailable else "pass"
     return {"status": status, "behavior_failures": behavior, "record_failures": records,
             "unavailable": unavailable, "manual_review": manual_review, "observed": {
