@@ -74,3 +74,11 @@ In CLI 1.0.114 track native `task` arguments, `subagent.started`, `subagent.comp
 ## Acceptance
 
 There must be two overlapping real workers. Verify QUICK's result, early closure and re-arming for the remaining deadline. During quiet time, check for gratuitous status reads, repeated setup or another dispatch. Require a real silent-worker deadline and a bounded response. Permit at most one extension based on a timely ETA. When ownership transfers, verify both the old worker and any write-producing operations have stopped. Report missing observations as unknown. Keep failed attempts, setup failures and successful host/caller combinations separately identifiable.
+
+## Bounded heartbeat writer for shutdown comparisons
+
+Use `heartbeat_probe.py` for a harmless synthetic writer when a native worker can start project-local commands. Copy the probe into the disposable project, then expose a narrow launcher in the worker profile. It writes one fsynced JSONL record per interval, including sequence number, wall and monotonic timestamps, and its PID. It refuses paths outside the current project, refuses to overwrite an existing file, and stops after at most 240 seconds. Each case must use a fresh project and output path.
+
+For Copilot profiles that receive `--profile <name>` when the command is invoked, the launcher may accept only the exact expected profile argument, either bare or as two tokens, then `exec` the probe. Do not silently discard arbitrary arguments. Keep the silent worker as a separate bounded `sleep` command. Register an absolute deadline from the live clock immediately before each dispatch, then record the checkpoint and native stop actions independently from the worker output.
+
+Observe `heartbeat.jsonl` and the writer PID from outside the disposable actor's editable records. A final heartbeat timestamp, worker completion notification, or parent CLI exit is not process-terminal proof. Record the first independent PID-terminal observation and the later no-new-write horizon. If the CLI cannot dispatch, a wrapper rejects host-added arguments, no writer PID appears, or the observer cannot establish process liveness, classify that attempt as setup failure or missing evidence. Do not call a no-worker wait a passing deadline trial.
