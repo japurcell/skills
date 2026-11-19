@@ -21,6 +21,8 @@ For the other caller, set `caller=execplan-implement`, set `--caller execplan`, 
 
 Re-grade a saved run without contacting a provider. The grader reads raw native events privately, strips prompts and message bodies, and reports behavior failures, record failures, unavailable observations, and unverifiable free-form actor statements separately. It accepts the actor-written `coordination.json`; malformed JSON, including valid JSON followed by trailing text, leaves native behavior grading intact while recording the input error. Shell invocations are recognized when captured as a command string or argv list. Missing native worker identity/model stays unavailable; a constrained actor statement can report its chosen model without claiming native exposure.
 
+The runner grades the same saved artifacts as replay. Both return exit 0 for a pass, 1 for a proven failure, and 2 when required evidence is unavailable. An unreadable event, router, or policy row prevents a pass. The verdict names the file and line and continues grading readable rows, including those after the damage. A missing receipt in a damaged trace leaves the corresponding action unverified. A readable wrong-worker dispatch still fails, even if another row is damaged. Malformed actor coordination is itself a record failure.
+
 ```sh
 run_dir=/path/to/saved/run
 rtk proxy python3 scripts/tests/orchestration/grade_native_gate.py \

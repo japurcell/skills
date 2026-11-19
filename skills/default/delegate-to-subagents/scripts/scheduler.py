@@ -100,54 +100,59 @@ def add_time(start, duration):
     return result
 
 
-def advance(a, now):
-    if a['status'] != 'active':
-        return None
-    phase = a['phase']
-    event = None
-    if phase == 'running' and now >= a['deadline']:
-        a['phase'] = 'checkpoint'
-        a['phase_deadline'] = add_time(now, a['checkpoint_grace'])
-        event = ('deadline_expired', 'request status by the checkpoint deadline')
-    elif phase in ('checkpoint', 'decision') and now >= a['phase_deadline']:
-        a['phase'] = 'stop'
-        event = ('checkpoint_expired', 'request stop; confirm worker and writes stopped before ownership transfer')
-    elif phase == 'extended' and now >= a['deadline']:
-        a['phase'] = 'stop'
-        event = ('extension_expired', 'request stop; confirm worker and writes stopped before ownership transfer')
-    elif phase in ('running', 'extended') and 'next_checkpoint' in a and now >= a['next_checkpoint']:
-        a['next_checkpoint'] = add_time(now, a['checkpoint_interval'])
-        event = ('progress_reminder', 'request concise progress update')
-    if event:
-        return {'type': event[0], 'assignment': a['id'], 'host_action': event[1]}
-    return None
-
-
-def events(assignments, now):
-    return [event for a in assignments.values() if (event := advance(a, now))]
+# The phase deadline takes priority over every overdue reminder.
+PHASE_TIMERS = {
+    'running': ('deadline', 'deadline_expired'),
+    'checkpoint': ('phase_deadline', 'checkpoint_expired'),
+    'decision': ('phase_deadline', 'checkpoint_expired'),
+    'extended': ('deadline', 'extension_expired'),
+}
+HOST_ACTIONS = {
+    'deadline_expired': 'request status by the checkpoint deadline',
+    'checkpoint_expired': 'request stop; confirm worker and writes stopped before ownership transfer',
+    'extension_expired': 'request stop; confirm worker and writes stopped before ownership transfer',
+    'progress_reminder': 'request concise progress update',
+}
 
 
 def phase_deadline(assignment):
+    timer = PHASE_TIMERS.get(assignment['phase'])
+    return assignment[timer[0]] if timer else None
+
+
+def next_timer(assignment, now):
+    deadline = phase_deadline(assignment)
+    if assignment['status'] != 'active' or deadline is None:
+        return None
     phase = assignment['phase']
-    if phase in ('running', 'extended'):
-        return assignment['deadline']
-    if phase in ('checkpoint', 'decision'):
-        return assignment['phase_deadline']
-    return None
+    _, expiry = PHASE_TIMERS[phase]
+    reminder = assignment.get('next_checkpoint') if phase in ('running', 'extended') else None
+    if now < deadline and reminder is not None and reminder < deadline:
+        return reminder, 'progress_reminder'
+    return deadline, expiry
 
 
-def next_event_time(assignments):
-    """Return the next timer transition, ignoring completed and stopped assignments."""
-    due_times = []
-    for a in assignments.values():
-        if a['status'] != 'active':
+def advance_timers(assignments, now):
+    """Advance each due assignment once, or return the next wake if none are due."""
+    events = []
+    next_wake = None
+    for assignment in assignments.values():
+        timer = next_timer(assignment, now)
+        if timer is None:
             continue
-        deadline = phase_deadline(a)
-        if deadline is not None:
-            due_times.append(deadline)
-        if a['phase'] in ('running', 'extended') and 'next_checkpoint' in a:
-            due_times.append(a['next_checkpoint'])
-    return min(due_times, default=None)
+        due, kind = timer
+        if due > now:
+            next_wake = due if next_wake is None else min(due, next_wake)
+            continue
+        if kind == 'deadline_expired':
+            assignment['phase'] = 'checkpoint'
+            assignment['phase_deadline'] = add_time(now, assignment['checkpoint_grace'])
+        elif kind == 'progress_reminder':
+            assignment['next_checkpoint'] = add_time(now, assignment['checkpoint_interval'])
+        else:
+            assignment['phase'] = 'stop'
+        events.append({'type': kind, 'assignment': assignment['id'], 'host_action': HOST_ACTIONS[kind]})
+    return events, next_wake
 
 
 class StrictParser(argparse.ArgumentParser):
@@ -224,7 +229,7 @@ def main():
                 data = load(args.state)
                 assignments = data['assignments']
                 if args.cmd in ('tick', 'wait'):
-                    found = events(assignments, now)
+                    found, due_at = advance_timers(assignments, now)
                     elapsed = time.monotonic() - started
                     if args.cmd == 'tick' or found or elapsed >= args.max_wait:
                         if found:
@@ -234,11 +239,9 @@ def main():
                             out['wait_seconds'] = min(elapsed, args.max_wait)
                         break
                     remaining = max(0, args.max_wait - elapsed)
-                    due_at = next_event_time(assignments)
-                    until_due = max(0, due_at - now) if due_at is not None else remaining
                     pause = min(WAIT_POLL_INTERVAL, remaining)
-                    if until_due > 0:
-                        pause = min(pause, until_due)
+                    if due_at is not None:
+                        pause = min(pause, due_at - now)
                 elif args.cmd == 'register':
                     if not args.id or args.id in assignments or args.deadline <= now or (args.checkpoint is not None and args.checkpoint <= 0) or args.grace < 0:
                         raise ValueError('duplicate ID or invalid deadline/checkpoint/grace')

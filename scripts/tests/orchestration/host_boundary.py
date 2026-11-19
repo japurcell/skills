@@ -28,7 +28,7 @@ def cases() -> dict[str, dict]:
     return rows
 
 
-def record(event: dict) -> None:
+def record(event: dict) -> int:
     with EVENTS.open("a+") as stream:
         fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
         stream.seek(0)
@@ -36,11 +36,24 @@ def record(event: dict) -> None:
         stream.seek(0, os.SEEK_END)
         stream.write(json.dumps(event, sort_keys=True) + "\n")
         stream.flush()
-        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+        if event["kind"] == "dispatch" and event["result"] == "model_wide_rejection":
+            # Sample the shared monotonic clock only after the rejection is visible.
+            confirmation = {"kind": "rejection_recorded", "case_id": event["case_id"],
+                            "receipt_sequence": event["sequence"], "sequence": event["sequence"] + 1,
+                            "recorded_ns": time.monotonic_ns()}
+            stream.write(json.dumps(confirmation, sort_keys=True) + "\n")
+            stream.flush()
+        return event["sequence"]
+
+
+def observed_events():
+    with EVENTS.open() as stream:
+        fcntl.flock(stream.fileno(), fcntl.LOCK_SH)
+        return [json.loads(line) for line in stream]
 
 
 def latest_route(case_id: str) -> dict:
-    for event in reversed([json.loads(line) for line in EVENTS.read_text().splitlines()]):
+    for event in reversed(observed_events()):
         if event["case_id"] == case_id and event["kind"] == "route":
             return event["result"]
     raise RuntimeError(f"route38 must run before a dispatch decision for {case_id}")
@@ -57,13 +70,16 @@ def catalog_tier(model: str, floor: str | None = None) -> str | None:
     return min(matching, key=TIER_RANK.get) if matching else None
 
 
-def dispatch(case, args, started_ns) -> int:
+def dispatch(case, args, started_ns, entered_ns) -> int:
     case_id = args[0]
-    route = latest_route(case_id)
     if len(args) < 3 or args[1] != "--model":
         print("usage: dispatch38 CASE --model MODEL [--effort LEVEL]", file=sys.stderr)
         return 2
     model = args[2]
+    # Journal the start before inspecting the route or choosing a host outcome.
+    start_sequence = record({"kind": "dispatch_start", "case_id": case_id, "model": model,
+                             "entered_ns": entered_ns})
+    route = latest_route(case_id)
     effort = None
     if "--effort" in args:
         effort = args[args.index("--effort") + 1]
@@ -102,14 +118,14 @@ def dispatch(case, args, started_ns) -> int:
     elif result is None and effort is not None:
         result = "unexpected_effort_under_host_default"
     if result is None and policy.get("availability") == "unknown":
-        previous = [row for row in (json.loads(line) for line in EVENTS.read_text().splitlines())
+        previous = [row for row in observed_events()
                     if row["case_id"] == case_id and row["kind"] == "dispatch" and row["model"] == model]
         if any(row["result"] == "model_wide_rejection" for row in previous):
             result = "retry_forbidden"
     if result is None:
         result = simulator.get("dispatch_outcomes", {}).get(model, "host_rejection")
     worker_id = f"w1-{uuid.uuid5(uuid.NAMESPACE_DNS, case_id).hex[:12]}" if result == "worker_completed" else None
-    event = {"kind": "dispatch", "case_id": case_id, "argv": ["dispatch38", *args],
+    event = {"kind": "dispatch", "case_id": case_id, "argv": ["dispatch38", *args], "start_sequence": start_sequence,
              "call_started_ns": started_ns,
              "route": route, "model": model, "effort": effort,
              "fallback_tier": fallback_tier, "result": result, "worker_id": worker_id}
@@ -148,6 +164,7 @@ def reuse_worker(case, args, started_ns) -> int:
 
 
 def main() -> int:
+    entered_ns = time.monotonic_ns()
     started_ns = time.time_ns()
     command = Path(sys.argv[0]).name
     args = sys.argv[1:]
@@ -190,7 +207,7 @@ def main() -> int:
         print(json.dumps(policy, sort_keys=True))
         return 0
     if command == "dispatch38":
-        return dispatch(case, args, started_ns)
+        return dispatch(case, args, started_ns, entered_ns)
     if command == "reuse38":
         return reuse_worker(case, args, started_ns)
     print(f"unknown boundary command: {command}", file=sys.stderr)

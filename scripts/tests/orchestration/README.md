@@ -50,3 +50,11 @@ word counts and full caller/router SHA-256 hashes. `test_w1.py` pins all six P2
 rendered hashes and counts, while retaining checks for the original P1 arms.
 The checked-in replay suite uses synthetic local fixtures and does not read
 private provider traces or `/private/tmp` artifacts.
+
+For controlled dispatch case 03, the host samples its monotonic clock at command entry
+and again after the primary rejection has been written to the log. Each dispatch receipt links to its start.
+The grader requires exactly one primary rejection followed by one successful
+routed fallback that began after that rejection was recorded. Two concurrent calls can
+finish in the expected order and still fail. The per-case report retains the raw
+observations in file order and flags missing or conflicting ordering evidence.
+Older traces remain reportable. Case 03 requires the start evidence to pass.

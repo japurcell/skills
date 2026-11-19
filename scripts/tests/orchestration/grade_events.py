@@ -6,6 +6,37 @@ import argparse
 import json
 from pathlib import Path
 
+from case_trace import CASE_IDS, read_cases
+
+
+def completed(row: dict) -> bool:
+    return row.get("result") == "worker_completed" and bool(row.get("worker_id"))
+
+
+def fallback_failure(case, route):
+    actions = case.actions
+    if len(actions) != 2 or any(row["kind"] != "dispatch" for row in actions):
+        return "expected exactly two dispatch attempts"
+    primary, fallback = actions
+    primary_model = route.get("model")
+    routed_fallback = route.get("fallback")
+    fallback_model = routed_fallback.get("model") if isinstance(routed_fallback, dict) else None
+    if primary.get("model") == fallback_model and fallback.get("model") == primary_model:
+        return "primary and fallback receipts are reversed"
+    if (not primary_model or not fallback_model or primary_model == fallback_model
+            or primary.get("model") != primary_model or primary.get("result") != "model_wide_rejection"
+            or fallback.get("model") != fallback_model or not completed(fallback)
+            or fallback.get("fallback_tier") is None or fallback.get("effort") is not None):
+        return "expected primary rejection and successful routed fallback"
+    if len(case.of_kind("dispatch_start")) > 2:
+        return "extra dispatch start"
+    follows_rejection = case.order_after_receipt(primary, fallback)
+    if follows_rejection is None:
+        return "insufficient ordering evidence"
+    if not follows_rejection:
+        return "fallback start overlaps the primary attempt"
+    return None
+
 
 def grade(path: Path) -> dict:
     checks = []
@@ -18,22 +49,18 @@ def grade(path: Path) -> dict:
         return {"source": str(path), "passed": passed, "total": len(checks),
                 "verdict": "pass" if passed == len(checks) else "fail", "checks": checks}
 
-    expected_ids = {f"case{number:02d}" for number in range(1, 17)}
+    expected_ids = set(CASE_IDS)
     if not path.is_file():
         case_check("all", "trace file exists", False, str(path))
         return verdict()
     try:
-        rows = [json.loads(line) for line in path.read_text().splitlines()]
-    except (OSError, json.JSONDecodeError) as error:
+        cases = read_cases(path)
+    except (OSError, ValueError) as error:
         case_check("all", "trace parses", False, str(error))
         return verdict()
-    if any(not isinstance(row, dict) or not isinstance(row.get("kind"), str) or
-           not isinstance(row.get("case_id"), str) for row in rows):
-        case_check("all", "trace rows have event and case IDs", False, "malformed JSONL record")
-        return verdict()
 
-    route_rows = [row for row in rows if row["kind"] == "route"]
-    control_rows = [row for row in rows if row["kind"] == "host_controls"]
+    route_rows = [row for case in cases.values() for row in case.of_kind("route")]
+    control_rows = [row for case in cases.values() for row in case.of_kind("host_controls")]
     route_ids = [row["case_id"] for row in route_rows]
     control_ids = [row["case_id"] for row in control_rows]
     if (set(route_ids) != expected_ids or len(route_ids) != len(expected_ids) or
@@ -50,9 +77,7 @@ def grade(path: Path) -> dict:
     if bad_routes:
         case_check("all", "every router call returned a valid JSON route", False, bad_routes)
         return verdict()
-    dispatches = [row for row in rows if row["kind"] == "dispatch"]
-    reuses = [row for row in rows if row["kind"] == "reuse"]
-    unexpected = sorted({row["case_id"] for row in dispatches + reuses} - expected_ids)
+    unexpected = sorted(set(cases) - expected_ids)
     case_check("all", "no arbitrary dispatch or reuse IDs", not unexpected, unexpected)
 
     case_check("all", "one router call per case", len(route_rows) == 16 and len(routes) == 16,
@@ -63,14 +88,11 @@ def grade(path: Path) -> dict:
     def expect(case_id: str, condition: bool, evidence: object) -> None:
         case_check(case_id, "observed action matches controlled requirement", condition, evidence)
 
-    def completed(row: dict) -> bool:
-        return row.get("result") == "worker_completed" and bool(row.get("worker_id"))
-
     def dispatches_for(case_id):
-        return [row for row in dispatches if row["case_id"] == case_id]
+        return cases[case_id].of_kind("dispatch")
 
     def reuses_for(case_id):
-        return [row for row in reuses if row["case_id"] == case_id]
+        return cases[case_id].of_kind("reuse")
 
     def dispatched_model(attempts, model):
         return len(attempts) == 1 and attempts[0].get("model") == model and completed(attempts[0])
@@ -82,14 +104,10 @@ def grade(path: Path) -> dict:
     attempts = dispatches_for("case02")
     expect("case02", dispatched_model(attempts, routes["case02"].get("model")), attempts)
 
-    attempts = dispatches_for("case03")
-    primary_model = routes["case03"].get("model")
-    fallback_model = (routes["case03"].get("fallback") or {}).get("model")
-    primary = [row for row in attempts if row.get("model") == primary_model]
-    fallback = [row for row in attempts if row.get("model") == fallback_model]
-    expect("case03", len(primary) == 1 and primary[0].get("result") == "model_wide_rejection" and
-           len(fallback) == 1 and completed(fallback[0]) and fallback[0].get("fallback_tier") is not None and
-           fallback[0].get("effort") is None, attempts)
+    case = cases["case03"]
+    reason = fallback_failure(case, routes["case03"])
+    expect("case03", reason is None, {"actions": case.actions, "reason": reason,
+                                      "ordering_issues": case.ordering_issues})
 
     for case_id, effort in (("case04", "high"), ("case05", None)):
         attempts = dispatches_for(case_id)

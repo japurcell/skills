@@ -13,7 +13,8 @@ import subprocess
 import sys
 import uuid
 
-from grade_native_gate import grade_native_gate
+from actor_records import coordination_schema
+from grade_native_gate import grade_saved_gate
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -206,13 +207,7 @@ def prepare(args):
         "`.github/agents/check-total.agent.md`; local router is `route38 --input route-request.json`. "
         "Coordination record is `coordination.json` and its format is `.harness/coordination.schema.json`.\n",
         encoding="utf-8")
-    before_fields = ["recorded_at", "assignment_id", "router_argv", "router_request", "router_output", "intended_child_controls", "parent_controls"]
-    after_fields = before_fields + ["actual_args", "worker_id", "observed_worker_model", "blocker", "override_fallback"]
-    schema = {"type": "object", "required": ["before", "after"], "additionalProperties": False,
-              "properties": {name: {"type": "object", "required": fields, "additionalProperties": False,
-                                    "properties": {key: {} for key in fields}}
-                             for name, fields in (("before", before_fields), ("after", after_fields))}}
-    write_json(project / ".harness/coordination.schema.json", schema)
+    write_json(project / ".harness/coordination.schema.json", coordination_schema())
 
     parent_flags = ["--trust-folder", "--no-ask-user", "--no-auto-update", "--disable-builtin-mcps",
                     "--no-color", "--model", args.parent_model, "--output-format", "json"]
@@ -228,6 +223,7 @@ def prepare(args):
     prompt_sha = sha256_bytes(prompt.encode())
     manifest = {
         "schema_version": 1, "assignment_id": assignment_id, "caller": args.caller,
+        "coordination_path": str(project / "coordination.json"),
         "source_hashes": source_hashes, "worker_policy": policy,
         "parent_model": args.parent_model, "parent_effort": None,
         "host_parent_effort_argument": "omitted", "host_cli": args.copilot,
@@ -250,18 +246,6 @@ def prepare(args):
             "route_executable": route38}
 
 
-def load_actor_records(project):
-    """Load the records written by the native actor; never infer them from host events."""
-    path = Path(project) / "coordination.json"
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return None, None
-    if not isinstance(value, dict):
-        return None, None
-    return value.get("before"), value.get("after")
-
-
 def _kill(proc):
     if os.name == "nt":
         proc.terminate()
@@ -271,19 +255,6 @@ def _kill(proc):
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
         os.killpg(proc.pid, signal.SIGKILL)
-
-
-def read_observed_rows(path):
-    """Keep complete event records even if the session ended mid-write."""
-    rows = []
-    if path.is_file():
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                try:
-                    rows.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return rows
 
 
 def run_prepared(prepared, args):
@@ -309,17 +280,9 @@ def run_prepared(prepared, args):
     manifest["finished_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     manifest["native_exit_code"] = exit_code
     write_json(prepared["private"] / "manifest.json", manifest)
-    events = read_observed_rows(prepared["private"] / "events.jsonl")
-    before, after = load_actor_records(prepared["project"])
-    router_records = read_observed_rows(prepared["private"] / "router-events.jsonl")
-    policy_path = prepared["private"] / "policy-observations.jsonl"
-    policy_records = []
-    if policy_path.is_file():
-        try:
-            policy_records = [json.loads(line) for line in policy_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-        except json.JSONDecodeError:
-            policy_records = []
-    verdict = grade_native_gate(events, manifest, router_records, before, after, policy_records)
+    private = prepared["private"]
+    verdict = grade_saved_gate(private / "events.jsonl", private / "manifest.json",
+                               private / "router-events.jsonl", prepared["project"] / "coordination.json")
     write_json(prepared["private"] / "verdict.json", verdict)
     print(json.dumps({"status": verdict["status"], "behavior_failures": verdict["behavior_failures"],
                       "record_failures": verdict["record_failures"], "unavailable": verdict["unavailable"],

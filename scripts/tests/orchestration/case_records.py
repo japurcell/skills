@@ -6,18 +6,20 @@ import argparse
 import json
 from pathlib import Path
 
+from case_trace import CASE_IDS, read_cases
+
 
 def build_records(source: Path) -> list[dict]:
-    events = [json.loads(line) for line in source.read_text().splitlines()]
+    cases = read_cases(source)
     output = []
-    for number in range(1, 17):
-        case_id = f"case{number:02d}"
-        case_events = [event for event in events if event.get("case_id") == case_id]
-        route = next((event for event in case_events if event.get("kind") == "route"), {})
-        controls = next((event for event in case_events if event.get("kind") == "host_controls"), {})
-        after = [event for event in case_events if event.get("kind") in ("dispatch", "reuse")]
+    for case_id in dict.fromkeys((*CASE_IDS, *cases)):
+        case = cases[case_id]
+        route = next(iter(case.of_kind("route")), {})
+        controls = next(iter(case.of_kind("host_controls")), {})
         output.append({
             "case_id": case_id,
+            "events": case.rows,
+            "ordering_issues": case.ordering_issues,
             "before": {
                 "router_invocation": route.get("argv"),
                 "router_input": route.get("input"),
@@ -25,7 +27,7 @@ def build_records(source: Path) -> list[dict]:
                 "host_controls": controls.get("controls"),
             },
             "after": {
-                "actual_dispatch_or_reuse_events": after,
+                "actual_dispatch_or_reuse_events": case.actions,
             },
         })
     return output

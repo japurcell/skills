@@ -102,6 +102,29 @@ class SchedulerCliTests(unittest.TestCase):
         self.run_cli("confirm-stopped", "stopped", "--confirmation", "worker-and-writes-stopped", "--now", "41")
         self.run_cli("transfer", "stopped", "--now", "42")
 
+    def test_late_tick_and_wait_expire_all_due_assignments_once(self):
+        for command in (["tick"], ["wait", "--max-wait", "0"]):
+            with self.subTest(command=command):
+                for key, interval in (("overdue", "10"), ("tied", "40")):
+                    self.run_cli("register", key, "worker", "work", "--now", "0",
+                                 "--deadline", "40", "--checkpoint", interval, "--grace", "0")
+
+                def due(now):
+                    return [(event["assignment"], event["type"])
+                            for event in self.run_cli(*command, "--now", now)["events"]]
+                self.assertCountEqual(due("41"), [("overdue", "deadline_expired"), ("tied", "deadline_expired")])
+                self.assertCountEqual(due("42"), [("overdue", "checkpoint_expired"), ("tied", "checkpoint_expired")])
+                self.assertEqual(due("43"), [])
+                self.state.unlink()
+
+    def test_late_observation_starts_grace_and_reminder_does_not_forbid_checkpoint(self):
+        self.run_cli("register", "x", "worker", "work", "--now", "0", "--deadline", "40",
+                     "--checkpoint", "10", "--grace", "5")
+        self.run_cli("checkpoint", "x", "--now", "12")
+        self.assertEqual(self.run_cli("tick", "--now", "50")["events"][0]["type"], "deadline_expired")
+        self.assertEqual(self.run_cli("tick", "--now", "54")["events"], [])
+        self.assertEqual(self.run_cli("tick", "--now", "55")["events"][0]["type"], "checkpoint_expired")
+
     def test_multiple_deadlines_skip_completed_assignment(self):
         self.run_cli("register", "early", "agent", "task", "--deadline", "100", "--now", "0")
         self.run_cli("register", "late", "agent", "task", "--deadline", "200", "--now", "0")

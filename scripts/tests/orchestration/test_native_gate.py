@@ -12,8 +12,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
 
-from grade_native_gate import grade_native_gate, main as grade_native_main, summarize_native_events
-from run_native_gate import load_actor_records
+from grade_native_gate import grade_saved_gate, grade_native_gate, main as grade_native_main, summarize_native_events
 from route_capture import main as capture_route
 
 
@@ -48,6 +47,39 @@ class ProviderLaunchTests(unittest.TestCase):
                     self.assertEqual(calls.read_text() if calls.exists() else "", "")
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertTrue(fixture.is_file())
+
+    def test_runner_and_replay_grade_the_same_damaged_files(self):
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            host = root / "fixture-host"
+            host.write_text(
+                "#!/bin/sh\n"
+                "if [ \"$1\" = --version ]; then echo fixture; exit 0; fi\n"
+                "echo '{invalid coordination' > coordination.json\n"
+                "echo 'null'\n"
+                """echo '{"type":"tool.execution_start","data":{"toolName":"task","toolCallId":"1","arguments":{"agent_type":"wrong"}}}'\n"""
+            )
+            host.chmod(0o755)
+            run = root / "run"
+            live = subprocess.run([sys.executable, str(here / "run_native_gate.py"),
+                                   "--caller", "execplan", "--copilot", str(host),
+                                   "--run-dir", str(run), "--allow-model-calls"],
+                                  capture_output=True, text=True, timeout=10)
+            private = run / "private"
+            self.assertTrue((private / "verdict.json").is_file(), live.stderr)
+            verdict = json.loads((private / "verdict.json").read_text())
+            replay = subprocess.run([sys.executable, str(here / "grade_native_gate.py"),
+                                     "--manifest", str(private / "manifest.json"),
+                                     "--events", str(private / "events.jsonl"),
+                                     "--router-log", str(private / "router-events.jsonl"),
+                                     "--coordination", str(run / "project/coordination.json")],
+                                    capture_output=True, text=True, timeout=10)
+            self.assertEqual((live.returncode, replay.returncode), (1, 1))
+            self.assertEqual(json.loads(replay.stdout), verdict)
+            self.assertTrue(any("wrong required project worker" in x for x in verdict["behavior_failures"]))
+            self.assertTrue(any("coordination.json" in x for x in verdict["record_failures"]))
+            self.assertTrue(any("events.jsonl" in x and "line 1" in x for x in verdict["unavailable"]))
 
     def test_live_permission_requires_the_full_option_name(self):
         here = Path(__file__).resolve().parent
@@ -132,7 +164,7 @@ def run_records():
                                       "parent_model": "gpt-6-luna", "requested_effort": None},
                  worker_id="child-1", observed_worker_model="claude-haiku-5.5",
                  blocker=None, override_fallback="claude-haiku-5.5")
-    manifest = {"caller": "delegate", "source_hashes": {key: "a" * 64 for key in (
+    manifest = {"coordination_path": "/private/tmp/run/project/coordination.json", "caller": "delegate", "source_hashes": {key: "a" * 64 for key in (
         "caller", "router_skill", "router_script", "router_catalog", "route_executable", "gate", "hook", "worker_policy", "worker_agent", "scheduler")},
         "worker_policy": ALLOWED, "parent_model": "gpt-6-luna", "parent_effort": None,
         "assignment_id": "smoke-1"}
@@ -143,20 +175,20 @@ def run_records():
 
 
 class NativeGateGraderTests(unittest.TestCase):
-    def test_runner_loads_actor_records_without_reconstructing_them(self):
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-            before = {"actor": "before"}
-            after = {"actor": "after"}
-            (project / "coordination.json").write_text(json.dumps({"before": before, "after": after}), encoding="utf-8")
-
-            self.assertEqual(load_actor_records(project), (before, after))
-
-    def test_runner_preserves_missing_actor_after_record_as_missing(self):
-        with tempfile.TemporaryDirectory() as directory:
-            project = Path(directory)
-
-            self.assertEqual(load_actor_records(project), (None, None))
+    def test_saved_gate_uses_actor_records_without_reconstructing_them(self):
+        manifest, router, before, after, _ = run_records()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, rows in (("events", native_events()), ("manifest", [manifest]), ("router", router)):
+                (root / name).write_text("".join(json.dumps(row) + "\n" for row in rows))
+            def grade():
+                return grade_saved_gate(root / "events", root / "manifest", root / "router", root / "actor")
+            self.assertTrue(any("after gate record is missing" in f for f in grade()["record_failures"]))
+            (root / "actor").write_text(json.dumps({"before": before, "after": after}))
+            self.assertEqual(grade()["status"], "pass")
+            after["assignment_id"] = "different"
+            (root / "actor").write_text(json.dumps({"before": before, "after": after}))
+            self.assertIn("before/after gate record changed assignment_id", grade()["record_failures"])
 
     def test_accepts_zero_primary_attempts_and_one_real_routed_fallback(self):
         manifest, router, before, after, policy_reads = run_records()
@@ -166,6 +198,195 @@ class NativeGateGraderTests(unittest.TestCase):
         self.assertEqual(verdict["observed"]["worker_effort"], "medium")
         self.assertEqual(verdict["observed"]["primary_attempts"], 0)
         self.assertEqual(verdict["observed"]["fallback_attempts"], 1)
+
+    def test_replay_keeps_independent_findings_when_one_source_is_damaged(self):
+        manifest, router, before, after, policy = run_records()
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            rows = native_events()
+            inputs = {"manifest.json": [manifest], "router.jsonl": router,
+                      "policy-observations.jsonl": policy, "events.jsonl": rows,
+                      "coordination.json": [{"before": before, "after": after}]}
+            task_receipt = next(i for i, event in enumerate(rows)
+                                if event["type"] == "tool.execution_complete"
+                                and event["data"].get("toolCallId") == "task-1")
+            def changed(row, **fields):
+                return json.dumps(dict(row, **fields)).encode()
+
+            def changed_data(index, **fields):
+                return changed(rows[index], data=dict(rows[index]["data"], **fields))
+
+            def task_arguments(**fields):
+                return changed_data(6, arguments=dict(rows[6]["data"]["arguments"], **fields))
+
+            for name, index, invalid in [
+                ("events.jsonl", 3, changed_data(3, toolName={"damaged": True})),
+                ("events.jsonl", task_receipt, changed_data(task_receipt, result={"content": True})),
+                ("events.jsonl", 6, task_arguments(agent_type=None)),
+                ("events.jsonl", 6, task_arguments(model=None)),
+                ("router.jsonl", 0, changed(router[0], request=dict(router[0]["request"], constraints=42))),
+                *(("manifest.json", 0, changed(manifest, **{key: {"damage": 1}}))
+                  for key in ("assignment_id", "parent_model", "parent_effort")),
+                ("manifest.json", 0, changed(manifest, worker_policy=dict(manifest["worker_policy"], another=[]))),
+                ("manifest.json", 0, changed(manifest, worker_policy=[])),
+                ("events.jsonl", 2, changed_data(2, toolName={})),
+                ("events.jsonl", task_receipt, changed_data(task_receipt, result=[])),
+                ("events.jsonl", 6, task_arguments(model="broken model")),
+                ("manifest.json", 0, changed(manifest, coordination_path={"damage": 1})),
+                ("router.jsonl", 0, changed(router[0], request={"task": {"work": {"damage": 1}}})),
+                ("router.jsonl", 0, changed(router[0], request=42)),
+                ("router.jsonl", 0, changed(router[0], output=dict(router[0]["output"], effort_policy={}))),
+                ("router.jsonl", 0, changed(router[0], output={k: v for k, v in router[0]["output"].items() if k != "model"})),
+                ("events.jsonl", 2, changed_data(2, arguments="{broken")),
+                ("events.jsonl", 4, changed_data(4, arguments=42)),
+                ("events.jsonl", 5, changed_data(5, success={})),
+                ("events.jsonl", task_receipt, changed(rows[task_receipt], timestamp="yesterday")),
+                ("router.jsonl", 0, changed(router[0], timestamp="yesterday")),
+                ("events.jsonl", 6, changed_data(6, arguments="{broken")),
+                ("router.jsonl", 0, changed(router[0], output={"model": {"private-raw-data": 1}})),
+                ("events.jsonl", task_receipt, b"private-raw-data\xff"),
+                ("events.jsonl", 5, b"null"),        # Before-write receipt.
+                ("events.jsonl", 6, b'{"type":"tool.execution_start","data":{"toolCallId":[]}}'),
+                ("events.jsonl", 6, b"{}"),
+                ("events.jsonl", 6, b"null"),        # Only dispatch start.
+                ("events.jsonl", len(rows)-1, b"{"), # Interrupted last line.
+                ("router.jsonl", 0, b"null"),
+                ("router.jsonl", 0, b"{}"),
+                ("policy-observations.jsonl", 0, b"{}"),
+                ("policy-observations.jsonl", 0, b"private-raw-data"),
+                ("manifest.json", 0, b"{"),
+            ]:
+                with self.subTest(name=name, index=index):
+                    for filename, values in inputs.items():
+                        lines = [json.dumps(value).encode() for value in values]
+                        if filename == name:
+                            lines[index] = invalid
+                        (root / filename).write_bytes(b"\n".join(lines))
+                    proc = subprocess.run([
+                        sys.executable, str(here / "grade_native_gate.py"),
+                        "--events", str(root / "events.jsonl"), "--router-log", str(root / "router.jsonl"),
+                        "--manifest", str(root / "manifest.json"), "--coordination", str(root / "coordination.json"),
+                    ], text=True, capture_output=True, timeout=10)
+                    verdict = json.loads(proc.stdout)
+                    self.assertEqual(verdict["behavior_failures"], [])
+                    self.assertEqual(verdict["record_failures"], [])
+                    self.assertEqual((proc.returncode, verdict["status"]), (2, "unavailable"))
+                    self.assertIn(f"{name}, line {index + 1}", " ".join(verdict["unavailable"]))
+                    self.assertNotIn("private-raw-data", proc.stdout)
+
+    def test_damaged_route_output_cannot_conceal_independent_argv_mismatch(self):
+        manifest, router, before, after, policy = run_records()
+        before["router_argv"] = after["router_argv"] = ["route38", "--input", "invented.json"]
+        original = router[0]
+        for damaged in (dict(original, output=dict(original["output"], effort_policy={})),
+                        {k: v for k, v in original.items() if k != "output"}, dict(original, request=42)):
+            verdict = grade_native_gate(native_events(), manifest, [damaged], before, after, policy)
+            self.assertEqual(verdict["status"], "fail")
+            self.assertTrue(any("router invocation" in f for f in verdict["record_failures"]))
+
+    def test_damaged_link_keeps_visible_excluded_dispatch(self):
+        manifest, router, before, after, _ = run_records()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, values in (("manifest", [manifest]), ("actor", [{"before": before, "after": after}]),
+                                 ("router", router)):
+                (root / name).write_text("".join(json.dumps(value) + "\n" for value in values))
+            for link in ("toolCallId", "agentId"):
+                rows = native_events()
+                task = rows[6]
+                task["data"]["arguments"]["model"] = router[0]["output"]["model"]
+                (task["data"] if link == "toolCallId" else task)[link] = []
+                (root / "events").write_text("".join(json.dumps(row) + "\n" for row in rows))
+                verdict = grade_saved_gate(root / "events", root / "manifest", root / "router", root / "actor")
+                with self.subTest(link=link):
+                    self.assertEqual(verdict["status"], "fail")
+                    self.assertTrue(any("excluded primary" in f for f in verdict["behavior_failures"]))
+                    self.assertIn("events, line 7", " ".join(verdict["unavailable"]))
+
+    def test_formatted_manifest_locates_the_invalid_policy_entry(self):
+        manifest, router, before, after, _ = run_records()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, rows in (("events", native_events()), ("router", router), ("actor", [{"before": before, "after": after}])):
+                (root / name).write_text("".join(json.dumps(row) + "\n" for row in rows))
+            for value, marker in (([], '"private-worker"'), (["ok", 42], "42")):
+                manifest["worker_policy"] = {**manifest["worker_policy"], "private-worker": value}
+                doc = json.dumps(manifest, indent=2)
+                (root / "manifest.json").write_text(doc)
+                line = next(n for n, text in enumerate(doc.splitlines(), 1) if marker in text)
+                verdict = grade_saved_gate(root / "events", root / "manifest.json", root / "router", root / "actor")
+                self.assertEqual(verdict["status"], "unavailable")
+                self.assertIn(f"manifest.json, line {line}:", " ".join(verdict["unavailable"]))
+                self.assertNotIn("private-worker", json.dumps(verdict))
+
+    def test_policy_damage_for_another_worker_keeps_check_total_exclusion(self):
+        manifest, router, before, after, policy = run_records()
+        manifest["worker_policy"] = {"check-total": ["different"], "another-worker": 1}
+        verdict = grade_native_gate(native_events(), manifest, router, before, after, policy)
+        self.assertTrue(any("disallowed model" in f for f in verdict["behavior_failures"]))
+
+    def test_damaged_router_effort_preserves_readable_policy_violation(self):
+        manifest, router, before, after, policy = run_records()
+        router[0]["output"] = dict(router[0]["output"], model="claude-haiku-5.5", effort_policy={})
+        verdict = grade_native_gate(native_events(), manifest, router, before, after, policy)
+        self.assertTrue(any("excluded primary" in f for f in verdict["behavior_failures"]))
+
+    def test_damaged_worker_type_preserves_independent_model_comparison(self):
+        manifest, router, before, after, policy = run_records()
+        before["intended_child_controls"]["model"] = "different"
+        events = native_events()
+        events[6]["data"]["arguments"]["agent_type"] = []
+        verdict = grade_native_gate(events, manifest, router, before, after, policy)
+        self.assertTrue(any("intended child controls differ" in f for f in verdict["behavior_failures"]))
+
+    def test_malformed_actor_fields_identify_the_source_without_echoing_values(self):
+        manifest, router, before, after, policy = run_records()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name, rows in (("events", native_events()), ("manifest", [manifest]), ("router", router)):
+                (root / name).write_text("".join(json.dumps(row) + "\n" for row in rows))
+            actor = root / "coordination.json"
+            for key, changes in (("recorded_at", {"after": dict(after, recorded_at={})}),
+                                 ("override_fallback", {"after": dict(after, override_fallback=[])}),
+                                 ("router_argv", {"after": dict(after, router_argv=[{}])}),
+                                 ("observed_worker_model", {"after": dict(after, observed_worker_model={})}),
+                                 ("private-marker", {"after": {**after, "private-marker": True}}),
+                                 ("private-marker", {"private-marker": True})):
+                with self.subTest(key=key):
+                    doc = json.dumps({"before": before, "after": after, **changes}, indent=2)
+                    doc = doc.replace('"private-marker": true', '"private-marker":\n\n true')
+                    actor.write_text(doc)
+                    line = max(i for i, value in enumerate(doc.splitlines(), 1) if f'"{key}":' in value)
+                    verdict = grade_saved_gate(root / "events", root / "manifest", root / "router", actor)
+                    self.assertEqual(verdict["status"], "fail")
+                    self.assertIn(f"coordination.json, line {line}:", " ".join(verdict["record_failures"]))
+                    self.assertNotIn("private-marker", json.dumps(verdict))
+
+    def test_writes_must_target_the_project_coordination_file(self):
+        manifest, router, before, after, policy = run_records()
+        for name in ("write", "apply_patch"):
+            for target in ("coordination.json.backup", "/other/project/coordination.json", "notcoordination.json"):
+                with self.subTest(name=name, target=target):
+                    rows = native_events()
+                    for row in rows:
+                        data = row.get("data", {})
+                        if data.get("toolName") == "apply_patch":
+                            data["toolName"] = name
+                            data["arguments"] = ({"path": target} if name == "write"
+                                                 else "*** Update File: " + target)
+                    verdict = grade_native_gate(rows, manifest, router, before, after, policy)
+                    self.assertEqual(verdict["status"], "fail")
+                    self.assertTrue(any("coordination write before" in f for f in verdict["record_failures"]))
+                    self.assertTrue(any("coordination write after" in f for f in verdict["record_failures"]))
+
+    def test_malformed_worker_model_is_an_actor_record_failure(self):
+        manifest, router, before, after, policy = run_records()
+        after["observed_worker_model"] = {"private-raw-data": 1}
+        verdict = grade_native_gate(native_events(), manifest, router, before, after, policy)
+        self.assertEqual(verdict["status"], "fail")
+        self.assertTrue(any("observed_worker_model" in f for f in verdict["record_failures"]))
+        self.assertNotIn("private-raw-data", json.dumps(verdict))
 
     def test_exact_router_shell_string_matches_the_captured_argv(self):
         manifest, router, before, after, policy_reads = run_records()
