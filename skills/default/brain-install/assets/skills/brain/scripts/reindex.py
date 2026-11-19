@@ -544,8 +544,19 @@ def inventory(vault, verify=False):
         from urllib.parse import unquote
         def targets(data):
             text = data.decode("utf-8")
-            links = re.findall(r"(?m)^- \[(?:\\.|[^\]])*\]\(<([^>]*)>\)\s*$", text)
-            if len(links) != sum(line.startswith("- ") for line in text.splitlines()):
+            links = []
+            remainder = []
+            for line in text.splitlines():
+                match = re.fullmatch(r"- \[(?:\\.|[^\]])*\]\(<([^>]*)>\)\s*", line)
+                if match:
+                    links.append(match.group(1))
+                    remainder.append("")
+                elif line.startswith("- "):
+                    raise BrainError("invalid index")
+                else:
+                    remainder.append(line)
+            if re.search(r"\]\s*[\[(]|^\s*\[[^]]+\]:|<\s*(?:a\b|https?://|mailto:)",
+                         "\n".join(remainder), re.IGNORECASE | re.MULTILINE):
                 raise BrainError("invalid index")
             return sorted(unquote(link) for link in links)
         if targets(previous) != targets(content):

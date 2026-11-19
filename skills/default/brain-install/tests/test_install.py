@@ -96,6 +96,26 @@ class InstallerTests(unittest.TestCase):
                          ".agents/skills/brain/scripts/auto-index-brain.py", expected=1)
         self.assertEqual(script.read_text(), "print('{}')\n")
 
+    def test_retained_noop_indexer_rejects_extra_link_anywhere(self):
+        self.run_install("--apply")
+        script = self.target / ".agents/skills/brain/scripts/auto-index-brain.py"
+        script.write_text("print('{}')\n", encoding="utf-8")
+        index = self.target / "brain/index.md"
+        lines = index.read_text(encoding="utf-8").splitlines()
+        links = [line for line in lines if line.startswith("- [")]
+        links.reverse()
+        links[0] = "- [a different label" + links[0][links[0].index("]("):]
+        index.write_text("# Custom heading\n\n" + "\n".join(links) + "\n", encoding="utf-8")
+        arguments = ("--apply", "--index-reviewed", "--keep-existing",
+                     ".agents/skills/brain/scripts/auto-index-brain.py")
+        self.run_install(*arguments)
+        index.write_text(index.read_text() + "\n[extra](outside-inventory.md)\n", encoding="utf-8")
+        before_index, before_script = index.read_bytes(), script.read_bytes()
+        result = self.run_install(*arguments, expected=1)
+        self.assertIn("verif", (result.stdout + result.stderr).lower())
+        self.assertEqual(index.read_bytes(), before_index)
+        self.assertEqual(script.read_bytes(), before_script)
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
