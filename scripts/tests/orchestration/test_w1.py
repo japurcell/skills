@@ -139,6 +139,30 @@ class W1BoundaryTests(unittest.TestCase):
         counts = json.loads((self.rendered / "counts.json").read_text())
         self.assertTrue(all(row["retained_standalone_words_excluded_from_gate_count"] == 6 for row in counts))
 
+    def test_p2_arms_render_exact_candidate_bytes_and_keep_p1_arms(self) -> None:
+        counts = json.loads((self.rendered / "counts.json").read_text())
+        rows = {(row["arm"], row["caller"]): row for row in counts}
+        expected = {
+            ("p2-screen", "delegate-to-subagents"): (59, 102, 161, "10c5f6019d240e883e0badaffcd9cb187e0e6e4e80f21cf43e13002bcc1670f0", "6d5eb3bcc89f1416e8046b390a5ad1f466ac7459a0b432c32843d6124ae6abc3"),
+            ("p2-screen", "execplan-implement"): (102, 102, 204, "9afcb7baafd835267a392a4a75a9d4819031b0fefed8481a16052ccb4662d984", "6d5eb3bcc89f1416e8046b390a5ad1f466ac7459a0b432c32843d6124ae6abc3"),
+            ("p2-deletion", "delegate-to-subagents"): (59, 100, 159, "10c5f6019d240e883e0badaffcd9cb187e0e6e4e80f21cf43e13002bcc1670f0", "6beae12c1e9d36f46c417971ee004656cc419d5a7dacaf1a4f433628cc68a8f5"),
+            ("p2-deletion", "execplan-implement"): (102, 100, 202, "9afcb7baafd835267a392a4a75a9d4819031b0fefed8481a16052ccb4662d984", "6beae12c1e9d36f46c417971ee004656cc419d5a7dacaf1a4f433628cc68a8f5"),
+            ("p2-final", "delegate-to-subagents"): (59, 98, 157, "10c5f6019d240e883e0badaffcd9cb187e0e6e4e80f21cf43e13002bcc1670f0", "656c361a8326899e8f6e166cf538d2cef9fed617e6d26df10d4a119d1bfe5e34"),
+            ("p2-final", "execplan-implement"): (102, 98, 200, "9afcb7baafd835267a392a4a75a9d4819031b0fefed8481a16052ccb4662d984", "656c361a8326899e8f6e166cf538d2cef9fed617e6d26df10d4a119d1bfe5e34"),
+        }
+        for (arm, caller), (caller_words, router_words, total_words, caller_hash, router_hash) in expected.items():
+            with self.subTest(arm=arm, caller=caller):
+                row = rows[(arm, caller)]
+                self.assertEqual(row["caller_gate_words"], caller_words)
+                self.assertEqual(row["shared_router_words"], router_words)
+                self.assertEqual(row["selected_total"], total_words)
+                self.assertEqual(row["caller_sha256"], caller_hash)
+                self.assertEqual(row["router_sha256"], router_hash)
+                self.assertGreater(row["selected_total"], 0)
+        self.assertTrue({"baseline", "short", "challenger", "challenger2"}.issubset(
+            {arm for arm, _ in rows}
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()

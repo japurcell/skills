@@ -16,6 +16,7 @@ CALLERS = {
 }
 ROUTER = "skills/default/subagent-model-router/SKILL.md"
 GATES = Path(__file__).with_name("fixtures") / "gates.json"
+P2_GATES = Path(__file__).with_name("fixtures") / "p2-gates.json"
 STANDALONE = "Return the CLI's JSON result unchanged."
 
 
@@ -83,9 +84,11 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     gates = load_gates()
+    p2_gates = json.loads(P2_GATES.read_text())
     rows = []
     arms = [("baseline", None), ("short", gates["short"]), ("challenger", gates["challenger"]),
             ("challenger2", gates["challenger2"])]
+    arms.extend(p2_gates.items())
     for arm, gate_spec in arms:
         shared = gate_spec["shared_rules"] if gate_spec else None
         for name, source in CALLERS.items():
