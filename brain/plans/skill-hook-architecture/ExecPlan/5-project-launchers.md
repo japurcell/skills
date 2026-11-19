@@ -3,9 +3,11 @@
 Status: open
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T5 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. Integrate after M3 so generator changes build on current output ownership. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+**T5a, freeze the rollout fixture.** The hook maintainer takes the decoded commands and owned metadata from `069b3f22` using `git show REV:PATH`. The repository sources are `.github/hooks/hooks.json`, `.gemini/settings.json`, and `.codex/hooks.json`. The portable documents are `skills/default/brain-install/assets/hooks/{copilot,gemini,codex}.json`. Each scope has two events and ten command strings (Copilot four, Gemini two, Codex four). Save literals in an independently maintained test fixture under `scripts/tests/hooks/`. Stop after the fixture matches all six original documents.
+
+**T5b, publication.** After T5a and M3 integration, define provider registrations in `hooks/families/brain.py` and extend `scripts/generate-hooks.py` to merge just the owned entries. Derive identity from event, handler shape, owned metadata and full command. Reuse the interpreter-prefix equivalence in `portable_registration` from the portable installer without adding a runtime dependency on the checkout. A script-name match only identifies a candidate for comparison. A customized candidate or multiple candidates produces a conflict. Stage the mixed documents inside the existing writer transaction and use the conditional rollback below. Stop after the independent fixture, conflict and fault cases, generator freshness and actual registered launches all pass.
 
 ## Source and interfaces
 
@@ -40,5 +42,6 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-5] Implement T5 and exercise the public entry points.
-- [ ] [milestone-5] Verify integrated behavior and record platform evidence.
+- [ ] [milestone-5] Freeze and independently verify T5a's 20-command fixture.
+- [ ] [milestone-5] Implement T5b identity matching, generation and conditional recovery.
+- [ ] [milestone-5] Validate current registrations from nested and non-Git projects and installed portable files.

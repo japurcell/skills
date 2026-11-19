@@ -1,11 +1,13 @@
 # M7. Project conversation batches
 
-Status: open
+Status: in progress
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T7 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. The committed plan is the only prerequisite. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+**T7a, candidate available.** Commit `149a2661` on `work/skill-arch-m7` implements project discovery, selection and exact batches. The project CLI accepts `OUTPUT --project PATH [--batches B]`, with optional source selectors. The JSON keys are `accepted_count` and `manifests`. Explicit roots suppress automatic discovery. The original extraction order feeds the balanced split. Each run has its own private directory. On failure a partial directory can remain private and unpublished. Consumers use only paths emitted by a successful invocation.
+
+**T7b, integration.** The coordinator inspects the candidate, brings over product and test changes including both copies of the extractor, and reconciles the candidate plan's results with this plan. Then run the two commands below, followed by the combined M2/M7 bundle tests once both candidates land. Run the relocated synthetic caller and compare actual recorded worker inputs with the exact `manifests` array, in order. The Windows runner executes the four existing workspace ACL cases on that integrated revision with `rtk proxy python3 -m unittest discover -s skills/default/brain-install/tests -p test_skill_workflows.py -k windows`. Expect all four to run and pass. Exercise the project-mode workflow there as part of the full bundle suite. Stop after recording both the integrated caller result and native permissions evidence.
 
 ## Source and interfaces
 
@@ -39,5 +41,10 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-7] Implement T7 and exercise the public entry points.
-- [ ] [milestone-7] Verify integrated behavior and record platform evidence.
+- [x] (2026-11-19) [milestone-7] Candidate 149a2661 passed the relocated caller and batch fixtures on macOS arm64 using Python 3.14.6.
+- [ ] [milestone-7] Verify T7b on the integration tree and rerun the shared bundle with corrected M2.
+- [ ] [milestone-7] Run the four workspace ACL cases on Windows and record the integrated project-mode result.
+
+## Candidate evidence
+
+The coordinator reran the relocated documented-invocation test on the candidate during this rewrite. One test ran and passed. The candidate's bundle suite ran 55 tests on macOS with four Windows ACL skips. Source validation and byte comparisons of both Ruminate copies passed. Concurrent synthetic runs produced disjoint complete manifests. A forced write failure emitted no success JSON. The relocated caller recorded exactly the current worker inputs, including zero inputs on empty and failed runs with stale files present. The candidate used synthetic histories. Live worker dispatch and Windows ACL behavior were outside that observation.
