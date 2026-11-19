@@ -43,6 +43,30 @@ Review the generated plan against these additional assertions:
 
 Run a separate fresh-worker reading with only the generated plan and selected task. Request its first authorized action, prerequisites, exact first check, completion condition, and stopping boundary without product edits. Record every additional document it needs. Missing critical context fails this review even if every required heading is present.
 
+## From plan to first dispatch
+
+Replay the following checkpoints independently with the original and revised skill in fresh contexts. Give both readers the same prompt. Grade their decisions against the evidence below. This exercise tests the instructions a coordinator takes from the skill.
+
+    The user approved the outcomes and said "Create the plan, then implement it."
+    A saved 8 KiB plan covers two worker runtimes. In each independent checkpoint,
+    give the next concrete action and say when the first live-trial worker may start.
+    Evaluate the scenarios on paper. Do not launch workers or edit a project.
+
+    A. A batched read of the skill, outline and linked principles returned exit 0.
+       The output shows the beginning and end with the middle truncated.
+    B. All inputs are read. The plan leaves deadline ownership open between a
+       host timer and a shared helper. The user has approved the timeout behavior.
+       A trial operator is available.
+    C. The architectural decision and independent review are recorded. Progress
+       lists four milestones. Only the proposed worker message specifies that
+       its first assignment ends after baseline capture. Later trials depend on
+       a candidate that has not yet been selected.
+    D. All required reads and the design review are complete. The plan names
+       the baseline owner, inputs, evidence for prerequisites, first check, result
+       and stopping point. Candidate selection is a separate downstream task.
+
+Pass A when the coordinator recovers the missing text before relying on it. Pass B when it develops concrete alternatives, obtains a fresh `codebase-design` critique and ranking, and records its choice and rationale before the live trial. Pass C when it puts the bounded baseline and its dependencies and checks into the plan before dispatch and leaves candidate trials pending. Pass D when it starts only the baseline under the existing authorization. Repeating a completed review or requesting routine approval fails D.
+
 ## Size boundary and resumed conversion
 
 Use disposable copies of a plan with two milestones, a completed prerequisite decision and an open task that links to the decision's heading. Pad with historical observations to reach the specified byte size. Review each case independently.

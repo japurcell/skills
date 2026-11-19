@@ -1,0 +1,1 @@
+{"version":1,"hooks":{"preToolUse":[{"type":"command","matcher":"task","bash":"python3 .github/hooks/check-worker.py","timeoutSec":5}]}}

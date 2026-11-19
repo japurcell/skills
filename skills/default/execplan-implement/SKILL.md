@@ -14,7 +14,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 - Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
-- Start with one implementer and assign each implementer one task at a time. Reuse an idle implementer when its model and effort satisfy the pre-dispatch gate and its prior context helps with the task. If no suitable implementer is idle, a single independent ready task is enough to start another when capacity allows.
+- Start with one implementer and assign each implementer one task at a time. Let the gate determine whether an idle implementer can take the next assignment. If no suitable implementer is idle, a single independent ready task is enough to start another when capacity allows.
 - Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
@@ -25,22 +25,15 @@ Before every commit, the commit creator must activate the `commit` skill and fol
 
 ## Pre-dispatch gate
 
-Before each new assignment, including agent reuse, run the router CLI. Save its invocation, unchanged JSON result, and intended dispatch arguments in the assignment's coordination record.
-
-Apply the selected route within user constraints, host permissions, context limits, and applicable restrictions.
-
-- Require `route_available: true`, except for an exact user-selected model. Apply that override through host controls; leave unknown catalog tier, price, and capability unresolved.
-- Dispatch the assignment with the exact model ID, even if omitted from a descriptive model list. Honor enforced allowlists. For `explicit`, pass the user-specified effort or otherwise the CLI effort. For `host_default`, omit effort and leave its capability unverified.
-- Use the dispatch result to establish live acceptance. If blocked, identify the specific model, effort, capability, or permission issue. Apply the same checks to any permitted fallback, preserving effort policy and capability floor. A model-wide rejection rules out every effort for that model.
-
-Record actual arguments and the returned agent ID or blocker. Record overrides and fallbacks separately from the CLI result. Routine routing needs no separate user confirmation.
+For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.
 
 ## Runtime enforcement
 
-1. **Record each background assignment you dispatch**, including reuse. Before dispatch, set a deadline based on expected effort and complexity. Record the routed model and its exact explicit effort or host-default omission. Track task and agent IDs, start time, extension count (initially zero), and enforcement handle as available.
-2. **Arm enforcement before waiting.** Use a host timeout or parent-owned scheduler bounded by the nearest assignment or checkpoint deadline. Independently time out blocking operations. Recheck deadlines whenever control returns, including after user interruptions.
-3. **At expiry**, request status, completed work, blockers, and updated ETA by a bounded checkpoint deadline. Keep overdue work under a deadline. On timely status, confirm completion, stop the worker, or grant its only ETA-based extension. If extended, record the new deadline, increment the count, and re-arm enforcement. Preserve the count across follow-ups. Stop the worker on a missed checkpoint or expired extension.
-4. **Before transferring ownership**, confirm the worker and its write-producing operations have stopped, then route and dispatch a fresh replacement. If shutdown is unconfirmed, report the blocker and continue independent work. Cancel enforcement on completion.
+1. **Register a live deadline before launch.** For each background assignment, including reuse, estimate duration from task complexity, read live host time, and register one absolute deadline before launch. If its budget starts at actual launch, re-anchor the deadline once to the host-reported start time when the worker ID returns. Record the routed model and explicit effort or host-default omission; track task and agent IDs, start time, extension count (initially zero), and enforcement handle as available.
+2. **Wait for completion or the nearest deadline.** Keep every active deadline in the parent-owned assignment registry, but arm only one wake for the nearest deadline. Calculate `remaining` from live host time; handle a due deadline immediately, otherwise use a host completion wait bounded by `remaining`: Codex `wait_agent`, or Copilot `read_agent(wait=true, timeout=remaining)` for the nearest pending assignment when the host waits on one worker at a time. If notifications arrive only on yield, arm one one-shot host timer and yield. A foreground timer-only helper wait cannot receive native completion; use it alone only when completion is independently observable during the wait. Time out blocking operations and recheck on other control returns, including user interruptions. On a completion, consume and verify its result, close its assignment, clear the wake, then arm the nearest remaining deadline. During quiet time, make no status lookup or new dispatch, and do not poll other workers when one completion arrives. Before dispatch, check the task registry for an active assignment; resume or resolve it instead of launching duplicate work.
+3. **Enforce real expiry.** When the deadline wins, consume any delivered result and check only the due assignment for completed work before requesting status, completed evidence, blockers, and updated ETA with a bounded checkpoint deadline. Keep overdue work under a deadline. On timely status, confirm completion, stop the worker, or grant its only ETA-based extension. Record an extension's new deadline and increment its count before re-arming. Preserve the count across follow-ups. Stop the worker on missed checkpoint or expired extension. Use the host's current time for live enforcement, not frozen test timestamps.
+4. **Preserve continuity.** Keep owner, pinned revision, completed evidence, blocker, deadline, and next action in the assignment record. For a same-worker follow-up, request a relevant fact from its earlier setup and verify the returned value. If transport is unavailable or a replacement is needed, provide the environment, pinned revision, and prior evidence.
+5. **Report compactly and transfer safely.** Each status report carries all six assignment fields. Later reports preserve stable evidence references, update changed fields, and add completed evidence without replaying setup or history. Before transferring ownership, confirm the worker and its write-producing operations have stopped, then route and dispatch a fresh replacement. If shutdown is unconfirmed, report the blocker and continue independent work. Cancel enforcement on verified completion.
 
 ## Steps
 
@@ -70,7 +63,7 @@ Call the Skill tool with `code-review-biaxis` on the integration branch. Track a
 
 For a narrow fix, prefer the original implementer when its investigation still applies. A reviewer can resume to recheck a specific finding. When a review calls for independent discovery, start a fresh reviewer with the relevant spec or standards, the diff and verification evidence. Keep the two review axes independent.
 
-Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. Reuse requires the same model with no original effort override for `host_default`, or the exact model/effort pair for `explicit`. Otherwise dispatch a fresh agent.
+Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. If reuse is ineligible, dispatch a fresh agent.
 
 ## Gotchas
 

@@ -49,6 +49,95 @@ class SchedulerCliTests(unittest.TestCase):
         self.run_cli("checkpoint", "x", "--now", "501", ok=False)
         self.run_cli("extend", "x", "--eta", "600", "--now", "501", ok=False)
 
+    def test_registration_without_interval_waits_only_for_deadline(self):
+        self.run_cli("register", "x", "agent", "task", "--deadline", "600", "--now", "0")
+        self.assertEqual(json.loads(self.state.read_text())["version"], 3)
+        state = self.run_cli("list")["assignments"][0]
+        self.assertNotIn("checkpoint_interval", state)
+        self.assertNotIn("next_checkpoint", state)
+        self.assertEqual(self.run_cli("tick", "--now", "300")["events"], [])
+        self.assertEqual(self.run_cli("tick", "--now", "600")["events"][0]["type"], "deadline_expired")
+
+    def test_existing_v2_state_keeps_its_opt_in_interval(self):
+        self.state.write_text(json.dumps({
+            "version": 2,
+            "assignments": {
+                "legacy": {
+                    "id": "legacy", "agent": "agent", "task": "task", "route": "",
+                    "status": "active", "phase": "running", "deadline": 100,
+                    "checkpoint_interval": 10, "checkpoint_grace": 60,
+                    "next_checkpoint": 10, "extension_used": False,
+                    "stop_confirmed": False, "transferred": False,
+                },
+                "extended": {
+                    "id": "extended", "agent": "agent", "task": "task", "route": "",
+                    "status": "active", "phase": "extended", "deadline": 40,
+                    "checkpoint_interval": 10, "checkpoint_grace": 60,
+                    "next_checkpoint": 30, "extension_used": True,
+                    "stop_confirmed": False, "transferred": False,
+                },
+                "stopped": {
+                    "id": "stopped", "agent": "agent", "task": "task", "route": "",
+                    "status": "active", "phase": "stop", "deadline": 40,
+                    "checkpoint_interval": 10, "checkpoint_grace": 60,
+                    "next_checkpoint": 30, "extension_used": True,
+                    "stop_confirmed": False, "transferred": False,
+                },
+            },
+        }))
+        self.run_cli("list")
+        self.assertEqual(json.loads(self.state.read_text())["version"], 2)
+        self.assertEqual(self.run_cli("tick", "--now", "9")["events"], [])
+        self.assertEqual(json.loads(self.state.read_text())["version"], 2)
+        self.assertEqual(self.run_cli("wait", "--max-wait", ".01", "--now", "9")["events"], [])
+        self.assertEqual(json.loads(self.state.read_text())["version"], 2)
+        event = self.run_cli("tick", "--now", "10")["events"][0]
+        self.assertEqual((event["assignment"], event["type"]), ("legacy", "progress_reminder"))
+        self.assertEqual(json.loads(self.state.read_text())["version"], 3)
+        self.run_cli("complete", "legacy", "--now", "11")
+        self.assertEqual(self.run_cli("tick", "--now", "40")["events"], [
+            {"assignment": "extended", "host_action": "request stop; confirm worker and writes stopped before ownership transfer", "type": "extension_expired"},
+        ])
+        self.run_cli("transfer", "stopped", "--now", "41", ok=False)
+        self.run_cli("confirm-stopped", "stopped", "--confirmation", "worker-and-writes-stopped", "--now", "41")
+        self.run_cli("transfer", "stopped", "--now", "42")
+
+    def test_multiple_deadlines_skip_completed_assignment(self):
+        self.run_cli("register", "early", "agent", "task", "--deadline", "100", "--now", "0")
+        self.run_cli("register", "late", "agent", "task", "--deadline", "200", "--now", "0")
+        self.run_cli("complete", "early", "--now", "50")
+        self.assertEqual(self.run_cli("tick", "--now", "100")["events"], [])
+        events = self.run_cli("tick", "--now", "200")["events"]
+        self.assertEqual([(event["assignment"], event["type"]) for event in events], [("late", "deadline_expired")])
+
+    def test_deadline_only_checkpoint_keeps_grace_and_extension(self):
+        self.run_cli("register", "x", "agent", "task", "--deadline", "100", "--grace", "5", "--now", "0")
+        self.run_cli("tick", "--now", "100")
+        self.run_cli("checkpoint", "x", "--eta", "130", "--now", "101")
+        self.assertNotIn("next_checkpoint", self.run_cli("list")["assignments"][0])
+        self.run_cli("extend", "x", "--eta", "130", "--now", "102")
+        self.assertEqual(self.run_cli("tick", "--now", "130")["events"][0]["type"], "extension_expired")
+
+    def test_deadline_only_wait_has_no_early_progress_wakeup(self):
+        deadline = time.time() + .45
+        self.run_cli("register", "quiet", "agent", "task", "--deadline", str(deadline))
+        early = self.run_cli("wait", "--max-wait", ".15")
+        self.assertEqual(early["events"], [])
+        self.assertGreaterEqual(early["wait_seconds"], .12)
+        due = self.run_cli("wait", "--max-wait", "1")
+        self.assertEqual(due["events"][0]["type"], "deadline_expired")
+
+    def test_last_completion_removes_deadline_wakeup(self):
+        self.run_cli("register", "only", "agent", "task", "--deadline", str(time.time() + 10))
+        waiter = subprocess.Popen([sys.executable, str(CLI), "--state", str(self.state), "wait", "--max-wait", ".25"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        time.sleep(.05)
+        self.run_cli("complete", "only")
+        stdout, stderr = waiter.communicate(timeout=2)
+        self.assertEqual(waiter.returncode, 0, stderr)
+        result = json.loads(stdout)
+        self.assertEqual(result["events"], [])
+        self.assertGreaterEqual(result["wait_seconds"], .22)
+
     def test_invalid_eta_and_state_fail_without_traceback(self):
         self.run_cli("register", "x", "agent", "task", "--deadline", "10", "--checkpoint", "5", "--now", "0")
         self.run_cli("tick", "--now", "10")

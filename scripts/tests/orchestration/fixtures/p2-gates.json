@@ -1,0 +1,23 @@
+{
+  "p2-screen": {
+    "caller_gate": "For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.",
+    "shared_rules": "Honor enforced worker restrictions, including for user-selected models. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse useful context only on the same model with matching explicit effort or originally omitted host-default effort. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    }
+  },
+  "p2-deletion": {
+    "caller_gate": "For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.",
+    "shared_rules": "Honor enforced worker restrictions, including for user-selected models. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse useful context only on the same model with matching explicit effort or host-default effort. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    }
+  },
+  "p2-final": {
+    "caller_gate": "For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.",
+    "shared_rules": "Honor enforced worker restrictions, including for user-selected models. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse needs useful context, the same model and matching original effort, including omission. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.",
+    "caller_addenda": {
+      "delegate-to-subagents": "Use a new assignment ID for each subtask and retain it for status updates."
+    }
+  }
+}
