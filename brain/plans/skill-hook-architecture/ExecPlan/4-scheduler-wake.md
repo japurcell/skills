@@ -3,9 +3,13 @@
 Status: open
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T4 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. The committed plan is the only prerequisite. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+**T4a, baseline only.** The native operator runs the currently shipped caller on a disposable project using the two-worker workload below. First record the positive control, then invert the actual registered deadlines so SILENT is due first while QUICK finishes first. Keep both assignments alive long enough to observe overlap. Capture registration, native completion, parent consumption, deadline action and terminal state. Stop after recording the old caller's results or the precise missing host capability.
+
+**T4b, timer selection.** Independently, the scheduler maintainer adds `next-wake` to the existing CLI, reading the locked snapshot and calling `next_timer(assignment, now)`. Return one JSON object with a `wake` field holding null or an object with `assignment`, `agent`, `due` and `reason`. Keep persisted version-2 state and existing mutating commands compatible. Document the same ordering on the standalone ExecPlan registry, including reservations without attached handles. Stop when scheduler CLI and delayed-launch fixtures pass.
+
+**T4c, delivery.** After T4a and T4b, wire the proven host-specific wait into `skills/default/delegate-to-subagents/SKILL.md` and `skills/default/execplan-implement/SKILL.md`. Use a wait for any completion with a bounded deadline, or an independent completion notification with a single timer. When neither is available, document the measured latency. Repeat the matched workload on the candidate. Prompt delivery requires QUICK consumption before SILENT's earlier deadline and evidence that the parent still services SILENT on expiry. Stop after recording the result for each claimed host/caller combination.
 
 ## Source and interfaces
 
@@ -40,5 +44,6 @@ Follow `scripts/tests/orchestration/native-lifecycle.md` with the inverted deadl
 
 ## Progress
 
-- [ ] [milestone-4] Implement T4 and exercise the public entry points.
-- [ ] [milestone-4] Verify integrated behavior and record platform evidence.
+- [ ] [milestone-4] Capture the T4a baseline without a candidate dispatch.
+- [ ] [milestone-4] Verify T4b timer selection, read-only state and delayed launch.
+- [ ] [milestone-4] Run T4c candidate trials against the baseline, recording unverified host paths.

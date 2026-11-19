@@ -3,9 +3,11 @@
 Status: open
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T1 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. The committed plan is the only prerequisite. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+**T1a, grammar parity.** The commit-skill maintainer starts on the integration branch with the accepted default grammar below. Use the wrapped-bullet case in `skills/default/commit/evals/test_validate_message.py` to drive the same drafts through validator and benchmark grader. Replace the separate grammar in `has_commit_message_shape` with a call into the bundled validator resolved relative to the skill. Have the parser return the header, parsed sections and ordered trailer entries. Keep the existing `validate` and CLI error behavior for callers. Stop after single-line, wrapped and empty bullets give the expected three verdicts on both paths.
+
+**T1b, intent and attribution.** After T1a gives the grader real trailer entries, update `eval_one` or the applicable scenario handler, `skills/default/commit/evals/evals.json`, fixture input and public grader tests together. Compare trailer entries with the scenario's independently specified issues and authors. Test unauthorized PR closure even when the PR also contains a neutral reference. Stop after the two intent cases and existing live Git workflow checks pass together.
 
 ## Source and interfaces
 
@@ -34,5 +36,5 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-1] Implement T1 and exercise the public entry points.
-- [ ] [milestone-1] Verify integrated behavior and record platform evidence.
+- [ ] [milestone-1] Prove T1a grammar parity through both CLIs.
+- [ ] [milestone-1] Complete T1b and run both suites together.

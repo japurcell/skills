@@ -3,9 +3,13 @@
 Status: open
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T6 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. The committed plan is the only prerequisite. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+The M6 worktree `work/skill-arch-m6` points at the original plan commit `66e3a80e`. The earlier Addy fixture pass is baseline evidence only.
+
+**T6a, qualify the filesystem adapter.** The installer maintainer and a Windows runner compare a disposable prototype with the existing `Copy-Skills` path. Have the Python traversal classify links/reparse points without following them, omit excluded subtrees before enumeration, and produce an ordered stream of operations for a skill. Keep the PowerShell process alive for one skill to perform native link/junction creation, copying and mode handling. Feed a single operation sequence using structured JSON and literal paths, with success/failure reported by the native adapter. Compare the destination tree, link and junction targets, modes and failure cleanup with the existing installer. Stop after recording native results. If the candidate cannot preserve a behavior, keep the existing caller active, record the failed case and revise the adapter before switching it.
+
+**T6b, migrate callers.** With the two profiles below and T6a's adapter contract proven, extend `filtered_entries` and `copy_filtered` in the shared helper to own traversal, prune order and profiles. Reuse the POSIX copy batching and existing native PowerShell file operations. Bind Bash and PowerShell main to overlay and Addy to replace. Preserve existing helper options including prune-only and copy-command invocations. Remove skill-specific duplicate recursion only after its caller passes the same fixture. Stop after reinstall and failure recovery through each public installer.
 
 ## Source and interfaces
 
@@ -36,5 +40,6 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-6] Implement T6 and exercise the public entry points.
-- [ ] [milestone-6] Verify integrated behavior and record platform evidence.
+- [ ] [milestone-6] Qualify T6a through an actual Windows junction and POSIX mode fixture.
+- [ ] [milestone-6] Switch T6b callers and verify each reinstall, exclusion and readback.
+- [ ] [milestone-6] Run disposable installed-asset journeys on the integrated revision.

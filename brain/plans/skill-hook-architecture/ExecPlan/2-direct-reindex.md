@@ -1,11 +1,15 @@
 # M2. Direct brain reindex
 
-Status: open
+Status: in progress
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T2 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. The committed plan is the only prerequisite. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+The existing implementation is on `work/skill-arch-m2` at `7f16d86b`. Its rendered manual command is `reindex.py PROJECT`. The installer invokes the packaged `reindex.py PROJECT --verify` after the selected helper. The candidate adds the render target in `hooks/manifest.py` and ships both portable and repository-local commands.
+
+**T2b, retained-index verification.** The M2 implementer owns the [repair assignment](2b-retained-index.md). The coordinator reproduced its failure against the actual installer. Stop after the public regression and freshness checks on the candidate.
+
+**T2c, integrate and qualify.** After T2b passes, the coordinator integrates the corrected product changes, preserving these plan files. Compare fresh installation with the retained-helper route through the public installer, exercise generated hooks and the relocated direct command, and record native Windows results from the Windows runner. Run the combined bundle again once M7 lands.
 
 ## Source and interfaces
 
@@ -40,5 +44,11 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-2] Implement T2 and exercise the public entry points.
-- [ ] [milestone-2] Verify integrated behavior and record platform evidence.
+- [x] (2026-11-19) [milestone-2] Candidate 7f16d86b implements explicit-root indexing, retained-helper selection and read-only verification.
+- [x] (2026-11-19) [milestone-2] Reproduced successful installation with an extra non-inventory link on the candidate.
+- [ ] [milestone-2] Complete T2b and rerun the installed direct and retained-helper paths.
+- [ ] [milestone-2] Complete T2c integration and native checks.
+
+## Candidate evidence
+
+On macOS the worker recorded the direct command adding and removing a note, retaining the mtime of a current index and refusing a nested root without its own vault. At uid 501 a held lock and an unwritable vault with a writable lock both failed. The candidate record reports installer and hook suites with four and one skips respectively, and 15 current generator outputs. The worker reran the direct test after adding the removal assertion. The coordinator separately observed the extra-link false success through the installed retained-helper path. Native Windows and integrated proof are outstanding.

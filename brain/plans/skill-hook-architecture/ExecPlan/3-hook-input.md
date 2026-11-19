@@ -3,9 +3,11 @@
 Status: open
 Acceptance: not met
 
-## Assignment
+## Tasks and prerequisites
 
-T3 belongs to the milestone implementer. Work from the repository root on a branch based on the committed plan. Integrate after M2 so regenerated brain artifacts include direct indexing. Reproduce any defect through the caller before editing. Stop when the behavior below is delivered, checks are recorded and any native evidence gap is named.
+**T3a, characterize the three readers.** The hook maintainer uses isolated copies of revision `069b3f22` and the byte-stream matrix below. Record the original public outputs, stderr, mock RTK input, and whether each pipe closes or remains open. Identify the reader from its entry point (`_read_json_input_text`, `read_hook_input` or Codex `read_json_input`). Stop after capturing expected outcomes on the available platforms.
+
+**T3b, migrate the readers.** Once the T3a matrix exists and corrected M2 outputs are integrated, render a single readiness/chunk/completion implementation from `hooks/families/common.py` into the family outputs and standalone Codex executable. Pass a consumer policy for completion, whitespace, limits and deadline behavior. Return original bytes or a classified read failure to the consumer. Preserve the bounded reader's incremental state across chunks. Use `hooks/manifest.py` and the generator for newly rendered output. Migrate one reader at a time against the captured streams, then exercise all three from the integrated checkout. Stop after the suites and native Windows/POSIX comparison.
 
 ## Source and interfaces
 
@@ -34,5 +36,5 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-3] Implement T3 and exercise the public entry points.
-- [ ] [milestone-3] Verify integrated behavior and record platform evidence.
+- [ ] [milestone-3] Capture T3a reference behavior and actual byte-forwarding results.
+- [ ] [milestone-3] Complete T3b, regenerate, and verify POSIX and Windows pipe behavior.
