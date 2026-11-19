@@ -47,6 +47,8 @@ Use [`scripts/scheduler.py`](scripts/scheduler.py) with a session-specific state
 
 Keep dispatch start time, routed model, exact effort or host-default omission, and any host enforcement handle in a separate coordination record keyed by assignment ID; the scheduler lacks structured fields for these. Let the scheduler own deadline transitions and extension state. It advances only when called and emits JSON actions; the parent performs communication, worker control, and shutdown verification.
 
+Native observations are not latency guarantees: in one Codex inverse trial, expiry was processed about 11 seconds late. In a Copilot trial, a stop message did not stop the worker's launcher, which wrote after the request. Keep ownership until the worker and its writes are independently confirmed stopped; report any missing control or observation.
+
 ## Gotchas
 
 - Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
