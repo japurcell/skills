@@ -1,7 +1,7 @@
 # M7. Project conversation batches
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Assignment
 
@@ -39,5 +39,13 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-7] Implement T7 and exercise the public entry points.
-- [ ] [milestone-7] Verify integrated behavior and record platform evidence.
+- [x] (2026-11-19) [milestone-7] Implemented project discovery, exact batches, private run directories and JSON publication. Preserved the explicit-source interface and synchronized both Ruminate copies.
+- [x] (2026-11-19) [milestone-7] Exercised the documented caller from a relocated skill and ran the full brain-install bundle suite on macOS arm64 with Python 3.14.6.
+
+## Results
+
+The synthetic baseline produced three legacy manifests for six conversations and four requested batches. The new `--project PATH` invocation produced four manifests with sizes 2, 2, 1 and 1. The suite also checked automatic sizing at 0, 1, 2, 41 and 250, an override above the accepted count, filtered attribution, all three providers and invalid explicit roots.
+
+The relocated caller printed exactly the paths published in the extractor’s JSON. A stale manifest produced no assignment, and empty and failed invocations printed no worker inputs. Four runs sharing one output location, including three launched concurrently, kept separate complete files. An imposed file-size limit made an actual output write fail with no success result.
+
+Both verification commands above exited zero. The bundle suite ran 55 tests with four existing Windows ACL checks skipped on macOS. Byte comparisons matched the portable and repository-local script and skill. The dispatch fixture recorded worker inputs from synthetic histories. Native Windows ACL behavior and live host dispatch were not exercised.
