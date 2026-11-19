@@ -1,6 +1,6 @@
 # M3. Complete-event hook input
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 ## Tasks and prerequisites
@@ -36,5 +36,5 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-3] Capture T3a reference behavior and actual byte-forwarding results.
+- [x] (2026-11-19) [milestone-3] T3a captured the macOS public-reader reference at `81413348`; native Windows remains open.
 - [ ] [milestone-3] Complete T3b, regenerate, and verify POSIX and Windows pipe behavior.

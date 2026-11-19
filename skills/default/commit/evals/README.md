@@ -10,6 +10,12 @@ python3 skills/default/commit/evals/test_validate_message.py
 python3 skills/default/commit/evals/test_grade_benchmark.py
 ```
 
+The dry-run scenarios 1 and 15 use separate reference-only and explicitly closing
+requests. Their fixture inputs independently specify issue numbers, authorized
+`fixes` (which authorize `--fixes` in a real validator call), and the contributor. The grader
+compares parsed commit trailers and PR closing directives against those inputs.
+A neutral issue reference does not authorize closure.
+
 The first suite checks the public validator CLI, including LF and CRLF structure,
 Unicode separators, required sections, trailers, and input errors. The second
 exercises the workflow grader with real disposable Git repositories. It checks

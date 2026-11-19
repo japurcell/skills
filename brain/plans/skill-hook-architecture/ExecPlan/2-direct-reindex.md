@@ -46,8 +46,9 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 - [x] (2026-11-19) [milestone-2] Candidate 7f16d86b implements explicit-root indexing, retained-helper selection and read-only verification.
 - [x] (2026-11-19) [milestone-2] Reproduced successful installation with an extra non-inventory link on the candidate.
-- [ ] [milestone-2] Complete T2b and rerun the installed direct and retained-helper paths.
-- [ ] [milestone-2] Complete T2c integration and native checks.
+- [x] (2026-11-19) [milestone-2] T2b verified at `658ab7e8` and integrated at `ebb09bb4`. The public installer rejects the extra link and preserves both files.
+- [x] (2026-11-19) [milestone-2] T2c passed on macOS with integrated M7, generated-output freshness, standalone hooks and disposable Bash and PowerShell installs.
+- [ ] [milestone-2] Qualify native Windows permission behavior.
 
 ## Candidate evidence
 

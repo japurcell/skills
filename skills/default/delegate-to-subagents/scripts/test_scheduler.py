@@ -29,6 +29,29 @@ class SchedulerCliTests(unittest.TestCase):
             self.assertNotEqual(p.returncode, 0)
         return json.loads(p.stdout) if p.stdout.strip() else None
 
+    def test_next_wake_orders_timers_without_mutating_state(self):
+        self.assertEqual(self.run_cli("next-wake", "--now", "0"), {"wake": None})
+        self.run_cli("register", "z", "agent-z", "task", "--deadline", "20", "--checkpoint", "10", "--now", "0")
+        self.run_cli("register", "b", "agent-b", "task", "--deadline", "10", "--now", "0")
+        self.run_cli("register", "a", "agent-a", "task", "--deadline", "10", "--now", "0")
+        original = self.state.read_bytes()
+        self.assertEqual(self.run_cli("next-wake", "--now", "1"), {"wake": {"assignment": "a", "agent": "agent-a", "due": 10, "reason": "deadline_expired"}})
+        self.assertEqual(self.state.read_bytes(), original)
+        self.assertEqual(len(self.run_cli("tick", "--now", "10")["events"]), 3)
+
+    def test_next_wake_legacy_overdue_phase_preserves_bytes(self):
+        self.state.write_text(json.dumps({"version": 2, "assignments": {"legacy": {
+            "id": "legacy", "agent": "worker", "task": "task", "route": "",
+            "status": "active", "phase": "running", "deadline": 20,
+            "checkpoint_interval": 10, "checkpoint_grace": 5, "next_checkpoint": 10,
+            "extension_used": False, "stop_confirmed": False, "transferred": False
+        }}}))
+        original = self.state.read_bytes()
+        self.assertEqual(self.run_cli("next-wake", "--now", "30"), {"wake": {"assignment": "legacy", "agent": "worker", "due": 20, "reason": "deadline_expired"}})
+        self.assertEqual(self.state.read_bytes(), original)
+        self.run_cli("complete", "legacy", "--now", "30")
+        self.assertEqual(self.run_cli("next-wake", "--now", "30"), {"wake": None})
+
     def test_deadline_checkpoint_extension_and_host_stop_gate(self):
         self.run_cli("register", "a1", "agent", "task", "--deadline", "100", "--checkpoint", "300", "--grace", "5", "--now", "0")
         self.assertEqual(self.run_cli("tick", "--now", "100")["events"][0]["type"], "deadline_expired")

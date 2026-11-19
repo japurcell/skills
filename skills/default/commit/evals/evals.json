@@ -19,7 +19,7 @@
     {
       "id": 1,
       "prompt": "Read the fixture in evals/files/staged-bugfix-pr/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required. pr_title must equal subject, not the full conventional-commit first line.",
-      "expected_output": "Keeps the current bugfix branch, commits only the staged files, uses a fix commit with Fixes #456, and prepares a PR.",
+      "expected_output": "Keeps the current bugfix branch, commits only the staged files, uses Refs #456, and prepares a PR with a neutral issue reference.",
       "files": [
         "evals/files/staged-bugfix-pr/input.json"
       ],
@@ -27,8 +27,8 @@
         "Returns a commit decision instead of a stop.",
         "Selects only the staged bugfix files and excludes unstaged README noise.",
         "Keeps branch fix/rate-limit-backoff.",
-        "Uses commit type fix plus Summary, Rationale, Tests, Fixes #456, and the default Copilot trailer.",
-        "Plans both push and PR creation, with PR title matching the commit subject."
+        "Uses commit type fix plus Summary, Rationale, Tests, Refs #456, and the specified Copilot trailer.",
+        "Plans push and PR creation with a matching title and neutral issue reference, without closing directives."
       ]
     },
     {
@@ -265,6 +265,22 @@
       "expected_coauthors": [
         "Other <other@example.com>"
       ]
+    },
+    {
+      "id": 15,
+      "prompt": "Read the fixture in evals/files/staged-bugfix-pr-close/input.json and apply the commit skill as a dry run. Do not run git or mutate a repo. Save outputs/result.json and outputs/output.md. result.json must include: status, stop_reason, next_action, branch, branch_action, selected_paths, commit_type, subject, commit_message, push_requested, should_push, pr_requested, should_create_pr, pr_blocker, pr_title, pr_body. Use status=commit or status=stop. Use branch_action=create or branch_action=keep. push_requested means the user explicitly asked to push; should_push means push is actually required. pr_title must equal subject, not the full conventional-commit first line.",
+      "expected_output": "Keeps the current bugfix branch, commits only the staged files, uses Fixes #456 with --fixes 456 authorization, and prepares a PR that closes issue 456.",
+      "files": [
+        "evals/files/staged-bugfix-pr-close/input.json"
+      ],
+      "assertions": [
+        "Returns a commit decision instead of a stop.",
+        "Selects only the staged bugfix files and excludes unstaged README noise.",
+        "Keeps branch fix/rate-limit-backoff.",
+        "Uses commit type fix plus Summary, Rationale, Tests, Fixes #456, and the specified Copilot trailer.",
+        "Plans push and PR creation with a matching title and authorized Fixes #456 directive."
+      ],
+      "name": "staged-bugfix-pr-explicit-close"
     }
   ]
 }

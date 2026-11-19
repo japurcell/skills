@@ -30,6 +30,28 @@ def run_scheduler(state, *args, ok=True):
 
 
 class ControlledOrchestrationTests(unittest.TestCase):
+    def test_simulated_standalone_reservation_survives_delayed_dispatch(self):
+        # The standalone registry is parent-owned guidance, not executable code.
+        # Pin the rules this offline simulation exercises to the current caller.
+        caller = (ROOT / 'skills/default/execplan-implement/SKILL.md').read_text()
+        self.assertIn('including reservations whose worker handle has not yet returned', caller)
+        self.assertIn('then expiry before reminder, then assignment ID', caller)
+        self.assertIn('re-anchor the deadline once', caller)
+        registry = {
+            'reserved': {'handle': None, 'deadline': 10},
+            'attached': {'handle': 'worker-b', 'deadline': 20},
+        }
+        def next_wake():
+            return min((entry['deadline'], assignment) for assignment, entry in registry.items())
+
+        self.assertEqual(next_wake(), (10, 'reserved'))
+        # Dispatch returns late; attaching a handle alone does not change the
+        # original absolute deadline. This scenario does not use re-anchoring.
+        registry['reserved']['handle'] = 'worker-a'
+        self.assertEqual(next_wake(), (10, 'reserved'))
+        del registry['reserved']
+        self.assertEqual(next_wake(), (20, 'attached'))
+
     def test_turn_requires_assignment_timing_and_action_observations(self):
         errors = grade_turn({"before": {}, "after": {}})
         details = "\n".join(errors)

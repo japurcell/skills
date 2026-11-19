@@ -306,6 +306,30 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertFalse(lock.exists())
 
 
+class LaunchRegistrationOracleTests(unittest.TestCase):
+    def test_frozen_registrations_and_negative_drift_control(self) -> None:
+        checker = ROOT / "scripts/tests/hooks/check-launch-registrations.py"
+        positive = subprocess.run([sys.executable, str(checker), "--root", str(ROOT)],
+                                  text=True, capture_output=True, check=False)
+        self.assertEqual(positive.returncode, 0, positive.stdout + positive.stderr)
+        self.assertIn("6 documents, 20 commands", positive.stdout)
+        with tempfile.TemporaryDirectory() as directory:
+            copy = Path(directory)
+            fixture = json.loads((ROOT / "scripts/tests/hooks/launch-registrations-069b3f22.json").read_text())
+            for name in fixture:
+                destination = copy / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, destination)
+            path = copy / ".github/hooks/hooks.json"
+            document = json.loads(path.read_text())
+            document["hooks"]["sessionStart"][0]["timeoutSec"] = 6
+            path.write_text(json.dumps(document))
+            negative = subprocess.run([sys.executable, str(checker), "--root", str(copy)],
+                                      text=True, capture_output=True, check=False)
+            self.assertNotEqual(negative.returncode, 0)
+            self.assertIn(".github/hooks/hooks.json", negative.stderr)
+
+
 class ReadyIdeasWindowsWorkflowTests(unittest.TestCase):
     def test_provider_hook_changes_trigger_push_and_pull_request_checks(self) -> None:
         sys.path.insert(0, str(ROOT / "scripts" / "vendor"))
