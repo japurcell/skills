@@ -1,5 +1,7 @@
 # Controlled orchestration evidence
 
+For a live two-worker trial on Copilot CLI or Codex, use the [native lifecycle replay](native-lifecycle.md).
+
 Run from the repository root:
 
 ```sh
