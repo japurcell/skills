@@ -4,7 +4,7 @@
 
 A maintainer should be able to change a rule once and see the same behavior in a relocated skill, a generated provider hook, or a disposable installation. Users still invoke each existing public command. The two new user-facing paths let them reindex a named project directly and request an attainable number of conversation batches after filtering. The seven milestone contracts below define the scope.
 
-**Next implementation action:** the M2 implementer takes [T2b, repair retained-index verification](ExecPlan/2b-retained-index.md) on the existing candidate. The coordinator owns integration on `work/skill-hook-architecture`. Preserve the candidate commits and this rewritten plan when bringing changes together.
+**Current assignments.** The commit-skill maintainer owns [T1b issue intent](ExecPlan/1b-intent.md). The hook maintainer owns the [T3b reader](ExecPlan/3b-input-reader.md), and the scheduler maintainer owns [T4b timer selection](ExecPlan/4b-timer.md). The integration coordinator brings tested revisions into `work/skill-hook-architecture`.
 
 **Governing principles.** Boundary Discipline puts admission and errors at the caller's interface. Redesign From First Principles and Subtract Before You Add favor one owner for each existing rule. Separate Before Serializing Shared State gives each extraction its own directory. Make Operations Idempotent governs reinstallation and generator retries. Experience First preserves CLI output and deployed behavior. Sequence Verifiable Units and Prove It Works require evidence through each public caller and again on the combined revision.
 
@@ -12,26 +12,30 @@ A maintainer should be able to change a rule once and see the same behavior in a
 
 Run commands from the checkout root with RTK, Git, Python 3.12+, Bash and PowerShell available for the relevant suite. `hooks/families/` contains build-time Python source. `scripts/generate-hooks.py` renders committed provider files that run away from the repository. `skills/default/brain-install/assets/` ships the portable project installation. Its six skill directories have repository-local peers in `.agents/skills/`. `scripts/install.sh` and `scripts/install.ps1` also install the published skills. Addy has its own replacement behavior. A “candidate” below is an implementation commit on a separate local branch.
 
-The approved design baseline is `069b3f22`. The original plan was committed in `66e3a80e`. At this rewrite the integration branch is at `64a92191`. M2 and M7 branch from the original plan. M6's worktree still points at that plan commit. Check `rtk proxy git worktree list` and `rtk proxy git log --oneline --all --decorate -12` for current refs before assigning work.
+The approved design baseline is `069b3f22`. The original plan is `66e3a80e`, the rewritten plan is `ea7abf10`, and the individual assignments are in `1eaf63dc`. Integrated revisions and evidence are recorded below.
 
 ## Progress
 
 - [x] (2026-11-19) Seven outcomes approved, original adversarial design review closed, concrete alternatives re-ranked for this rewrite.
-- [ ] [milestone-1] [Commit message validation](ExecPlan/1-commit-validation.md). Open. Compare the public validator and dry-run grader, then verify independent issue intent.
+- [x] (2026-11-19) [milestone-1] Integrated T1a at `059166bf`. The CLI and grader agree on single, wrapped and empty bullets. Both suites passed (15 and 30 tests).
+- [ ] [milestone-1] [Commit message validation](ExecPlan/1-commit-validation.md). Complete T1b's scenario-specific issue and author checks.
 - [x] (2026-11-19) [milestone-2] Direct command and installer candidate available in `7f16d86b`. Reproduced an extra-link false success on that revision.
-- [ ] [milestone-2] [Direct reindex](ExecPlan/2-direct-reindex.md). In progress. Repair verification, integrate and exercise the installed and native paths.
-- [ ] [milestone-3] [Hook event input](ExecPlan/3-hook-input.md). Open. Capture original behavior, then migrate consumers against identical streams.
-- [ ] [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Open. Capture the native baseline, implement timer selection and verify delivery on each claimed host.
+- [x] (2026-11-19) [milestone-2] Repaired the retained-index verifier and integrated M2 at `ebb09bb4`. Freshness and installer checks passed on macOS.
+- [ ] [milestone-2] [Direct reindex](ExecPlan/2-direct-reindex.md). Native Windows qualification remains open.
+- [x] (2026-11-19) [milestone-3] Frozen public-process fixture passed against reference and candidate on macOS at `886dea6a`.
+- [ ] [milestone-3] [Hook event input](ExecPlan/3-hook-input.md). Migrate readers and verify identical public behavior.
+- [ ] [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Offline baseline passed. Verify the timer and host adapters. Native timing remains open.
 - [ ] [milestone-5] [Project brain launch registrations](ExecPlan/5-project-launchers.md). Open. Freeze the command fixture before changing the generator.
 - [ ] [milestone-6] [Skill copy policy](ExecPlan/6-skill-copy.md). Open. Qualify the filesystem adapter before switching the installers.
 - [x] (2026-11-19) [milestone-7] Project-mode batching and the relocated caller fixture exist in `149a2661`.
-- [ ] [milestone-7] [Conversation batches](ExecPlan/7-conversation-batches.md). In progress. Integrate the candidate, repeat its checks alongside M2 and verify Windows workspace permissions.
+- [x] (2026-11-19) [milestone-7] Integrated batching at `ffe630df` and repeated shared bundle verification with M2 at `ebb09bb4`. The macOS suite ran 58 tests with four skips.
+- [ ] [milestone-7] [Conversation batches](ExecPlan/7-conversation-batches.md). Windows workspace permissions remain open.
 
 ## Plan of work and dependencies
 
-The coordinator owns tasks described inside each milestone until assigning one to a worker. The first worker-ready assignment has its own file. Before dispatching any other independently owned task, copy its current inputs, prerequisite evidence, checks and stopping point into a linked assignment file. Workers update only their own assignment. The coordinator reconciles milestone and entry status together.
+Each independently assignable task is linked from its milestone. Workers own their assignment files. The parent reconciles milestone and entry status at integration checkpoints.
 
-M1, M4's baseline and timer work, M5's frozen fixture, M6's qualification, and review of M7's candidate can proceed independently of T2b. M3 can capture the old inputs immediately. Publish generated output in order **M2, M3, M5** in the integration checkout. M3 can proceed once M2's corrected candidate is integrated and fresh. M5 publication requires M3's integrated generated files and the independently captured fixture. Native proof may proceed separately from that publication order. M2 and M7 share the portable brain bundle, so run their installation and parity checks on the same tree after both land. Serialize generator tests and installer fixtures that snapshot or mutate the checkout.
+M1, M4, the frozen M5 fixture and M6 qualification can progress independently. The generated-output integration order is M2 (integrated), M3, then M5. M5 publication also needs the independent fixture. The shared M2/M7 installation and parity runs passed on the integrated macOS tree. Serialize generator and installer fixtures that snapshot or mutate a single checkout.
 
 ## Decision Log
 
@@ -55,7 +59,7 @@ The earlier review compared build-time sharing, consumer-local copies with parit
 
 ## Concrete steps, validation and recovery
 
-Start with [T2b](ExecPlan/2b-retained-index.md). After its installer check passes, inspect the candidate changes against the branch point, bring the product changes into the integration branch and preserve the current plan documents during conflict resolution. Apply the same procedure to M7. Inspect `rtk proxy git diff 66e3a80e 149a2661 --stat` before integrating it. If a cherry-pick stops on a plan file, retain the rewritten contract and reconcile verified results into it. Abort an unsuccessful in-flight pick to retry from its original revision. Keep both worker refs until integrated verification passes.
+Continue the current assignments above. The next independent tasks are the [M5 rollout fixture](ExecPlan/5a-launch-oracle.md) and the [M6 adapter qualification](ExecPlan/6a-adapter.md). For each integration, preserve the current plan and results and run the milestone checks on the merged tree. If a merge stops, resolve only the scoped conflicts or abort the in-flight merge and retry from the recorded revisions.
 
 Run each milestone's listed checks. After M2/M3/M5 regeneration, run `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py` and `rtk proxy python3 scripts/generate-hooks.py --check`. Follow the repository-local `verify-skills` Doctor, default installation, selection and provider-hook journeys for affected installers using fresh disposable homes, then run `rtk proxy python3 scripts/test-all.py` with the checkout idle. Record revision, OS, command, exit, observed output and any skips. Expect current generated files, correct installed file/registration readback and passing applicable suites. On failure retain the fixture and fix its owning source, regenerate and repeat the affected checks on the combined revision.
 
@@ -63,4 +67,4 @@ The coordinator schedules direct-index permissions (M2), event pipes (M3), junct
 
 ## Outcomes & Retrospective
 
-At the 2026-11-19 rewrite, two of seven milestones have unmerged product candidates. M2 needs a correctness fix, and M7 has branch-local fixture evidence. All seven integrated acceptance decisions remain open. The generator, installer, native platform and host checks above establish when the work can be called complete.
+The retained-index false success is fixed and exact conversation batching is integrated. The combined bundle passed on macOS with Windows cases skipped. T1a is integrated. The user selected local checks. Windows and authenticated host observations remain open. The implementation and local review continue on this topic branch.

@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 
 import json
+import importlib.util
 import argparse
 import re
 import subprocess
 import sys
 import os
 from pathlib import Path
+
+
+_validator_path = Path(__file__).resolve().parents[1] / "scripts" / "validate_message.py"
+_spec = importlib.util.spec_from_file_location("commit_validator", _validator_path)
+_validator = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_validator)
 
 
 COPILOT_TRAILER = "Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
@@ -51,37 +58,18 @@ def has_required_skill_shape() -> tuple[bool, str]:
 
 
 def has_commit_message_shape(commit_message: str, commit_type: str, subject: str) -> tuple[bool, str]:
-    lines = commit_message.splitlines()
-    if len(lines) < 8:
-        return False, commit_message or "missing commit_message"
-    header_pattern = rf"^{re.escape(commit_type)}(?:\([^)]+\))?: {re.escape(subject)}$"
-    if re.match(header_pattern, lines[0]) is None:
-        return False, lines[0]
-    if lines[1] != "":
-        return False, "missing blank line after subject"
-    index = 2
-    for heading in ("Summary:", "Rationale:", "Tests:"):
-        while index < len(lines) and lines[index] == "":
-            index += 1
-        if index >= len(lines) or lines[index] != heading:
-            return False, f"missing {heading}"
-        index += 1
-        bullet_count = 0
-        while index < len(lines) and lines[index].startswith("- "):
-            bullet_count += 1
-            index += 1
-        if bullet_count == 0:
-            return False, f"missing bullet under {heading}"
-    while index < len(lines) and lines[index] == "":
-        index += 1
-    trailer_lines = lines[index:]
-    if not trailer_lines:
-        return False, "missing issue/co-author trailers"
-    if "" in trailer_lines:
-        return False, "blank line found inside trailers"
-    if not any(line.startswith("Co-authored-by: ") for line in trailer_lines):
+    try:
+        header, _, trailers = _validator.parse_message(commit_message)
+        _validator.validate_trailers(trailers.copy(), None)
+    except ValueError as error:
+        return False, str(error)
+    header_pattern = rf"^{re.escape(commit_type)}(?:\([^()\s]+\))?: {re.escape(subject)}$"
+    if re.fullmatch(header_pattern, header) is None:
+        return False, header
+    if not any(line.startswith("Co-authored-by: ") for line in trailers):
         return False, "missing Co-authored-by trailer"
-    return True, lines[0]
+    return True, header
+
 
 
 def build_grading(run_dir: Path, expectations: list[dict]) -> dict:
