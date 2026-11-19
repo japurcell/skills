@@ -4,7 +4,7 @@
 
 A maintainer should be able to change a rule once and see the same behavior in a relocated skill, a generated provider hook, or a disposable installation. Users still invoke each existing public command. The two new user-facing paths let them reindex a named project directly and request an attainable number of conversation batches after filtering. The seven milestone contracts below define the scope.
 
-**Current assignments.** The seven implementation milestones are accepted. The coordinator owns final local checks, independent standards and specification review, resolution of any in-scope findings, and removal of the temporary CI branch and task worktrees.
+**Current assignments.** A single implementer owns the [two review findings](ExecPlan/review-fixes.md). The coordinator owns integration, combined checks, fresh independent standards and specification reviews, and cleanup.
 
 **Governing principles.** Boundary Discipline puts admission and errors at the caller's interface. Redesign From First Principles and Subtract Before You Add favor one owner for each existing rule. Separate Before Serializing Shared State gives each extraction its own directory. Make Operations Idempotent governs reinstallation and generator retries. Experience First preserves CLI output and deployed behavior. Sequence Verifiable Units and Prove It Works require evidence through each public caller and again on the combined revision.
 
