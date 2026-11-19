@@ -22,35 +22,36 @@ INPUT_MAX_BYTES = 2 * 1024 * 1024
 INPUT_MAX_DEPTH = 64
 
 
-def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
+def _stdin_is_ready(stdin_fd: int, timeout: float = 0, *, eof_ready: bool = True) -> bool:
     if os.name != "nt":
         import select
 
         return bool(select.select([stdin_fd], [], [], timeout)[0])
 
-    import ctypes
-    import msvcrt
-
     deadline = time.monotonic() + timeout
-    pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
     while True:
-        available = ctypes.c_ulong()
-        if kernel32.PeekNamedPipe(
-            pipe_handle, None, 0, None, ctypes.byref(available), None,
-        ):
-            if available.value:
-                return True
-        else:
-            error = ctypes.get_last_error()
-            # A broken pipe is readable EOF; regular-file stdin needs no wait.
-            if error == 109 or kernel32.GetFileType(pipe_handle) == 1:
-                return True
-            raise OSError(error, "Hook stdin readiness failed")
+        available = windows_pipe_bytes_available(stdin_fd)
+        if available or (available is None and eof_ready):
+            return True
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             return False
         time.sleep(min(0.01, remaining))
+
+
+def windows_pipe_bytes_available(stdin_fd: int) -> int | None:
+    import ctypes
+    import msvcrt
+
+    pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    available = ctypes.c_ulong()
+    if kernel32.PeekNamedPipe(pipe_handle, None, 0, None, ctypes.byref(available), None):
+        return available.value
+    error = ctypes.get_last_error()
+    if error == 109 or kernel32.GetFileType(pipe_handle) == 1:
+        return None
+    raise OSError(error, "Hook stdin readiness failed")
 
 
 class InputLimitError(ValueError):
@@ -59,11 +60,9 @@ class InputLimitError(ValueError):
         super().__init__(rule_id)
 
 
-def _read_stdin_chunk(stdin_fd: int, max_bytes: int, timeout: float) -> bytes | None:
+def _read_stdin_chunk(stdin_fd: int, max_bytes: int, timeout: float, *, eof_ready: bool = True) -> bytes | None:
     if os.name == "nt":
-        # Pre-3.12 Windows pipes require PeekNamedPipe, not POSIX flags.
-        return os.read(stdin_fd, max_bytes) if _stdin_is_ready(stdin_fd, timeout) else None
-
+        return os.read(stdin_fd, max_bytes) if _stdin_is_ready(stdin_fd, timeout, eof_ready=eof_ready) else None
     blocking = os.get_blocking(stdin_fd)
     try:
         os.set_blocking(stdin_fd, False)
@@ -77,62 +76,12 @@ def _read_stdin_chunk(stdin_fd: int, max_bytes: int, timeout: float) -> bytes | 
         os.set_blocking(stdin_fd, blocking)
 
 
-def _read_available_stdin_bytes(
-    stdin_fd: int,
-    max_bytes: int = INPUT_MAX_BYTES,
-    deadline: float | None = None,
-    *, initial_bytes: int = 0,
-) -> bytes:
-    if deadline is None:
-        deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
-    chunks: list[bytes] = []
-    total = 0
+def _bounded_completion(max_markers):
+    markers = 0
+    stack = []
+    started = in_string = escaped = complete = False
+    chunk = yield False
     while True:
-        if time.monotonic() >= deadline:
-            raise ValueError("Invalid hook input: input deadline exceeded")
-        chunk = _read_stdin_chunk(stdin_fd, min(65536, max_bytes - total + 1), 0)
-        if chunk is None:
-            break
-        if not chunk:
-            break
-        total += len(chunk)
-        if total > max_bytes:
-            raise InputLimitError("raw_input_bytes", max_bytes + initial_bytes, total + initial_bytes, "bytes")
-        chunks.append(chunk)
-    return b"".join(chunks)
-
-
-def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int | None = None) -> str:
-    try:
-        stdin_fd = sys.stdin.fileno()
-    except (AttributeError, OSError):
-        # Runtime hooks require descriptor readiness to bound blocking reads.
-        raise ValueError("Invalid hook input: stdin readiness unavailable") from None
-
-    deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
-    chunks: list[bytes] = []
-    total = markers = 0
-    stack: list[int] = []
-    started = False
-    in_string = False
-    escaped = False
-    complete = False
-
-    while True:
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise ValueError("Invalid hook input: input deadline exceeded")
-        chunk = _read_stdin_chunk(stdin_fd, min(65536, max_bytes - total + 1),
-                                  min(INPUT_COMPLETION_IDLE_SECONDS, remaining))
-        if chunk is None:
-            raise ValueError("Invalid hook input: malformed or incomplete JSON")
-        if not chunk:
-            return b"".join(chunks).decode("utf-8")
-        total += len(chunk)
-        if total > max_bytes:
-            raise InputLimitError("raw_input_bytes", max_bytes, total, "bytes")
-        chunks.append(chunk)
-
         # Scan structural markers once in C, skipping ordinary UTF-8 bytes.
         # json.loads remains the full syntax authority after bounded collection.
         cursor = 1 if in_string and escaped else 0
@@ -180,14 +129,107 @@ def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int 
             # Only a terminal backslash carries its escape into the next chunk.
             escaped = False
 
-        if time.monotonic() >= deadline:
+        chunk = yield complete
+
+
+def collect_event_input(mode, *, max_bytes=None, max_markers=None):
+    """Collect one event, retaining its bytes and applying the caller's policy."""
+    import codecs
+
+    try:
+        fd = sys.stdin.fileno()
+    except (AttributeError, OSError):
+        if mode == "bounded":
+            raise ValueError("Invalid hook input: stdin readiness unavailable") from None
+        raise
+    deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS if mode == "bounded" else None
+    raw = bytearray()
+    bounded = _bounded_completion(max_markers) if mode == "bounded" else None
+    if bounded is not None:
+        next(bounded)
+    decoder = codecs.getincrementaldecoder("utf-8")() if mode == "rtk" else None
+    text = ""
+    parser = json.JSONDecoder()
+    end = 0
+    payload = None
+    complete = False
+    while True:
+        remaining = deadline - time.monotonic() if deadline is not None else INPUT_COMPLETION_IDLE_SECONDS
+        if remaining <= 0:
             raise ValueError("Invalid hook input: input deadline exceeded")
-        if complete:
-            trailing = _read_available_stdin_bytes(stdin_fd, max_bytes - total, deadline, initial_bytes=total)
-            if trailing.strip(b" \t\r\n"):
+        size = 65536 if mode == "bounded" else (8192 if mode == "rtk" else 4096)
+        if max_bytes is not None:
+            size = min(size, max_bytes - len(raw) + 1)
+        chunk = _read_stdin_chunk(fd, size, min(INPUT_COMPLETION_IDLE_SECONDS, remaining), eof_ready=mode != "codex")
+        if chunk is None:
+            raise ValueError("Invalid hook input: malformed or incomplete JSON")
+        if not chunk:
+            if mode == "bounded":
+                return bytes(raw), None
+            raise ValueError("Invalid hook input: incomplete JSON")
+        raw.extend(chunk)
+        if max_bytes is not None and len(raw) > max_bytes:
+            if mode == "bounded":
+                raise InputLimitError("raw_input_bytes", max_bytes, len(raw), "bytes")
+            raise ValueError("Hook input exceeds the maximum size")
+        if mode == "bounded":
+            complete = bounded.send(chunk)
+        else:
+            try:
+                text = text + decoder.decode(chunk, final=False) if decoder else raw.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                if mode == "codex" and exc.reason == "unexpected end of data":
+                    continue
+                raise ValueError("Invalid hook input: expected UTF-8 JSON") from exc
+            try:
+                start = len(text) - len(text.lstrip())
+                payload, end = parser.raw_decode(text, start)
+                complete = True
+            except json.JSONDecodeError:
+                continue
+            if mode == "rtk" and not isinstance(payload, dict):
+                raise ValueError("invalid hook input JSON")
+        if deadline is not None and time.monotonic() >= deadline:
+            raise ValueError("Invalid hook input: input deadline exceeded")
+        if not complete:
+            continue
+        while True:
+            if deadline is not None and time.monotonic() >= deadline:
+                raise ValueError("Invalid hook input: input deadline exceeded")
+            size = 65536 if mode == "bounded" else (8192 if mode == "rtk" else 4096)
+            if max_bytes is not None:
+                size = min(size, max_bytes - len(raw) + 1)
+            extra = _read_stdin_chunk(fd, size, 0, eof_ready=mode != "codex")
+            if not extra:
+                break
+            raw.extend(extra)
+            if max_bytes is not None and len(raw) > max_bytes:
+                if mode == "bounded":
+                    raise InputLimitError("raw_input_bytes", max_bytes, len(raw), "bytes")
+                raise ValueError("Hook input exceeds the maximum size")
+            if mode == "bounded":
+                if extra.strip(b" \t\r\n"):
+                    raise ValueError("Invalid hook input: trailing data")
+            elif mode == "rtk":
+                try:
+                    text += decoder.decode(extra, final=False)
+                except UnicodeDecodeError as exc:
+                    raise ValueError("Invalid hook input: expected UTF-8 JSON") from exc
+        if mode != "bounded":
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ValueError("Invalid hook input: expected UTF-8 JSON") from exc
+            if mode == "codex":
+                payload, end = parser.raw_decode(text, start)
+            if text[end:].strip():
                 raise ValueError("Invalid hook input: trailing data")
-            chunks.append(trailing)
-            return b"".join(chunks).decode("utf-8")
+        return bytes(raw), payload
+
+
+def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int | None = None) -> str:
+    raw, _ = collect_event_input("bounded", max_bytes=max_bytes, max_markers=max_markers)
+    return raw.decode("utf-8")
 
 
 def read_json_input(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int | None = None) -> dict:

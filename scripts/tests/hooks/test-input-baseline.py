@@ -39,6 +39,7 @@ CASES = {
     "delayed-final": ([BASE, b"}"], .1, True),
     "incomplete": ([BASE], 0, True),
     "non-object": ([b"[]"], 0, True),
+    "buffered-number": ([b" " * 4095 + b"12"], 0, True),
     "invalid-utf8": ([BASE + b',"x":"\xff"}'], 0, True),
     "depth-65": ([BASE + b',"x":' + b"[" * 65 + b"0" + b"]" * 65 + b"}"], 0, False),
     "large-fragmented": ([BASE + b',"x":"'] + [b"a" * 4096] * 256 + [b'"}'], 0, False),
