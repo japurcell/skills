@@ -8,7 +8,7 @@ Prove It Works and Boundary Discipline govern what a host trace establishes. Mod
 
 ## Next action and task graph
 
-On `feat/todo-38-dispatch-deadlines`, the wording evaluator runs [W1](38-dispatch-and-deadlines-exec-plan/wording.md) while the native-eval implementer finishes [P0](38-dispatch-and-deadlines-exec-plan/native-fixture.md). The Copilot operator then runs [P1](38-dispatch-and-deadlines-exec-plan/paired-dispatch.md). In parallel the runtime implementer addresses [R2](38-dispatch-and-deadlines-exec-plan/wait-delivery.md) and the host operators run [N1](38-dispatch-and-deadlines-exec-plan/native-replay.md). The verified integration coordinator `/root/codex` owns [I1](38-dispatch-and-deadlines-exec-plan/integration.md). The milestone files below link every assignment and its prerequisites.
+The native-eval implementer is finishing [P0](38-dispatch-and-deadlines-exec-plan/native-fixture.md) using the controlled [W1](38-dispatch-and-deadlines-exec-plan/wording.md) winner. Once the runner launches a real worker and distinguishes behavior from record quality, the Copilot operator runs [P1](38-dispatch-and-deadlines-exec-plan/paired-dispatch.md). The runtime implementer owns the [R3 deadline correction](38-dispatch-and-deadlines-exec-plan/wait-delivery.md#r3-register-an-actionable-deadline-in-execplan) while the host operators finish [N1](38-dispatch-and-deadlines-exec-plan/native-replay.md). The persistent integration coordinator owns [I1](38-dispatch-and-deadlines-exec-plan/integration.md). The user authorized sending both caller skills, router instructions and synthetic fixtures to the authenticated Codex and Copilot providers. Keep the historical remote trace and credentials out of these inputs.
 
 ## Decision Log
 
@@ -26,23 +26,25 @@ On `feat/todo-38-dispatch-deadlines`, the wording evaluator runs [W1](38-dispatc
 - [x] (2026-11-18) [milestone-2] S1 at `af044126` passes 17 scheduler CLI tests. New ordinary assignments are quiet until expiry. Explicit intervals and active version 2 records retain their old behavior.
 - [x] (2026-11-18) [milestone-2] E1 at `b1a63dd2` passes six controlled tests, including rejection of a quiet-time lookup and transfer while a separate writer is active.
 - [x] (2026-11-18) [milestone-2] Integrated R1 at `5f2892ab`. Both caller hashes match the tested sources. The combined checkout passed 17 scheduler tests, six controlled tests and skill-source validation. Native acceptance belongs to milestone 4.
-- [ ] [milestone-2] [E2, fail missing evidence](38-dispatch-and-deadlines-exec-plan/missing-evidence.md), after three empty-input false positives reproduced in the public grader.
-- [ ] [milestone-3] W1 shorter candidate and challenger, P1 six matched Copilot pairs.
+- [x] (2026-11-18) [milestone-2] Integrated 9ac6517c, nine controlled checks and 17 scheduler checks. [E2, fail missing evidence](38-dispatch-and-deadlines-exec-plan/missing-evidence.md), after three empty-input false positives reproduced in the public grader.
+- [x] (2026-11-18) [milestone-3] W1 observed 18/18 for each baseline, short and challenger caller. Deleting the original effort condition failed the reuse case in both callers (17/18 each).
+- [ ] [milestone-3] Six native old/new Copilot pairs and promotion of qualifying wording.
 - [x] (2026-11-18) [milestone-4] First Copilot N1 trials exposed a delayed native notification and a late checkpoint. Both original traces retained.
-- [ ] [milestone-4] R2 wait guidance, N1 native acceptance and I1 integrated verdict, review and backlog reconciliation.
+- [x] (2026-11-18) [milestone-4] R2 wait guidance integrated at c66ae7a8. Both Codex replays produced the expected bytes.
+- [ ] [milestone-4] Copilot N1 acceptance and I1 integrated verdict, review and backlog reconciliation.
 
 ## Milestone contracts and integration evidence
 
 | Milestone | Status | Acceptance |
 | --- | --- | --- |
 | [1. Historical and native baselines](38-dispatch-and-deadlines-exec-plan/baselines.md) | done | met |
-| [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | in progress | not met |
+| [2. Lifecycle, continuity and reporting](38-dispatch-and-deadlines-exec-plan/lifecycle.md) | done | met |
 | [3. Controlled and live dispatch comparison](38-dispatch-and-deadlines-exec-plan/dispatch.md) | in progress | not met |
 | [4. Integrated native acceptance and review](38-dispatch-and-deadlines-exec-plan/native-and-close.md) | in progress | not met |
 
 ## Concrete steps, validation and recovery
 
-From the repository root run `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`, `rtk proxy python3 skills/default/subagent-model-router/scripts/test_route.py`, `rtk proxy python3 -m unittest discover -s scripts/tests/orchestration`, `rtk proxy python3 scripts/validate-skill-sources.py skills` and `rtk git diff --check`. The new controlled suite must execute actual tests. A zero-test run means evidence is missing. Expected verdicts, native setup steps and stopping conditions are in the linked assignments. Record exact native invocations after the first valid run.
+Next, use the native fixture and candidate inputs linked above to run P1. At integration, from the repository root run `rtk proxy python3 skills/default/delegate-to-subagents/scripts/test_scheduler.py`, `rtk proxy python3 skills/default/subagent-model-router/scripts/test_route.py`, `rtk proxy python3 -m unittest discover -s scripts/tests/orchestration`, `rtk proxy python3 scripts/validate-skill-sources.py skills` and `rtk git diff --check`. The new controlled suite must execute actual tests. A zero-test run means evidence is missing. Expected verdicts, native setup steps and stopping conditions are in the linked assignments. Record exact native invocations after the first valid run.
 
 Use fresh run directories, identify old and new sources by Git revision or content hash and preserve previous partial runs on retry. No global installation or policy change is required. If the sandbox restricts legitimate vendor connections, request approval for the scoped native action. If the provider then requires owner authentication, record that prerequisite and proceed with offline work. Earlier startup artifacts are under `/private/tmp/todo38-1795057091956/{copilot,codex}`.
 
@@ -52,4 +54,4 @@ The supplied metadata trace has 25 prompts from a recurring five-minute Copilot 
 
 ## Outcomes & Retrospective
 
-Historical and current-host baselines are complete. The controlled suite passes. The native post-change scheduling verdicts and the dispatch wording comparison remain open. In the Copilot calibration, a required custom profile still accepted an explicit different model. A separate native project hook rejected that call and allowed the routed fallback. This establishes the known-exclusion fixture used for P1.
+The historical trace and four old host/caller baselines are verified. The scheduler and controlled fixtures pass. Both revised Codex pairings handled real early completion and silent-worker expiry. The controlled wording winner costs 172 words for delegate and 215 for ExecPlan. Native Copilot dispatch comparison and final lifecycle acceptance remain open. In the Copilot calibration, a required custom profile still accepted an explicit different model. A separate native project hook rejected that call and allowed the routed fallback. This establishes the known-exclusion fixture used for P1.
