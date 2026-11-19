@@ -12,6 +12,12 @@ SOURCE_KEYS = ("caller", "router_skill", "router_script", "router_catalog", "rou
 GATE_BEFORE = {"recorded_at", "assignment_id", "router_argv", "router_request", "router_output", "intended_child_controls", "parent_controls"}
 GATE_AFTER = GATE_BEFORE | {"actual_args", "worker_id", "observed_worker_model", "blocker", "override_fallback"}
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+REPORTED_MODEL_RE = re.compile(
+    r"\b(?:selected|chose|chosen|using|used)\s+(?:the\s+)?"
+    r"(?:routed\s+)?(?:fallback\s+)?model(?:\s+is)?\s*[:=]?\s*"
+    r"([A-Za-z0-9][A-Za-z0-9._/-]*)",
+    re.IGNORECASE,
+)
 
 
 def _time(value):
@@ -29,6 +35,20 @@ def _integer(value):
     if isinstance(value, str) and re.fullmatch(r"\s*-?[0-9]+\s*", value):
         return int(value)
     return None
+
+
+def _reported_fallback_model(value):
+    """Extract only a direct model field or a constrained model-selection statement."""
+    if isinstance(value, dict):
+        model = value.get("model")
+        return model if isinstance(model, str) and model else None
+    if not isinstance(value, str):
+        return None
+    direct = value.strip()
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", direct):
+        return direct
+    match = REPORTED_MODEL_RE.search(direct)
+    return match.group(1).rstrip(".,;:") if match else None
 
 
 def summarize_native_events(events):
@@ -72,7 +92,9 @@ def summarize_native_events(events):
                            requested_effort=args.get("reasoning_effort", args.get("effort")),
                            tool_args=safe_args)
             elif tool in ("shell", "bash", "powershell"):
-                command = args.get("command", "")
+                command = args.get("command", raw_args) if isinstance(args, dict) else raw_args
+                if isinstance(command, list) and all(isinstance(item, str) for item in command):
+                    command = " ".join(command)
                 command = command if isinstance(command, str) else ""
                 row.update(tool="command", call_id=data.get("toolCallId"),
                            policy_read=bool(re.search(r"(?:^|[/\\\s])policy38(?:\s|$)", command)),
@@ -136,7 +158,7 @@ def summarize_native_events(events):
 
 def grade_native_gate(events, manifest, router_records, before, after, policy_records=None, expected_answer=73):
     """Return separate behavior failures, record failures and unavailable observations."""
-    behavior, records, unavailable = [], [], []
+    behavior, records, unavailable, manual_review = [], [], [], []
     summary = summarize_native_events(events if isinstance(events, list) else [])
     if not summary:
         unavailable.append("native JSONL has no relevant events")
@@ -293,6 +315,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     if task_result and task_result.get("answer") is None and not read_results and task_result.get("success") is True:
         unavailable.append("native child result was not independently read")
 
+    override_model = None
     if isinstance(after, dict):
         actual_args = after.get("actual_args")
         if not isinstance(actual_args, dict):
@@ -314,9 +337,15 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         elif not observed_model:
             unavailable.append("effective native worker model was not exposed")
         override = after.get("override_fallback")
-        override_model = override.get("model") if isinstance(override, dict) else override
+        override_model = _reported_fallback_model(override)
         if task_call and task_call.get("model") and override_model and override_model != task_call.get("model"):
             records.append("after gate record fallback does not match native arguments")
+        elif override_model and fallback and override_model != fallback:
+            records.append("actor-reported fallback model differs from router output")
+        elif override_model and not task_call.get("model"):
+            unavailable.append("actor reported fallback model, but native task model was not exposed")
+        elif isinstance(override, str) and override.strip() and not override_model:
+            manual_review.append("fallback choice in actor record is free-form and cannot be verified automatically")
         if after.get("blocker") is not None and task_result and task_result.get("success") is True:
             records.append("after gate record reports a blocker despite successful native completion")
         if task_result and task_result.get("success") is False and not after.get("blocker"):
@@ -343,10 +372,11 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         records.append("native trace lacks a successful coordination write after worker completion")
     status = "fail" if behavior or records else "unavailable" if unavailable else "pass"
     return {"status": status, "behavior_failures": behavior, "record_failures": records,
-            "unavailable": unavailable, "observed": {
+            "unavailable": unavailable, "manual_review": manual_review, "observed": {
                 "primary_attempts": sum(row.get("model") == primary for row in task_calls),
                 "fallback_attempts": sum(row.get("model") == fallback for row in task_calls),
                 "worker_model": started.get("model") if started else None,
+                "actor_reported_fallback_model": override_model if isinstance(after, dict) else None,
                 "worker_effort": configured.get("effort") if configured else None,
                 "answer": observed_answer,
                 "worker_id": started.get("worker_id") if started else spawned_id,

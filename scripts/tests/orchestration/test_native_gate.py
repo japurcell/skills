@@ -162,6 +162,16 @@ class NativeGateGraderTests(unittest.TestCase):
         reads = [row for row in summarize_native_events(events) if row.get("policy_read")]
         self.assertEqual(len(reads), 1)
 
+    def test_shell_string_and_argv_list_preserve_the_same_invocation(self):
+        string_event = {"type": "tool.execution_start", "data": {
+            "toolName": "shell", "toolCallId": "string", "arguments": "route38 --input route-request.json"}}
+        argv_event = {"type": "tool.execution_start", "data": {
+            "toolName": "shell", "toolCallId": "argv", "arguments": ["route38", "--input", "route-request.json"]}}
+        string_row = summarize_native_events([string_event])[0]
+        argv_row = summarize_native_events([argv_event])[0]
+        self.assertEqual((string_row["router_call"], string_row["policy_read"]), (True, False))
+        self.assertEqual((argv_row["router_call"], argv_row["policy_read"]), (True, False))
+
     def test_native_coordination_write_after_task_is_not_a_before_write(self):
         manifest, router, before, after, policy_reads = run_records()
         events = native_events()
@@ -222,10 +232,10 @@ class NativeGateGraderTests(unittest.TestCase):
         verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
         self.assertTrue(any("wrong required project worker" in item for item in verdict["behavior_failures"]))
 
-    def test_malformed_coordination_does_not_hide_wrong_native_profile(self):
+    def test_malformed_coordination_does_not_hide_wrong_native_type_even_with_matching_name(self):
         manifest, router, before, after, _ = run_records()
         events = native_events()
-        events[6]["data"]["arguments"]["agent_type"] = "general-purpose"
+        events[6]["data"]["arguments"].update(agent_type="task", name="check-total")
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             event_file = root / "events.jsonl"
@@ -235,15 +245,52 @@ class NativeGateGraderTests(unittest.TestCase):
             router_file = root / "router.jsonl"
             router_file.write_text("".join(json.dumps(event) + "\n" for event in router), encoding="utf-8")
             coordination = root / "coordination.json"
-            coordination.write_text('{"before":', encoding="utf-8")
-            output = StringIO()
-            with redirect_stdout(output):
-                code = grade_native_main(["--events", str(event_file), "--manifest", str(manifest_file),
-                                          "--router-log", str(router_file), "--coordination", str(coordination)])
-            verdict = json.loads(output.getvalue())
-            self.assertEqual(code, 1)
-            self.assertTrue(any("wrong required project worker" in item for item in verdict["behavior_failures"]))
-            self.assertTrue(any("invalid JSON" in item for item in verdict["record_failures"]))
+            for malformed in ('{"before":{}}\n{"after":{}}', '{"before":{}}\n}\n'):
+                coordination.write_text(malformed, encoding="utf-8")
+                output = StringIO()
+                with redirect_stdout(output):
+                    code = grade_native_main(["--events", str(event_file), "--manifest", str(manifest_file),
+                                              "--router-log", str(router_file), "--coordination", str(coordination)])
+                verdict = json.loads(output.getvalue())
+                self.assertEqual(code, 1)
+                self.assertTrue(any("wrong required project worker" in item for item in verdict["behavior_failures"]))
+                self.assertTrue(any("invalid JSON" in item for item in verdict["record_failures"]))
+
+    def test_synchronous_result_without_public_worker_identity_is_unavailable_not_failure(self):
+        manifest, router, before, after, policy_reads = run_records()
+        events = native_events()
+        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        del events[6]["data"]["arguments"]["model"]
+        after["worker_id"] = None
+        after["observed_worker_model"] = None
+        verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
+        self.assertEqual(verdict["observed"]["answer"], 73)
+        self.assertEqual(verdict["observed"]["worker_id"], None)
+        self.assertFalse(verdict["behavior_failures"])
+        self.assertFalse(verdict["record_failures"])
+        self.assertEqual(verdict["status"], "unavailable")
+        self.assertTrue(any("worker ID" in item for item in verdict["unavailable"]))
+
+    def test_constrained_english_fallback_record_is_reported_without_claiming_native_exposure(self):
+        manifest, router, before, after, policy_reads = run_records()
+        events = native_events()
+        events = [event for event in events if event.get("type") not in ("subagent.started", "subagent.configured", "subagent.completed")]
+        del events[6]["data"]["arguments"]["model"]
+        after["worker_id"] = None
+        after["observed_worker_model"] = None
+        after["override_fallback"] = "I used the routed fallback model claude-haiku-5.5."
+        verdict = grade_native_gate(events, manifest, router, before, after, policy_reads)
+        self.assertEqual(verdict["observed"]["actor_reported_fallback_model"], "claude-haiku-5.5")
+        self.assertFalse(verdict["behavior_failures"])
+        self.assertFalse(verdict["record_failures"])
+        self.assertTrue(any("native task model" in item for item in verdict["unavailable"]))
+
+    def test_unverifiable_fallback_prose_is_reported_for_manual_review(self):
+        manifest, router, before, after, policy_reads = run_records()
+        after["override_fallback"] = "I selected the safer option."
+        verdict = grade_native_gate(native_events(), manifest, router, before, after, policy_reads)
+        self.assertTrue(verdict["manual_review"])
+        self.assertFalse(verdict["behavior_failures"])
 
 
 if __name__ == "__main__":
