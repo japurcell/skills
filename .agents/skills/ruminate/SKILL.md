@@ -21,49 +21,34 @@ Create one temporary directory with Python's `tempfile.mkdtemp(prefix="ruminate-
 
 Use the available Python 3.12+ executable (`python`, `python3`, or `py -3.12`). Pass the snapshot path to each analysis agent. This avoids loading the full brain into the ruminate orchestrator's context.
 
-### 2. Locate conversations
+### 2. Extract the current project's conversations
 
-Find available supported provider roots:
-
-1. Claude project directory:
-   `~/.claude/projects/-<cwd-with-dashes-replacing-slashes>/`
-2. Codex sessions root:
-   `~/.codex/sessions/`
-3. GitHub Copilot CLI session history:
-   `~/.copilot/session-state/<session-id>/events.jsonl`. Pass the `session-state` directory.
-
-Other provider formats require a separate extraction route.
-
-### 3. Extract conversations
-
-Run the extraction script to parse session logs into readable text and split into batches:
+Run the helper from the project directory, replacing the two placeholder paths. Project mode discovers available Claude, Codex and GitHub Copilot CLI histories. It includes conversations with matching working-directory metadata and usable messages, then sizes the batches.
 
 ```python
 from pathlib import Path
+import json
 import subprocess
 import sys
 
-subprocess.run([
+completed = subprocess.run([
     sys.executable, "<ruminate-skill-path>/scripts/extract-conversations.py",
-    "<temporary-directory>/extracted",
-    "--claude-dir", str(Path.home() / ".claude/projects/<project-slug>"),
-    "--codex-dir", str(Path.home() / ".codex/sessions"),
-    "--copilot-dir", str(Path.home() / ".copilot/session-state"),
-    "--cwd", str(Path.cwd()), "--batches", "2",
-], check=True)
+    "<temporary-directory>/extracted", "--project", str(Path.cwd()),
+], check=True, stdout=subprocess.PIPE, encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")
+for manifest_path in json.loads(completed.stdout)["manifests"]:
+    print(manifest_path)
 ```
 
-Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations across all providers: ~1 batch per 20 conversations, minimum 2, maximum 10.
+Add `--claude-dir`, `--codex-dir`, or `--copilot-dir` only when the user specifies sources. These options restrict extraction to those roots. Add `--batches N` only for a requested batch count. Use `--help` for date and size filters. On failure, report the diagnostic from stderr and stop. On success with no manifest paths, report that no matching conversations were found and clean up.
 
-Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
+### 3. Spawn analysis team
 
-### 4. Spawn analysis team
-
-Analyze each batch with available general analysis subagents, following the model-routing skill when available and respecting harness concurrency limits. Use bounded local passes if delegation is unavailable.
+Create one analysis assignment per printed manifest path, passing that path verbatim. Use available general analysis subagents, following the model-routing skill when available and respecting harness concurrency limits. Use bounded local passes if delegation is unavailable.
 
 Each agent's prompt should include:
 
-- The actual batch manifest path (`<temporary-directory>/extracted/batches/batch_N.txt`)
+- The manifest path from this invocation
 - The actual output path (`<temporary-directory>/findings_N.md`)
 - The list of topics **already captured** in the brain (compiled from step 1) - so agents skip known knowledge
 - A reminder that each extracted file includes provider/source metadata headers (`[PROVIDER]`, `[CWD]`, `[SOURCE_FILE]`) and should be used as evidence context
@@ -80,7 +65,7 @@ Each agent's prompt should include:
 
 Agents write structured findings to their output files.
 
-### 5. Synthesize
+### 4. Synthesize
 
 After all agents complete, read all findings files. Cross-reference with existing brain content. Deduplicate across batches. Before presenting a proposed finding, recheck its cited raw evidence and unique-conversation count; an analysis agent's summary alone is not proof.
 
@@ -92,7 +77,7 @@ After all agents complete, read all findings files. Cross-reference with existin
 
 **Discard aggressively.** It's better to present 3 high-signal findings than 9 that include noise. If a finding only happened once and isn't a factual correction, skip it.
 
-### 6. Present and apply
+### 5. Present and apply
 
 Present findings to the user in a table with columns: finding, frequency/evidence, and proposed action. Be honest about which findings are one-offs vs. recurring patterns - let the user decide what's worth adding.
 
@@ -105,7 +90,7 @@ Apply only the changes the user approves. Follow brain writing conventions:
 - Activate the `brain` skill to maintain curated indexes and reconcile the root inventory, using manual indexing if hooks are unavailable
 - Default to updating existing notes over creating new ones
 
-### 7. Clean up
+### 6. Clean up
 
 After all analysis finishes, remove only the temporary directory this invocation created. Replace the placeholder with the exact retained path, never a provider history directory:
 
