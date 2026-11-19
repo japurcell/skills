@@ -109,7 +109,7 @@ class TestTestAll(unittest.TestCase):
         # RTK scripts are invoked as helpers by retained provider suites.
         expected = {
             str(path.relative_to(REPO_ROOT))
-            for domain in ("hooks", "installers", "tooling", "runner")
+            for domain in ("hooks", "installers", "tooling", "runner", "orchestration")
             for pattern in ("test-*.sh", "test-*.ps1", "test-*.py", "test_*.py")
             for path in (REPO_ROOT / "scripts/tests" / domain).glob(pattern)
             if path.name != "test-rtk-stable-windows.ps1"
@@ -118,6 +118,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("skills/archive/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py")
         expected.add("skills/default/subagent-model-router/scripts/test_route.py")
+        expected.add("skills/default/delegate-to-subagents/scripts/test_scheduler.py")
         expected.add("skills/archive/ablate-ai-layer/scripts/test_ablation.py")
         expected.add("skills/default/commit/evals/test_validate_message.py")
         expected.add("skills/default/commit/evals/test_grade_benchmark.py")
