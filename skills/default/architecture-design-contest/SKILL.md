@@ -140,8 +140,6 @@ End by asking the user to choose one of these paths:
 
 ## Subagent delegation
 
-Activate or load the `delegate-to-subagents` skill so that you delegate tasks to the most suitable subagents for each task type.
-
 ## Output shape
 
 Use this structure unless the user asks for something else:

@@ -2,18 +2,14 @@
 name: techdebt
 description: Find and safely remove duplicated or redundant code in current context or a provided scope, e.g. `scope:git diff main..HEAD`.
 disable-model-invocation: true
-argument-hint: '[scope:<path or git diff range>]'
+argument-hint: "[scope:<path or git diff range>]"
 ---
 
 # /techdebt
 
 Remove duplicated code while preserving behavior. Prefer small, safe, validated changes over broad cleanup.
 
-## 1. Route
-
-Before starting, activate or load the `delegate-to-subagents` skill so that you delegate tasks to the most suitable subagents for each task type when useful.
-
-## 2. Scope
+## 1. Scope
 
 If candidates are already provided, use them and skip discovery.
 
@@ -26,7 +22,7 @@ Otherwise, use a fast-tier subagent to resolve scope:
 
 Build a shortlist of changed functions, classes, modules, tests, configs, scripts, handlers, or UI units.
 
-## 3. Find duplication
+## 2. Find duplication
 
 Dispatch 1-3 `code-explorer` subagents scaled to scope size, or inspect the relevant code directly for a narrow scope.
 
@@ -45,7 +41,7 @@ Classify each finding as:
 
 If no meaningful duplication is found, report that and stop.
 
-## 4. Prioritize
+## 3. Prioritize
 
 Process safe, in-scope candidates in this order:
 
@@ -63,7 +59,7 @@ Prefer:
 
 Default to the top 1–3 safest candidates unless the user requested broader cleanup.
 
-## 5. Refactor and validate
+## 4. Refactor and validate
 
 For each selected candidate:
 
@@ -87,7 +83,7 @@ Ask the user before changes involving:
 - broad convention or naming changes
 - unrelated refactors
 
-## 6. Report
+## 5. Report
 
 Return a concise summary:
 
