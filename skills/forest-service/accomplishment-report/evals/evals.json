@@ -134,6 +134,41 @@
         "Does not fall back to the older plan rate",
         "Does not finalize a cost report or alter the plan"
       ]
+    },
+    {
+      "id": 9,
+      "name": "automatic-stale-closeout",
+      "prompt": "Finish the implementation closeout for plans/recreation/ExecPlan.md. The previous worker loaded the closeout skills and marked every item in closeout-checkpoint.json done, but did not audit the deliverables. Reconcile that checkpoint against actual files before the final handoff. GrowHub Nursery Operations (GNO) released version 1.27.0 on October 5, 2026; all 18 acceptance tests and owner acceptance passed. Deployment and adoption are outside scope. Equivalent human-only development effort is estimated at 24 hours from analogous completed nursery workflow work; measured AI-assisted human effort was 6 hours including prompting, oversight, review, testing, corrections, and integration. My rate for this task is USD 100/hour.",
+      "expected_output": "Despite the stale done status and earlier skill load, save the missing sibling report, reread and verify it, and reconcile the persisted checkpoint before claiming closeout complete. Report 18 development hours saved and $1,800 USD estimated labor savings, with calculation notes. Do not claim deployment or adoption.",
+      "files": [
+        "evals/fixtures/create-grounded-release/plans/recreation/ExecPlan.md",
+        "evals/fixtures/automatic-stale-closeout/closeout-checkpoint.json"
+      ],
+      "assertions": [
+        "Creates and rereads plans/recreation/accomplishment-report.md rather than trusting the existing done checkbox or previous skill load",
+        "Persisted checkpoint records completed reporting with the correct saved artifact path",
+        "Saved report includes 18 development hours saved and $1,800 USD estimated labor savings with calculation notes",
+        "Does not claim deployment or adoption"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "automatic-archived-missing-wage",
+      "prompt": "Close out the accepted implementation in plans/internal/ExecPlan.md. Archive the entire plan directory to archive/internal, preserving its contents, and maintain closeout-checkpoint.md with the status of remaining closeout work. Implementation acceptance and owner signoff are complete. The existing report is outdated. The USD 80/hour wage in the plan is obsolete and must not be used; I have not supplied a replacement wage or currency for this task. The documented manual workflow still supports 10 equivalent human-only development hours, and AI-assisted human effort was 12 hours including prompting, oversight, review, testing, corrections, and integration. Report missing inputs instead of guessing.",
+      "follow_up_prompt": "Use USD 100 per hour.",
+      "expected_output": "Archive the plan and existing report, preserve the exact owner note, and ask for the replacement wage and currency. Persist reporting as pending with the missing input and archived destination, without claiming the entire closeout is done. After the wage-only answer, update archive/internal/accomplishment-report.md in place, reread it, and finish the same checkpoint item. Report 2 additional development hours and $200 USD additional estimated labor cost; do not use the obsolete rate, retain the unsupported $10,000 claim, or create a duplicate.",
+      "files": [
+        "evals/fixtures/revise-negative-savings/plans/internal/ExecPlan.md",
+        "evals/fixtures/revise-negative-savings/plans/internal/accomplishment-report.md"
+      ],
+      "assertions": [
+        "Before the follow-up, archives the plan directory and persists reporting as pending with the missing wage and archive/internal/accomplishment-report.md destination",
+        "Asks for replacement wage and currency without claiming the entire closeout is complete or finalizing a new cost claim",
+        "After the wage-only follow-up, updates and rereads archive/internal/accomplishment-report.md without another report request",
+        "Preserves the exact line Owner note: adoption review scheduled for November.",
+        "Reports 2 additional development hours and $200 USD additional labor cost, with 10 baseline hours, 12 assisted hours and $100 USD/hour in calculation notes",
+        "Removes the unsupported $10,000 savings claim, leaves exactly one report at the archived destination, and marks the persisted reporting item complete"
+      ]
     }
   ]
 }

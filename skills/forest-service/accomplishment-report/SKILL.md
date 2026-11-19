@@ -1,15 +1,21 @@
 ---
 name: accomplishment-report
-description: Create a concise Forest Service executive accomplishment report when all work in an implementation plan is completed, or update its existing report. Use at plan closeout and when asked to report completed work, agency alignment, and estimated AI-assisted versus human-only time and cost savings.
+description: Create or update a concise Forest Service executive accomplishment report with agency alignment and estimated AI-assisted labor savings. Use automatically at verified implementation-plan closeout, archival, or final handoff, even without a separate report request; also use when asked for an accomplishment report.
 argument-hint: "[--hourly-wage <amount> <currency>]"
 ---
 
 # Accomplishment Report
 
+## Track the closeout obligation
+
+When participating in implementation closeout, record reporting as a distinct pending item in the existing durable task tracker or authorized closeout checklist. Carry its status, destination, and missing inputs through checkpoints and handoffs. Keep reporting separate from implementation acceptance so it does not create a circular completion gate.
+
+Before archival or a final closeout response, reconcile that item against the actual report at the plan's current location. Loading this skill, checking a box, or archiving the plan is not evidence that the report was saved. Mark reporting complete only after saving and rereading the report and performing the checks below. Otherwise, record and disclose reporting as pending with its blocker and required input or owner action; ask for missing inputs and resume when supplied. Implementation may be accepted while reporting remains pending, but do not describe the entire closeout as complete.
+
 ## Confirm scope and completion
 
 1. Identify the exact plan from the task or repository context; ask only if multiple targets remain plausible.
-2. Read the plan, repository overview, relevant changes, and acceptance evidence. Confirm every in-scope task and milestone is complete and acceptance is met. Checked boxes do not override unresolved tests, verification, or owner actions. If work remains, explain the gap and stop without generating a report or changing the plan. Reporting does not create a circular completion gate.
+2. Read the plan, repository overview, relevant changes, and acceptance evidence. Confirm every in-scope task and milestone is complete and acceptance is met. Checked boxes do not override unresolved tests, verification, or owner actions. If work remains, explain the gap and stop without generating a report or changing the plan.
 3. Write to `<plan-directory>/accomplishment-report.md`. Update an existing report in place and preserve supported human edits, including owner notes, verbatim and separate from generated prose. Identify the plan. If the path belongs to another plan, ask how to resolve the collision. Do not create dated duplicates or modify implementation files.
 
 ## Resolve the hourly wage

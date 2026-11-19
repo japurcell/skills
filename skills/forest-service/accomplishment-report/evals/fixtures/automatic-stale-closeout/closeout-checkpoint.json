@@ -1,0 +1,11 @@
+{
+  "items": [
+    { "name": "Implementation", "status": "done" },
+    { "name": "Acceptance verification", "status": "done" },
+    {
+      "name": "Accomplishment report",
+      "status": "done",
+      "artifact": "plans/recreation/accomplishment-report.md"
+    }
+  ]
+}
