@@ -70,6 +70,32 @@ class RepositoryParityTests(unittest.TestCase):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_installed_direct_reindex_updates_new_note(self):
+        self.run_install("--apply")
+        (self.target / "brain/new.md").write_text("new", encoding="utf-8")
+        script = self.target / ".agents/skills/brain/scripts/reindex.py"
+        result = subprocess.run([sys.executable, str(script), str(self.target)], capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("new.md", (self.target / "brain/index.md").read_text())
+        before = (self.target / "brain/index.md").stat().st_mtime_ns
+        self.assertEqual(subprocess.run([sys.executable, str(script), str(self.target)]).returncode, 0)
+        self.assertEqual((self.target / "brain/index.md").stat().st_mtime_ns, before)
+        (self.target / "brain/new.md").unlink()
+        self.assertEqual(subprocess.run([sys.executable, str(script), str(self.target)]).returncode, 0)
+        self.assertNotIn("new.md", (self.target / "brain/index.md").read_text())
+        nested = self.target / "nested"
+        nested.mkdir()
+        self.assertNotEqual(subprocess.run([sys.executable, str(script), str(nested)], capture_output=True).returncode, 0)
+
+    def test_retained_noop_indexer_cannot_accept_stale_inventory(self):
+        self.run_install("--apply")
+        script = self.target / ".agents/skills/brain/scripts/auto-index-brain.py"
+        script.write_text("print('{}')\n", encoding="utf-8")
+        (self.target / "brain/new.md").write_text("new", encoding="utf-8")
+        self.run_install("--apply", "--index-reviewed", "--keep-existing",
+                         ".agents/skills/brain/scripts/auto-index-brain.py", expected=1)
+        self.assertEqual(script.read_text(), "print('{}')\n")
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

@@ -1,6 +1,6 @@
 # M2. Direct brain reindex
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 ## Assignment
@@ -40,5 +40,12 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 ## Progress
 
-- [ ] [milestone-2] Implement T2 and exercise the public entry points.
-- [ ] [milestone-2] Verify integrated behavior and record platform evidence.
+- [x] (2026-11-19) [milestone-2] Implement direct reindex, retained-helper selection and trusted inventory verification; exercise installed direct and stale retained helper.
+- [ ] [milestone-2] Complete integrated and native Windows verification, and review remaining acceptance coverage.
+
+## Observed evidence
+
+- Disposable CLI reproduction: a hook invocation with no event exited zero and omitted a newly added note. The installed direct command now adds and removes that link, preserves the unchanged index mtime, and rejects a nested root without its own vault.
+- Installer suite: 51 tests passed, four skipped; hook suite: 27 tests passed, one skipped. Generator check reports 15 current files. The new direct test was rerun after its deletion assertion and passed.
+- On macOS as uid 501, a held writer lock and an unwritable vault with an existing writable lock both returned failure. Native Windows and final integrated proof remain outstanding.
+- Session reflection: the stale-helper risk is enforced by the trusted verifier; no additional durable note was identified.

@@ -184,6 +184,7 @@ def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int 
             return b"".join(chunks).decode("utf-8")
 
 INJECT = True
+DIRECT = False
 
 import argparse
 import secrets
@@ -485,7 +486,7 @@ def writer_lock(vault):
         os.close(descriptor)
 
 
-def inventory(vault):
+def inventory(vault, verify=False):
     deadline = time.monotonic() + 2
     groups = {}
     pending = [((), ())]
@@ -537,7 +538,35 @@ def inventory(vault):
             previous = stream.read(512 * 1024 + 1)
         if len(previous) > 512 * 1024:
             raise BrainError("existing index too large")
-    if previous != content:
+    if verify:
+        if previous is None:
+            raise BrainError("missing index")
+        from urllib.parse import unquote
+        def targets(data):
+            text = data.decode("utf-8")
+            links = re.findall(r"(?m)^- \[(?:\\.|[^\]])*\]\(<([^>]*)>\)\s*$", text)
+            if len(links) != sum(line.startswith("- ") for line in text.splitlines()):
+                raise BrainError("invalid index")
+            return sorted(unquote(link) for link in links)
+        if targets(previous) != targets(content):
+            raise BrainError("stale index")
+        return content
+    if previous == content:
+        first = ".brain-index-" + secrets.token_hex(12)
+        second = ".brain-index-" + secrets.token_hex(12)
+        owned = []
+        try:
+            descriptor = vault.open_file(first, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            owned.append(first)
+            os.close(descriptor)
+            descriptor = vault.open_file(second, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            owned.append(second)
+            os.close(descriptor)
+            vault.replace(first, second)
+        finally:
+            for name in owned:
+                vault.unlink(name)
+    else:
         name = ".brain-index-" + secrets.token_hex(12)
         descriptor = vault.open_file(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
         try:
@@ -552,7 +581,32 @@ def inventory(vault):
     return content
 
 
+def direct_main():
+    parser = argparse.ArgumentParser(description="Reindex an explicit repository's brain vault.")
+    parser.add_argument("root", type=Path)
+    parser.add_argument("--verify", action="store_true")
+    args = parser.parse_args()
+    try:
+        if sys.version_info < (3, 12):
+            raise BrainError("Python 3.12 or newer is required")
+        root = args.root.resolve(strict=True)
+        if not root.is_dir():
+            raise BrainError("root is not a directory")
+        path = root / "brain"
+        info = path.lstat()
+        if linked(info) or not stat.S_ISDIR(info.st_mode):
+            raise BrainError("invalid vault")
+        with Directory(path, info) as directory, writer_lock(directory):
+            inventory(directory, verify=args.verify)
+        return 0
+    except (BrainError, OSError, ValueError, UnicodeError) as error:
+        print("brain: " + str(error) + "; previous index preserved", file=sys.stderr)
+        return 1
+
+
 def main():
+    if DIRECT:
+        return direct_main()
     if sys.version_info < (3, 12):
         print("brain: Python 3.12 or newer is required", file=sys.stderr)
         sys.stdout.buffer.write(b"{}\n")

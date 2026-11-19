@@ -319,19 +319,29 @@ def main():
         for relative, content in changes:
             atomic_write(safe_path(target, relative), content)
             completed.append(relative)
-        result = subprocess.run(
-            check=False,
-            args=[sys.executable, "-I", "-S", "-B",
-             str(target / ".agents/skills/brain/scripts/auto-index-brain.py"), "--provider", "codex"],
-            input=json.dumps({"cwd": str(target), "hook_event_name": "PostToolUse"}),
-            text=True, capture_output=True, timeout=15,
-        )
-        if result.returncode or result.stderr or not index.is_file():
-            raise OSError(f"indexing failed: {result.stderr.strip() or 'no index generated'}")
-        inventory = index.read_text(encoding="utf-8")
-        for expected in ("principles.md", "todos.md", "codebase/index.md", "plans/index.md", "audits/index.md", "archive/index.md"):
-            if expected not in inventory:
-                raise OSError(f"indexing failed: missing {expected}")
+        legacy = ".agents/skills/brain/scripts/auto-index-brain.py"
+        direct = target / ".agents/skills/brain/scripts/reindex.py"
+        retained = legacy in kept and (target / legacy).read_bytes() != (ASSETS / "skills/brain/scripts/auto-index-brain.py").read_bytes()
+        command = [sys.executable, "-I", "-S", "-B", str(target / legacy if retained else direct)]
+        if retained:
+            command += ["--provider", "codex"]
+            input_text = json.dumps({"cwd": str(target), "hook_event_name": "PostToolUse"})
+        else:
+            command.append(str(target))
+            input_text = None
+        result = subprocess.run(command, input=input_text, text=True, capture_output=True, timeout=15)
+        if result.returncode or result.stderr:
+            raise OSError(f"indexing failed: {result.stderr.strip() or 'helper failure'}")
+        # Always verify with the trusted bundled implementation, never the retained helper.
+        verifier = ASSETS / "skills/brain/scripts/reindex.py"
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(verifier), str(target), "--verify"],
+                                capture_output=True, text=True, timeout=15)
+        if result.returncode or result.stderr:
+            raise OSError(f"index verification failed: {result.stderr.strip() or 'helper failure'}")
+        for relative in ("brain/principles.md", "brain/todos.md", "brain/codebase/index.md",
+                         "brain/plans/index.md", "brain/audits/index.md", "brain/archive/index.md"):
+            if not safe_path(target, relative).is_file():
+                raise OSError(f"index verification failed: missing starter navigation {relative}")
         print("Installation complete; brain/index.md verified")
         return 0
     except (ValueError, UnicodeError) as error:
