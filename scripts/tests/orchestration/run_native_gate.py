@@ -1,4 +1,4 @@
-"""Prepare or run one scoped Copilot model-gate smoke test."""
+"""Prepare a Copilot model-gate fixture locally. Live execution can spend model tokens."""
 
 import argparse
 from datetime import datetime, timedelta, timezone
@@ -342,7 +342,7 @@ def main(argv=None):
     parser.add_argument("--copilot", default="copilot", help="Copilot CLI executable from the existing provider-managed environment")
     parser.add_argument("--parent-model", default="gpt-6-luna")
     parser.add_argument("--timeout-seconds", type=int, default=300)
-    parser.add_argument("--run", action="store_true", help="start the authenticated native Copilot session")
+    parser.add_argument("--allow-model-calls", action="store_true", help="launch Copilot and allow token usage")
     args = parser.parse_args(argv)
     if args.timeout_seconds < 1:
         parser.error("--timeout-seconds must be positive")
@@ -351,7 +351,7 @@ def main(argv=None):
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"native gate setup failed: {error}", file=sys.stderr)
         return 2
-    if not args.run:
+    if not args.allow_model_calls:
         print(json.dumps({"status": "prepared", "project": str(prepared["project"]),
                           "private_evidence": str(prepared["private"]),
                           "native_session_started": False}, sort_keys=True))

@@ -1,6 +1,8 @@
 # Controlled orchestration evidence
 
-For a live two-worker trial on Copilot CLI or Codex, use the [native lifecycle replay](native-lifecycle.md).
+All tests below run offline. The standalone `run_actors.py` and `run_native_gate.py` commands also prepare local fixtures by default. To spend tokens on a live eval, pass the full `--allow-model-calls` option on that invocation.
+
+For a manual live two-worker trial on Copilot CLI or Codex, use the [native lifecycle replay](native-lifecycle.md).
 
 Run from the repository root:
 

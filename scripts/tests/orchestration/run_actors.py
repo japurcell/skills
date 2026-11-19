@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare and run one fresh Codex W1 controlled actor session."""
+"""Prepare a Codex actor fixture locally. Live execution can spend model tokens."""
 from __future__ import annotations
 
 import argparse
@@ -58,10 +58,12 @@ The host API commands are available on PATH: `case38 list` prints assignments; `
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--arm", choices=sorted(ARMS), required=True)
     parser.add_argument("--caller", choices=sorted(CALLERS), required=True)
-    parser.add_argument("--prepare-only", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--prepare-only", action="store_true", help="prepare the fixture locally (default)")
+    mode.add_argument("--allow-model-calls", action="store_true", help="launch Codex and allow token usage")
     parser.add_argument("--run-suffix", default="")
     parser.add_argument("--scratch-root", type=Path, required=True)
     args = parser.parse_args()
@@ -75,7 +77,7 @@ def main() -> None:
     output = scratch / "evidence" / f"{key}{suffix}"
     output.mkdir(parents=True, exist_ok=True)
     prepare(args.arm, args.caller, project, rendered_root)
-    if args.prepare_only:
+    if not args.allow_model_calls:
         print(project)
         return
     env = os.environ.copy()

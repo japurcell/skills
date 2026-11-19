@@ -1,6 +1,6 @@
 # Native model-gate replay
 
-Run the fixture from the repository root with the existing authenticated Copilot CLI. Each run directory must be new. The runner records its exact argv and scoped `write`, `policy38`, `route38`, and delegate-only `scheduler38` permissions in `private/`.
+Prepare the fixture offline from the repository root. Each run directory must be new. The runner records its exact argv and scoped `write`, `policy38`, `route38`, and delegate-only `scheduler38` permissions in `private/`.
 
 ```sh
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/native-gate.XXXXXX")"
@@ -12,8 +12,10 @@ rtk proxy python3 scripts/tests/orchestration/run_native_gate.py \
   --caller delegate --caller-skill-file "$rendered/caller-SKILL.md" \
   --router-skill-file "$rendered/router-SKILL.md" \
   --parent-model gpt-6-luna --timeout-seconds 300 \
-  --run-dir "$run_dir" --run
+  --run-dir "$run_dir"
 ```
+
+For an intentional live trial, choose a fresh run directory and append `--allow-model-calls`. This starts authenticated Copilot and can spend tokens.
 
 For the other caller, set `caller=execplan-implement`, set `--caller execplan`, and use that directory's rendered caller and router files. In matched pairs, vary both rendered caller and router wording as assigned. Keep the router Python/catalog, project hook, worker profile, task, parent model, timeout, and command permissions fixed. The ExecPlan caller's allowed project command list omits `scheduler38`.
 
@@ -28,7 +30,7 @@ rtk proxy python3 scripts/tests/orchestration/grade_native_gate.py \
   --coordination "$run_dir/project/coordination.json"
 ```
 
-The 22-test offline suite covers the permitted fallback, denied primary, missing evidence, malformed actor records, wrong worker types even when a matching display name is supplied, shell string/argv invocation equivalence, explicit unknown worker identity/model, constrained and unverifiable fallback records, actor-record/native-trace mismatch, background result lookup by worker ID, exact child output messages matched by worker ID, post-dispatch receipts before asynchronous completion, native pre/post coordination writes, and execution of a non-executable frozen router script through the executable `route38` alias.
+The offline suite checks that both runners prepare fixtures without invoking a provider CLI. It also covers the permitted fallback, denied primary, missing evidence, malformed actor records, wrong worker types even when a matching display name is supplied, shell string/argv invocation equivalence, explicit unknown worker identity/model, constrained and unverifiable fallback records, actor-record/native-trace mismatch, background result lookup by worker ID, exact child output messages matched by worker ID, post-dispatch receipts before asynchronous completion, native pre/post coordination writes, and execution of a non-executable frozen router script through the executable `route38` alias.
 
 ```sh
 rtk proxy python3 scripts/tests/orchestration/test_native_gate.py

@@ -3,6 +3,9 @@
 import json
 import os
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -12,6 +15,58 @@ from unittest.mock import patch
 from grade_native_gate import grade_native_gate, main as grade_native_main, summarize_native_events
 from run_native_gate import load_actor_records
 from route_capture import main as capture_route
+
+
+class ProviderLaunchTests(unittest.TestCase):
+    def test_runner_defaults_prepare_without_invoking_either_provider_cli(self):
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / ".codex").mkdir()
+            (root / ".codex/config.toml").write_text('model = "test-model"\n')
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            (bin_dir / "python3").symlink_to(sys.executable)
+            (bin_dir / "git").symlink_to(shutil.which("git"))
+            for name in ("rtk", "codex", "copilot"):
+                stub = bin_dir / name
+                stub.write_text('#!/bin/sh\nprintf "%s %s %s\\n" "$1" "$2" "$3" >> "$CALL_LOG"\n')
+                stub.chmod(0o755)
+            runners = [
+                ("run_actors.py", ["--caller", "delegate-to-subagents", "--arm", "short",
+                                   "--scratch-root", str(root / "actors")],
+                 root / "actors/projects/short-delegate-to-subagents/.w1/cases.json"),
+                ("run_native_gate.py", ["--caller", "execplan", "--run-dir", str(root / "gate")],
+                 root / "gate/private/manifest.json"),
+            ]
+            for script, args, fixture in runners:
+                with self.subTest(script=script):
+                    calls = root / (script + ".calls")
+                    env = {"PATH": str(bin_dir), "HOME": temp, "CALL_LOG": str(calls)}
+                    result = subprocess.run([sys.executable, str(here / script), *args], env=env,
+                                            text=True, capture_output=True, timeout=30)
+                    self.assertEqual(calls.read_text() if calls.exists() else "", "")
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(fixture.is_file())
+
+    def test_live_permission_requires_the_full_option_name(self):
+        here = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as temp:
+            # An empty PATH makes even a parser regression safe to exercise.
+            for runner, args in [
+                ("run_actors.py", ["--arm", "short", "--caller", "execplan-implement",
+                                   "--scratch-root", temp]),
+                ("run_native_gate.py", ["--caller", "execplan", "--run-dir", temp]),
+            ]:
+                with self.subTest(runner=runner):
+                    command = [sys.executable, str(here / runner), *args]
+                    env = {"PATH": temp, "HOME": temp}
+                    help_text = subprocess.check_output([*command, "--help"], env=env, text=True)
+                    self.assertIn("--allow-model-calls", help_text)
+                    refused = subprocess.run([*command, "--allow-model"], env=env,
+                                             capture_output=True, text=True)
+                    self.assertEqual(refused.returncode, 2)
+                    self.assertIn("unrecognized arguments: --allow-model", refused.stderr)
 
 
 ALLOWED = {"check-total": ["claude-haiku-5.5"]}
