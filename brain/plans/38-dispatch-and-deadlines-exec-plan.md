@@ -8,11 +8,13 @@ Prove It Works and Boundary Discipline govern what a host trace establishes. Mod
 
 ## Next action and task graph
 
-The scheduler implementer completed [S1, helper baseline and repair](38-dispatch-and-deadlines-exec-plan/scheduler.md). The native operators are running [B1, Copilot baseline](38-dispatch-and-deadlines-exec-plan/copilot-baseline.md) and [B2, Codex baseline](38-dispatch-and-deadlines-exec-plan/codex-baseline.md). Each native assignment stops at its own baseline. The integration branch is `feat/todo-38-dispatch-deadlines`. The verified coordinator follow-up handle is `/root/codex`.
+The coordinator integrated [S1, helper repair](38-dispatch-and-deadlines-exec-plan/scheduler.md), E1 and R1 at `5f2892ab`. The native operators use the [Copilot](38-dispatch-and-deadlines-exec-plan/copilot-baseline.md) and [Codex](38-dispatch-and-deadlines-exec-plan/codex-baseline.md) baseline evidence to replay the affected pairings. The integration branch is `feat/todo-38-dispatch-deadlines`. The verified coordinator follow-up handle is `/root/codex`.
 
 [E1, controlled behavior](38-dispatch-and-deadlines-exec-plan/controlled.md) and [W1, candidate screening](38-dispatch-and-deadlines-exec-plan/wording.md) also depend on the design review. E1 owns the orchestration fixtures, W1 owns distinct wording fixtures in the same test directory. P1 requires W1, E1 and the Copilot baseline. N1 runs only for a host/caller needing new proof. I1 verifies and reconciles the combined result. See [P1, N1 and I1 assignments](38-dispatch-and-deadlines-exec-plan/native-and-close.md). Each receives a separate assignment when its prerequisites have evidence. The parent updates this entry after verifying results.
 
 [R1, caller lifecycle instructions](38-dispatch-and-deadlines-exec-plan/runtime.md) owns the caller-side changes exposed by S1, E1 and the old native cases. W1 and P1 own the dispatch wording. N1 uses the integrated lifecycle changes. These assignments can test the two behaviors independently.
+
+[P0, reproducible native fixture](38-dispatch-and-deadlines-exec-plan/native-fixture.md) packages the verified B1 restriction and result reader while W1 screens the wording. The Copilot operator uses both outputs for P1.
 
 ## Decision Log
 
@@ -26,36 +28,37 @@ The scheduler implementer completed [S1, helper baseline and repair](38-dispatch
 
 - [x] (2026-11-18) [milestone-1] Pinned `7fc651a7702735f0b13d1f50695a8ef0ddc96477`, verified the historical archive checksum, analysis and negative tests, and reviewed architecture before renewed dispatch.
 - [x] (2026-11-18) [milestone-1] Parent and S1 worker independently reproduced a status-only `progress_reminder` at 300 seconds and `deadline_expired` at 600 seconds through the old public helper. Baseline suites passed 11 scheduler and 26 router tests.
-- [ ] [milestone-1] Complete B1 and B2 native baseline evidence.
+- [x] (2026-11-18) [milestone-1] All four old native pairings launched real workers and exposed lifecycle misses. See the B1 and B2 task records. Both control hosts are available.
 - [x] (2026-11-18) [milestone-2] S1 at `af044126` passes 17 scheduler CLI tests. New ordinary assignments are quiet until expiry. Explicit intervals and active version 2 records retain their old behavior.
-- [ ] [milestone-2] E1 continuity/reporting/transfer cases and negative controls. R1 caller instructions and verification.
+- [x] (2026-11-18) [milestone-2] E1 at `b1a63dd2` passes six controlled tests, including rejection of a quiet-time lookup and transfer while a separate writer is active.
+- [x] (2026-11-18) [milestone-2] Integrated R1 at `5f2892ab`. Both caller hashes match the tested sources. The combined checkout passed 17 scheduler tests, six controlled tests and skill-source validation. Native acceptance belongs to milestone 4.
 - [ ] [milestone-3] W1 shorter candidate and challenger, P1 six matched Copilot pairs.
 - [ ] [milestone-4] N1 and I1 integrated verdict, review and backlog reconciliation.
 
 ## Milestone 1. Establish comparable baselines
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 From the repo root verify `rtk git rev-parse HEAD` and the old revision above. Commit `b7874592` changed the planning skill only. Git showed no difference in the three target skills. Each operator records the active CLI version, source identities, normal provider-managed session and evidence directory. Missing auth, rejected sandbox access and missing host events remain distinct from semantic failures. Store no credentials or private application data. B1 and B2 end with a recorded host verdict or blocker. A blocker leaves the affected live acceptance open.
 
 ## Milestone 2. Verify lifecycle, continuity and status
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 The delegate source is `skills/default/delegate-to-subagents/scripts/scheduler.py`. Test via its CLI and `scripts/test_scheduler.py` in the same skill. The ExecPlan caller's runtime-enforcement section owns its registry policy. Demonstrate early completion, quiet time, deadline expiry, bounded grace, one extension and separate worker/write shutdown checks before transfer. Exercise both same-task delivery of a setup fact and fresh-worker recovery with the environment, pinned revision and prior evidence. Compare two status reports for owner, revision, completed evidence, blocker, deadline and next action. The second uses stable references instead of reconstructing history. Use the same grader on an unnecessary five-minute status lookup and a legitimate expiry.
 
 ## Milestone 3. Compare gates
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Run W1 against the frozen gate, short shared rule and shorter challenger. P1 uses actual Copilot router and dispatch events for both callers. A model name in the worker prompt, a worker ID alone, or a recreated JSON event does not establish the effective settings. Publish winning text only on applicable passing evidence. Full scope and [earlier research](../../docs/subagent-dispatch-research.md) supplement the assignment.
 
 ## Milestone 4. Validate the combined revision
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 Each of four skill/host pairings must show real early completion, quiet waiting, and action at the remaining deadline. A passing baseline counts. Repeat affected cases after a fix, retain every failure and classify it. Run the focused suites and independent standards and spec reviews. Keep todo 38 open until the controlled cases, live runs and wording verdict meet the agreed bar.
@@ -72,4 +75,4 @@ The supplied metadata trace has 25 prompts from a recurring five-minute Copilot 
 
 ## Outcomes & Retrospective
 
-The design review and historical baseline are complete. Current-host acceptance, the controlled suite, and candidate selection remain open. The earlier plan bundled baseline and candidate trials in one assignment; the new task graph stops each worker at the first independently verifiable outcome.
+Historical and current-host baselines are complete. The controlled suite passes. The native post-change scheduling verdicts and the dispatch wording comparison remain open. In the Copilot calibration, a required custom profile still accepted an explicit different model. A separate native project hook rejected that call and allowed the routed fallback. This establishes the known-exclusion fixture used for P1.
