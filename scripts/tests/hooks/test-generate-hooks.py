@@ -154,7 +154,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (14 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (15 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -212,7 +212,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (14 files).\n")
+        self.assertEqual(result.stdout, "Generated hooks are current (15 files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -237,7 +237,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (14 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (15 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
