@@ -1,7 +1,7 @@
 # M4. Scheduler wake and native completion
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -46,4 +46,4 @@ Follow `scripts/tests/orchestration/native-lifecycle.md` with the inverted deadl
 
 - [x] (2026-11-19) [milestone-4] Captured T4a setup outcome and nine passing local controlled tests. Automatic approval review rejected the authenticated native control before any launch.
 - [x] (2026-11-19) [milestone-4] Integrated T4b at `b386efe`. The scheduler, W1 and controlled suites passed (21, 12 and 10 tests). The delayed-handle case was simulated.
-- [ ] [milestone-4] Run T4c candidate trials against the baseline, recording unverified host paths.
+- [x] (2026-11-19) [milestone-4] Integrated authenticated Codex 0.170.0 and Copilot 1.0.114 [baseline](4a-native-baseline.md) and [candidate](4c-delivery.md) evidence at `c406fc2d`. Both Codex inverse trials consumed QUICK before SILENT was due and serviced expiry. Copilot standalone consumed QUICK 45.7 s after its native event in one candidate trial. A delegate stop request failed to prevent a later write. Both callers document observed limits.

@@ -4,7 +4,7 @@
 
 A maintainer should be able to change a rule once and see the same behavior in a relocated skill, a generated provider hook, or a disposable installation. Users still invoke each existing public command. The two new user-facing paths let them reindex a named project directly and request an attainable number of conversation batches after filtering. The seven milestone contracts below define the scope.
 
-**Current assignments.** The scheduler maintainer is finishing the authenticated host trials. The index maintainer is checking additional links in a retained inventory. The integration coordinator owns combined checks. The user authorized provider trials and a temporary Windows CI branch, with native observations required for acceptance.
+**Current assignments.** The seven implementation milestones are accepted. The coordinator owns final local checks, independent standards and specification review, resolution of any in-scope findings, and removal of the temporary CI branch and task worktrees.
 
 **Governing principles.** Boundary Discipline puts admission and errors at the caller's interface. Redesign From First Principles and Subtract Before You Add favor one owner for each existing rule. Separate Before Serializing Shared State gives each extraction its own directory. Make Operations Idempotent governs reinstallation and generator retries. Experience First preserves CLI output and deployed behavior. Sequence Verifiable Units and Prove It Works require evidence through each public caller and again on the combined revision.
 
@@ -25,13 +25,13 @@ The approved design baseline is `069b3f22`. The original plan is `66e3a80e`, the
 - [x] (2026-11-19) [milestone-3] Frozen public-process fixture passed against reference and candidate on macOS at `886dea6a`.
 - [x] (2026-11-19) [milestone-3] [Hook event input](ExecPlan/3-hook-input.md). The shipped pipe test passed on macOS and Windows, including exact forwarded bytes.
 - [x] (2026-11-19) [milestone-4] Query and standalone timer ordering integrated at `b386efe`.
-- [ ] [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Complete the matched native timing record for each caller and host.
+- [x] (2026-11-19) [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Integrated measured native timing and the limitations of each caller at `c406fc2d`.
 - [x] (2026-11-19) [milestone-5] Froze the original 20 commands and owned metadata at `eb949e2`.
 - [x] (2026-11-19) [milestone-5] [Project brain launch registrations](ExecPlan/5-project-launchers.md). Publication, concurrent-edit recovery, frozen commands and installed readback passed at `615111b3`.
 - [x] (2026-11-19) [milestone-6] [Skill copy policy](ExecPlan/6-skill-copy.md). The shipped installer passed the native Windows junction fixture and the local copy and readback checks.
 - [x] (2026-11-19) [milestone-7] Project-mode batching and the relocated caller fixture exist in `149a2661`.
 - [x] (2026-11-19) [milestone-7] Integrated batching at `ffe630df` and repeated shared bundle verification with M2 at `ebb09bb4`. The macOS suite ran 58 tests with four skips.
-- [ ] [milestone-7] [Conversation batches](ExecPlan/7-conversation-batches.md). Windows workspace permissions remain open.
+- [x] (2026-11-19) [milestone-7] [Conversation batches](ExecPlan/7-conversation-batches.md). The relocated workflow and all four Windows ACL cases passed. The Windows matrix passed on Python 3.12 and 3.14.
 
 ## Plan of work and dependencies
 
@@ -69,4 +69,4 @@ The coordinator schedules direct-index permissions (M2), event pipes (M3), junct
 
 ## Outcomes & Retrospective
 
-M1, M2, M3, M5 and M6 are complete. M7 is testing a corrected negative ACL fixture and the standard-user runner on Windows. M4 is completing authenticated timing trials. The repository test registry now includes the two new public suites. All implementation changes through `82737aed` are on the local topic. The original M1, M2, M3, M5, M6 and M7 worktrees and the retained-index repair worktree have been removed.
+All seven milestone results are recorded above. The final integration includes the corrected Windows test user, both new suites in the repository runner, and measured Codex and Copilot delivery limits. The independent final review and task cleanup remain.

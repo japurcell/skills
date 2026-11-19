@@ -1,7 +1,7 @@
 # M7. Project conversation batches
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -43,7 +43,7 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 - [x] (2026-11-19) [milestone-7] Candidate 149a2661 passed the relocated caller and batch fixtures on macOS arm64 using Python 3.14.6.
 - [x] (2026-11-19) [milestone-7] T7b integrated at `ffe630df`, with combined M2/M7 checks at `ebb09bb4`.
-- [ ] [milestone-7] Resolve the [native bundle verification findings](7c-native-bundle.md), then pass all four ACL cases and the project-mode workflow on the integrated revision.
+- [x] (2026-11-19) [milestone-7] The installed caller and all four Windows ACL cases passed on Python 3.13 with matching workspace owner and current user. The 3.12 and 3.14 matrix passed as well. [Qualification](https://github.com/japurcell/skills/actions/runs/44497720899/job/135469086388) and [matrix](https://github.com/japurcell/skills/actions/runs/44497720740).
 
 ## Candidate evidence
 
