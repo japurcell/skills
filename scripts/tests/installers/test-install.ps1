@@ -2120,9 +2120,20 @@ function Test-SkillArtifactsAreFilteredBeforeCopyAndPrunedOnUpgrade {
         $installer = Join-Path $repo 'scripts/install.ps1'
         $text = Get-Content -LiteralPath $installer -Raw
         $text = $text.Replace('        Copy-Item -LiteralPath $Source -Destination $Destination -Force', "        if (`$Source.EndsWith('.pyc', [StringComparison]::Ordinal) -or `$Source.EndsWith('.pyo', [StringComparison]::Ordinal) -or `$Source.EndsWith('.DS_Store', [StringComparison]::Ordinal)) { throw 'artifact reached file copier' }`n        Copy-Item -LiteralPath `$Source -Destination `$Destination -Force")
-        $text = $text.Replace('    Get-ChildItem -Force -Path $Source | ForEach-Object {', "    if ([IO.Path]::GetFileName(`$Source) -cin @('__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache')) { throw 'artifact directory traversed' }`n    Get-ChildItem -Force -Path `$Source | ForEach-Object {")
-        $text = $text.Replace('        foreach ($entry in (Get-ChildItem -Force -LiteralPath $Source)) {', "        if ([IO.Path]::GetFileName(`$Source) -cin @('__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache')) { throw 'artifact mode directory traversed' }`n        foreach (`$entry in (Get-ChildItem -Force -LiteralPath `$Source)) {")
-        $text = $text.Replace('                Set-FileModeFrom -Source $entry.FullName -Destination $installedPath', "                if (`$entry.Name.EndsWith('.pyc', [StringComparison]::Ordinal) -or `$entry.Name.EndsWith('.pyo', [StringComparison]::Ordinal) -or `$entry.Name -ceq '.DS_Store') { throw 'artifact reached mode copier' }`n                Set-FileModeFrom -Source `$entry.FullName -Destination `$installedPath")
+        $helper = Join-Path $repo 'scripts/rebase-skill-references.py'
+        $helperText = Get-Content -LiteralPath $helper -Raw
+        $audit = @'
+def fixture_audit(event, args):
+    if event == "os.scandir" and not isinstance(args[0], int) and "--source-dir" in sys.argv:
+        root = Path(sys.argv[sys.argv.index("--source-dir") + 1]).absolute()
+        path = Path(os.fsdecode(args[0])).absolute()
+        if path.is_relative_to(root) and path.name in {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}:
+            raise RuntimeError("source artifact directory traversed")
+sys.addaudithook(fixture_audit)
+
+'@
+        $helperText = $helperText.Replace('def filtered_entries(', $audit + 'def filtered_entries(')
+        Set-Content -LiteralPath $helper -Value $helperText -Encoding utf8NoBOM -NoNewline
         Set-Content -LiteralPath $installer -Value $text -Encoding utf8NoBOM -NoNewline
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
         $installed = Join-Path $homeDir '.agents/skills/alpha'
@@ -2165,6 +2176,9 @@ function Test-SkillCopyPreservesExternalDestinationTargets {
             New-Item -ItemType HardLink -Path (Join-Path $installed 'scripts/route.py') -Target (Join-Path $outside 'hardlink-target') | Out-Null
         }
         catch { Write-Host "Skipping destination link fixture: $($_.Exception.Message)"; return }
+        if (-not $IsWindows) {
+            [System.IO.File]::SetUnixFileMode((Join-Path $outside 'symlink-target'), [System.IO.UnixFileMode]::UserRead)
+        }
         $before = Get-TreeFingerprint $outside
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
         Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected external file targets untouched.'
