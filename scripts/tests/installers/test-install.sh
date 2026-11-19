@@ -90,6 +90,12 @@ source_root = Path(sys.argv[1])
 fixture_root = Path(sys.argv[2])
 sys.path.insert(0, str(fixture_root))
 from hooks.manifest import targets
+from hooks.registration_merge import DOCUMENTS
+
+for name in DOCUMENTS:
+    destination = fixture_root / name
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source_root / name, destination)
 
 for target in targets():
     source = source_root.joinpath(*target.output_path.parts)
@@ -1553,6 +1559,8 @@ import sys
 manifest = Path(sys.argv[1])
 manifest.write_text("".join(line for line in manifest.read_text().splitlines(keepends=True)
                             if not ('GeneratedTarget(' in line and 'PurePosixPath("skills/' in line)))
+registrations = manifest.with_name("registration_merge.py")
+registrations.write_text(registrations.read_text() + '\nDOCUMENTS = {k: v for k, v in DOCUMENTS.items() if not k.startswith("skills/")}\n')
 PYFIXTURE
   python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
   home="$workdir/empty-home"

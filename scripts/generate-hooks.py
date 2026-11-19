@@ -30,6 +30,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from hooks.manifest import GeneratedTarget, targets
 from hooks.providers import PROVIDERS
+from hooks.registration_merge import DOCUMENTS, render as render_registration
 
 
 OWNERSHIP_PREFIX = "# Generated from hooks/families/"
@@ -212,6 +213,14 @@ def check_outputs(repo_root: Path, outputs: tuple[RenderedOutput, ...]) -> Check
         path = validate_target(repo_root, output.target)
         if not _output_is_current(path, output):
             stale.append(output.target.output_path)
+    for name, provider in DOCUMENTS.items():
+        path = _registration_path(repo_root, name)
+        try:
+            data = path.read_bytes()
+            if render_registration(data, provider) != data:
+                stale.append(PurePosixPath(name))
+        except (OSError, ValueError, TypeError, KeyError) as error:
+            raise GenerateError(f"Registration conflict in {name}: {error}") from error
     return CheckResult(tuple(stale), _owned_undeclared_paths(repo_root, declared))
 
 
@@ -244,32 +253,57 @@ def _stage(path: Path, content: bytes, mode: int) -> Path:
         raise
 
 
+def _registration_path(repo_root: Path, name: str) -> Path:
+    path = repo_root / name
+    current = repo_root
+    for component in Path(name).parts:
+        current = current / component
+        _assert_safe_component(current, "Registration path")
+    if not path.is_file():
+        raise GenerateError(f"Missing registration document: {name}")
+    return path
+
+
 def write_outputs(repo_root: Path, outputs: tuple[RenderedOutput, ...]) -> WriteResult:
-    """Atomically replace stale outputs and restore all of them after a failure."""
+    """Read mixed documents under the writer lock and publish conditionally."""
     for output in outputs:
         validate_rendered_output(repo_root, output)
-    changes = tuple(
-        output for output in outputs
-        if not _output_is_current(validate_target(repo_root, output.target), output)
-    )
-    if not changes:
-        return WriteResult((), len(outputs))
-    lock_path: Path | None = None
-    staged: dict[Path, Path] = {}
-    backups: dict[Path, tuple[Path | None, int | None]] = {}
-    replaced: list[Path] = []
+    lock_path = _create_lock(repo_root)
+    staged = {}
+    backups = {}
+    backup_files = {}
+    replaced = []
+    published = {}
     try:
-        lock_path = _create_lock(repo_root)
-        for output in changes:
-            destination = validate_target(repo_root, output.target)
-            staged[destination] = _stage(destination, output.content, output.target.mode)
-            if destination.exists():
-                backups[destination] = (_stage(destination, destination.read_bytes(), _mode(destination)), _mode(destination))
-            else:
-                backups[destination] = (None, None)
-        for index, output in enumerate(changes, start=1):
-            destination = validate_target(repo_root, output.target)
+        changes = []
+        for output in outputs:
+            path = validate_target(repo_root, output.target)
+            if not _output_is_current(path, output):
+                old = path.read_bytes() if path.exists() else None
+                old_mode = _mode(path) if old is not None else None
+                changes.append((path, output.target.output_path, output.content, output.target.mode, old, old_mode))
+        for name, provider in DOCUMENTS.items():
+            path = _registration_path(repo_root, name)
+            data = path.read_bytes()
+            mode = _mode(path)
+            try:
+                content = render_registration(data, provider)
+            except (ValueError, TypeError, KeyError) as error:
+                raise GenerateError(f"Registration conflict in {name}: {error}") from error
+            if content != data:
+                changes.append((path, PurePosixPath(name), content, mode, data, mode))
+        for destination, relative, content, mode, old, old_mode in changes:
+            backups[destination] = (old, old_mode)
+            staged[destination] = _stage(destination, content, mode)
+            if old is not None:
+                backup_files[destination] = _stage(destination, old, old_mode)
+        for index, (destination, relative, content, mode, _, _) in enumerate(changes, start=1):
+            old, old_mode = backups[destination]
+            current = destination.read_bytes() if destination.exists() else None
+            if current != old or (old is not None and _mode(destination) != old_mode):
+                raise GenerateError(f"Concurrent edit conflicts with publication: {relative}")
             os.replace(staged[destination], destination)
+            published[destination] = (content, mode)
             replaced.append(destination)
             failure_after = os.environ.get(TEST_FAILURE_ENVIRONMENT)
             if failure_after and index >= int(failure_after):
@@ -277,32 +311,24 @@ def write_outputs(repo_root: Path, outputs: tuple[RenderedOutput, ...]) -> Write
             interrupt_after = os.environ.get(TEST_INTERRUPT_ENVIRONMENT)
             if interrupt_after and index >= int(interrupt_after):
                 raise KeyboardInterrupt
-        return WriteResult(tuple(output.target.output_path for output in changes), len(outputs) - len(changes))
-    except KeyboardInterrupt:
-        _rollback(replaced, backups)
-        raise
-    except (OSError, ValueError, GenerateError) as error:
-        _rollback(replaced, backups)
-        raise GenerateError(f"Write failed; rollback completed: {error}") from error
+        return WriteResult(tuple(relative for _, relative, _, _, _, _ in changes), len(outputs) - len(changes))
+    except BaseException as error:
+        for destination in reversed(replaced):
+            content, mode = published[destination]
+            if not destination.exists() or destination.read_bytes() != content or _mode(destination) != mode:
+                continue
+            old, old_mode = backups[destination]
+            if old is None:
+                destination.unlink()
+            else:
+                os.replace(backup_files[destination], destination)
+        if isinstance(error, KeyboardInterrupt):
+            raise
+        raise GenerateError(f"Write failed; rollback attempted: {error}") from error
     finally:
-        for temporary in staged.values():
+        for temporary in (*staged.values(), *backup_files.values()):
             temporary.unlink(missing_ok=True)
-        for backup, _mode_value in backups.values():
-            if backup is not None:
-                backup.unlink(missing_ok=True)
-        if lock_path is not None:
-            lock_path.unlink(missing_ok=True)
-
-
-def _rollback(replaced: list[Path], backups: dict[Path, tuple[Path | None, int | None]]) -> None:
-    for destination in reversed(replaced):
-        backup, mode = backups[destination]
-        if backup is None:
-            destination.unlink(missing_ok=True)
-        else:
-            os.replace(backup, destination)
-            if mode is not None:
-                os.chmod(destination, mode)
+        lock_path.unlink(missing_ok=True)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

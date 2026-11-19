@@ -529,3 +529,29 @@ def render(provider, target):
             + "INJECT = " + repr(target.output_path.name == "inject-brain.py") + "\n"
             + "DIRECT = " + repr(target.output_path.name == "reindex.py") + "\n"
             + RUNTIME)
+
+
+def registrations(provider):
+    """Build the project launch registrations for a provider."""
+    paths = {"copilot": ".github/hooks/scripts", "gemini": ".gemini/hooks/scripts", "codex": ".codex/hooks"}
+    events = {"copilot": ("sessionStart", "postToolUse"), "gemini": ("SessionStart", "AfterTool"), "codex": ("SessionStart", "PostToolUse")}
+    result = {}
+    for event, name in zip(events[provider], ("inject-brain", "auto-index-brain")):
+        path = paths[provider] + "/" + name + ".py"
+        command = ("python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); "
+                   "d=next((d for d in ds if (d/'.git').exists()),None); "
+                   f"d=d if d is not None else next(d for d in ds if (d/'{path}').is_file()); "
+                   f"p=d/'{path}'; sys.argv=[str(p),'--provider','{provider}']; runpy.run_path(str(p),run_name='__main__')\"")
+        if provider == "copilot":
+            entry = {"type": "command", "bash": command, "powershell": command, "timeoutSec": 5}
+        elif provider == "gemini":
+            entry = {"hooks": [{"name": name, "type": "command", "command": command, "timeout": 5000}]}
+        else:
+            handler = {"type": "command", "command": command, "commandWindows": command, "timeout": 5}
+            if name == "inject-brain":
+                handler["additionalContextLimit"] = 0
+            entry = {"hooks": [handler]}
+            if name == "inject-brain":
+                entry["matcher"] = "startup|resume|clear|compact|fork"
+        result[event] = (name, entry)
+    return result
