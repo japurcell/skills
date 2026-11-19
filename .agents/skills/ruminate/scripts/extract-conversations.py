@@ -2,6 +2,7 @@
 """Extract user and assistant messages from Claude, Codex, and GitHub Copilot CLI conversation JSONL files.
 
 Usage:
+  extract-conversations.py <output-dir> --project PATH [options]
   extract-conversations.py <output-dir> --claude-dir DIR [--codex-dir DIR] [options]
   extract-conversations.py <output-dir> --codex-dir DIR [--claude-dir DIR] [options]
   extract-conversations.py <output-dir> --copilot-dir DIR [options]
@@ -11,7 +12,7 @@ Options:
   --codex-dir DIR    Codex sessions root directory (repeatable, recursive)
   --copilot-dir DIR  GitHub Copilot CLI session-state root
   --cwd PATH         Include only conversations from this working directory
-  --batches N        Number of batch manifests to create (default: 5)
+  --batches N        Requested batch count (automatic in project mode, otherwise 5)
   --from YYYY-MM-DD  Include conversations modified on or after this date
   --to YYYY-MM-DD    Include conversations modified on or before this date
   --min-size BYTES   Minimum file size in bytes (default: 500)
@@ -22,6 +23,9 @@ Date filters are composable:
   --to 2026-02-13                      Up to and including Feb 13
 
 Output:
+  Project mode creates a private run directory and writes a single JSON object
+  with accepted_count and ordered absolute manifest paths in manifests to stdout.
+  Explicit-source legacy mode prints the output directory and uses this layout:
   <output-dir>/000_<provider>_<name>.txt  - extracted messages per conversation
   <output-dir>/batches/batch_0.txt ... batch_N.txt - file lists for each batch
 
@@ -34,10 +38,12 @@ and stable; path checks do not prevent hostile concurrent ancestor swaps.
 import argparse
 import json
 import os
+import re
 import stat
 import sys
 import tempfile
 import unicodedata
+from collections.abc import Iterator
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -430,6 +436,25 @@ def discover_files(claude_dirs: list[str], codex_dirs: list[str]) -> dict[str, P
     return files
 
 
+def batches(files: list[str], requested: int | None, *, project: bool) -> Iterator[list[str]]:
+    if not files:
+        return
+    if project:
+        automatic_count = min(10, max(2, (len(files) + 19) // 20))
+        count = min(len(files), requested or automatic_count)
+        size, remainder = divmod(len(files), count)
+        start = 0
+        for index in range(count):
+            end = start + size + (index < remainder)
+            yield files[start:end]
+            start = end
+    else:
+        count = requested or 5
+        size = (len(files) + count - 1) // count
+        for start in range(0, len(files), size):
+            yield files[start:start + size]
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -448,8 +473,10 @@ def main() -> None:
         help="Literal directory beneath ~/.codex/sessions (recursive)",
     )
     parser.add_argument("--copilot-dir", help="GitHub Copilot CLI history root (~/.copilot/session-state)")
-    parser.add_argument("--cwd", help="Only include conversations where detected cwd matches this path")
-    parser.add_argument("--batches", type=int, default=5, help="Number of batch manifests (default: 5)")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--project", metavar="PATH", help="Discover this project's conversations and print JSON")
+    mode.add_argument("--cwd", help="Only include conversations where detected cwd matches this path")
+    parser.add_argument("--batches", type=int, help="Requested batch count (automatic with --project, otherwise 5)")
     parser.add_argument(
         "--from",
         dest="from_date",
@@ -465,9 +492,9 @@ def main() -> None:
     parser.add_argument("--min-size", type=int, default=500, help="Minimum file size in bytes (default: 500)")
     args = parser.parse_args()
 
-    if not args.claude_dir and not args.codex_dir and not args.copilot_dir:
+    if args.project is None and not args.claude_dir and not args.codex_dir and args.copilot_dir is None:
         parser.error("at least one input source is required (--claude-dir, --codex-dir, or --copilot-dir)")
-    if args.batches <= 0:
+    if args.batches is not None and args.batches <= 0:
         parser.error("--batches must be positive")
     if args.min_size < 0:
         parser.error("--min-size must be nonnegative")
@@ -484,14 +511,25 @@ def main() -> None:
 
 def run(args: argparse.Namespace) -> None:
     home = Path.home().resolve()
-    claude_dirs = [source_root(root, home / ".claude/projects") for root in args.claude_dir]
-    codex_dirs = [source_root(root, home / ".codex/sessions") for root in args.codex_dir]
+    claude_root = home / ".claude/projects"
+    codex_root = home / ".codex/sessions"
+    copilot_root = home / ".copilot/session-state"
+    claude_sources, codex_sources, copilot_source = args.claude_dir, args.codex_dir, args.copilot_dir
+    if args.project is not None and not claude_sources and not codex_sources and copilot_source is None:
+        project_path = Path(args.project).resolve().as_posix()
+        slugs = (re.sub(r"[^a-zA-Z0-9]", "-", project_path),
+                 project_path.replace("/", "-").replace(":", "-"))
+        candidates = [claude_root / slug for slug in dict.fromkeys(slugs)]
+        claude_sources = [str(p) for p in candidates if os.path.lexists(p)]
+        codex_sources = [str(codex_root)] if os.path.lexists(codex_root) else []
+        copilot_source = str(copilot_root) if os.path.lexists(copilot_root) else None
+    claude_dirs = [source_root(root, claude_root) for root in claude_sources]
+    codex_dirs = [source_root(root, codex_root) for root in codex_sources]
     output, workspace = output_root(args.output_dir)
     sources = discover_files(claude_dirs, codex_dirs)
 
-    copilot_root = home / ".copilot/session-state"
-    if args.copilot_dir:
-        root = Path(source_root(args.copilot_dir, copilot_root))
+    if copilot_source is not None:
+        root = Path(source_root(copilot_source, copilot_root))
         if root != copilot_root:
             raise PathPolicyError(f"expected Copilot session-state root: {copilot_root}")
         for session in root.iterdir():
@@ -527,13 +565,20 @@ def run(args: argparse.Namespace) -> None:
         date_desc = f" (to {args.to_date})"
     print(f"Found {len(files)} candidate conversations{date_desc}", file=sys.stderr)
 
+    project = args.project is not None
+    target_cwd = args.project if project else args.cwd
+    if project:
+        make_output_directory(output, workspace)
+        output = Path(tempfile.mkdtemp(prefix="run-", dir=output))
+        private_directory(output)
+
     extracted: list[str] = []
     outputs: list[tuple[Path, str]] = []
     provider_counts: dict[str, int] = {"claude": 0, "codex": 0, "unknown": 0}
 
     for idx, fpath in enumerate(files):
         provider, cwd, messages = extract_messages(fpath, sources[fpath], copilot=sources[fpath] == copilot_root)
-        if args.cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
+        if target_cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(target_cwd)):
             continue
         if not messages:
             continue
@@ -541,7 +586,6 @@ def run(args: argparse.Namespace) -> None:
         provider_counts[provider] = provider_counts.get(provider, 0) + 1
         path = Path(fpath)
         fname = path.parent.name if provider == "copilot" else path.name.replace(".jsonl", "")
-        out_path = f"{args.output_dir}/{idx:03d}_{provider}_{fname}.txt"
         destination = output / f"{idx:03d}_{provider}_{fname}.txt"
         output_file(destination, workspace)
         content = f"[PROVIDER]: {provider}\n"
@@ -549,18 +593,15 @@ def run(args: argparse.Namespace) -> None:
             content += f"[CWD]: {cwd}\n"
         content += f"[SOURCE_FILE]: {fpath}\n\n" + "\n\n".join(messages) + "\n"
         outputs.append((destination, content))
-        extracted.append(out_path)
+        extracted.append(str(destination) if project else f"{args.output_dir}/{destination.name}")
 
     batch_dir = output / "batches"
     output_directory(batch_dir, workspace)
-    batch_size = max(1, (len(extracted) + args.batches - 1) // args.batches)
     manifests: list[tuple[Path, list[str]]] = []
-    for b in range(args.batches):
-        batch_files = extracted[b * batch_size : (b + 1) * batch_size]
-        if batch_files:
-            manifest = batch_dir / f"batch_{b}.txt"
-            output_file(manifest, workspace)
-            manifests.append((manifest, batch_files))
+    for b, batch_files in enumerate(batches(extracted, args.batches, project=project)):
+        manifest = batch_dir / f"batch_{b}.txt"
+        output_file(manifest, workspace)
+        manifests.append((manifest, batch_files))
 
     make_output_directory(output, workspace)
     make_output_directory(batch_dir, workspace)
@@ -572,7 +613,7 @@ def run(args: argparse.Namespace) -> None:
         f"{len(extracted)} conversations with content "
         f"(claude={provider_counts.get('claude', 0)}, "
         f"codex={provider_counts.get('codex', 0)}, "
-        + (f"copilot={provider_counts.get('copilot', 0)}, " if args.copilot_dir else "")
+        + (f"copilot={provider_counts.get('copilot', 0)}, " if copilot_source is not None else "")
         + f"unknown={provider_counts.get('unknown', 0)})",
         file=sys.stderr,
     )
@@ -581,7 +622,10 @@ def run(args: argparse.Namespace) -> None:
         write_output(manifest, "\n".join(batch_files) + "\n", workspace)
         print(f"Batch {b}: {len(batch_files)} conversations", file=sys.stderr)
 
-    print(args.output_dir)
+    if project:
+        print(json.dumps({"accepted_count": len(extracted), "manifests": [str(path) for path, _ in manifests]}))
+    else:
+        print(args.output_dir)
 
 
 if __name__ == "__main__":

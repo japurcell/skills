@@ -21,3 +21,9 @@ Edit the inventory verification in `hooks/families/brain.py`, then regenerate th
     rtk proxy python3 scripts/generate-hooks.py --check
 
 Stop when the new public regression changes from red to green, the valid control still succeeds, the existing stale/missing cases pass and generated files are current. Record the revision, exits, platform and skips. The coordinator owns integration and Windows qualification. If an attempted fix rejects a valid retained index, retain that fixture, narrow the verifier and repeat both cases.
+
+## Result
+
+On Darwin 27.2.0, starting from candidate `7f16d86b` and rewritten plan merge `bbd5dbea`, the retained-noop control passed (one test, exit 0). The new installer regression first failed because the extra paragraph link yielded exit 0 and `Installation complete; brain/index.md verified`, instead of the required failure. After the repair it passed, including its reordered inventory, custom label and heading control and byte-preservation assertions.
+
+The installer suite passed 30 tests (exit 0); the hook suite passed 27 tests with one skip (exit 0); generator check reported 15 current files (exit 0). An isolated Bash default installation and its Doctor and file readback passed; evidence is in `/tmp/verify-skills.17NToO/evidence`. That separate journey predates the final verifier-only adjustment. Provider execution, PowerShell, Windows and integrated proof remain coordinator work. Reflection found no additional durable note: the public regression and verifier enforce the discovered constraint.
