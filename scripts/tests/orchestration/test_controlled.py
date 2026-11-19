@@ -30,6 +30,30 @@ def run_scheduler(state, *args, ok=True):
 
 
 class ControlledOrchestrationTests(unittest.TestCase):
+    def test_simulated_inverse_completion_is_admitted_before_expiry(self):
+        # Offline host trace: delivery and observation are distinct; no native
+        # timing or host notification capability is asserted by this fixture.
+        for caller in ('delegate-to-subagents', 'execplan-implement'):
+            guidance = (ROOT / 'skills/default' / caller / 'SKILL.md').read_text()
+            self.assertIn('Drain delivered completions before expiring assignments', guidance)
+            self.assertIn('Refresh after completion, a registry mutation, a deadline or an interruption', guidance)
+        with tempfile.TemporaryDirectory() as directory:
+            state = Path(directory) / 'state.json'
+            run_scheduler(state, 'register', 'silent', 'worker-silent', 'work', '--deadline', '10', '--grace', '5', '--now', '0')
+            run_scheduler(state, 'register', 'quick', 'worker-quick', 'work', '--deadline', '20', '--now', '0')
+            wake = run_scheduler(state, 'next-wake', '--now', '1')['result']['wake']
+            self.assertEqual((wake['assignment'], wake['due']), ('silent', 10))
+            delivered = [{'assignment': 'quick', 'result': 'QUICK', 'completed_at': 5}]
+            observed = delivered.pop(0)
+            self.assertEqual(observed['result'], 'QUICK')
+            run_scheduler(state, 'complete', observed['assignment'], '--now', '6')
+            wake = run_scheduler(state, 'next-wake', '--now', '6')['result']['wake']
+            self.assertEqual((wake['assignment'], wake['due']), ('silent', 10))
+            events = run_scheduler(state, 'tick', '--now', '10')['result']['events']
+            self.assertEqual([(e['assignment'], e['type']) for e in events], [('silent', 'deadline_expired')])
+            wake = run_scheduler(state, 'next-wake', '--now', '10')['result']['wake']
+            self.assertEqual((wake['assignment'], wake['due'], wake['reason']), ('silent', 15, 'checkpoint_expired'))
+
     def test_simulated_standalone_reservation_survives_delayed_dispatch(self):
         # The standalone registry is parent-owned guidance, not executable code.
         # Pin the rules this offline simulation exercises to the current caller.
