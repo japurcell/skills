@@ -43,7 +43,7 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 
 - [x] (2026-11-19) [milestone-7] Candidate 149a2661 passed the relocated caller and batch fixtures on macOS arm64 using Python 3.14.6.
 - [x] (2026-11-19) [milestone-7] T7b integrated at `ffe630df`, with combined M2/M7 checks at `ebb09bb4`.
-- [ ] [milestone-7] Run the four workspace ACL cases on Windows and record the integrated project-mode result.
+- [ ] [milestone-7] Resolve the [native bundle verification findings](7c-native-bundle.md), then pass all four ACL cases and the project-mode workflow on the integrated revision.
 
 ## Candidate evidence
 
