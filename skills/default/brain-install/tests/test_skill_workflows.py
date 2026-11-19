@@ -354,10 +354,8 @@ class SkillWorkflowTests(unittest.TestCase):
         self.write_histories()
         output = self.root / "extracted"
         output.mkdir(mode=0o700)
-        # Replace the inheritable entries with private, non-inheritable ones.
-        subprocess.run(["icacls", str(output), "/inheritance:r", "/grant:r", "*S-1-3-4:F",
-                        "*S-1-5-18:F", "*S-1-5-32-544:F"],
-                       check=True, capture_output=True)
+        # Replace the entire DACL: Python 3.13 mkdir(0o700) supplies explicit
+        # inheritable ACEs that icacls /grant:r need not replace.
         # Only the child's duplicated impersonation token is changed.
         bootstrap = r'''
 import ctypes, os, runpy, sys
@@ -374,10 +372,18 @@ a.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [w.LPCWSTR, d,
 a.GetSecurityDescriptorDacl.argtypes = [p, ctypes.POINTER(w.BOOL), ctypes.POINTER(p), ctypes.POINTER(w.BOOL)]
 a.SetTokenInformation.argtypes = [p, d, p, d]
 a.SetThreadToken.argtypes = [p, p]
+a.SetFileSecurityW.argtypes = [w.LPCWSTR, d, p]
 def check(ok):
     if not ok:
         raise ctypes.WinError(ctypes.get_last_error())
 token, duplicate, descriptor, acl = p(), p(), p(), p()
+# Protected, explicit and non-inheritable: retain ownership and access, but
+# let the thread token's default DACL determine new-file security.
+check(a.ConvertStringSecurityDescriptorToSecurityDescriptorW(
+    "D:P(A;;FA;;;OW)(A;;FA;;;SY)(A;;FA;;;BA)", 1, ctypes.byref(descriptor), None))
+check(a.SetFileSecurityW(sys.argv[2], 0x80000004, descriptor))
+k.LocalFree(descriptor)
+descriptor = p()
 check(a.OpenProcessToken(k.GetCurrentProcess(), 0xA, ctypes.byref(token)))
 check(a.DuplicateTokenEx(token, 0x8C, None, 2, 2, ctypes.byref(duplicate)))
 check(a.ConvertStringSecurityDescriptorToSecurityDescriptorW("D:(A;;FA;;;WD)", 1, ctypes.byref(descriptor), None))
@@ -415,7 +421,9 @@ runpy.run_path(sys.argv[0], run_name="__main__")
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("private", result.stderr)
         self.assertEqual(result.stdout, "")
-        self.assertTrue(all(path.stat().st_size == 0 for path in output.rglob("*.txt")))
+        created = list(output.rglob("*.txt"))
+        self.assertTrue(created, "expected the extractor to create an unsafe file")
+        self.assertTrue(all(path.stat().st_size == 0 for path in created))
 
     def test_repeated_roots_deduplicate_and_claude_discovery_stays_nonrecursive(self):
         self.write_histories()
