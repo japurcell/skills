@@ -18,9 +18,14 @@ with tempfile.TemporaryDirectory() as temp:
     os.symlink('nested', source / 'dir-link')
     os.symlink('missing', source / 'dangling-link')
     dest.mkdir()
+    external = root / 'external'
+    external.write_text('untouched')
+    external.chmod(0o444)
+    os.symlink(str(external), dest / 'nested-link-placeholder')
     (dest / 'note').write_text('keep')
     trace = root / 'scan.jsonl'
     env = dict(os.environ, ADAPTER_SCAN_TRACE=str(trace))
+    (source / 'nested-link-placeholder').write_text('replacement')
     for _ in range(2):
         subprocess.run(['python3', str(HERE / 'copy.py'), str(source), str(dest)], check=True, env=env)
         assert (dest / 'nested' / 'odd [x].txt').read_text() == 'fixture'
@@ -28,5 +33,8 @@ with tempfile.TemporaryDirectory() as temp:
         assert os.readlink(dest / 'link') == 'nested/odd [x].txt'
         assert not (dest / '__pycache__').exists()
         assert (dest / 'note').read_text() == 'keep'
+        assert external.read_text() == 'untouched'
+        assert external.stat().st_mode & 0o777 == 0o444
+        assert (dest / 'nested-link-placeholder').read_text() == 'replacement'
     assert '__pycache__' not in trace.read_text()
 print('PASS: prototype repeat, literal paths, modes, link and exclusion')

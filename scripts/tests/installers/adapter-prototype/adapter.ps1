@@ -5,11 +5,24 @@ Set-StrictMode -Version Latest
 $tokens = $null; $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile($Installer, [ref]$tokens, [ref]$errors)
 if ($errors.Count) { throw 'Cannot parse installer' }
-$names = @('Fail', 'Install-PreservedLink', 'Complete-CopyMode', 'Assert-SkillDirectoryIsSafe', 'Remove-UnsafeSkillFileDestination', 'Copy-FileWithMode', 'Set-FileModeFrom')
+$names = @('Fail', 'Install-PreservedLink', 'Complete-CopyMode', 'Assert-SkillDirectoryIsSafe', 'Copy-FileWithMode', 'Set-FileModeFrom')
 foreach ($name in $names) {
     $function = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq $name }, $true)
     if ($null -eq $function) { throw "Missing native operation: $name" }
     Invoke-Expression $function.Extent.Text
+}
+# This also protects source-file-over-destination-link, before Copy-Item runs.
+function Remove-UnsafeSkillFileDestination {
+    param([string]$Path)
+    $entry = Get-Item -Force -LiteralPath $Path -ErrorAction SilentlyContinue
+    if ($null -eq $entry -or -not [string]$entry.LinkType) { return }
+    if ([string]$entry.LinkType -ceq 'HardLink' -and $entry.IsReadOnly) {
+        Fail "Refusing to change read-only hard-linked file: $Path"
+    }
+    if ([string]$entry.LinkType -cin @('SymbolicLink', 'Junction')) {
+        if ($IsWindows -and $entry.PSIsContainer) { [System.IO.Directory]::Delete($Path) }
+        else { [System.IO.File]::Delete($Path) }
+    } else { Remove-Item -Force -LiteralPath $Path }
 }
 $stack = [System.Collections.Generic.Stack[object]]::new()
 try {
@@ -35,17 +48,7 @@ try {
             'link' {
                 $entry = Get-Item -Force -LiteralPath $op.source
                 if ([string]$entry.LinkType -cnotin @('SymbolicLink', 'Junction')) { throw "Unsupported reparse point: $($op.source)" }
-                $existing = Get-Item -Force -LiteralPath $op.destination -ErrorAction SilentlyContinue
-                if ($null -ne $existing -and [string]$existing.LinkType -cin @('SymbolicLink', 'Junction')) {
-                    # Remove-Item -Force on macOS can change the target's mode before unlinking.
-                    if ($IsWindows -and $existing.PSIsContainer) {
-                        [System.IO.Directory]::Delete($op.destination)
-                    } else {
-                        [System.IO.File]::Delete($op.destination)
-                    }
-                } else {
-                    Remove-UnsafeSkillFileDestination -Path $op.destination
-                }
+                Remove-UnsafeSkillFileDestination -Path $op.destination
                 Install-PreservedLink -SourceDescription $op.source -Destination $op.destination -LinkType $entry.LinkType -Target $entry.Target
             }
             default { throw "Unknown operation: $($op.kind)" }
