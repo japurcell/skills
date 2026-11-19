@@ -16,6 +16,8 @@ The coordinator integrated [S1, helper repair](38-dispatch-and-deadlines-exec-pl
 
 [P0, reproducible native fixture](38-dispatch-and-deadlines-exec-plan/native-fixture.md) packages the verified B1 restriction and result reader while W1 screens the wording. The Copilot operator uses both outputs for P1.
 
+[R2, completion delivery during a deadline wait](38-dispatch-and-deadlines-exec-plan/wait-delivery.md) follows the first N1 Copilot misses. A native child can complete while the parent blocks on the helper, before the host delivers its notification. Replay after changing that wait decision.
+
 ## Decision Log
 
 - The user approved one state owner, a silent-worker watchdog, one ETA-based extension, safe transfer, compact reporting and repeatable on-demand host trials. Completion notifications re-arm the remaining watch. The implementation must establish which layer owns state and which layer acts.
@@ -33,7 +35,8 @@ The coordinator integrated [S1, helper repair](38-dispatch-and-deadlines-exec-pl
 - [x] (2026-11-18) [milestone-2] E1 at `b1a63dd2` passes six controlled tests, including rejection of a quiet-time lookup and transfer while a separate writer is active.
 - [x] (2026-11-18) [milestone-2] Integrated R1 at `5f2892ab`. Both caller hashes match the tested sources. The combined checkout passed 17 scheduler tests, six controlled tests and skill-source validation. Native acceptance belongs to milestone 4.
 - [ ] [milestone-3] W1 shorter candidate and challenger, P1 six matched Copilot pairs.
-- [ ] [milestone-4] N1 and I1 integrated verdict, review and backlog reconciliation.
+- [x] (2026-11-18) [milestone-4] First Copilot N1 trials exposed a delayed native notification and a late checkpoint. Both original traces retained.
+- [ ] [milestone-4] R2 wait guidance, N1 native acceptance and I1 integrated verdict, review and backlog reconciliation.
 
 ## Milestone 1. Establish comparable baselines
 
