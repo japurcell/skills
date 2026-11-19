@@ -4,7 +4,7 @@
 
 A maintainer should be able to change a rule once and see the same behavior in a relocated skill, a generated provider hook, or a disposable installation. Users still invoke each existing public command. The two new user-facing paths let them reindex a named project directly and request an attainable number of conversation batches after filtering. The seven milestone contracts below define the scope.
 
-**Current assignments.** The commit-skill maintainer owns [T1b issue intent](ExecPlan/1b-intent.md). The hook maintainer owns the [T3b reader](ExecPlan/3b-input-reader.md), and the scheduler maintainer owns [T4b timer selection](ExecPlan/4b-timer.md). The integration coordinator brings tested revisions into `work/skill-hook-architecture`.
+**Current assignments.** The hook maintainer owns the [T3b reader](ExecPlan/3b-input-reader.md), the scheduler maintainer owns [T4c delivery](ExecPlan/4c-delivery.md), and the installer maintainer owns [T6a adapter qualification](ExecPlan/6a-adapter.md). The integration coordinator brings tested revisions into `work/skill-hook-architecture`.
 
 **Governing principles.** Boundary Discipline puts admission and errors at the caller's interface. Redesign From First Principles and Subtract Before You Add favor one owner for each existing rule. Separate Before Serializing Shared State gives each extraction its own directory. Make Operations Idempotent governs reinstallation and generator retries. Experience First preserves CLI output and deployed behavior. Sequence Verifiable Units and Prove It Works require evidence through each public caller and again on the combined revision.
 
@@ -18,14 +18,16 @@ The approved design baseline is `069b3f22`. The original plan is `66e3a80e`, the
 
 - [x] (2026-11-19) Seven outcomes approved, original adversarial design review closed, concrete alternatives re-ranked for this rewrite.
 - [x] (2026-11-19) [milestone-1] Integrated T1a at `059166bf`. The CLI and grader agree on single, wrapped and empty bullets. Both suites passed (15 and 30 tests).
-- [ ] [milestone-1] [Commit message validation](ExecPlan/1-commit-validation.md). Complete T1b's scenario-specific issue and author checks.
+- [x] (2026-11-19) [milestone-1] [Commit message validation](ExecPlan/1-commit-validation.md). Integrated independent intent and attribution checks. Both suites passed at `92a8c0a0`.
 - [x] (2026-11-19) [milestone-2] Direct command and installer candidate available in `7f16d86b`. Reproduced an extra-link false success on that revision.
 - [x] (2026-11-19) [milestone-2] Repaired the retained-index verifier and integrated M2 at `ebb09bb4`. Freshness and installer checks passed on macOS.
 - [ ] [milestone-2] [Direct reindex](ExecPlan/2-direct-reindex.md). Native Windows qualification remains open.
 - [x] (2026-11-19) [milestone-3] Frozen public-process fixture passed against reference and candidate on macOS at `886dea6a`.
 - [ ] [milestone-3] [Hook event input](ExecPlan/3-hook-input.md). Migrate readers and verify identical public behavior.
-- [ ] [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Offline baseline passed. Verify the timer and host adapters. Native timing remains open.
-- [ ] [milestone-5] [Project brain launch registrations](ExecPlan/5-project-launchers.md). Open. Freeze the command fixture before changing the generator.
+- [x] (2026-11-19) [milestone-4] Query and standalone timer ordering integrated at `b386efe`.
+- [ ] [milestone-4] [Scheduler wake and completion](ExecPlan/4-scheduler-wake.md). Complete local delivery checks. Native timing remains open.
+- [x] (2026-11-19) [milestone-5] Froze the original 20 commands and owned metadata at `eb949e2`.
+- [ ] [milestone-5] [Project brain launch registrations](ExecPlan/5-project-launchers.md). Publish owned registrations once M3 is integrated.
 - [ ] [milestone-6] [Skill copy policy](ExecPlan/6-skill-copy.md). Open. Qualify the filesystem adapter before switching the installers.
 - [x] (2026-11-19) [milestone-7] Project-mode batching and the relocated caller fixture exist in `149a2661`.
 - [x] (2026-11-19) [milestone-7] Integrated batching at `ffe630df` and repeated shared bundle verification with M2 at `ebb09bb4`. The macOS suite ran 58 tests with four skips.
@@ -59,7 +61,7 @@ The earlier review compared build-time sharing, consumer-local copies with parit
 
 ## Concrete steps, validation and recovery
 
-Continue the current assignments above. The next independent tasks are the [M5 rollout fixture](ExecPlan/5a-launch-oracle.md) and the [M6 adapter qualification](ExecPlan/6a-adapter.md). For each integration, preserve the current plan and results and run the milestone checks on the merged tree. If a merge stops, resolve only the scoped conflicts or abort the in-flight merge and retry from the recorded revisions.
+Continue the current assignments above. T5b starts after M3 integration. For each integration, preserve the current plan and results and run the milestone checks on the merged tree. If a merge stops, resolve only the scoped conflicts or abort the in-flight merge and retry from the recorded revisions.
 
 Run each milestone's listed checks. After M2/M3/M5 regeneration, run `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py` and `rtk proxy python3 scripts/generate-hooks.py --check`. Follow the repository-local `verify-skills` Doctor, default installation, selection and provider-hook journeys for affected installers using fresh disposable homes, then run `rtk proxy python3 scripts/test-all.py` with the checkout idle. Record revision, OS, command, exit, observed output and any skips. Expect current generated files, correct installed file/registration readback and passing applicable suites. On failure retain the fixture and fix its owning source, regenerate and repeat the affected checks on the combined revision.
 
@@ -67,4 +69,4 @@ The coordinator schedules direct-index permissions (M2), event pipes (M3), junct
 
 ## Outcomes & Retrospective
 
-The retained-index false success is fixed and exact conversation batching is integrated. The combined bundle passed on macOS with Windows cases skipped. T1a is integrated. The user selected local checks. Windows and authenticated host observations remain open. The implementation and local review continue on this topic branch.
+M1 is complete. The M2 repair, M7 batching, M4 timer selection and M5 frozen oracle are integrated. The combined M2/M7 bundle passed on macOS. Original M7 ancestry is retained in `ee7f986f`. M1, M2 and M7 worktrees and branches have been removed after clean-status and ancestry checks. The user selected local checks. Native Windows and authenticated host observations remain open.

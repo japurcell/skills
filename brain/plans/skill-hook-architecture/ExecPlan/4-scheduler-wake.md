@@ -45,5 +45,5 @@ Follow `scripts/tests/orchestration/native-lifecycle.md` with the inverted deadl
 ## Progress
 
 - [x] (2026-11-19) [milestone-4] Captured T4a setup outcome and nine passing local controlled tests. Automatic approval review rejected the authenticated native control before any launch.
-- [ ] [milestone-4] Verify T4b timer selection, read-only state and delayed launch.
+- [x] (2026-11-19) [milestone-4] Integrated T4b at `b386efe`. The scheduler, W1 and controlled suites passed (21, 12 and 10 tests). The delayed-handle case was simulated.
 - [ ] [milestone-4] Run T4c candidate trials against the baseline, recording unverified host paths.

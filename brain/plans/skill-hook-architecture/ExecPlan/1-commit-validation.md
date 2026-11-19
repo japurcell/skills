@@ -1,7 +1,7 @@
 # M1. Commit message validation
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 ## Tasks and prerequisites
 
@@ -37,4 +37,4 @@ Run from the checkout root. Each command must exit zero. Inspect the files or ou
 ## Progress
 
 - [x] (2026-11-19) [milestone-1] T1a passed both integrated suites at `059166bf`.
-- [ ] [milestone-1] Complete T1b and run both suites together.
+- [x] (2026-11-19) [milestone-1] Integrated T1b at `92a8c0a0`. Validator and grader suites ran 15 and 34 tests with all passing. The neutral and explicit-closing cases both pass. The legacy anatomy assertion in eval 0 is a separate baseline discrepancy; its trailer and real Git checks passed.
