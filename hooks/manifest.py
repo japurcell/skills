@@ -32,5 +32,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/auto-index-brain.py")),
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/inject-brain.py")),
         GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py")),
+        GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts/reindex.py")),
         GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/hooks/inject-brain.py")),
     )
