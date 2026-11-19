@@ -2,8 +2,9 @@
 """Compare public hook processes to revision 069b3f22 on identical byte streams.
 
 Run from any directory: python3 scripts/tests/hooks/test-input-baseline.py [candidate-root]
-Requires Git and Python 3.12+. A native Windows run is separate evidence.
+Requires Git and Python 3.12+. Run separately on each supported platform.
 """
+import errno
 import io
 import json
 import os
@@ -51,6 +52,23 @@ CASES = {
 }
 
 
+REJECTED_INPUTS = {
+    "common": {"nbsp-both-sides", "buffered-trailing", "incomplete", "non-object",
+               "buffered-number", "invalid-utf8", "depth-65", "common-limit-plus-one",
+               "over-common-limit"},
+    "rtk": {"buffered-trailing", "incomplete", "non-object", "buffered-number", "invalid-utf8"},
+    "codex": {"buffered-trailing", "incomplete", "non-object", "buffered-number", "invalid-utf8",
+              "large-fragmented", "codex-limit-plus-one", "common-limit", "common-limit-plus-one",
+              "over-common-limit"},
+}
+
+RTK_ACCEPTED = {
+    "ascii-whitespace", "nbsp-both-sides", "split-utf8", "delayed-final",
+    "depth-65", "large-fragmented", "codex-limit", "codex-limit-plus-one",
+    "common-limit", "common-limit-plus-one", "over-common-limit",
+}
+
+
 def run(root, hook, case, work):
     rel, args = HOOKS[hook]
     home = work / "home"
@@ -60,12 +78,18 @@ def run(root, hook, case, work):
     bindir.mkdir(exist_ok=True)
     capture = work / "forwarded"
     capture.unlink(missing_ok=True)
-    mock = bindir / "rtk"
-    mock.write_text("#!" + sys.executable + "\nimport os,sys\nopen(os.environ['CAPTURE'], 'wb').write(sys.stdin.buffer.read())\nprint('{\"mock\":true}')\n")
-    mock.chmod(0o755)
+    recorder = "import os,sys\nopen(os.environ['CAPTURE'], 'wb').write(sys.stdin.buffer.read())\nprint('{\"mock\":true}')\n"
+    if os.name == "nt":
+        (bindir / "record.py").write_text(recorder)
+        (bindir / "rtk.cmd").write_text('@echo off\n"' + sys.executable + '" "%~dp0record.py"\n')
+    else:
+        mock = bindir / "rtk"
+        mock.write_text("#!" + sys.executable + "\n" + recorder)
+        mock.chmod(0o755)
     env = dict(os.environ, HOME=str(home), USERPROFILE=str(home), CAPTURE=str(capture), PATH=str(bindir) + os.pathsep + os.environ.get("PATH", ""))
     proc = subprocess.Popen([sys.executable, str(root / rel), *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, cwd=work, bufsize=0)
     chunks, delay, hold = case
+    writer_errors = []
     def writer():
         try:
             for i, chunk in enumerate(chunks):
@@ -76,8 +100,8 @@ def run(root, hook, case, work):
                     remaining = remaining[os.write(proc.stdin.fileno(), remaining):]
             if not hold:
                 proc.stdin.close()
-        except (BrokenPipeError, ValueError):
-            pass
+        except Exception as error:
+            writer_errors.append(error)
     thread = threading.Thread(target=writer, daemon=True)
     thread.start()
     try:
@@ -87,6 +111,16 @@ def run(root, hook, case, work):
         proc.wait()
         raise AssertionError(f"{hook} did not finish within 8 seconds")
     thread.join(timeout=2)
+    if thread.is_alive():
+        raise AssertionError(f"{hook}/{work.name}: writer did not finish")
+    if writer_errors:
+        error = writer_errors[0]
+        closed_pipe = isinstance(error, BrokenPipeError) or (
+            os.name == "nt" and isinstance(error, OSError) and error.errno == errno.EINVAL
+        )
+        expected_rejection = work.name in REJECTED_INPUTS[hook]
+        if not (closed_pipe and expected_rejection):
+            raise AssertionError(f"{hook}/{work.name}: unexpected writer error") from error
     # A still-open writer establishes that the consumer completed without EOF.
     pipe_open = hold and not proc.stdin.closed
     try:
@@ -121,8 +155,10 @@ def main():
                 new = run(CANDIDATE, hook, case, b)
                 assert old == new, f"{name}/{hook}: reference={old!r}, candidate={new!r}"
                 stdout, stderr, forwarded, pipe_open = old
-                if hook == "rtk" and forwarded is not None:
-                    assert forwarded == b"".join(case[0]), name
+                if hook == "rtk" and name in RTK_ACCEPTED:
+                    assert forwarded == b"".join(case[0]) and forwarded, f"{name}: RTK did not receive the exact bytes"
+                elif hook == "rtk":
+                    assert forwarded is None, f"{name}: invalid input reached RTK"
                 print(f"{name}/{hook}: stdout={stdout.decode().strip()} stderr={stderr.decode().strip()!r} forwarded={len(forwarded) if forwarded is not None else None} pipe_open={pipe_open}")
     print("Public hook input parity passed")
 
