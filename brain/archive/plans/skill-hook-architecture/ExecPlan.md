@@ -4,7 +4,7 @@
 
 A maintainer should be able to change a rule once and see the same behavior in a relocated skill, a generated provider hook, or a disposable installation. Users still invoke each existing public command. The two new user-facing paths let them reindex a named project directly and request an attainable number of conversation batches after filtering. The seven milestone contracts below define the scope.
 
-**Current assignments.** A single implementer owns the [two review findings](ExecPlan/review-fixes.md). The coordinator owns integration, combined checks, fresh independent standards and specification reviews, and cleanup.
+**Closed on 2026-11-19.** All seven milestones are accepted and merged into `work/skill-hook-architecture`. The [final independent reviews](ExecPlan/review-fixes.md) reported zero remaining standards and specification findings. All task worktrees and their branches are removed.
 
 **Governing principles.** Boundary Discipline puts admission and errors at the caller's interface. Redesign From First Principles and Subtract Before You Add favor one owner for each existing rule. Separate Before Serializing Shared State gives each extraction its own directory. Make Operations Idempotent governs reinstallation and generator retries. Experience First preserves CLI output and deployed behavior. Sequence Verifiable Units and Prove It Works require evidence through each public caller and again on the combined revision.
 
@@ -35,9 +35,9 @@ The approved design baseline is `069b3f22`. The original plan is `66e3a80e`, the
 
 ## Plan of work and dependencies
 
-Each independently assignable task is linked from its milestone. Workers own their assignment files. The parent reconciles milestone and entry status at integration checkpoints.
+Each milestone links its assignments, implementation evidence and acceptance results.
 
-M1, M4, the frozen M5 fixture and M6 qualification can progress independently. The generated-output integration order is M2 (integrated), M3, then M5. M5 publication also needs the independent fixture. The shared M2/M7 installation and parity runs passed on the integrated macOS tree. Serialize generator and installer fixtures that snapshot or mutate a single checkout.
+M1, M4, the frozen M5 fixture and M6 qualification ran independently. Generated outputs were integrated in M2, M3, M5 order. M5 publication used the frozen fixture. Shared M2/M7 installation and parity tests ran again after integration.
 
 ## Decision Log
 
@@ -61,12 +61,16 @@ The earlier review compared build-time sharing, consumer-local copies with parit
 
 ## Concrete steps, validation and recovery
 
-Run the combined local and native checks for the integrated revision. If a merge stops, resolve only the scoped conflicts or abort the in-flight merge and retry from the recorded revisions.
+The final reviewed product revision is `d4a3c79693618d8ddbe51fdfe4f34ae1e1318912`. The temporary Windows checkout `09c8a89a` adds the CI-only probes to that revision.
 
-Run each milestone's listed checks. After M2/M3/M5 regeneration, run `rtk proxy python3 scripts/tests/hooks/test-generate-hooks.py` and `rtk proxy python3 scripts/generate-hooks.py --check`. Follow the repository-local `verify-skills` Doctor, default installation, selection and provider-hook journeys for affected installers using fresh disposable homes, then run `rtk proxy python3 scripts/test-all.py` with the checkout idle. Record revision, OS, command, exit, observed output and any skips. Expect current generated files, correct installed file/registration readback and passing applicable suites. On failure retain the fixture and fix its owning source, regenerate and repeat the affected checks on the combined revision.
+On macOS arm64, `rtk proxy python3 -B scripts/test-all.py` exited 0 on a clean detached checkout of `d4a3c796`. All 35 maintained suites passed in 312.8 seconds. Each suite reported its own host-specific skips. The generator check found 16 current files. The disposable `verify-skills` Doctor and real Bash and PowerShell installs passed default selection, category overrides, invalid input, refresh, registered script bytes and modes, and installed configuration readback. The final installer evidence was captured under `/private/tmp/verify-m6-final-72ut9t_9/evidence` and `/private/tmp/m6-hooks-6j1819l4/evidence`.
 
-The coordinator schedules direct-index permissions (M2), event pipes (M3), junction copying (M6) and private conversation-workspace ACL checks (M7) on native Windows. The native operator runs M4's inverted two-worker trial for each host/caller path for which prompt delivery is claimed. Until those observations exist, keep the corresponding acceptance open. M7's approved consumer proof uses recorded worker inputs from a relocated bundle and synthetic histories.
+Direct-index permissions, real event pipes and RTK bytes, production junction copying, and private conversation-workspace ACLs passed on native Windows. The portable suite ran 59 tests with seven POSIX-only skips, including the relocated caller and all four Windows ACL cases. The separate Linux, macOS and Windows matrix passed on Python 3.12 and 3.14. [Native Windows job](https://github.com/japurcell/skills/actions/runs/44499839822/job/135476389898) and [platform matrix](https://github.com/japurcell/skills/actions/runs/44499839846).
 
 ## Outcomes & Retrospective
 
-All seven milestone results are recorded above. The final integration includes the corrected Windows test user, both new suites in the repository runner, and measured Codex and Copilot delivery limits. The independent final review and task cleanup remain.
+The [native timing record](ExecPlan/4c-delivery.md) gives consumption, expiry and shutdown observations. Both Codex inverse candidates consumed QUICK before SILENT was due. One Copilot standalone candidate consumed QUICK 45.7 seconds after its event. Its baseline waited at least 80.4 seconds and crossed SILENT's deadline. One Copilot delegate stop request allowed a later write. Both callers qualify delivery and shutdown claims accordingly.
+
+All four hosted workflows succeeded on the final candidate, including the [macOS installer](https://github.com/japurcell/skills/actions/runs/44499839887) and [Windows hook suite](https://github.com/japurcell/skills/actions/runs/44499839857). After verifying each product branch was merged and every task checkout was clean, the coordinator removed the task branches and worktrees. The public CI-only branch was deleted at its tested revision and `git ls-remote --heads` returned no matching ref. The implementation is local to the topic branch.
+
+Session reflection found the durable lessons already encoded at their owners. The repository runner enumerates the new suites, the Windows fixture proves its input permissions before testing rejection, the grader separates format from scenario attribution, and the caller guidance records measured host limits. No additional backlog or guidance changes were needed.
