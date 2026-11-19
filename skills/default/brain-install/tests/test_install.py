@@ -98,23 +98,39 @@ class InstallerTests(unittest.TestCase):
 
     def test_retained_noop_indexer_rejects_extra_link_anywhere(self):
         self.run_install("--apply")
+        folder = self.target / "brain/codebase/[draft] notes"
+        folder.mkdir()
+        (folder / "review `v1`.md").touch()
+        self.run_install("--apply", "--index-reviewed")
         script = self.target / ".agents/skills/brain/scripts/auto-index-brain.py"
         script.write_text("print('{}')\n", encoding="utf-8")
         index = self.target / "brain/index.md"
         lines = index.read_text(encoding="utf-8").splitlines()
         links = [line for line in lines if line.startswith("- [")]
+        self.assertTrue(any("review%20%60v1%60.md" in line for line in links))
         links.reverse()
-        links[0] = "- [a different label" + links[0][links[0].index("]("):]
-        index.write_text("# Custom heading\n\n" + "\n".join(links) + "\n", encoding="utf-8")
+        links[0] = r"- [a different \[label\] with a \\ path" + links[0][links[0].index("]("):]
+        valid = r"# Custom heading with a \[tag\]" + "\n\n" + "\n".join(links) + "\n"
+        index.write_text(valid, encoding="utf-8")
         arguments = ("--apply", "--index-reviewed", "--keep-existing",
                      ".agents/skills/brain/scripts/auto-index-brain.py")
         self.run_install(*arguments)
-        index.write_text(index.read_text() + "\n[extra](outside-inventory.md)\n", encoding="utf-8")
-        before_index, before_script = index.read_bytes(), script.read_bytes()
-        result = self.run_install(*arguments, expected=1)
-        self.assertIn("verif", (result.stdout + result.stderr).lower())
-        self.assertEqual(index.read_bytes(), before_index)
-        self.assertEqual(script.read_bytes(), before_script)
+        before_script = script.read_bytes()
+        invalid = {
+            "prose link": valid + "\n[extra](outside-inventory.md)\n",
+            "email autolink": valid + "\n<person@example.org>\n",
+            "heading autolink": valid + "## Contact <ftp://example.org/foo>\n",
+            "label autolink": valid.replace("- [a different", "- [<person@example.org> different"),
+            "duplicate target": valid + links[1] + "\n",
+        }
+        for case, document in invalid.items():
+            with self.subTest(case=case):
+                index.write_text(document, encoding="utf-8")
+                before_index = index.read_bytes()
+                result = self.run_install(*arguments, expected=1)
+                self.assertIn("verif", (result.stdout + result.stderr).lower())
+                self.assertEqual(index.read_bytes(), before_index)
+                self.assertEqual(script.read_bytes(), before_script)
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
