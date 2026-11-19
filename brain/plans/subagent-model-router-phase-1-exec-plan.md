@@ -58,7 +58,7 @@ The source bundle currently contains:
 - `skills/default/subagent-model-router/scripts/test_route.py`: deterministic public-process tests, including copied portable bundles.
 - `skills/default/subagent-model-router/evals/evals.json`: live instruction-following scenarios for the skill.
 
-Relevant maintained guidance is `brain/codebase/script-testing.md`, `brain/codebase/testing.md`, `brain/codebase/skills-and-installation.md`, and `skills/default/create-skill/README.md`. Existing dispatch research is `.agents/scratchpad/subagent-dispatch-model-and-reasoning-controls.md`. Its examples and installed-version observations are not current live-acceptance proof.
+Relevant maintained guidance is `brain/codebase/script-testing.md`, `brain/codebase/testing.md`, `brain/codebase/skills-and-installation.md`, and `skills/default/create-skill/README.md`.
 
 A configuration means an exact model and effort pair. A capability floor is the minimum tier imposed by the task and diagnosed failures. A workload profile names a narrowly described family of assignments and its acceptance rubric. A runtime profile identifies the actual host, provider, versions/settings, tools, and model identifiers used for measurement. Pareto dominance means that, for comparable evidence and relevant objectives, one qualified configuration is no worse in any measured dimension and better in at least one. A point on a public chart does not establish local task qualification.
 
