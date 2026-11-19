@@ -146,7 +146,7 @@ class InstallerTests(unittest.TestCase):
     def directory_link(self, link, destination):
         if os.name == "nt":
             result = subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(link), str(destination)],
-                                    capture_output=True, text=True, check=False)
+                                    capture_output=True, check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         else:
             link.symlink_to(destination, target_is_directory=True)

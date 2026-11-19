@@ -35,7 +35,7 @@ class SkillWorkflowTests(unittest.TestCase):
 
     def run_cli(self, script, *arguments, payload=None, expected=0):
         result = subprocess.run(
-            [sys.executable, "-I", "-S", "-B", str(script), *map(str, arguments)],
+            [sys.executable, "-I", "-S", "-B", "-X", "utf8", str(script), *map(str, arguments)],
             cwd=self.project, env=self.environment,
             input=None if payload is None else json.dumps(payload),
             capture_output=True, text=True, encoding="utf-8", timeout=15, check=False,
@@ -355,17 +355,19 @@ class SkillWorkflowTests(unittest.TestCase):
         output = self.root / "extracted"
         output.mkdir(mode=0o700)
         # Replace the inheritable entries with private, non-inheritable ones.
-        subprocess.run(["icacls", str(output), "/grant:r", "*S-1-3-4:F",
+        subprocess.run(["icacls", str(output), "/inheritance:r", "/grant:r", "*S-1-3-4:F",
                         "*S-1-5-18:F", "*S-1-5-32-544:F"],
                        check=True, capture_output=True)
         # Only the child's duplicated impersonation token is changed.
         bootstrap = r'''
-import ctypes, runpy, sys
+import ctypes, os, runpy, sys
 from ctypes import wintypes as w
 a = ctypes.WinDLL("advapi32", use_last_error=True)
 k = ctypes.WinDLL("kernel32", use_last_error=True)
 p, d = ctypes.c_void_p, w.DWORD
 k.GetCurrentProcess.restype = p
+k.LocalFree.argtypes = [p]
+k.LocalFree.restype = p
 a.OpenProcessToken.argtypes = [p, d, ctypes.POINTER(p)]
 a.DuplicateTokenEx.argtypes = [p, d, p, d, d, ctypes.POINTER(p)]
 a.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [w.LPCWSTR, d, ctypes.POINTER(p), ctypes.POINTER(d)]
@@ -383,6 +385,24 @@ present, defaulted = w.BOOL(), w.BOOL()
 check(a.GetSecurityDescriptorDacl(descriptor, ctypes.byref(present), ctypes.byref(acl), ctypes.byref(defaulted)))
 check(a.SetTokenInformation(duplicate, 6, ctypes.byref(acl), ctypes.sizeof(acl)))
 check(a.SetThreadToken(None, duplicate))
+# Prove the token default actually reaches a newly created file. An inheritable
+# parent ACE would override the default DACL and invalidate this experiment.
+probe = os.path.join(sys.argv[2], "acl-probe")
+with open(probe, "wb"):
+    pass
+security, dacl, sddl = p(), p(), p()
+a.GetNamedSecurityInfoW.argtypes = [w.LPWSTR, d, d, p, p, ctypes.POINTER(p), p, ctypes.POINTER(p)]
+a.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [p, d, d, ctypes.POINTER(p), p]
+error = a.GetNamedSecurityInfoW(probe, 1, 4, None, None, ctypes.byref(dacl), None, ctypes.byref(security))
+if error:
+    raise OSError(error, "cannot inspect ACL probe")
+check(a.ConvertSecurityDescriptorToStringSecurityDescriptorW(security, 1, 4, ctypes.byref(sddl), None))
+acl_text = ctypes.wstring_at(sddl)
+if ";;;WD)" not in acl_text and ";;;S-1-1-0)" not in acl_text:
+    raise RuntimeError("new-file ACL probe lacks Everyone: " + acl_text)
+k.LocalFree(sddl)
+k.LocalFree(security)
+os.unlink(probe)
 sys.argv = sys.argv[1:]
 runpy.run_path(sys.argv[0], run_name="__main__")
 '''

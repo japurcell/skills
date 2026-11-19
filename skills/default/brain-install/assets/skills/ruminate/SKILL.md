@@ -34,7 +34,9 @@ import sys
 completed = subprocess.run([
     sys.executable, "<ruminate-skill-path>/scripts/extract-conversations.py",
     "<temporary-directory>/extracted", "--project", str(Path.cwd()),
-], check=True, stdout=subprocess.PIPE, encoding="utf-8")
+], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
+sys.stderr.write(completed.stderr)
+completed.check_returncode()
 sys.stdout.reconfigure(encoding="utf-8")
 for manifest_path in json.loads(completed.stdout)["manifests"]:
     print(manifest_path)
