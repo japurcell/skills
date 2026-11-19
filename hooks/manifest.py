@@ -19,6 +19,7 @@ class GeneratedTarget:
 def targets() -> tuple[GeneratedTarget, ...]:
     """Return the explicit provider and bundled-hook ownership inventory."""
     return (
+        GeneratedTarget("required_skills", "codex", PurePosixPath(".codex/hooks/load-required-skills.py")),
         GeneratedTarget("common", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/common.py")),
         GeneratedTarget("common", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/common.py")),
         GeneratedTarget("audit", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/audit.py")),
