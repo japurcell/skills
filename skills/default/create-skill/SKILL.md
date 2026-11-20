@@ -5,26 +5,7 @@ description: Create or revise portable agent skills with clear triggers, focused
 
 # Create Skill
 
-## Core Principles
-
-### Concise is key
-
-The context window is a public good. A Skill shares the context window with everything else an agent needs, including:
-
-- The system prompt
-- Conversation history
-- Other Skills’ metadata
-- The user request
-
-Being concise in SKILL.md matters: once an agent loads it, every token competes with conversation history and other context. So keep SKILL.md and its associated resources as concise as possible while preserving intended behavior.
-
-**Default assumption**: The agent is already very smart
-
-Only add context the agent doesn’t already have. Challenge each piece of information:
-
-- “Does the agent really need this explanation?”
-- “Can I assume the agent has this information?”
-- “Does this paragraph justify its token cost?”
+Keep wording that changes when the skill activates, what the agent does, or how it verifies success. Cut inferable explanations and rules already supplied by a required skill.
 
 ## Workflow
 
@@ -43,7 +24,7 @@ Only add context the agent doesn’t already have. Challenge each piece of infor
    - Retain an existing `disable-model-invocation: true` unless a human explicitly approves removing it. If a validator rejects the field, check its allowlist against the target host's documented support and report the mismatch.
    - Consult the [Claude Code frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) when choosing invocation controls and argument hints. Use documented field names and account for differences in other target hosts. Additionally, include `arguments`, `allowed-tools`, `disallowed-tools`, `compatibility` and any other helpful fields when known.
    - When adding or revising an `argument-hint`, read [argument hints](references/argument-hints.md) for invocation syntax and YAML quoting.
-   - Keep the description trigger-oriented: state what the skill does and clear `Use when ...` conditions. Keep workflow steps in the body.
+   - State what the skill does and its `Use when ...` conditions in the description. Keep workflow steps in the body. Preserve the existing description during minimization unless trigger tuning is requested.
    - Keep the body under 200 lines. Keep references one level deep, preferably in an immediate reference directory; link directly from SKILL.md with a loading condition and read needed references completely. References longer than 100 lines MUST start with a table of contents.
    - Keep resources self-contained within the bundle. Refer to other skills through activation language, and derive target-project details from its applicable instructions instead of linking to the author's repository documents.
    - Keep a skill's own maintenance and evaluation instructions in README.md files. When writing or running evaluations and benchmarks is the skill's task, keep that procedure in its runtime instructions and bundled references.
@@ -57,9 +38,9 @@ Only add context the agent doesn’t already have. Challenge each piece of infor
    - Read [evaluation validation and evidence](references/validation.md) when writing scenarios or graders, running evaluations, or interpreting benchmarks.
    - For unsupported scenarios, use a maintained scenario harness that preserves the same isolation, session, and evidence requirements. Record the capability gap; preserve the scenario's actions and baseline conditions instead of adding turns, exposing a skill, or bypassing guards to fit the runner.
    - Use the target project's existing validation tools and maintained skill's acceptance scope. Resolve tooling from the available skill installation rather than assuming the author's checkout layout.
+   - Minimize in-scope prose on every creation and revision using the [wording trials playbook](references/wording-minimization.md).
 
 5. **Review the result**
-   - Compress changed passages before finalizing. Remove repetition and explanation that adds no behavioral guidance; preserve every obligation, condition, exception, and safeguard.
    - Check that each runtime reference resolves within the bundle and has a distinct loading trigger.
    - Confirm that another project can use the skill without this repository's documents or checkout layout.
    - Preserve unrelated content and report the changed source, verification performed, and any unresolved limits.

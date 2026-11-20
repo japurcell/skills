@@ -31,6 +31,7 @@
 - [codebase/script-testing](<codebase/script-testing.md>)
 - [codebase/scripts-and-installers](<codebase/scripts-and-installers.md>)
 - [codebase/skills-and-installation](<codebase/skills-and-installation.md>)
+- [codebase/subagent-dispatch](<codebase/subagent-dispatch.md>)
 - [codebase/testing](<codebase/testing.md>)
 
 ## plans

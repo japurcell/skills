@@ -1,4 +1,9 @@
-"""Shape of the actor-written coordination document."""
+#!/usr/bin/env python3
+"""Check the saved coordination.json in the project directory for a dispatch phase."""
+
+import argparse
+import json
+from pathlib import Path
 
 
 BEFORE = {
@@ -34,3 +39,29 @@ def field_failures(name, record):
             yield (), f"{name} gate record lacks {key}"
         elif _JSON_TYPES.get(type(record[key])) not in types:
             yield (key,), f"{name} gate record has malformed {key}"
+
+
+def check_saved_record(phase):
+    document = json.loads(Path("coordination.json").read_text(encoding="utf-8"))
+    if not isinstance(document, dict) or document.keys() != RECORDS.keys():
+        raise ValueError("expected before and after at the document root")
+    if phase == "before" and document["after"] is not None:
+        raise ValueError("after must be null before dispatch")
+    for name in (("before",) if phase == "before" else ("before", "after")):
+        record = document[name]
+        for _, message in field_failures(name, record):
+            raise ValueError(message)
+        extra = record.keys() - RECORDS[name].keys()
+        if extra:
+            raise ValueError(f"unexpected fields in {name}: {', '.join(sorted(extra))}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("phase", choices=RECORDS)
+    phase = parser.parse_args().phase
+    try:
+        check_saved_record(phase)
+    except (OSError, ValueError) as error:
+        parser.exit(1, f"coordination.json: {error}\n")
+    print(f"coordination.json valid for {phase}")

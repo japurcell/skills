@@ -15,4 +15,5 @@
 - [Scripts and installers: design, authoring, review, and execution](scripts-and-installers.md)
 - [script-testing](script-testing.md)
 - [skills-and-installation](skills-and-installation.md)
+- [Writing subagent dispatch instructions](subagent-dispatch.md)
 - [testing](testing.md)

@@ -336,6 +336,9 @@ def summarize_native_events(events, *, coordination_path=None, unavailable=None)
                     unavailable.append(_diagnostic(event, "malformed native task result"))
                 match = re.search(r"agent_id:\s*([0-9a-f-]{36})", content) if isinstance(content, str) else None
                 row.update(tool="task", call_id=call_id, success=data.get("success"),
+                           answer_only=isinstance(result, dict) and
+                           result.get("detailedContent", content) == content and
+                           set(result) <= {"content", "detailedContent"},
                            answer=_integer(content), worker_id=match.group(1) if match else None)
             elif tool in ("shell", "bash", "powershell"):
                 row.update(tool="command", call_id=call_id, success=data.get("success"))
@@ -615,10 +618,12 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
             intended = before.get("intended_child_controls")
             if not isinstance(intended, dict):
                 intended = {}
-            controls = ("agent_type", "model")
-            if any(not intended.get(key) or not task_call.get(key) for key in controls):
+            controls = [(intended.get("model"), task_call.get("model"))]
+            profile_keys = [key for key in ("agent_type", "profile") if key in intended]
+            controls.extend((intended[key], task_call.get("agent_type")) for key in profile_keys)
+            if not profile_keys or any(not planned or not actual for planned, actual in controls):
                 unavailable.append("intended or actual child model control was not exposed")
-            if any(intended.get(key) and task_call.get(key) and intended[key] != task_call[key] for key in controls):
+            if any(planned and actual and planned != actual for planned, actual in controls):
                 behavior.append("intended child controls differ from native task arguments")
 
     call_id = task_call.get("call_id")
@@ -629,6 +634,24 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
     task_result = next((row for row in related if row.get("type") == "tool.execution_complete" and row.get("tool") == "task"), None)
     spawned_id = task_result.get("worker_id") if task_result else None
     worker_id = (started.get("worker_id") if started else None) or spawned_id
+    lifecycle = [row for row in related if row["type"] in
+                 ("subagent.started", "subagent.configured", "subagent.completed")]
+    if worker_id and any(row.get("worker_id") and row["worker_id"] != worker_id for row in lifecycle):
+        behavior.append("native lifecycle events disagree on worker identity")
+    if spawned_id and worker_id != spawned_id:
+        behavior.append("task receipt identifies a different native worker")
+    if fallback and any(row.get("model") and row["model"] != fallback for row in lifecycle):
+        behavior.append("native worker lifecycle reports a model other than the fallback")
+    if any(row.get("agent_name") and row["agent_name"] != "check-total" for row in lifecycle):
+        behavior.append("native worker lifecycle reports the wrong project worker")
+    # A synchronous integer receipt exposes neither the child ID nor the effective model.
+    sync_answer_only = (
+        task_call.get("tool_args", {}).get("mode") == "sync"
+        and task_result and task_result.get("success") is True
+        and task_result.get("answer_only") and task_result.get("answer") == expected_answer and not spawned_id
+        and worker_id and fallback and started and started.get("model") == fallback
+        and all(row and row.get("worker_id") == worker_id for row in (started, configured, completed))
+    )
     read_results = [row for row in summary if row.get("type") == "tool.execution_complete" and row.get("tool") == "read_agent" and row.get("success") is True
                     and worker_id and row.get("worker_id") == worker_id]
     child_messages = [row for row in summary if row.get("type") == "assistant.message"
@@ -683,7 +706,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
                 manual_review.append("actor worker ID is free-form and cannot be verified automatically")
         if recorded_worker_id and worker_id and recorded_worker_id != worker_id:
             records.append("after record worker ID differs from native task output")
-        elif not recorded_worker_id or not worker_id:
+        elif (not recorded_worker_id or not worker_id) and not (sync_answer_only and raw_worker_id is None):
             unavailable.append("actor-visible worker ID is unknown")
         observed_model = started.get("model") if started else None
         actor_model = after.get("observed_worker_model")
@@ -696,7 +719,7 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
                 records.append("after gate record observed model differs from native child event")
             else:
                 manual_review.append("actor worker model is free-form and cannot be verified automatically")
-        elif not actor_model or not observed_model:
+        elif (not actor_model or not observed_model) and not (sync_answer_only and actor_model is None):
             unavailable.append("effective native worker model was not exposed")
         override = after.get("override_fallback")
         override_model = _reported_fallback_model(override, fallback)
@@ -709,9 +732,16 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
         elif isinstance(override, str) and override.strip() and not override_model:
             manual_review.append("fallback choice in actor record is free-form and cannot be verified automatically")
         blocker = after.get("blocker")
-        if blocker is not None and _explicitly_unavailable(blocker):
+        # Recognize only independently verified clauses. A mixed statement can also
+        # report a real blocker and must not be discarded as an observation note.
+        receipt_note = (sync_answer_only and isinstance(blocker, str) and re.fullmatch(
+            r"(?:(?:the )?(?:synchronous |sync )?task tool (?:returned|exposed) no "
+            r"(?:public )?(?:worker|agent) (?:ID|identifier)|no (?:worker|agent) ID (?:returned|exposed))"
+            rf"(?:[.;]\s*(?:completion output was {expected_answer}|(?:task |result )?completed successfully))?\.?",
+            blocker.strip(), re.IGNORECASE))
+        if blocker is not None and _explicitly_unavailable(blocker) and not receipt_note:
             unavailable.append("actor record describes an unavailable observation, not a host launch blocker")
-        elif blocker is not None and task_result and task_result.get("success") is True:
+        elif blocker is not None and not receipt_note and task_result and task_result.get("success") is True:
             records.append("after gate record reports a blocker despite successful native completion")
         if task_result and task_result.get("success") is False and not blocker:
             records.append("after gate record omits the host's rejected-launch blocker")
@@ -734,6 +764,9 @@ def grade_native_gate(events, manifest, router_records, before, after, policy_re
                 "worker_effort": configured.get("effort") if configured else None,
                 "answer": observed_answer,
                 "worker_id": started.get("worker_id") if started else spawned_id,
+                "task_receipt_worker_id": spawned_id,
+                "actor_reported_worker_model": (actor_model if isinstance(after, dict)
+                                               and actor_model == observed_model else None),
                 "router_output": route_output or None}}
 
 

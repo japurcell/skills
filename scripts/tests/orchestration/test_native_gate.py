@@ -17,6 +17,36 @@ from route_capture import main as capture_route
 
 
 class ProviderLaunchTests(unittest.TestCase):
+    def test_delegate_can_check_each_saved_phase_and_locate_a_trailing_brace(self):
+        runner = Path(__file__).with_name("run_native_gate.py")
+        with tempfile.TemporaryDirectory() as temp:
+            run = Path(temp) / "trial"
+            subprocess.run([sys.executable, str(runner), "--caller", "delegate",
+                            "--run-dir", str(run)], check=True, capture_output=True)
+            project = run / "project"
+            path = project / "coordination.json"
+            record = json.loads(path.read_text())
+            self.assertEqual(record, {"before": None, "after": None})
+            _, _, before, after, _ = run_records()
+            record["before"] = before
+            path.write_text(json.dumps(record))
+
+            def check(phase):
+                return subprocess.run([project / "bin/check-record38", phase],
+                                      cwd=project, capture_output=True, text=True)
+
+            self.assertEqual(check("before").returncode, 0)
+            self.assertNotEqual(check("after").returncode, 0)
+            record["after"] = after
+            path.write_text(json.dumps(record))
+            self.assertEqual(check("after").returncode, 0)
+            with path.open("a") as stream:
+                stream.write("\n}\n")
+            invalid = check("after")
+            self.assertNotEqual(invalid.returncode, 0)
+            self.assertIn("line 2", invalid.stderr)
+            self.assertTrue(path.read_text().endswith("\n}\n"))
+
     def test_runner_defaults_prepare_without_invoking_either_provider_cli(self):
         here = Path(__file__).resolve().parent
         with tempfile.TemporaryDirectory() as temp:
@@ -175,6 +205,42 @@ def run_records():
 
 
 class NativeGateGraderTests(unittest.TestCase):
+    def test_sync_answer_can_verify_dispatch_with_native_only_identity(self):
+        manifest, router, before, after, policy = run_records()
+        events = native_events()
+        events[6]["data"]["arguments"]["mode"] = "sync"
+        receipt = events[10]["data"]["result"]
+        receipt["detailedContent"] = "73"
+        after.update(worker_id=None, observed_worker_model=None,
+                     blocker="The synchronous task tool returned no worker ID; completion output was 73.")
+        def grade():
+            return grade_native_gate(events, manifest, router, before, after, policy)
+        verdict = grade()
+        self.assertEqual(verdict["status"], "pass")
+        self.assertEqual(verdict["observed"]["worker_id"], "child-1")
+        self.assertIsNone(verdict["observed"]["task_receipt_worker_id"])
+        self.assertIsNone(verdict["observed"]["actor_reported_worker_model"])
+        receipt["detailedContent"] = "worker ID child-1, effective model claude-haiku-5.5"
+        self.assertEqual(grade()["status"], "unavailable")
+        receipt["detailedContent"] = "73"
+        events[9]["agentId"] = "other-worker"
+        self.assertEqual(grade()["status"], "fail")
+        events[9]["agentId"] = "child-1"
+        del events[8]
+        self.assertEqual(grade()["status"], "unavailable")
+
+    def test_intended_profile_is_checked_against_native_agent_type(self):
+        manifest, router, before, after, policy = run_records()
+        intended = before["intended_child_controls"]
+        intended["profile"] = intended.pop("agent_type")
+        def grade():
+            return grade_native_gate(native_events(), manifest, router, before, after, policy)
+        self.assertEqual(grade()["status"], "pass")
+        intended["agent_type"] = "general-purpose"
+        self.assertTrue(grade()["behavior_failures"])
+        intended["agent_type"], intended["profile"] = intended["profile"], intended["agent_type"]
+        self.assertTrue(grade()["behavior_failures"])
+
     def test_saved_gate_uses_actor_records_without_reconstructing_them(self):
         manifest, router, before, after, _ = run_records()
         with tempfile.TemporaryDirectory() as temp:

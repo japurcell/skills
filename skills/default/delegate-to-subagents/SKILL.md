@@ -19,21 +19,13 @@ Keep routine messages sparse. When one worker produces an artifact another consu
 
 ## Dispatch loop
 
-Activate the `subagent-model-router` skill to learn how to use the router CLI.
+For each assignment, including reuse:
 
-While you pursue the long-running goal and maintain dialogue with the user, you will continuously identify subtasks to make progress until the goal is achieved. For each subtask:
-
-- Define scope, file ownership, acceptance criteria, and required completion evidence.
+- Assign a new ID for status updates. Define scope, ownership, acceptance criteria, and required completion evidence.
 - Put constraints and known negative cases that change the worker's decisions in the brief. Point to the relevant file, section, commit or research note for supporting detail.
-- Follow the [pre-dispatch gate](#pre-dispatch-gate).
-- Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
+- Activate the `subagent-model-router` skill. Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
+- Route once per assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Record actual arguments and the returned worker ID or blocker. For structured records, update named fields and validate the saved file before dispatch and after recording the result. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
 - Ask for the result, evidence pointer and any open decision that affects another task. Retrieve the underlying evidence when verifying a claim or resolving a disagreement.
-
-### Pre-dispatch gate
-
-For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.
-
-Use a new assignment ID for each subtask and retain it for status updates.
 
 ## Runtime enforcement
 
@@ -48,7 +40,3 @@ Use [`scripts/scheduler.py`](scripts/scheduler.py) with a session-specific state
 Keep dispatch start time, routed model, exact effort or host-default omission, and any host enforcement handle in a separate coordination record keyed by assignment ID; the scheduler lacks structured fields for these. Let the scheduler own deadline transitions and extension state. It advances only when called and emits JSON actions; the parent performs communication, worker control, and shutdown verification.
 
 Native observations are not latency guarantees: in one Codex inverse trial, expiry was processed about 11 seconds late. In a Copilot trial, a stop message did not stop the worker's launcher, which wrote after the request. Keep ownership until the worker and its writes are independently confirmed stopped; report any missing control or observation.
-
-## Gotchas
-
-- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.

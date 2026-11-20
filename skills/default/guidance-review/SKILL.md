@@ -14,12 +14,11 @@ Review `guidance_corpus` for:
 - contradictions or incompatible instructions;
 - ambiguous, confusing, or underspecified guidance;
 - misleading or incorrect examples;
-- unnecessary duplication;
-- information apparently missing for the guidance's stated purpose; and
-- wording that is not as concise as possible without changing the intended meaning.
+- information missing for the guidance's stated purpose.
 
 Trace what a reader following the instructions literally would do:
 
+- For repetitive or wordy passages, identify the decision a deletion or shorter phrasing would change. If none changes, recommend the cut. If uncertain, name the smallest case that distinguishes the two versions.
 - At each decision, identify the evidence the reader has and what only becomes observable after acting. Check whether the guidance distinguishes descriptive examples from enforced restrictions.
 - Walk examples in order. Track what each step changes and whether the required proof is still observable when collected. For prose examples, compare each claim with the evidence supplied.
 - When guidance describes a local CLI, schema, template, or evaluation, compare a representative case with the relevant source. Trace a boundary case when it could change the finding.

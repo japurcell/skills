@@ -115,6 +115,7 @@ class TestTestAll(unittest.TestCase):
             if path.name != "test-rtk-stable-windows.ps1"
         }
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
+        expected.add("skills/default/create-skill/evals/test_wording_trial.py")
         expected.add("skills/archive/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py")
         expected.add("skills/default/subagent-model-router/scripts/test_route.py")

@@ -4,6 +4,10 @@ This repository publishes skills from `skills/`, canonical custom-agent Markdown
 
 For installer CLI verification, category selection, generated agents, or installed provider configuration, activate the `verify-skills` skill. It owns the disposable-install journeys and evidence procedure.
 
+## Evaluations
+
+Use Codex by default for live evals and wording iterations. Copilot credits are limited. Run Copilot when requested or when a check requires Copilot-specific evidence, using the fewest scenarios and repetitions that satisfy the requested coverage.
+
 ## Brain
 
 The `brain/` directory is an Obsidian vault - persistent memory across sessions.

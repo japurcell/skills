@@ -1,0 +1,88 @@
+{
+  "skill_name": "fan-out",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Fan out the creation of two release notes using fast background workers. Create north.md with the single line 'North ships Tuesday.' and south.md with the single line 'South ships Friday.' Those are the only deliverables. Check both before reporting.",
+      "files": [],
+      "expected_output": "Two independently owned files with the exact requested lines.",
+      "assertions": [
+        "Two background workers were dispatched before either was awaited, using verified Fast-tier model selections.",
+        "Each dispatch names its single writable file and expected contents.",
+        "Both files contain the requested lines and the coordinator checked both."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Fan out the update to this release packet using fast background workers. Change v1 to v2 in alpha.md and beta.md. Then assemble index.md from the finished files, alpha first and beta second, keeping the original capitalization and one line per entry. Check the packet before reporting.",
+      "files": ["files/alpha.md", "files/beta.md"],
+      "expected_output": "Both notes updated independently and one owner assembles the index from their verified contents.",
+      "assertions": [
+        "Independent note updates used concurrent background Fast workers with disjoint ownership and an observable acceptance criterion in each brief.",
+        "The index had a single owner and was assembled after both changed notes were available.",
+        "Both notes have the requested version and the checked index exactly matches their concatenation."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fan out this correction if it splits cleanly. In alpha.md replace the single line 'Alpha v1' with 'Alpha v2'. That is the whole change.",
+      "files": ["files/alpha.md"],
+      "expected_output": "The coordinator makes and checks the single edit directly.",
+      "assertions": [
+        "No background worker was dispatched for the indivisible edit.",
+        "Only alpha.md changed and it contains the requested line."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Conduct a tabletop review using the supplied fan-out skill and its router. Trace each independent situation in a short operational answer without performing the actions. Distinguish actions imposed by the workflow from host-specific assumptions.\nA. The host has two slots. Atlas, Birch and Cedar are ready; two read the same manifest. Each edits its own doc. The combined manifest is produced from all three. Show the first launches, the response to Birch completing before Atlas, an example of the actual worker message for Cedar, and the final checks. Cedar's source is cedar.txt, the expected deliverable cedar.md must match it byte for byte. During its work Cedar notices a typo in Atlas's file.\nB. Two ready chunks returned different routes. Atlas got route_available=true, tier=Standard and model S. Birch got Fast model F with explicit high effort, but the host can only select models, not effort. A supported Fast fallback preserves all router constraints for Atlas only. Give the actual disposition of each, including what to report. Separately state the model and effort arguments for a supported Fast route with host_default effort.\nC. An agent assigned summary.md timed out. Its subprocess may still write. A replacement is available immediately. What happens before ownership changes, and what if the evidence never arrives?",
+      "files": [],
+      "expected_output": "The coordinator fills freed slots, enforces Fast routing, verifies dependent inputs, and keeps an uncertain writer's ownership.",
+      "assertions": [
+        "Cedar takes the freed slot with an exclusive scope, byte-equality criterion and evidence request. The parent checks each input before integration and checks the manifest.",
+        "Use the eligible Fast fallback for Atlas. Handle Birch locally and report the missing effort control. Omit the effort argument for host_default.",
+        "A timeout alone cannot transfer ownership. Require confirmation that every writer stopped, or leave the path blocked and report it."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Fan out a read-only inventory of the adapters under modules/. For each adapter directory, identify its current transport and its retired transport. Cite the relative source paths for both. Return one combined answer here.",
+      "files": [
+        "files/modules/alerts/current.txt", "files/modules/alerts/archive/previous.txt",
+        "files/modules/billing/current.txt", "files/modules/billing/archive/previous.txt",
+        "files/modules/search/current.txt", "files/modules/search/archive/previous.txt"
+      ],
+      "expected_output": "Three concurrent read-only workers each explore a whole adapter directory. The parent returns the six source-backed findings.",
+      "assertions": [
+        "Before waiting, the coordinator dispatched one Fast worker per adapter directory, with read-only scope and a verifiable return requirement.",
+        "The combined answer identifies alerts as webhook after email, billing as queue after polling, and search as streaming after batch, and cites all six relative paths.",
+        "The project tree is unchanged after exploration."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Review the supplied workflow as a portable specification. Quote the shortest operative phrase from the skill or its router for each required decision below. When the text leaves the decision open, say so. (1) Finishing a worker's assignment requires a correction outside its scope. Who should hear about it? (2) No eligible Fast route exists. The parent finishes all work. What must the final report disclose about dispatch? (3) One output passes its individual check. Another worker reports success but its output fails. When may their combined result be accepted? (4) The user wants one worker to explore a directory tree and another to investigate a topic. Can each receive an assignment without owning a writable file? (5) Only one independent chunk is ready. Does the workflow require the parent to do it directly? (6) The inputs exist only in the parent's context. Must the assignment make them available to the worker?",
+      "files": [],
+      "expected_output": "The text or router supports reporting outside-scope issues and local fallback, verifying individual and combined results, and delegating read-only directories or topics.",
+      "assertions": [
+        "An operative instruction supports flagging an out-of-scope issue. Ownership alone does not require reporting.",
+        "The coordinator must disclose local fallback even when it completed the deliverables.",
+        "Both inputs must pass verification before acceptance, followed by a check of the combined result.",
+        "Independent research scopes can be directories or topics with no write ownership.",
+        "One ready chunk stays with the parent.",
+        "Worker briefs supply the inputs required to do the assigned work."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Fan out the reconciliation of this list across two background workers. Each entry is an ID, expected count and actual count. Return all IDs whose counts differ, with signed differences (actual minus expected), in original order. A 9 9, B 7 5, C 0 3, D 8 8, E 5 6, F 4 4, G 3 1, H 2 2. Everything you need is in this message. Reply in chat.",
+      "files": [],
+      "expected_output": "Each worker receives a disjoint part of the list with enough input to check it. The combined answer is B -2, C +3, E +1, G -2.",
+      "assertions": [
+        "Two Fast workers launched before waiting. Their assignments cover the eight records exactly once and supply the counts, acceptance criteria and requested evidence.",
+        "The final answer reports B -2, C +3, E +1 and G -2, in order.",
+        "No task files are created or changed."
+      ]
+    }
+  ]
+}

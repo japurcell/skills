@@ -1,6 +1,8 @@
 # Native model-gate replay
 
-Prepare the fixture offline from the repository root. Each run directory must be new. The runner records its exact argv and scoped `write`, `policy38`, `route38`, and delegate-only `scheduler38` permissions in `private/`.
+Prepare the fixture offline from the repository root. Each run directory must be new. The runner records its exact argv and scoped `write`, `policy38`, `route38`, `check-record38`, and delegate-only `scheduler38` permissions in `private/`.
+
+The fixture starts `coordination.json` with two null fields. The caller fills `before` and runs `check-record38 before` prior to dispatch. After recording the receipt in `after`, it runs `check-record38 after`. The checker parses the file on disk and reports syntax or field errors. The grader still requires native evidence of caller writes on both sides of dispatch.
 
 ```sh
 scratch="$(mktemp -d "${TMPDIR:-/tmp}/native-gate.XXXXXX")"
@@ -22,6 +24,8 @@ For the other caller, set `caller=execplan-implement`, set `--caller execplan`, 
 Re-grade a saved run without contacting a provider. The grader reads raw native events privately, strips prompts and message bodies, and reports behavior failures, record failures, unavailable observations, and unverifiable free-form actor statements separately. It accepts the actor-written `coordination.json`; malformed JSON, including valid JSON followed by trailing text, leaves native behavior grading intact while recording the input error. Shell invocations are recognized when captured as a command string or argv list. Missing native worker identity/model stays unavailable; a constrained actor statement can report its chosen model without claiming native exposure.
 
 The runner grades the same saved artifacts as replay. Both return exit 0 for a pass, 1 for a proven failure, and 2 when required evidence is unavailable. An unreadable event, router, or policy row prevents a pass. The verdict names the file and line and continues grading readable rows, including those after the damage. A missing receipt in a damaged trace leaves the corresponding action unverified. A readable wrong-worker dispatch still fails, even if another row is damaged. Malformed actor coordination is itself a record failure.
+
+Copilot can return only the answer from a synchronous task. Record JSON null for an unexposed worker ID or model and for the blocker after a successful launch. Verifying this dispatch requires matching native start, configuration, and completion events for the worker. Legacy records can describe the answer-only receipt in the blocker field. Free-form unknown identity or model strings remain unavailable observations. The verdict reports the task receipt's worker ID and the actor's corroborated model separately from the native worker ID and model. For intended child controls, both `profile` and `agent_type` name the required worker and both must agree with the call when supplied.
 
 ```sh
 run_dir=/path/to/saved/run

@@ -12,9 +12,9 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- Activate the `subagent-model-router` skill and follow the [pre-dispatch gate](#pre-dispatch-gate) for every subagent dispatch.
+- For each assignment, including reuse, activate the `subagent-model-router` skill. Route once per assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Append actual arguments and the returned worker ID or blocker. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
-- Start with one implementer and assign each implementer one task at a time. Let the gate determine whether an idle implementer can take the next assignment. If no suitable implementer is idle, a single independent ready task is enough to start another when capacity allows.
+- After the coordinator acknowledges readiness, start one implementer. Assign one task per implementer. For each ready task, reuse an eligible idle implementer or start another when capacity allows.
 - Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
@@ -22,10 +22,6 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 [Enforce limits](#runtime-enforcement) for exploration, implementation, review, and fixes. An agent is idle only with no outstanding assignment; dependency waits remain active.
 
 Before every commit, the commit creator must activate the `commit` skill and follow its message validation workflow.
-
-## Pre-dispatch gate
-
-For every assignment, including reuse, run the router. Save its invocation, unchanged JSON and intended arguments. Dispatch the required worker with the exact model. Pass explicit effort; omit host-default effort. Record actual arguments and the returned worker ID or blocker.
 
 ## Runtime enforcement
 
@@ -65,10 +61,7 @@ Call the Skill tool with `code-review-biaxis` on the integration branch. Track a
 
 For a narrow fix, prefer the original implementer when its investigation still applies. A reviewer can resume to recheck a specific finding. When a review calls for independent discovery, start a fresh reviewer with the relevant spec or standards, the diff and verification evidence. Keep the two review axes independent.
 
-Apply the [pre-dispatch gate](#pre-dispatch-gate) to each new assignment. If reuse is ineligible, dispatch a fresh agent.
-
 ## Gotchas
 
 - Do not allow code reviews result in scope creep. It is your job to keep scope limited to the ExecPlan frontier.
 - Do not create worktrees anywhere within the main project directory because agents will automatically discover files like `AGENTS.md` causing context window bloat. Recommend creating them in `../<project name>.worktrees`.
-- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.

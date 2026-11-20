@@ -1,6 +1,6 @@
 ---
 name: subagent-model-router
-description: Select a subagent model and effort policy using task requirements and catalog pricing. Use when the user requests a fast, standard, or premium subagent.
+description: Select a subagent model and effort policy using task requirements and catalog pricing. Use when a fast, standard, or premium tier subagent is requested.
 compatibility: Requires python3
 ---
 
@@ -40,6 +40,6 @@ Return the CLI's JSON result unchanged.
 
 ## Dispatch controls
 
-Honor enforced worker restrictions, including for user-selected models. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse useful context only on the same model with matching explicit effort or originally omitted host-default effort. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.
+Honor enforced worker restrictions, including for user-selected models. When worker policy excludes the primary, use the returned fallback if eligible or report the blocker. Descriptive lists are advisory. If availability is unknown, try once; a model-wide rejection excludes every effort. Require `route_available` unless the user selected that exact model. Use the user's explicit effort when supplied. Keep unknown availability, tier, cost and capability unknown. Fallbacks preserve capability floor, effort policy and worker profile. In Copilot, set `task.agent_type` to the required profile ID; `name` labels an instance. Reuse useful context only on the same model with matching explicit effort or originally omitted host-default effort. Missing controls block dispatch. Record overrides and fallbacks outside the router JSON and worker prompt.
 
 Load [maintenance.md](reference/maintenance.md) only when updating snapshots or investigating historical exclusions.
