@@ -11,6 +11,11 @@
 
 40. [ ] Update `delegate-to-subagents` and `execplan-implement` to skip `subagent-model-router` when the user specifies a model for an assignment. Dispatch with that model directly. Keep routing assignments for which the user specifies only a tier or leaves model selection open.
 
+41. [ ] Example self-updating AGENTS.md file: "## Maintaining this file
+
+- Keep durable project requirements and reusable lessons here; active status and next authorization belong in `handoff.md`.
+- Rewrite or prune rather than append duplicates. Link authoritative files or commands instead of copying their facts; keep entries concise and useful across sessions."
+
 ## Investigations
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
