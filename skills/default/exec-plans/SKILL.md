@@ -38,7 +38,7 @@ Adapt the outline using the relevant source and supplied requirements. Cite the 
 
 ## Before implementation
 
-Save the plan at the requested location, the project's established plan location, or otherwise `brain/<feature-slug>/ExecPlan.md`. Before the first implementation edit or dispatch of a planned task (including a baseline trial), inspect the saved plan for the following evidence.
+Save the plan at the requested location, the project's established plan location, or otherwise `brain/plans/<feature-slug>/ExecPlan.md`. Before the first implementation edit or dispatch of a planned task (including a baseline trial), inspect the saved plan for the following evidence.
 
 1. **Design evidence.** For each architectural choice governing the task, find the alternatives, the [fresh reviewer's ranking](#collaborate-on-the-architecture), and the reason for the selection in the Decision Log. Check which implementation choices remain open even when the user has approved the acceptance criteria.
 2. **A ready task.** Find the task’s prerequisites and their evidence, owner, inputs, expected outcome, verification and stopping point in the plan. Put missing details there before briefing the worker. Give each worker only its ready assignment, even when it will own later milestones.
