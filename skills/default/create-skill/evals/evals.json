@@ -53,6 +53,39 @@
         "Generated output describes a category-level published sibling (skills/<category>/<skill>-workspace/iteration-N) or a repo-local sibling (.agents/skills/<name>-workspace/iteration-N or ../<name>-workspace/iteration-N from its owner).",
         "Generated evals.json includes at least 3 evals."
       ]
+    },
+    {
+      "id": 4,
+      "eval_name": "revise-without-minimization",
+      "prompt": "$create-skill\n\nApply the confirmed maintenance request in evals/files/report-guide-revision.md.",
+      "expected_output": "The corrected guide is saved without wording trials, even though the guide documents a flag spelled --minimize.",
+      "files": ["evals/files/report-guide/SKILL.md", "evals/files/report-guide-revision.md"],
+      "assertions": [
+        "The revised report-guide documents both current display options.",
+        "The run leaves no wording trial material."
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "revise-with-minimization",
+      "prompt": "$create-skill --minimize\n\nApply the confirmed maintenance request in evals/files/report-guide-revision.md.",
+      "expected_output": "The corrected guide and the first isolated wording candidate are saved with matching helper evidence.",
+      "files": ["evals/files/report-guide/SKILL.md", "evals/files/report-guide-revision.md"],
+      "assertions": [
+        "The revised report-guide documents both current display options.",
+        "The candidate and cut record demonstrate a shorter body with both display options preserved."
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "revise-with-target-argument",
+      "prompt": "$create-skill evals/files/report-guide/SKILL.md\n\nApply the confirmed maintenance request in evals/files/report-guide-revision.md.",
+      "expected_output": "Passing a target path selects the guide to edit and leaves wording trials off.",
+      "files": ["evals/files/report-guide/SKILL.md", "evals/files/report-guide-revision.md"],
+      "assertions": [
+        "The revised report-guide documents both current display options.",
+        "The run leaves no wording trial material."
+      ]
     }
   ]
 }

@@ -9,7 +9,7 @@
 
 ## Prepare a candidate offline
 
-Use Python 3.9+ with the standard library. Set `helper` to the adjacent `wording_trial.py`, `baseline` to the trusted self-contained bundle and `work` to a fresh external trial directory. For example, with a skill containing “Explain local fallback.” in its body, run the following.
+Use Python 3.9+ with the standard library. Set `helper` to this skill's [scripts/wording_trial.py](../scripts/wording_trial.py), `baseline` to the trusted self-contained bundle and `work` to a fresh external trial directory. For example, with a skill containing “Explain local fallback.” in its body, run the following.
 
 ```sh
 mkdir -p "$work"

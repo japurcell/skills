@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import hashlib
 import json
 import re
 import subprocess
@@ -296,7 +297,61 @@ def grade_eval_three(run_dir: Path) -> list[dict]:
     ]
 
 
+def current_report_guide(skill: bytes) -> bool:
+    text = skill.decode(errors="replace").replace("\r\n", "\n")
+    return (
+        parse_frontmatter(text).get("name") == "report-guide"
+        and "reportctl --readable" in text and "reportctl --minimize" in text
+        and "--pretty" not in text
+    )
+
+
+def check_report_candidate(source: bytes, trials: Path) -> tuple[bool, str]:
+    try:
+        record = json.loads((trials / "cut.json").read_bytes())
+        candidate = (trials / "candidate" / "SKILL.md").read_bytes()
+    except (OSError, ValueError) as error:
+        return False, str(error)
+    if not isinstance(record, dict) or not isinstance(record.get("cut"), str):
+        return False, "Missing cut text in helper record"
+    body = re.fullmatch(rb"(---\r?\n.*?\r?\n---(?:\r?\n|$))(.*)", source, re.S)
+    cut = record["cut"].encode()
+    if not body or not cut or body[2].count(cut) != 1:
+        return False, "Recorded cut does not identify one body substring"
+    if candidate != body[1] + body[2].replace(cut, b"", 1) or not current_report_guide(candidate):
+        return False, "Candidate differs from the recorded edit or loses a display option"
+    for key, content in [("source_skill_sha256", source), ("candidate_skill_sha256", candidate)]:
+        if record.get(key) != hashlib.sha256(content).hexdigest():
+            return False, f"{key} does not match the saved file"
+    return True, f"Verified isolated candidate with cut {record['cut']!r}"
+
+
+def grade_report_revision(run_dir: Path, minimize: bool) -> list[dict]:
+    source_path = relative_skill_dir(run_dir, "report-guide") / "SKILL.md"
+    source = source_path.read_bytes() if source_path.is_file() else b""
+    revised = current_report_guide(source)
+    checks = [expectation(
+        "The revised report-guide documents both current display options.", revised,
+        "Verified both options and skill identity" if revised else "Missing or incorrect revised guide",
+    )]
+    trials = run_dir / "outputs" / "trials"
+    if minimize:
+        valid, evidence = check_report_candidate(source, trials)
+        checks.append(expectation(
+            "The candidate and cut record demonstrate a shorter body with both display options preserved.",
+            valid, evidence,
+        ))
+    else:
+        artifacts = sorted(str(p.relative_to(trials)) for p in trials.rglob("*"))
+        checks.append(expectation("The run leaves no wording trial material.",
+                                  revised and not trials.is_file() and not artifacts,
+                                  f"revised={revised}, trial files={artifacts}"))
+    return checks
+
+
 def grade_expectations(eval_name: str, run_dir: Path) -> list[dict]:
+    if eval_name in {"revise-with-minimization", "revise-without-minimization", "revise-with-target-argument"}:
+        return grade_report_revision(run_dir, minimize=eval_name == "revise-with-minimization")
     if eval_name == "create-new-skill-with-benchmarks":
         return grade_eval_zero(run_dir)
     if eval_name == "modify-existing-skill-to-dedupe":

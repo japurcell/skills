@@ -1,6 +1,7 @@
 ---
 name: create-skill
 description: Create or revise portable agent skills with clear triggers, focused instructions, and self-contained resources. Use when creating, modifying, refactoring, or deduplicating a skill or its SKILL.md, or authoring skill evaluations and benchmarks.
+argument-hint: '[--minimize]'
 ---
 
 # Create Skill
@@ -38,7 +39,7 @@ Keep wording that changes when the skill activates, what the agent does, or how 
    - Read [evaluation validation and evidence](references/validation.md) when writing scenarios or graders, running evaluations, or interpreting benchmarks.
    - For unsupported scenarios, use a maintained scenario harness that preserves the same isolation, session, and evidence requirements. Record the capability gap; preserve the scenario's actions and baseline conditions instead of adding turns, exposing a skill, or bypassing guards to fit the runner.
    - Use the target project's existing validation tools and maintained skill's acceptance scope. Resolve tooling from the available skill installation rather than assuming the author's checkout layout.
-   - Minimize in-scope prose on every creation and revision using the [wording trials playbook](references/wording-minimization.md).
+   - Only when the caller passes `--minimize` as a standalone invocation argument, follow the [wording trials playbook](references/wording-minimization.md) to minimize in-scope prose.
 
 5. **Review the result**
    - Check that each runtime reference resolves within the bundle and has a distinct loading trigger.

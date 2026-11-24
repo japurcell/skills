@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "references" / "wording_trial.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "wording_trial.py"
 
 
 class WordingTrialTest(unittest.TestCase):

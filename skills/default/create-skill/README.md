@@ -20,6 +20,7 @@ For archive edit/baseline scope, installation ownership, and independent workflo
    - Run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
    - If packaging behavior changes or the user requests a packaged archive, run `PYTHONPATH=skills/default/skill-creator python3 skills/default/skill-creator/scripts/package_skill.py skills/default/<skill-name> /tmp/skill-dist`.
 ### Benchmarking guidance
+- For invocation evals 4 through 6, use a fresh working directory per run. Copy each listed fixture at its relative path. Point Codex at the selected snapshot's SKILL.md, preserve the invocation line in the scenario prompt, and capture the `codex exec --json` trace beside `outputs/`. Run the benchmark grader on the iteration and inspect the completed tool calls. Only the `--minimize` case should run the snapshot's helper. These cases end at the first candidate.
 - For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/default/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
 - Review authored outputs and retained evidence as well as scores. Preserve valid failures and the selected run identity; the validation and evidence section below defines rubric correction and honest metric reporting.
 - For a brand-new skill, compare against `without_skill`. For a modified skill, compare against an explicit `old_skill` or snapshot baseline.

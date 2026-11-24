@@ -94,5 +94,52 @@ class TestCreateSkillWorkspaceLayout(unittest.TestCase):
         self.assertFalse(expectation["passed"], expectation["evidence"])
 
 
+class TestMinimizationInvocation(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.iteration = Path(temporary.name)
+        self.case = self.iteration / "eval-invocation"
+        self.run_dir = self.case / "with_skill" / "run-1"
+        self.baseline = self.run_dir / "outputs" / "report-guide"
+        self.baseline.mkdir(parents=True)
+        fixture = GRADER.parent / "files" / "report-guide" / "SKILL.md"
+        (self.baseline / "SKILL.md").write_text(fixture.read_text().replace("--pretty", "--readable"))
+        self.trials = self.baseline.parent / "trials"
+
+    def grade(self, name):
+        (self.case / "eval_metadata.json").write_text(json.dumps({"eval_name": name}))
+        subprocess.run([sys.executable, str(GRADER), str(self.iteration)], check=True, capture_output=True)
+        return json.loads((self.run_dir / "grading.json").read_text())["summary"]["failed"]
+
+    def test_the_same_edit_requires_different_evidence_by_invocation(self):
+        plain = "revise-without-minimization"
+        flagged = "revise-with-minimization"
+        self.assertEqual(self.grade(plain), 0)
+        self.assertGreater(self.grade(flagged), 0)
+        self.trials.mkdir()
+        helper = GRADER.parents[1] / "scripts" / "wording_trial.py"
+        cut = subprocess.check_output([
+            sys.executable, str(helper), "cut", str(self.baseline), str(self.trials / "candidate"),
+            "For compact output, use the compact output option.",
+        ])
+        record = self.trials / "cut.json"
+        record.write_bytes(cut)
+        self.assertEqual(self.grade(flagged), 0)
+        self.assertGreater(self.grade(plain), 0)
+        self.assertGreater(self.grade("revise-with-target-argument"), 0)
+        record.write_text(json.dumps({**json.loads(cut), "candidate_skill_sha256": "stale"}))
+        self.assertGreater(self.grade(flagged), 0)
+        record.write_text("invalid JSON")
+        self.assertGreater(self.grade(flagged), 0)
+        record.write_bytes(cut)
+        (self.trials / "candidate" / "SKILL.md").write_text("unrelated")
+        self.assertGreater(self.grade(flagged), 0)
+
+    def test_empty_plain_run_fails(self):
+        (self.baseline / "SKILL.md").unlink()
+        self.assertGreater(self.grade("revise-without-minimization"), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
