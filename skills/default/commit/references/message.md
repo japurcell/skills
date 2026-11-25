@@ -79,6 +79,7 @@ Use the verified default for each contributing agent unless user instructions or
 ```text
 Co-authored-by: Codex <noreply@openai.com>
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+Co-authored-by: Gemini <noreply@google.com>
 ```
 
 The Codex CLI identity is verified in the official [OpenAI Codex source](https://github.com/openai/codex/blob/main/codex-rs/git-utils/src/baseline.rs), which uses the exact name and address in its baseline commit metadata. This is a default for Codex CLI, not every OpenAI product or host. Prefer a verified identity supplied by the active host when available; otherwise use this Codex identity. Never substitute one agent's identity for another.
