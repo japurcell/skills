@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 43 -->
+<!-- next-id: 44 -->
 <!-- Merge collision: origin/main keeps IDs 33/34; topic IDs 33/34 from c7a6261a are now 36/37. -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
@@ -39,3 +39,8 @@
 41. [ ] Add Microsoft Work IQ integration to the `accomplishment-report` skill. Reference: [microsoft/work-iq](https://github.com/microsoft/work-iq).
 
 42. [ ] Research [TokenEconomizer](https://github.com/microsoft/TokenEconomizer).
+
+43. [ ] Improve skills - clarify `subagent-model-router` activation vs invocation in `execplan-implement` and `subagent-model-router`:
+    - Observation: `subagent-model-router` was reloaded four times across assignments (original coordinator probe, replacement setup, replacement readiness probe, and timeout qualification).
+    - Cause: ExecPlan workflow directs activating the router and running it once per assignment, including reuse. The router also says to reuse its loaded instructions and help. The agent took "activate" literally and reloaded the skill each time. The separate routing runs were required, but reloading the same instructions added no value. All dispatches maintained the GPT-6.1 Terra low requirement.
+    - Remediation: Clarify `execplan-implement` and `subagent-model-router` guidance so agents load the skill instructions once per session and execute subsequent routing evaluations without redundant tool re-activations.
