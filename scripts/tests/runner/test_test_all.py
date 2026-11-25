@@ -116,6 +116,8 @@ class TestTestAll(unittest.TestCase):
         }
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/create-skill/evals/test_wording_trial.py")
+        expected.add("skills/default/exec-plans/evals/test_grade_benchmark.py")
+        expected.add("skills/default/exec-plans/evals/test_size_checkpoints.py")
         expected.add("skills/archive/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py")
         expected.add("skills/default/subagent-model-router/scripts/test_route.py")

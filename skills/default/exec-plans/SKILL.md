@@ -29,7 +29,7 @@ Tell the user this task doesn't need a plan and suggest implementing directly wi
 Before choosing an approach or writing any part of an ExecPlan, the plan author must personally read the following in full, even when the user has already approved the design.
 
 1. Read this skill, its [annotated outline](references/outline.md), and applicable project planning instructions.
-2. Activate `codebase-design` and read its entire `SKILL.md`. The architecture reviewer also activates it during the later review.
+2. Activate `codebase-design` and read its entire `SKILL.md`.
 3. Read `brain/principles.md` fresh for this plan. Follow every principle link in the index and read each file from beginning to end.
 
 Check the returned text for each required file. If a read is summarized or a batch omits its middle, retrieve the missing contents in smaller ranges until you have seen every section. Reuse complete reads from this planning pass. A reviewer’s summary or a successful command with clipped output leaves the read incomplete.
@@ -42,8 +42,6 @@ Save the plan at the requested location, the project's established plan location
 
 1. **Design evidence.** For each architectural choice governing the task, find the alternatives, the [fresh reviewer's ranking](#collaborate-on-the-architecture), and the reason for the selection in the Decision Log. Check which implementation choices remain open even when the user has approved the acceptance criteria.
 2. **A ready task.** Find the task’s prerequisites and their evidence, owner, inputs, expected outcome, verification and stopping point in the plan. Put missing details there before briefing the worker. Give each worker only its ready assignment, even when it will own later milestones.
-
-Use [planning-time exploration](#gather-context-with-subagents) and design review to fill gaps. Once the applicable checks pass, proceed within the existing authorization.
 
 When executing, proceed to the next planned milestone without asking the user for routine next steps. Resolve ordinary implementation ambiguities autonomously within the agreed scope. Honor explicit stopping points, required approvals, and owner-only actions; when one blocks progress, record the missing decision or permission and continue independent authorized work. Follow the project's commit workflow.
 
@@ -68,7 +66,7 @@ Start with one Markdown file. At creation and each implementation checkpoint, me
 
 Keep the original entry path. For a split plan, create a sibling directory named after the file stem, for example `ExportPlan.md` and `ExportPlan/milestone-1.md`. Treat the entry and its linked milestone and task files as one self-contained ExecPlan.
 
-- **Entry file.** State the objective, governing constraints, next authorized action, owner and direct assignment link. If blocked, identify the blocker and who can clear it. Summarize milestone status, acceptance and dependencies. Keep the full open-task index here while it fits. When it grows too large, place task IDs, states, prerequisite edges and links in their owning milestones. Group larger indexes behind bounded, linked pages as needed. Keep the next action and decisions that govern it visible in the entry, with direct links to supporting detail.
+- **Entry file.** State the objective, governing constraints, next authorized action, owner and direct assignment link. If blocked, identify the blocker and who can clear it. Summarize milestone status, acceptance and dependencies. Keep the full open-task index here while it fits. When it grows too large, place task IDs, states, prerequisite edges and links in their owning milestones. Group larger indexes behind bounded, linked pages as needed. Keep the next action and decisions that govern it visible in the entry, with direct links to supporting detail. Check prerequisite summaries against the individual task records.
 - **Milestone files.** Give each milestone one file for its contract, implementation steps, granular Progress and integration proof. Before dispatch, give independently assigned tasks their own linked files. Other tasks can stay under milestone headings until the milestone exceeds the budget.
 - **Task files.** Keep the assignment, instructions, acceptance criteria and current result together. Link directly to any prerequisite result or shared decision the worker needs, using a heading anchor where appropriate. Workers read the entry, their assignment and its explicit prerequisites. They update only their assigned plan file. The parent updates shared status, dependencies and the next action at checkpoints.
 
@@ -85,19 +83,17 @@ Use milestones when work has distinct checkpoints. Each milestone must describe 
     Status: done | in progress | open
     Acceptance: met | not met
 
-Keep the narrative precise and testable. Name the working directory for commands, show expected output where it helps, and describe behavior a person can verify rather than only internal code changes. Include idempotence, rollback, dependencies, interfaces, and evidence when they affect successful or safe execution. Define specialized terms in plain language.
-
 A milestone is a delivery and acceptance outcome, not automatically one task. A **task** is an independently assignable unit of work with explicit prerequisites, required inputs and current design context, an outcome, verification, and a stopping boundary. Before dispatch, assess its behavioral scope, unresolved decisions, coupled state, and verification burden. Keep each task bounded by splitting independently deliverable behaviors into separate tasks. Preserve necessary negative cases and indivisible correctness rules. A difficult but inseparable task needs clear reasoning risks and entry points, not reduced acceptance. Resolve a design uncertainty through a bounded decision or feasibility task before dependent implementation.
 
-Name files with full repository-relative paths, identify the exact functions or modules to edit, and say where new files belong. Explain how affected areas fit together. State environment assumptions and provide reasonable alternatives when commands or results vary by environment. Carry task-specific facts and decisions from references or prior plans into the active plan so the reader can execute its contract. Link reusable guidance at its canonical location in the repository's durable documentation instead of copying it into the plan.
+Name files with full repository-relative paths, identify the exact functions or modules to edit, and say where new files belong. Explain how affected areas fit together. State environment assumptions and provide reasonable alternatives when commands or results vary by environment.
 
 Design steps to be repeatable. Explain how to detect and recover from a partial failure, including safe retries and backups or fallbacks for destructive work. Prefer additive, testable changes that can be validated before replacing existing behavior.
 
 ### Collaborate on the architecture
 
-For architectural decisions, trace every system the change touches, then sketch 2-3 different shapes for it (types, signatures, module boundaries). Before you pick one, dispatch a fresh subagent and instruct it to: activate the `codebase-design` skill and critique, grade, and rank your designs. Use that feedback to pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. If the best design isn't obvious, ask the user to pick.
+For architectural decisions, trace every system the change touches, then sketch 2-3 different shapes for it (types, signatures, module boundaries). Before you pick one, dispatch a fresh subagent and instruct it to: activate the `codebase-design` skill and critique, grade, and rank your designs. For designs that replace working code, include the proposed candidate, comparison and later promotion task in the reviewer's brief. Use that feedback to pick the one where each piece of state has one owner, each task has one way to do it, and callers need to know least. If the best design isn't obvious, ask the user to pick.
 
-Record the alternatives, the reviewer's ranking and its bearing on the choice in the plan's `Decision Log`.
+Obtain the read-only critique during planning, even when a later coordinator owns implementation assignments. Record the alternatives, the returned ranking and how it affected the choice in the `Decision Log`. If the review is unavailable, record the blocker.
 
 ### Redesign check
 
@@ -127,8 +123,6 @@ Every ExecPlan keeps these sections current. In a split plan, keep shared state 
 - `Decision Log` records current decisions and why they were made.
 - `Outcomes & Retrospective` states what is complete, what remains, and the task's outcomes and evidence, with links to separately persisted durable lessons.
 
-Also include the project context, plan of work, concrete steps, validation and acceptance, and recovery guidance needed to carry out the task without prior context. Add interface, dependency, or artifact details when they materially help a novice proceed.
-
 Plans are temporary and may be deleted. Persist reusable lessons and rules when identified, using the repository's existing knowledge base or documentation conventions. If no suitable destination exists, create a focused guidance document outside temporary plan directories and link it from the repository's documentation navigation. Keep only a link in the plan. Before archiving or deleting a plan, extract any durable guidance still stored only there and verify the saved document and its navigation links. Keep the plan's task-specific contract, decisions, and evidence intact.
 
 Each milestone has matching Progress entries tagged `[milestone-X]`; split partially completed work into completed and remaining steps. A completed milestone uses `Status: done`, `Acceptance: met`, and checked entries such as `- [x] (YYYY-MM-DD) [milestone-X] ...`. Open or in-progress work keeps its remaining entries unchecked. Update the milestone's status, acceptance, and every affected Progress entry in the same edit. Do not mark work done without evidence that its acceptance is met.
@@ -141,7 +135,9 @@ Record tasks, their prerequisites, and completion evidence in the plan, mapped t
 
 ## Prototypes and migration paths
 
-Use explicit prototyping milestones when a significant unknown could invalidate the design. Read relevant dependency source or documentation and capture the findings needed to assess feasibility. Keep prototypes additive and testable, label their limited scope, give exact commands and observable results, and state the criteria for promoting, reworking, or discarding them. When several new libraries or feature areas are involved, consider independent feasibility experiments so a failure in one does not hide the behavior of another.
+When a significant unknown could invalidate the design, plan a feasibility milestone before integration. Give each independent unknown its own runnable task, temporary file or function, exact command, and observable pass and failure criteria. Use separate scratch files when the eventual implementations share a module. Read relevant dependency source or documentation and record the findings.
+
+When the final design changes a working implementation, keep it intact throughout the experiment. This includes changing a function body behind an unchanged interface. Compare the same logical cases through inputs each implementation accepts. Check candidate-only inputs against expected results. Name both implementations and the exact comparison call for each. Give promotion its own task in the task graph, even when the final design reuses the original function. State when to rework or discard a failed candidate. Before handing off the saved plan, ask the architecture reviewer to read its tasks and identify the unchanged implementation, separate candidate, comparison task and dependent promotion task. If review is unavailable, perform this check yourself and record that limit. Confirm the comparison can run from its listed prerequisites. Correct missing prerequisites, unsupported calls or premature edits to the original before delivery.
 
 During a migration, keep old and new implementations alongside one another when that reduces risk or preserves working tests. Specify how to validate both paths on the same relevant inputs, what differences are acceptable, and what evidence permits switching the default. Describe how to retire the old path safely with tests and a recovery strategy. Prefer additive changes followed by removal only after the replacement has met its acceptance criteria.
 
@@ -151,19 +147,17 @@ Reconcile an existing plan whenever you resume work, change scope or approach, c
 
 Replace outdated statements wherever they appear in active sections. A correction only in a new note is insufficient. Update the sections affected by the change, including milestone states and Progress, Concrete Steps, Validation and Acceptance, Decision Log, Outcomes, and the next action. When scope or approach changes, also update the purpose, acceptance, dependencies, and remaining milestones as needed.
 
-In Concrete Steps, lead with the next unfinished, authorized action. Remove completed implementation instructions or label them explicitly completed. A completed milestone and an unqualified instruction to implement it cannot remain current together. Keep past command results as verification evidence rather than presenting them as work still to do.
+In Concrete Steps, lead with the next unfinished, authorized action. Remove completed implementation instructions or label them explicitly completed. Keep past command results as verification evidence rather than presenting them as work still to do.
 
-At a stop, leave a reader able to tell what has been verified, what remains unfinished, who owns the next action, and what to do next. If current evidence cannot be inspected, state that limit instead of claiming the work is complete or unchanged. Continue to the next planned milestone only while it remains within the user's scope and authorization.
+At a stop, leave a reader able to tell what has been verified, what remains unfinished, who owns the next action, and what to do next. If current evidence cannot be inspected, state that limit instead of claiming the work is complete or unchanged.
 
 ## Keep the current contract separate from history
 
 The active plan is the single place to learn current requirements, decisions, status, safety limits, and next steps. Keep pending recovery instructions, security and authorization boundaries, owner actions, and external validation inline in active sections whenever they constrain the work. State who must act, what approval is required, what has or has not happened, and the condition for recovery. Never rely on an old transcript or a separate history file to establish current permission or status.
 
-Give current requirements and active decisions stable headings or identifiers when tasks reference them. Keep the required facts inline in the self-contained plan and update affected task references when a decision changes. References help a worker locate the current rule; they must not force the worker to reconstruct it from superseded history.
+Give current requirements and active decisions stable headings or identifiers when tasks reference them. Keep the required facts inline in the self-contained plan and update affected task references when a decision changes.
 
 Preserve useful task-specific decisions and unique evidence before moving material out of the active plan. Keep evidence needed for current status or acceptance inline. For historical material that can leave the active plan, first reuse an existing retained artifact or create a clearly labeled sibling snapshot. Add a link to it under a clearly titled historical section, verify that the target exists and still contains the unique dates, commands, results, or decisions being moved, and only then replace the inline material. A link to the active plan itself is not an archive. If the archive cannot be verified, keep the evidence inline and report the limitation.
-
-Keep the current rationale concise in `Decision Log` and useful findings in `Surprises & Discoveries` or `Validation and Acceptance`. Move superseded run transcripts, outdated status statements, and revision narratives behind the verified historical reference when their provenance matters. Historical material is background only: it never authorizes work, overrides user instructions, or controls present state. Do not append a full revision narrative after every update, and do not make a reader search history to continue.
 
 For substantive changes in scope or approach, record what changed and why in the relevant living sections, including a dated decision when needed. Routine progress or editorial corrections need only update the affected current sections; they do not require a separate revision footer.
 

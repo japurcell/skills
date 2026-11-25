@@ -7,6 +7,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 
 REQUIRED_SECTIONS = (
@@ -44,6 +45,18 @@ def normalize(text):
 
 def compact(text):
     return re.sub(r"\s+", "", text.lower())
+
+
+def asserts_observation(text, pattern):
+    """Match an affirmative report in its own clause, excluding predictions and uncertainty."""
+    for clause in re.split(r"(?<=[.!?;])\s+|\n+|\b(?:but|whereas|although|while)\b", text, flags=re.I):
+        qualified = re.search(
+            r"\b(?:not|no(?! (?:errors?|failures?)\b)|never|unclear|unknown|uncertain|unverified|unconfirmed|whether|if|until|"
+            r"should|would|could|might|may|expect(?:s|ed)?|planned)\b|n['’]t\b", clause, re.I,
+        )
+        if not qualified and re.search(pattern, clause, re.I):
+            return True
+    return False
 
 
 def expectation(label, passed, evidence):
@@ -180,7 +193,7 @@ def run_tests(project, source_dir):
         return False, "project or test files are missing"
     env = os.environ.copy()
     if source_dir:
-        env["PYTHONPATH"] = str(project / source_dir)
+        env["PYTHONPATH"] = str((project / source_dir).resolve())
     command = [sys.executable, "-m", "unittest", "discover", "-s", "tests"]
     try:
         result = subprocess.run(command, cwd=project, env=env, capture_output=True, text=True, timeout=20)
@@ -201,14 +214,28 @@ def run_command(project, *args):
 
 
 def grade_create(run_dir):
-    plan = read_text(run_dir / "outputs" / "ExecPlan.md")
+    outputs = run_dir / "outputs"
+    plan_path = outputs / "ExecPlan.md"
+    plan = read_text(plan_path)
     active, _ = active_and_historical(plan)
     checks = common_plan_checks(plan)
-    path_and_commands = all(token in active for token in ("src/report_cli.py", "src/summary.py", "python3 -m unittest discover -s tests"))
+    files = sorted(str(path.relative_to(outputs)) for path in outputs.rglob("*") if path.is_file())
+    size = plan_path.stat().st_size if plan_path.is_file() else 0
+    project = Path("files/create-plan/project")
+    original = Path(__file__).resolve().parent / project
+    supplied = run_dir / "evals" / project
+    unchanged, input_evidence = compare_fixture(original, supplied)
+    checks.append(expectation(
+        "The only deliverable is the requested plan within the 12 KiB entry budget.",
+        bool(plan.strip()) and files == ["ExecPlan.md"] and size <= 12_288 and unchanged,
+        f"output files={files}, entry bytes={size}; {input_evidence}",
+    ))
+    command_text = re.sub(r"\bpython3\s+-B(?=\s)", "python3", active)
+    path_and_commands = all(token in command_text for token in ("src/report_cli.py", "src/summary.py", "python3 -m unittest discover -s tests"))
     checks.append(expectation("The plan names the actual project files and test command.", bool(plan.strip()) and path_and_commands, "project paths and test command found" if path_and_commands else "plan or concrete project paths/command missing"))
     validation = find_block(active, ("validation and acceptance",))
     validation_text = validation["body"] if validation else ""
-    contract_compact = compact(active)
+    contract_compact = compact(command_text)
     observable = (
         bool(validation_text.strip())
         and "python3src/report_cli.py" in contract_compact
@@ -224,6 +251,31 @@ def grade_create(run_dir):
     unfinished = any(state["status"] in {"open", "in progress"} and state["acceptance"] != "met" for state in states.values())
     checks.append(expectation("The new plan leaves its unstarted milestone open with unchecked progress.", bool(plan.strip()) and unfinished and milestone_sync(plan)[0], milestone_sync(plan)[1] if plan.strip() else "plan is missing"))
     return checks
+
+
+def compare_fixture(original, supplied):
+    if not original.is_dir() or not supplied.is_dir() or supplied.is_symlink():
+        return False, "the original or post-run input project is unavailable"
+
+    def contents(root):
+        files = {}
+        for path in root.rglob("*"):
+            if path.is_symlink():
+                raise ValueError(f"unexpected symbolic link: {path.relative_to(root)}")
+            if path.parent.name == "__pycache__" and path.suffix == ".pyc":
+                continue
+            if not path.is_dir():
+                if not path.is_file():
+                    raise ValueError(f"unexpected special file: {path.relative_to(root)}")
+                files[path.relative_to(root)] = path.read_bytes()
+        return files
+
+    try:
+        before, after = contents(original), contents(supplied)
+    except (OSError, ValueError) as error:
+        return False, f"could not verify input project: {error}"
+    differences = sorted(str(path) for path in before.keys() | after.keys() if before.get(path) != after.get(path))
+    return bool(before) and not differences, f"input files checked={len(before)}, differences={differences}"
 
 
 def report_cli_checks(project):
@@ -258,9 +310,13 @@ def linked_history_is_retained(plan_path, plan_text):
     if not history:
         return False, "a clearly titled historical section is missing"
     links = re.findall(r"\[[^\]]+\]\(([^)]+)\)", history["body"])
+    incomplete = []
     for target in links:
-        relative = Path(target.split("#", 1)[0])
-        archive_path = (plan_path.parent / relative).resolve()
+        relative = Path(unquote(target.split("#", 1)[0]))
+        try:
+            archive_path = (plan_path.parent / relative).resolve()
+        except (OSError, RuntimeError, ValueError):
+            continue
         if relative.is_absolute() or archive_path == plan_path.resolve() or archive_path.parent != plan_path.parent.resolve():
             continue
         archive = read_text(archive_path)
@@ -272,8 +328,84 @@ def linked_history_is_retained(plan_path, plan_text):
         if archive and has_date and has_command and has_count and has_json:
             return True, f"{relative} exists and retains the date, test count, command, and JSON result"
         if archive:
-            return False, f"{relative} exists but is missing unique dated test evidence"
+            incomplete.append(str(relative))
+    if incomplete:
+        return False, f"historical siblings missing unique dated test evidence: {', '.join(incomplete)}"
     return False, "the historical link is missing, points back to the active plan, or has no retained sibling file"
+
+
+def matches_two_row_json(value):
+    try:
+        result = json.loads(value)
+    except ValueError:
+        return False
+    return result == {"count": 2, "total": 18} and all(type(number) is int for number in result.values())
+
+
+def observed_limit_result(text):
+    """Find the measured two-row JSON result in a result record for that invocation."""
+    flags = r"(?:--json\s+--limit(?:=|\s+)2|--limit(?:=|\s+)2\s+--json)"
+    program = r"(?:rtk\s+(?:proxy\s+)?)?python3?(?:\s+-[Bu]+)*\s+(?:\./)?src/report_cli\.py"
+    command_pattern = program + r"\s+" + flags
+    verified = (r"\b(?:passed|passes|verified|accepted|reported OK|exited (?:with )?(?:status )?0|"
+                r"(?:observed|reported) exit(?: (?:status|code))? 0)\b")
+    # A shell transcript binds a prompt only to its very next output line.
+    for block in re.finditer(r"^([^\n]+)\n(?:[ \t]*\n)*[ \t]*```[^\n]*\n([\s\S]*?)^[ \t]*```[ \t]*$", text, re.M):
+        caption, body = block.groups()
+        if re.search(r"\bcheckpoint (?:one|1)\b", caption, re.I) or not asserts_observation(
+                caption, r"\b(?:observed|actual|verified|recorded)\b"):
+            continue
+        lines = body.splitlines()
+        for command, output in zip(lines, lines[1:]):
+            if re.fullmatch(r"\$\s+" + command_pattern, command.strip()) and matches_two_row_json(output):
+                return command.strip() + "\n" + output.strip()
+    paragraphs = re.split(r"\n\s*\n", text)
+    for index, paragraph in enumerate(paragraphs):
+        past_context = asserts_observation(paragraph, verified) and not re.search(
+            r"\bcheckpoint (?:one|1)\b", paragraph, re.I)
+        table_headers = []
+        for line in paragraph.splitlines():
+            if line.lstrip().startswith("|"):
+                cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+                headers = [cell.lower() for cell in cells]
+                if "command" in headers or "arguments" in headers:
+                    table_headers = [re.sub(r"^exit (?:code|status)$", "exit", header) for header in headers]
+                    table_headers = [re.sub(r"^(?:observed|actual) (?:stdout|output)$", "measured", header)
+                                     for header in table_headers]
+                row = dict(zip(table_headers, cells))
+                if "measured" in row and matches_two_row_json(row["measured"]):
+                    if row.get("exit") == "0" and re.fullmatch(command_pattern, row.get("command", "")):
+                        return line.strip()
+                    if index and re.fullmatch(flags, row.get("arguments", "")):
+                        caption = paragraphs[index - 1]
+                        measured_program = asserts_observation(caption, r"\barguments were (?:checked|tested|run) (?:with|using) `" + program + r"`")
+                        shared_success = asserts_observation(caption, r"\b(?:each|every|all) (?:successful )?(?:invocations?|commands?)\b[^.!?;]*\bexited 0\b")
+                        if measured_program and (row["exit"] == "0" if "exit" in row else shared_success):
+                            return caption.strip() + "\n" + line.strip()
+                continue
+            for record in re.split(r"(?<=[.!?;])\s+|\b(?:but|whereas|although)\b", line, flags=re.I):
+                match = re.search(r"\{[^{}]*\}", record)
+                if not match or not matches_two_row_json(match.group()):
+                    continue
+                prefix = record[:match.start()].lower()
+                target = re.search(flags + r"(?![\w.-])|\blimited json\b", prefix)
+                if not target or re.search(r"--(?:limit|json)\b|\bfailed\b", prefix[target.end():]):
+                    continue
+                # A named executable must be the report CLI. Prose may also refer to its flags alone.
+                code = next((span.group(1) for span in re.finditer(r"`([^`]+)`", record)
+                             if span.start() < target.start() < span.end()), None)
+                if code and not (re.fullmatch(command_pattern, code) or re.fullmatch(flags, code)):
+                    continue
+                if not code:
+                    explicit = re.search(r"(?:\brtk\b|\bpython[\d.]*\b|(?:\S*/)?\S+\.py\b)[^`|]*$", prefix[:target.start()])
+                    if explicit and not re.fullmatch(command_pattern, prefix[explicit.start():target.end()]):
+                        continue
+                    if re.match(r"\s+-\S", prefix[target.end():]):
+                        continue
+                if (asserts_observation(record, r"\b(?:printed|returned|produced|was)\b")
+                        or (past_context and asserts_observation(record, r"\b(?:prints|returns|produces)\b"))):
+                    return record.strip()
+    return ""
 
 
 def grade_resume(run_dir):
@@ -322,17 +454,19 @@ def grade_resume(run_dir):
     cli_ok, cli_evidence = report_cli_checks(project)
     checks.append(expectation("CLI behavior preserves defaults and validates the row limit.", cli_ok, cli_evidence))
     validation = find_block(active, ("validation and acceptance",))
-    validation_compact = compact(validation["body"] if validation else "")
+    validation_text = validation["body"] if validation else ""
+    validation_compact = compact(validation_text)
+    limit_result = observed_limit_result(validation_text)
+    if not limit_result and concrete and "concrete steps" in validation_text.lower():
+        limit_result = observed_limit_result(concrete["body"])
     plan_evidence = (
         all(token in compact(active) for token in ("--json", "--limit"))
         and "count=3total=31" in compact(active)
-        and re.search(r'\bcount["`]*\s*[:=]\s*2\b(?!\.)', active, re.IGNORECASE)
-        and re.search(r'\btotal["`]*\s*[:=]\s*18\b(?!\.)', active, re.IGNORECASE)
         and "json" in validation_compact
         and "limit" in validation_compact
-        and re.search(r"\b(?:passed|passes|verified|accepted)\b", validation["body"] if validation else "", re.IGNORECASE)
+        and limit_result
     )
-    checks.append(expectation("The active acceptance records the verified JSON and row-limit outcomes.", bool(plan.strip()) and plan_evidence, "current command outcomes found" if plan_evidence else "current validation outcomes are incomplete"))
+    checks.append(expectation("The active acceptance records the verified JSON and row-limit outcomes.", bool(plan.strip()) and plan_evidence, limit_result if plan_evidence else "current validation outcomes are incomplete"))
     return checks
 
 
@@ -348,18 +482,26 @@ def recovery_source_unchanged(project):
 
 
 def claims_current_external_proof(active):
+    if asserts_observation(active, r"\brelease[- ]owner (?:has )?(?:already )?"
+                           r"(?:signed off\b|approved (?:the )?(?:release|rollout|deployment|staged validation)\b)"):
+        return True
     sentences = re.split(r"[.;\n]|\b(?:but|while|whereas)\b", active, flags=re.IGNORECASE)
     for sentence in sentences:
         prefix = ""
         for clause in re.split(r",|\band\b", sentence, flags=re.IGNORECASE):
             text = normalize(clause)
-            subject = re.search(r"\b(?:staged(?: device)?|external) validation\b|\b(?:release[- ]?)?owner approval\b", text)
+            # In a pending task, "performs approved staged validation" describes the owner's action.
+            text = re.sub(r"\b((?:performs?|runs?|conducts?) (?:the )?)approved (?=staged(?: device)? validation\b)",
+                          r"\1", text)
+            # A completed implementation can be a prerequisite for a pending owner decision.
+            text = re.sub(r"\bcompleted (?=(?:code|implementation|local verification)\b)", "", text)
+            subject = re.search(r"\b(?:staged(?: device)?|external) validation\b|\b(?:release[- ]?)?owner(?:['’]s)? approval\b", text)
             completion = re.search(r"\b(?:passed|verified|succeeded|completed|granted)\b|(?<!-)\bapproved\b|\b(?:is|are|was|were) (?:now )?complete\b|\b(?:has|have) been (?:run|performed|supplied|recorded)\b", text)
             negated_or_required = re.search(r"\b(?:not|no|never|pending|unverified|unconfirmed|requires?|until|must|should)\b", text)
             # A condition can govern both sides of "until approval and validation are complete".
             conditional = subject and (
                 re.search(r"\b(?:until|before|if)\b", prefix + text[:subject.start()])
-                or re.search(r"\bonly after\b", text[:subject.start()])
+                or re.search(r"\b(?:only after|whether)\b", text[:subject.start()])
             )
             denied_list = (
                 text.startswith("or ")
@@ -384,12 +526,19 @@ def grade_recovery(run_dir):
     agent_restricted = (
         re.search(r"\b" + actor + r"(?:\s+\w+){0,5}\s+(?:must not|is not authorized|does not execute rollback)\b", owner_text)
         or re.search(r"\b(?:this|the) plan does not authorize an? agent(?: or device owner)? to (?:run (?:that|the) command|execute rollback)\b", owner_text)
+        # Only a list of operations may intervene between rollback and its scope predicate.
+        or re.search(r"(?<!test )\brollback(?: execution)?(?:,? (?:and )?(?:owner contact|(?:production (?:signing )?)?key rotation|deployment|external validation))* "
+                     r"(?:are|is|remain|remains) outside (?:this|the|its)(?: (?:agent|contributor)['’]s)? "
+                     r"(?:checkpoint|scope|authorization|reconciliation)\b", owner_text)
     )
-    unsafe_agent_permission = re.search(
-        r"\b" + actor + r"(?:\s+\w+){0,5}\s+(?:may|can|should|must|is authorized to)\s+"
-        r"(?:(?:execute|run|perform)\s+(?:the\s+)?(?:rollback|recovery|deployment|external validation)|"
-        r"deploy|rollback|rotate\s+(?:a\s+|the\s+)?production\s+key|contact\s+(?:an?\s+|the\s+)?owner)\b",
-        owner_text,
+    operation = r"(?:(?:production|operational) )?(?:rollback|recovery|deployment|external validation)"
+    unsafe_agent_permission = (
+        re.search(r"\b" + actor + r"(?:\s+\w+){0,5}\s+(?:may|can|should|must|is (?:authorized|permitted) to)\s+"
+                  r"(?:(?:execute|run|perform)\s+(?:the\s+)?" + operation + r"|"
+                  r"deploy|rollback|rotate\s+(?:a\s+|the\s+)?production\s+key|contact\s+(?:an?\s+|the\s+)?owner)\b",
+                  owner_text)
+        or re.search(r"\b" + operation + r"\s+(?:(?:may|can|should|must) be (?:executed|run|performed) by|"
+                     r"is (?:authorized|permitted) for) (?:the |an? )?" + actor + r"\b", owner_text)
     )
     owner_ok = (
         bool(plan.strip())
@@ -418,17 +567,37 @@ def grade_recovery(run_dir):
     checks.append(expectation("Recovery instructions remain in the active plan with the owner-only command.", recovery_ok, recovery_section["body"].strip() if recovery_section else "active recovery section missing"))
     active_validation = find_block(active, ("validation and acceptance",))
     validation_text = normalize(re.sub(r"(?<=\w)-(?=\w)", " ", active_validation["body"])) if active_validation else ""
+    owner_approval = r"(?:release )?owner(?:['’]s)? approval"
+    both_gates_pending = any(
+        re.search(r"\b(?:staged|external) acceptance requires\b", requirement)
+        and re.search(r"\b" + owner_approval + r"\b", requirement)
+        and "device owner" in requirement and re.search(r"\b(?:result|validation)\b", requirement)
+        for requirement in re.findall(r"(?:^|[.!?])\s*([^.!?]+)[.!?]\s*both (?:are|remain) (?:pending|outstanding)\b",
+                                      validation_text)
+    )
     no_external_proof = (
         re.search(r"\b(?:has|have) not been (?:performed|run|supplied|recorded)\b", validation_text)
         or re.search(r"\bno (?:staged|external)(?:\s+\w+){0,8}\s+(?:has been run|was run|was performed|is included|has been supplied)\b", validation_text)
+        or re.search(r"\bpending until\b[^.!?]*\bdevice owner\b[^.!?]*\b(?:supplies|provides|records|reports)\b[^.!?]*\b(?:result|evidence)\b", validation_text)
+        or re.search(r"\b(?:device|staged|external) validation (?:still )?requires evidence from the device owner\b", validation_text)
+        or re.search(r"(?:^|[.;:!?])\s*there is (?:currently |still )?no (?:staged|external)(?: device)? result(?: yet)?(?:[.!;]|$)", validation_text)
+        or re.search(r"(?:^|[.;:!?])\s*(?:the )?(?:device owner['’]s )?(?:staged(?: device)?|external) (?:acceptance|validation|result) "
+                     r"(?:is|remains) (?:pending|outstanding|unverified)\b", validation_text)
+    )
+    staged_result = r"(?: and (?:the )?(?:(?:external|staged|device|owner(?:['’]s)?) )*(?:result|validation))?"
+    pending_owner_status = r"\b" + owner_approval + staged_result + r" (?:is |are |remains? |still |the |next )+(?:pending|outstanding|unrecorded)\b"
+    approval_pending = (
+        re.search(pending_owner_status, owner_text)
+        or re.search(r"\bpending (?:recorded |explicit )?" + owner_approval + r"\b", owner_text)
+        or re.search(r"\bpending until (?:the )?release owner (?:records|gives|grants|provides) (?:explicit )?approval\b", owner_text)
     )
     pending = (
         bool(plan.strip())
         and active_validation is not None
-        and re.search(r"\b(?:pending|incomplete|remain open)\b", validation_text)
-        and no_external_proof
+        and (approval_pending or both_gates_pending)
+        and (no_external_proof or both_gates_pending)
         and "device owner" in validation_text
-        and "release owner" in validation_text
+        and "release owner" in owner_text
         and not claims_current_external_proof(active)
     )
     checks.append(expectation("External owner approval and staged validation remain pending.", pending, active_validation["body"].strip() if active_validation else "active validation section missing"))
@@ -437,18 +606,22 @@ def grade_recovery(run_dir):
     unchanged, source_evidence = recovery_source_unchanged(project)
     checks.append(expectation("The supplied completed source is unchanged.", unchanged, source_evidence))
     active_outcomes = find_block(active, ("outcomes & retrospective",))
-    outcome_text = active_outcomes["body"].lower() if active_outcomes else ""
-    completed_code = (
-        "code is complete" in outcome_text
-        or re.search(r"\bsnapshot and restore(?:\s+\w+){0,3}\s+(?:implemented|complete)\b", outcome_text)
-        or re.search(r"\bcode milestone(?: and (?:local )?verification milestone)? (?:is|are) complete\b", outcome_text)
-    )
+    outcome_text = re.sub(r"(?<=\w)-(?=\w)", " ", active_outcomes["body"].lower()) if active_outcomes else ""
+    completed_code = asserts_observation(outcome_text,
+        r"\b(?:code is complete|snapshot and restore(?:\s+\w+){0,3}\s+(?:implemented|complete)|"
+        r"code milestone(?: and (?:local )?verification milestone)? (?:is|are) complete|"
+        r"implementation and local verification are complete|completes? (?:the )?implementation and local verification milestones|"
+        r"(?:helper|implementation) restores? (?:the )?original (?:policy )?bytes in (?:the )?local test)\b")
+    if not completed_code and asserts_observation(outcome_text, r"\bcan (?:save|snapshot) and restore\b"):
+        completed_code = asserts_observation(outcome_text,
+            r"\blocal (?:test|round trip) (?:passed|succeeded)\b|\bobserved in (?:the )?local test\b")
     not_closed = (
         bool(plan.strip())
         and active_outcomes is not None
         and completed_code
-        and re.search(r"\brelease[^.\n]*\b(?:pending|open)\b", outcome_text)
-        and not re.search(r"(?:release|plan|overall work) is complete", outcome_text)
+        and (re.search(r"\b(?:release|rollout|milestone 3)[^.\n]*\b(?:pending|open)\b", outcome_text)
+             or asserts_observation(outcome_text, pending_owner_status))
+        and not re.search(r"(?:release|plan|overall work|rollout) is complete", outcome_text)
     )
     checks.append(expectation("The plan records completed code without claiming release completion.", not_closed, active_outcomes["body"].strip() if active_outcomes else "active outcomes section missing"))
     return checks

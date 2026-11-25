@@ -42,6 +42,8 @@ SUITES = (
     ("python3", "scripts/tests/tooling/test_helpers.py"),
     ("python3", "skills/default/create-skill/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/create-skill/evals/test_wording_trial.py"),
+    ("python3", "skills/default/exec-plans/evals/test_grade_benchmark.py"),
+    ("python3", "skills/default/exec-plans/evals/test_size_checkpoints.py"),
     ("python3", "skills/archive/spec-to-tasks/evals/test_grade_benchmark.py"),
     ("python3", "skills/archive/prd-ralph-loop/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/subagent-model-router/scripts/test_route.py"),

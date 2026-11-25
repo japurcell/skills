@@ -14,6 +14,7 @@
         "evals/files/create-plan/project/tests/test_summary.py"
       ],
       "assertions": [
+        "The only deliverable is the requested plan within the 12 KiB entry budget.",
         "The plan includes all required living sections and concrete repository paths.",
         "The plan states exact commands and observable text and JSON output.",
         "The plan has milestone status and a matching unchecked progress entry."

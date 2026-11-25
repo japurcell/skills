@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -63,17 +65,22 @@ Use only Python's standard library. The CLI accepts `--format` with `text` and `
 """
 
 
-def run_with_skill(root, eval_name, outputs):
+def run_with_skill(root, eval_name, outputs, prepare=None):
     eval_dir = root / "eval-0"
     run_dir = eval_dir / "with_skill" / "run-1"
     run_dir.mkdir(parents=True)
     (eval_dir / "eval_metadata.json").write_text(
         json.dumps({"eval_id": 0, "eval_name": eval_name}), encoding="utf-8"
     )
+    if eval_name == "create-self-contained-plan":
+        project = Path("evals/files/create-plan/project")
+        shutil.copytree(SKILL_DIR / project, run_dir / project)
     for name, content in outputs.items():
         path = run_dir / "outputs" / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content if isinstance(content, bytes) else content.encode("utf-8"))
+    if prepare is not None:
+        prepare(run_dir)
     result = subprocess.run(
         [sys.executable, str(GRADER), str(root)], cwd=SKILL_DIR, capture_output=True, text=True
     )
@@ -301,6 +308,358 @@ Historical note: an earlier operator reported approval. That does not describe t
 
 
 class GradeBenchmarkTests(unittest.TestCase):
+    def test_unanswered_owner_decision_and_absent_staged_result(self):
+        review = "The release owner reviews the evidence and records whether staged validation is approved."
+        gates = "Release-owner approval and the staged device result are still outstanding."
+        validation = "Operational acceptance still requires a passing staged device result from the device owner."
+        for decision, result, valid in (
+            (review, "There is currently no staged result.", True),
+            (review + " Staged device validation passed.", "There is currently no staged result.", False),
+            (review + " The release owner signed off yesterday.", "There is currently no staged result.", False),
+            (review, "If there is currently no staged result, schedule another test.", False),
+            (review, "There is currently no local result.", False),
+        ):
+            plan = f"## Outcomes & Retrospective\n{gates}\n\n## Decision Log\n{decision}\n\n## Validation and Acceptance\n{validation} {result}\n"
+            with self.subTest(decision=decision, result=result), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                self.assertEqual(check_named(checks(run), "External owner approval and staged validation remain pending.")["passed"], valid)
+
+    def test_argument_table_uses_its_own_measured_command_and_row(self):
+        command = "The following arguments were checked with `python3 -B src/report_cli.py`."
+        success = "Each successful invocation wrote the shown line to stdout, exited 0, and had empty stderr."
+        table = '| Arguments | Observed stdout |\n| --- | --- |\n| `--json --limit 2` | `{"count": 2, "total": 18}` |'
+        for caption, result_table, valid in (
+            (command + " " + success, table, True),
+            (command.replace("report_cli.py", "other.py") + " " + success, table, False),
+            (command.replace("were checked", "will be checked") + " " + success, table, False),
+            (command + " " + success, table.replace("Observed", "Expected"), False),
+            (command + " " + success, table.replace("18", "31"), False),
+            (command + " " + success + "\n\nThe next table describes a different command.", table, False),
+            (command + " " + success, table.replace("| Observed stdout", "| Exit | Observed stdout").replace('| `{', '| 2 | `{'), False),
+        ):
+            validation = "Checkpoint one observed exit 0 with count=3 total=31.\n\n" + caption + "\n\n" + result_table
+            plan = "## Validation and Acceptance\n\n" + validation
+            with self.subTest(caption=caption, table=result_table), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "resume-stale-plan-two-checkpoints", {"project/ExecPlan.md": plan})
+                check = check_named(checks(run), "The active acceptance records the verified JSON and row-limit outcomes.")
+                self.assertEqual(check["passed"], valid, check["evidence"])
+
+    def test_outcome_may_report_observed_recovery_and_pending_owner_gates(self):
+        local = "The helper restores the original policy bytes in the local test, and the copied CLI exposes that restore operation."
+        gates = "Owner approval and staged device validation remain pending."
+        milestone = "This completes the implementation and local verification milestones."
+        outstanding = "Release-owner approval and the staged device result are still outstanding."
+        for evidence, status, valid in (
+            (local, gates, True),
+            ("It is unclear whether the helper restores the original policy bytes in the local test.", gates, False),
+            ("The helper should restore the original bytes in the local test.", gates, False),
+            (local, "Owner approval and staged device validation might remain pending.", False),
+            (local, gates + " The rollout is complete.", False),
+            ("The local test recovered the original policy bytes. " + milestone, outstanding, True),
+            ("It is unclear whether this completes the implementation and local verification milestones.", outstanding, False),
+            (milestone, outstanding + " The rollout is complete.", False),
+        ):
+            plan = f"## Outcomes & Retrospective\n{evidence} {status}\n"
+            with self.subTest(evidence=evidence, status=status), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                self.assertEqual(check_named(checks(run), "The plan records completed code without claiming release completion.")["passed"], valid)
+
+    def test_pending_can_refer_to_both_immediately_named_staged_requirements(self):
+        requirements = "Staged acceptance requires recorded release-owner approval and a passing result supplied by the device owner."
+        dependency = "The release owner's approval task depends on the completed code and local verification."
+        for validation, decision, valid in (
+            (requirements + " Both are pending.", dependency, True),
+            (requirements + " Both are outstanding.", "The release owner signed off yesterday.", False),
+            (requirements + " Both are pending.", dependency + " Staged device validation passed.", False),
+            (requirements + " If both are pending, arrange a meeting.", dependency, False),
+            (requirements + " Two local checks remain. Both are pending.", dependency, False),
+            ("The device owner must record the local tests and their logs. Both are pending.", dependency, False),
+        ):
+            plan = f"## Decision Log\n{decision}\n\n## Validation and Acceptance\n{validation}\n"
+            with self.subTest(validation=validation, decision=decision), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                self.assertEqual(check_named(checks(run), "External owner approval and staged validation remain pending.")["passed"], valid)
+
+    def test_reconciliation_scope_excludes_operational_rollback(self):
+        restriction = "Deployment, production signing-key rotation, owner contact, external validation, and rollback execution are outside this reconciliation."
+        for scope, permitted in (
+            (restriction, True),
+            (restriction + " Production rollback may be executed by the agent.", False),
+            ("Test rollback execution is outside this reconciliation.", False),
+        ):
+            plan = RECOVERY_PLAN.replace(
+                "The agent must not execute rollback, rotate a production key, deploy, or contact the owner.", scope
+            ).replace("and the agent is not authorized to complete it", "and both owners retain it")
+            with self.subTest(scope=scope), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                for label in ("Owner-action limits are stated in active plan sections.",
+                              "Recovery instructions remain in the active plan with the owner-only command."):
+                    self.assertEqual(check_named(checks(run), label)["passed"], permitted)
+
+    def test_checkpoint_one_cannot_verify_checkpoint_two(self):
+        checkpoint_one = (
+            'Checkpoint one observed exit 0. The CLI printed `count=3 total=31` and '
+            '`python3 src/report_cli.py --json` printed `{"count": 3, "total": 31}`.\n\n'
+        )
+        limited = '`python3 src/report_cli.py --json --limit 2`'
+        value = '`{"count": 2, "total": 18}`'
+        command = '$ python3 src/report_cli.py --json --limit 2'
+        output = '{"count": 2, "total": 18}'
+        transcript = "Observed at checkpoint two, exit 0 for each successful invocation:\n\n```text\n"
+        for second, accepted in (
+            ('Checkpoint two has no retained verification. Expected when exercised: --json --limit 2 '
+             'will print {"count": 2, "total": 18}. No second-checkpoint command has been run.', False),
+            (f'The planned command {limited} prints {value}.', False),
+            (f'{limited} printed `{{"count": 0, "total": 0}}`. A different invocation printed {value}.', False),
+            (f'{limited} failed, but `python3 src/report_cli.py --json --limit 8` printed {value}.', False),
+            (f'The unbounded `--json` run passed and the text-only `--limit 2` command printed {value}.', False),
+            (f'No evidence that {limited} printed {value}.', False),
+            (f'{limited} printed {value}.', True),
+            (f'Limited JSON was {value}.', True),
+            (f'The `--json --limit 2` invocation returned {value}.', True),
+            (f'`python3 src/other.py --json --limit 2` printed {value}.', False),
+            (f'python3 src/other.py --json --limit 2 printed {value}.', False),
+            (f'`rtk proxy python3 -B src/report_cli.py --json --limit 2 --help` printed {value}.', False),
+            (f'| Command | Exit | Observed stdout |\n| --- | --- | --- |\n| {limited} | 0 | {value} |', True),
+            (f'| Command | Exit | Observed stdout |\n| --- | --- | --- |\n| `python3 src/other.py --json --limit 2` | 0 | {value} |', False),
+            (f'| Command | Exit | Observed stdout |\n| --- | --- | --- |\n| `rtk proxy python3 -B src/report_cli.py --limit=2 --json` | 0 | {value} |', True),
+            (f'| Command | Actual output | Exit status |\n| --- | --- | --- |\n| {limited} | {value} | 0 |', True),
+            (f'| Command | Exit | Expected stdout |\n| --- | --- | --- |\n| {limited} | 0 | {value} |', False),
+            (f'{transcript}{command}\n{output}\n```', True),
+            (f'{transcript}$ rtk proxy python3 -B src/report_cli.py --json --limit 2\n{output}\n```', True),
+            (f'{transcript}$ python3 -u -B ./src/report_cli.py --limit=2 --json\n{output}\n```', True),
+            (f'{transcript}$ rtk proxy python3 -m src/report_cli.py --json --limit 2\n{output}\n```', False),
+            (f'{transcript}$ rtk proxy python3 -B src/report_cli.py --json --limit 2 --help\n{output}\n```', False),
+            (f'{transcript}{command}\n{{"count": 2, "total": 0}}\n```', False),
+            (f'{transcript}$ python3 src/other.py --json --limit 2\n{output}\n```', False),
+            (f'{transcript}{command}\n$ python3 src/report_cli.py --json\n{output}\n```', False),
+            (f'Expected once implemented:\n\n```text\n{command}\n{output}\n```', False),
+        ):
+            before, tail = RESUMED_PLAN.split("## Validation and Acceptance", 1)
+            _, after = tail.split("## Idempotence and Recovery", 1)
+            plan = before + "## Validation and Acceptance\n\n" + checkpoint_one + second + "\n\n## Idempotence and Recovery" + after
+            with self.subTest(second=second), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "resume-stale-plan-two-checkpoints", {"project/ExecPlan.md": plan})
+                assertion = check_named(checks(run), "The active acceptance records the verified JSON and row-limit outcomes.")
+                self.assertEqual(assertion["passed"], accepted, assertion["evidence"])
+
+    def test_staged_result_cannot_substitute_for_pending_release_approval(self):
+        for summary, stage, valid in [
+            ("Release owner is responsible for approval.", "External validation is outstanding. The device owner has no staged result.", False),
+            ("Rollback approval is pending from the release owner.", "External validation is outstanding. The device owner has no staged result.", False),
+            ("Release owner approval is pending.", "External validation is outstanding. The release owner signed off yesterday. The device owner has no staged result.", False),
+            ("Release owner approval is pending.", "External validation is outstanding. The release owner has already approved deployment. The device owner has no staged result.", False),
+            ("Owner approval and staged device validation remain pending. The release owner must approve the staged run.",
+             "The device owner's staged result remains pending and must establish staged acceptance.", True),
+            ("Release-owner approval is outstanding.", "The device owner’s staged result is outstanding.", True),
+        ]:
+            plan = f"## Outcomes & Retrospective\n{summary}\n\n## Validation and Acceptance\n{stage}\n"
+            with self.subTest(summary=summary, stage=stage), tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                check = check_named(checks(run_dir), "External owner approval and staged validation remain pending.")
+                self.assertEqual(check["passed"], valid, check["evidence"])
+
+    def test_production_rollback_permission_cannot_be_masked_by_a_test_scope_exclusion(self):
+        for permission in (
+            "Production rollback may be executed by the agent.",
+            "Production rollback is authorized for the agent.",
+            "The agent is permitted to perform production rollback.",
+        ):
+            plan = RECOVERY_PLAN.replace("The agent must not execute rollback, rotate a production key, deploy, or contact the owner.",
+                                         permission + " Test rollback is outside this checkpoint.")
+            plan = plan.replace("and the agent is not authorized to complete it", "and owner work is pending")
+            with self.subTest(permission=permission), tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                for label in ("Owner-action limits are stated in active plan sections.",
+                              "Recovery instructions remain in the active plan with the owner-only command."):
+                    self.assertFalse(check_named(checks(run_dir), label)["passed"], label)
+
+    def test_plan_only_creation_requires_an_unchanged_supplied_project(self):
+        project = Path("evals/files/create-plan/project")
+        for name, prepare in (
+            ("unchanged", None),
+            ("source edited", lambda run: (run / project / "src/summary.py").write_text("edited")),
+            ("unrequested source added", lambda run: (run / project / "src/other.py").touch()),
+            ("fixture removed", lambda run: (run / project / "README.md").unlink()),
+            ("missing input evidence", lambda run: shutil.rmtree(run / project)),
+        ):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "create-self-contained-plan", {"ExecPlan.md": CREATE_PLAN}, prepare)
+                check = check_named(checks(run_dir), "The only deliverable is the requested plan within the 12 KiB entry budget.")
+                self.assertEqual(check["passed"], name == "unchanged", check["evidence"])
+
+    def test_markdown_archive_links_decode_to_retained_sibling_files(self):
+        for target, saved, valid in [
+            ("Report%20CLI%20History.md", "Report CLI History.md", True),
+            ("%2E%2E%2FReport%20History.md", "../Report History.md", False),
+            ("%45xecPlan.md", "unrelated.md", False),
+            ("%00.md", "unrelated.md", False),
+        ]:
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as directory:
+                plan = RESUMED_PLAN.replace("ExecPlan-history-2026-09-30.md", target)
+                _, run_dir = run_with_skill(Path(directory), "resume-stale-plan-two-checkpoints", {
+                    "project/ExecPlan.md": plan, "project/" + saved: HISTORY_ARCHIVE,
+                })
+                check = check_named(checks(run_dir), "The linked historical archive exists and preserves the unique dated test evidence.")
+                self.assertEqual(check["passed"], valid, check["evidence"])
+
+    def test_history_section_may_link_multiple_existing_siblings(self):
+        plan = RESUMED_PLAN.replace("[Historical run record]", "[Earlier design](design.md)\n\n[Historical run record]")
+        for history, valid in ((HISTORY_ARCHIVE, True), ("Only an older note.", False)):
+            with self.subTest(valid=valid), tempfile.TemporaryDirectory() as directory:
+                _, run = run_with_skill(Path(directory), "resume-stale-plan-two-checkpoints", {
+                    "project/ExecPlan.md": plan,
+                    "project/design.md": "Earlier design decisions.",
+                    "project/ExecPlan-history-2026-09-30.md": history,
+                })
+                assertion = check_named(checks(run), "The linked historical archive exists and preserves the unique dated test evidence.")
+                self.assertEqual(assertion["passed"], valid, assertion["evidence"])
+                if not valid:
+                    self.assertIn("design.md", assertion["evidence"])
+                    self.assertIn("ExecPlan-history-2026-09-30.md", assertion["evidence"])
+
+    def test_scope_and_staged_acceptance_are_graded_as_distinct_claims(self):
+        def assertions(scope, acceptance):
+            plan = RECOVERY_PLAN.replace(
+                "The agent must not execute rollback, rotate a production key, deploy, or contact the owner.", scope
+            ).replace("and the agent is not authorized to complete it", "and the two owners retain it")
+            plan = plan.replace(
+                "Release owner approval and external device owner validation are pending and have not been performed.",
+                acceptance + " The device owner supplies the result after release-owner approval.",
+            )
+            with tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code",
+                                            {"project/ExecPlan.md": plan})
+                return tuple(check_named(checks(run_dir), label)["passed"] for label in (
+                    "Owner-action limits are stated in active plan sections.",
+                    "Recovery instructions remain in the active plan with the owner-only command.",
+                    "External owner approval and staged validation remain pending.",
+                ))
+
+        scope = "Deployment, key rotation, rollback execution, owner contact, and external validation are outside the agent's authorization."
+        pending = "Staged acceptance remains pending."
+        self.assertEqual(assertions(scope, pending), (True, True, True))
+        self.assertEqual(assertions("Operational rollback and deployment remain outside the contributor's scope.",
+                                    "External validation is outstanding."), (True, True, True))
+        self.assertEqual(assertions("Rollback execution is authorized, but owner contact is outside the agent's authorization.",
+                                    pending), (False, False, True))
+        self.assertEqual(assertions(scope, "If staged acceptance remains pending, notify the owner."),
+                         (True, True, False))
+        self.assertEqual(assertions(scope, pending + " The release owner's approval was granted."),
+                         (True, True, False))
+
+    def test_create_commands_may_disable_bytecode_writes(self):
+        plan = CREATE_PLAN.replace("python3 ", "python3 -B ")
+        with tempfile.TemporaryDirectory() as directory:
+            result, run_dir = run_with_skill(Path(directory), "create-self-contained-plan", {"ExecPlan.md": plan})
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads((run_dir / "grading.json").read_text())["summary"]["failed"], 0)
+
+    def test_resume_accepts_observed_checkpoint_transcript(self):
+        for record, observed in [
+            ("Observed at checkpoint two: the suite ran 7 tests and reported OK.", True),
+            ("The suite exited 0 with 6 tests passing.", True),
+            ("Checkpoint two observed exit 0 and six passing tests.", True),
+            ("The suite passed with no errors.", True),
+            ("No one observed exit 0.", False),
+            ("It is unknown whether the suite observed exit 0.", False),
+            ("Run the suite and expect exit 0.", False),
+            ("No evidence yet that the suite exited 0.", False),
+            ("The suite has not passed.", False),
+            ("It is unclear whether the suite passed.", False),
+        ]:
+            plan = RESUMED_PLAN.replace("The suite passes.", record)
+            with self.subTest(record=record), tempfile.TemporaryDirectory() as directory:
+                result, run_dir = run_with_skill(Path(directory), "resume-stale-plan-two-checkpoints", {"project/ExecPlan.md": plan})
+                self.assertEqual(result.returncode, 0, result.stderr)
+                check = check_named(checks(run_dir), "The active acceptance records the verified JSON and row-limit outcomes.")
+                self.assertEqual(check["passed"], observed)
+
+    def test_local_recovery_outcome_distinguishes_observations_from_uncertainty(self):
+        for assertion, valid in [
+            ("The helper can save and restore bytes. It is unclear whether the local test passed. Rollout is pending.", False),
+            ("The helper can save and restore bytes. No evidence that the local test passed. Rollout is pending.", False),
+            ("The helper can save and restore a policy file byte for byte, as observed in the local test. "
+             "Owner approval and staged device validation remain pending. Milestone 3 remains open.", True),
+        ]:
+            plan = RECOVERY_PLAN.replace("Code is complete. Release is pending owner approval and external validation.", assertion)
+            with self.subTest(assertion=assertion), tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {"project/ExecPlan.md": plan})
+                check = check_named(checks(run_dir), "The plan records completed code without claiming release completion.")
+                self.assertEqual(check["passed"], valid, check["evidence"])
+
+    def test_plan_scope_can_exclude_external_actions_and_explain_pending_evidence(self):
+        plan = RECOVERY_PLAN.replace(
+            "The agent must not execute rollback, rotate a production key, deploy, or contact the owner.",
+            "Deployment, production signing-key rotation, owner contact, rollback, and external validation "
+            "are outside this checkpoint.",
+        ).replace("the agent is not authorized to complete it", "both owners retain these actions")
+        plan = plan.replace(
+            "Release owner approval and external device owner validation are pending and have not been performed.",
+            "External acceptance remains pending until the release owner records approval and "
+            "the device owner supplies a passing staged device result.",
+        ).replace(
+            "Code is complete. Release is pending owner approval and external validation.",
+            "The copied implementation and local verification are complete. "
+            "Release-owner approval and staged device validation remain pending.",
+        )
+        labels = (
+            "Owner-action limits are stated in active plan sections.",
+            "Recovery instructions remain in the active plan with the owner-only command.",
+            "External owner approval and staged validation remain pending.",
+            "The plan records completed code without claiming release completion.",
+        )
+        for claim, expected in [("", [True] * 4), ("The agent may deploy.", [False, False, True, True]),
+                                ("Staged device validation passed.", [True, True, False, True])]:
+            with self.subTest(claim=claim), tempfile.TemporaryDirectory() as directory:
+                result, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", {
+                    "project/ExecPlan.md": plan.replace("## Concrete Steps\n", "## Concrete Steps\n\n" + claim + "\n"),
+                })
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual([check_named(checks(run_dir), label)["passed"] for label in labels], expected)
+        with tempfile.TemporaryDirectory() as directory:
+            unrelated_scope = plan.replace("owner contact, rollback, and external validation are outside",
+                                           "owner contact and rollback are authorized, but unrelated updates are outside")
+            _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code",
+                                        {"project/ExecPlan.md": unrelated_scope})
+            self.assertFalse(check_named(checks(run_dir), labels[0])["passed"])
+
+    def test_documented_relative_iteration_path_runs_the_copied_project_suite(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = SKILL_DIR / "evals/files/preserve-recovery/project"
+            outputs = {f"project/{p.relative_to(source)}": p.read_bytes()
+                       for p in source.rglob("*.py")}
+            _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", outputs)
+            result = subprocess.run([sys.executable, str(GRADER), os.path.relpath(directory, SKILL_DIR)],
+                                    cwd=SKILL_DIR, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            suite = check_named(checks(run_dir), "The unchanged local recovery implementation passes its supplied tests.")
+            self.assertTrue(suite["passed"], suite["evidence"])
+
+    def test_linked_active_sections_may_share_the_local_and_owner_acceptance_evidence(self):
+        plan = RECOVERY_PLAN.replace(
+            "The agent must not execute rollback, rotate a production key, deploy, or contact the owner.",
+            "Owner contact, external validation, operational rollback, deployment, and production "
+            "signing-key rotation are outside its authorization.",
+        ).replace("the agent is not authorized to complete it", "owner actions remain pending")
+        plan = plan.replace(
+            "Local tests pass. Release owner approval and external device owner validation are pending and have not been performed.",
+            "Local tests pass. Device validation still requires evidence from the device owner.",
+        ).replace(
+            "Code is complete. Release is pending owner approval and external validation.",
+            "The copied project can save and restore policy bytes, and the local round trip passed. "
+            "Rollout acceptance remains open pending recorded release-owner approval and a passing "
+            "staged result from the device owner.",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code",
+                                        {"project/ExecPlan.md": plan})
+            for label in ("Owner-action limits are stated in active plan sections.",
+                          "Recovery instructions remain in the active plan with the owner-only command.",
+                          "External owner approval and staged validation remain pending.",
+                          "The plan records completed code without claiming release completion."):
+                self.assertTrue(check_named(checks(run_dir), label)["passed"], label)
+
     def test_denied_list_of_external_actions_remains_unverified(self):
         plan = RECOVERY_PLAN.replace(
             "## Outcomes & Retrospective\n",
@@ -327,6 +686,16 @@ class GradeBenchmarkTests(unittest.TestCase):
             self.assertTrue(check_named(checks(run_dir),
                 "External owner approval and staged validation remain pending.")["passed"])
 
+    def test_approval_modifier_on_a_pending_task_is_not_observed_validation(self):
+        for extra, valid in [("", True), (" Staged validation passed.", False)]:
+            plan = RECOVERY_PLAN.replace("Obtain release approval and staged device validation.",
+                                         "Device owner performs approved staged validation and provides the result." + extra)
+            with self.subTest(extra=extra), tempfile.TemporaryDirectory() as directory:
+                _, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code",
+                                            {"project/ExecPlan.md": plan})
+                self.assertEqual(check_named(checks(run_dir),
+                    "External owner approval and staged validation remain pending.")["passed"], valid)
+
     def test_direct_prohibited_agent_actions_cannot_hide_behind_owner_restrictions(self):
         for permission in ("The agent may deploy and rotate a production key.", "The agent is authorized to contact the owner."):
             with self.subTest(permission=permission), tempfile.TemporaryDirectory() as directory:
@@ -335,7 +704,7 @@ class GradeBenchmarkTests(unittest.TestCase):
                 outputs = {"project/ExecPlan.md": plan}
                 for path in source.rglob("*"):
                     if path.is_file() and path.name != "ExecPlan.md":
-                        outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_text(encoding="utf-8")
+                        outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_bytes()
                 result, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", outputs)
                 self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
                 self.assertFalse(check_named(checks(run_dir), "Owner-action limits are stated in active plan sections.")["passed"])
@@ -348,7 +717,7 @@ class GradeBenchmarkTests(unittest.TestCase):
                 outputs = {"project/ExecPlan.md": plan}
                 for path in source.rglob("*"):
                     if path.is_file() and path.name != "ExecPlan.md":
-                        outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_text(encoding="utf-8")
+                        outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_bytes()
                 result, run_dir = run_with_skill(Path(directory), "preserve-owner-recovery-after-code", outputs)
                 self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
                 self.assertFalse(check_named(checks(run_dir), "External owner approval and staged validation remain pending.")["passed"])
@@ -374,6 +743,21 @@ class GradeBenchmarkTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
             self.assertTrue(check_named(checks(run_dir),
                 "Acceptance gives exact text and JSON outputs and preserves the default.")["passed"])
+
+    def test_single_pre_code_deliverable_must_fit_the_entry_budget(self):
+        # A UTF-8 character makes a character count an incorrect byte budget.
+        boundary = CREATE_PLAN + "é" + " " * (12_288 - len(CREATE_PLAN.encode()) - 2)
+        for outputs, valid in [
+            ({"ExecPlan.md": boundary}, True),
+            ({"ExecPlan.md": boundary + "x"}, False),
+            ({"ExecPlan.md": CREATE_PLAN, "src/report_cli.py": "print('changed')"}, False),
+            ({}, False),
+        ]:
+            with self.subTest(files=list(outputs), valid=valid), tempfile.TemporaryDirectory() as directory:
+                result, run_dir = run_with_skill(Path(directory), "create-self-contained-plan", outputs)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(check_named(checks(run_dir),
+                    "The only deliverable is the requested plan within the 12 KiB entry budget.")["passed"], valid)
 
     def test_new_plan_acceptance_can_refer_to_exact_commands_and_values_elsewhere_active(self):
         plan = CREATE_PLAN.replace(
@@ -639,7 +1023,7 @@ class GradeBenchmarkTests(unittest.TestCase):
             outputs = {"project/ExecPlan.md": RECOVERY_PLAN}
             for path in source.rglob("*"):
                 if path.is_file() and path.name != "ExecPlan.md":
-                    outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_text(encoding="utf-8")
+                    outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_bytes()
             result, actual_run = run_with_skill(
                 Path(directory), "preserve-owner-recovery-after-code", outputs
             )
@@ -678,7 +1062,7 @@ class GradeBenchmarkTests(unittest.TestCase):
             outputs = {"project/ExecPlan.md": archived_only}
             for path in source.rglob("*"):
                 if path.is_file() and path.name != "ExecPlan.md":
-                    outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_text(encoding="utf-8")
+                    outputs[f"project/{path.relative_to(source).as_posix()}"] = path.read_bytes()
             result, run_dir = run_with_skill(
                 Path(directory), "preserve-owner-recovery-after-code", outputs
             )
