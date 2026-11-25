@@ -1,0 +1,26 @@
+{
+  "skill_name": "council",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Plan a council to investigate duplicate receipts. For this dry run, give the dispatch plan only. The native child tool lists Sol and takes an effort argument. GitHub Copilot lists Claude Opus and Gemini Neon and supports high effort for both. All delegates can read the same incident log.",
+      "files": [],
+      "expected_output": "Three independent read-only sessions receive the same incident question and evidence.",
+      "assertions": ["Sol uses the native child tool at high.", "Opus and Neon each use a separate Copilot session with model and high effort explicitly selected."]
+    },
+    {
+      "id": 2,
+      "prompt": "Complete this council critique of a proposed switch from daily to hourly backups. All three selected models ran at high. Sol and Opus recommend hourly backups to meet the 2-hour recovery point target. Neon objects that queued jobs snapshot only when they start. The provided logs show a 4-hour queue stall. Give the decision.",
+      "files": [],
+      "expected_output": "Hourly scheduling alone cannot guarantee the target during the observed stall. Address the delay and verify actual recovery points.",
+      "assertions": ["The recommendation accounts for the observed four-hour stall.", "The answer credits the material minority objection."]
+    },
+    {
+      "id": 3,
+      "prompt": "Finish this council with the supplied session evidence. Sol and Claude Opus, both at high, independently favor option B. The Neon session returned option A but its metadata says it fell back to Gemini Pro. The only other Neon route supports low effort only. No additional routes exist.",
+      "files": [],
+      "expected_output": "An incomplete council with two attributable findings and an unavailable Neon-at-high seat.",
+      "assertions": ["The response identifies both the fallback and effort mismatch.", "Only Sol and Opus count as participating delegates."]
+    }
+  ]
+}

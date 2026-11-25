@@ -39,7 +39,7 @@ Keep wording that changes when the skill activates, what the agent does, or how 
    - Read [evaluation validation and evidence](references/validation.md) when writing scenarios or graders, running evaluations, or interpreting benchmarks.
    - For unsupported scenarios, use a maintained scenario harness that preserves the same isolation, session, and evidence requirements. Record the capability gap; preserve the scenario's actions and baseline conditions instead of adding turns, exposing a skill, or bypassing guards to fit the runner.
    - Use the target project's existing validation tools and maintained skill's acceptance scope. Resolve tooling from the available skill installation rather than assuming the author's checkout layout.
-   - Only when the caller passes `--minimize` as a standalone invocation argument, follow the [wording trials playbook](references/wording-minimization.md) to minimize in-scope prose.
+   - Only when the caller passes `--minimize` as a standalone invocation argument, run the [wording trials playbook](references/wording-minimization.md) through its stopping condition and verify the selected wording. Honor an earlier checkpoint explicitly requested by the caller.
 
 5. **Review the result**
    - Check that each runtime reference resolves within the bundle and has a distinct loading trigger.
