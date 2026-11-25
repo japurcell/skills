@@ -33,16 +33,16 @@ def decision(value):
 class RouterCliTests(unittest.TestCase):
     def test_effort_policy_is_selective_across_public_cli(self):
         cases = (
-            (("--work", "coding"), "gpt-6-luna", "Standard", "host_default", None),
+            (("--work", "coding"), "gpt-6.2-sol", "Standard", "host_default", None),
             (("--work", "bounded"), None, "Fast", "host_default", None),
             (("--work", "exploration"), None, "Fast", "host_default", None),
             (("--work", "standard"), None, "Standard", "host_default", None),
             (("--review", "mechanical"), None, "Fast", "host_default", None),
             (("--work", "coding", "--risk", "high_stakes"), None, "Premium", "host_default", None),
-            (("--work", "planning"), "gpt-6.1-sol", "Standard", "explicit", "medium"),
-            (("--work", "execplan"), "gpt-6.1-sol", "Standard", "explicit", "medium"),
-            (("--review", "substantive"), "gpt-6-luna", "Standard", "explicit", "high"),
-            (("--review", "security"), "gpt-6.1-terra", "Premium", "explicit", "high"),
+            (("--work", "planning"), "gpt-6.2-sol", "Standard", "explicit", "medium"),
+            (("--work", "execplan"), "gpt-6.2-sol", "Standard", "explicit", "medium"),
+            (("--review", "substantive"), "gpt-6.1-terra", "Standard", "explicit", "medium"),
+            (("--review", "security"), "gpt-6.2-sol", "Premium", "explicit", "high"),
             (("--work", "coding", "--effort", "high"), None, "Standard", "explicit", "high"),
         )
         for arguments, expected_model, expected_tier, policy, effort in cases:
@@ -64,6 +64,36 @@ class RouterCliTests(unittest.TestCase):
                     else:
                         self.assertIsNotNone(output["fallback"]["reasoning_effort"])
 
+    def test_bounded_defaults_rank_luna_then_haiku_then_mai(self):
+        cases = [
+            ([], "gpt-6-luna", "claude-haiku-5.5"),
+            (["--model", "mai-code-2-flash", "--model", "claude-haiku-5.5"],
+             "claude-haiku-5.5", "mai-code-2-flash"),
+        ]
+        for flags, primary, fallback in cases:
+            with self.subTest(flags=flags):
+                result = json.loads(run_cli("--work", "bounded", *flags).stdout)
+                self.assertEqual((result["model"], result["fallback"]["model"]), (primary, fallback))
+
+    def test_excluded_gemini_models_cannot_be_requested(self):
+        for model in ("gemini-4-argon", "gemini-4-hydrogen", "gemini-4-carbon"):
+            with self.subTest(model=model):
+                result = decision({"constraints": {"models": [model]}})
+                self.assertFalse(result["route_available"])
+                self.assertIsNone(result["model"])
+                self.assertEqual(result["fallback"], "none")
+
+    def test_costly_families_require_user_named_models(self):
+        task = {"work": "coding", "selected_tier": "Premium"}
+        result = decision({"task": task, "constraints": {"efforts": ["medium"]}})
+        for model in (result["model"], result["fallback"]["model"]):
+            self.assertNotIn("astra", model)
+            self.assertNotIn("fable", model)
+        for model in ("claude-fable-5.2", "gpt-6.2-astra"):
+            with self.subTest(model=model):
+                result = decision({"task": task, "constraints": {"models": [model]}})
+                self.assertEqual(result["model"], model)
+
     def test_no_match_keeps_no_route_distinct_from_effort_omission(self):
         result = run_cli("--work", "coding", "--model", "no-such-model")
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -83,46 +113,55 @@ class RouterCliTests(unittest.TestCase):
         self.assertIn("host_default", help_text)
         self.assertIn("argument in host_default mode", help_text)
 
-    def test_unspecified_usage_still_uses_copilot_rate_baseline(self):
+    def test_review_default_respects_escalation_without_usage(self):
         result = decision({"task": {"work": "standard", "review": "substantive",
                                     "prior_important_miss": True}})
         self.assertEqual((result["floor"], result["model"], result["reasoning_effort"]),
-                         ("Premium", "gpt-6.1-terra", "high"))
+                         ("Premium", "gpt-6.2-sol", "high"))
         self.assertIsNone(result["estimated_cost_usd"])
         self.assertFalse(result["cost_minimum_verified"])
 
     def test_equal_price_prefers_newer_model_in_same_family(self):
         result = decision({"task": {"risks": {"high_stakes": True}},
-                           "constraints": {"models": ["claude-opus-4.8", "claude-opus-5"]},
+                           "constraints": {"models": ["gpt-6.1-sol", "gpt-6.2-sol"]},
                            "usage": {"input_tokens": 1000, "output_tokens": 1000}})
-        self.assertEqual(result["model"], "claude-opus-5")
-        self.assertEqual(result["fallback"]["model"], "claude-opus-4.8")
+        self.assertEqual(result["model"], "gpt-6.2-sol")
+        self.assertEqual(result["fallback"]["model"], "gpt-6.1-sol")
 
     def test_minimal_planning_request_has_primary_and_alternative(self):
         result = decision({"task": {"work": "planning"}})
         self.assertTrue(result["route_available"])
         self.assertEqual((result["floor"], result["model"], result["reasoning_effort"]),
-                         ("Standard", "gpt-6.1-sol", "medium"))
-        self.assertEqual(result["fallback"]["model"], "gpt-6-sol")
+                         ("Standard", "gpt-6.2-sol", "medium"))
+        self.assertEqual(result["fallback"]["model"], "gpt-6.1-sol")
         self.assertFalse(result["availability_verified"])
         self.assertFalse(result["cost_minimum_verified"])
         self.assertIsNone(result["estimated_cost_usd"])
 
+    def test_tier_order_preserves_overlapping_task_preferences(self):
+        catalog = json.loads((SKILL / "reference" / "catalog.json").read_text())
+        for tier, rows in catalog["tiers"].items():
+            models = [row["model"] for row in rows]
+            for task in catalog["task_defaults"]:
+                with self.subTest(tier=tier, task=task["name"]):
+                    preferences = [task["starting"], *task["alternatives"]]
+                    shared = [pair["model"] for pair in preferences if pair["model"] in models]
+                    self.assertEqual(shared, sorted(shared, key=models.index))
+
     def test_planning_catalog_lists_requested_models_in_order(self):
         data = json.loads((SKILL / "reference" / "catalog.json").read_text())
         planning = next(item for item in data["task_defaults"] if item["name"] == "Planning")
-        self.assertEqual(planning["starting"], {"model": "gpt-6.1-sol", "effort": "medium"})
+        self.assertEqual(planning["starting"], {"model": "gpt-6.2-sol", "effort": "medium"})
         self.assertEqual(planning["alternatives"], [
+            {"model": "claude-opus-5.5", "effort": "high"},
+            {"model": "gpt-6.1-sol", "effort": "medium"},
             {"model": "gpt-6-sol", "effort": "medium"},
-            {"model": "claude-opus-5.5", "effort": "medium"},
-            {"model": "claude-fable-5.1", "effort": "medium"},
-            {"model": "gpt-6-astra", "effort": "medium"},
         ])
 
     def test_planning_respects_floor_and_explicit_constraints(self):
         premium = decision({"task": {"work": "planning", "risks": {"high_stakes": True}}})
         self.assertEqual((premium["floor"], premium["model"], premium["reasoning_effort"]),
-                         ("Premium", "gpt-6.1-sol", "high"))
+                         ("Premium", "gpt-6.2-sol", "high"))
         alternative = decision({"task": {"work": "execplan"},
                                 "constraints": {"models": ["gpt-6-sol"]}})
         self.assertEqual((alternative["model"], alternative["reasoning_effort"]),
@@ -141,7 +180,7 @@ class RouterCliTests(unittest.TestCase):
                          ("Standard", "Standard", "gpt-6.1-terra", "medium"))
         effort_only = decision({"task": {"work": "planning"},
                                 "constraints": {"efforts": ["medium"]}})
-        self.assertEqual(effort_only["model"], "gpt-6.1-sol")
+        self.assertEqual(effort_only["model"], "gpt-6.2-sol")
 
     def test_risk_review_and_escalation_floors(self):
         ordinary = decision({"task": {"review": "substantive"}})
@@ -204,7 +243,7 @@ class RouterCliTests(unittest.TestCase):
                    "usage": {"input_tokens": 80000, "output_tokens": 2000}}
         result = decision(request)
         self.assertEqual(result["model"], "claude-opus-5.5")
-        self.assertEqual(result["fallback"]["model"], "claude-fable-5.1")
+        self.assertEqual(result["fallback"]["model"], "gpt-6-astra")
         self.assertTrue(result["fallback_restrictions"])
 
     def test_promotion_expiry_boundaries(self):
@@ -214,14 +253,24 @@ class RouterCliTests(unittest.TestCase):
             path = skill / "reference" / "catalog.json"
             data = json.loads(path.read_text())
             route = skill / "scripts" / "route.py"
-            request = {"task": {"work": "standard"}, "constraints": {"models": ["gemini-4-argon"]},
+            request = {"task": {"work": "standard"}, "constraints": {"models": ["gemini-4-neon"]},
                        "usage": {"input_tokens": 1000, "output_tokens": 1000}}
-            data["rates"]["gemini-4-argon"][0]["condition"] = f"promotional before {date.today().isoformat()}"
+            data["rates"]["gemini-4-neon"][0]["condition"] = f"promotional before {date.today().isoformat()}"
             path.write_text(json.dumps(data))
             self.assertIsNone(json.loads(run_route(request, route).stdout)["estimated_cost_usd"])
-            data["rates"]["gemini-4-argon"][0]["condition"] = f"promotional through {date.today().isoformat()}"
+            data["rates"]["gemini-4-neon"][0]["condition"] = f"promotional through {date.today().isoformat()}"
             path.write_text(json.dumps(data))
             self.assertIsNotNone(json.loads(run_route(request, route).stdout)["estimated_cost_usd"])
+
+            data["rates"]["gemini-4-neon"].append({
+                "condition": "default", "input": 4, "cached_input": 0.2,
+                "cache_write": None, "output": 20,
+            })
+            path.write_text(json.dumps(data))
+            self.assertEqual(json.loads(run_route(request, route).stdout)["estimated_cost_usd"], 0.018)
+            data["rates"]["gemini-4-neon"][0]["condition"] = f"promotional before {date.today().isoformat()}"
+            path.write_text(json.dumps(data))
+            self.assertEqual(json.loads(run_route(request, route).stdout)["estimated_cost_usd"], 0.024)
 
     def test_catalog_drift_and_retired_candidate_fail_closed(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -287,7 +336,7 @@ class RouterCliTests(unittest.TestCase):
             request_path.write_text(json.dumps(request))
             result = run_cli("--input", str(request_path), script=skill / "scripts" / "route.py")
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(json.loads(result.stdout)["model"], "gpt-6.1-sol")
+            self.assertEqual(json.loads(result.stdout)["model"], "gpt-6.2-sol")
         missing = subprocess.run([sys.executable, str(ROUTE), "--input", "/missing/route.json"],
                                  text=True, capture_output=True)
         self.assertEqual(missing.returncode, 2)

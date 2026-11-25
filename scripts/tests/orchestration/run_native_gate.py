@@ -24,7 +24,8 @@ PROMPTS = {
 }
 TASK = ("Use the required project worker `check-total` to calculate 17 + 25 + 31. "
         "Keep the coordination record current. Return only the integer result.\n")
-ROUTER_REQUEST = {"task": {"work": "bounded"}}
+# Keep the calibrated primary/fallback pair stable across pricing refreshes.
+ROUTER_REQUEST = {"task": {"work": "bounded"}, "constraints": {"models": ["gpt-6-luna", "claude-haiku-5.5"]}}
 
 
 def sha256_bytes(data):

@@ -6,11 +6,11 @@
     "gpt-6-luna": "worker_completed"
   },
   "case03": {
-    "gpt-6-luna": "model_wide_rejection",
-    "gpt-5.6-luna": "worker_completed"
+    "gpt-6.2-sol": "model_wide_rejection",
+    "gpt-6.1-sol": "worker_completed"
   },
   "case04": {
-    "gpt-6.1-sol": "worker_completed"
+    "gpt-6.2-sol": "worker_completed"
   },
   "case05": {
     "gpt-6-luna": "worker_completed"
@@ -23,13 +23,13 @@
     "gpt-9-user-requested": "host_rejection"
   },
   "case09": {
-    "gpt-6.1-sol": "worker_completed"
+    "gpt-6.2-sol": "worker_completed"
   },
   "case10": {
-    "gpt-6.1-sol": "worker_completed"
+    "gpt-6.2-sol": "worker_completed"
   },
   "case11": {
-    "gpt-5.6-luna": "worker_completed"
+    "gpt-6.1-sol": "worker_completed"
   },
   "case12": {
     "gpt-6-luna": "worker_completed"
@@ -41,7 +41,7 @@
     "gpt-6-luna": "worker_completed"
   },
   "case15": {
-    "gpt-6.1-sol": "worker_completed"
+    "gpt-6.2-sol": "worker_completed"
   },
   "case16": {
     "gpt-6-luna": "worker_completed"

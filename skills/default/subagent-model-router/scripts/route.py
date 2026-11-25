@@ -7,6 +7,7 @@ import json
 import argparse
 import math
 from datetime import date
+from fnmatch import fnmatchcase
 import re
 import sys
 from pathlib import Path
@@ -94,7 +95,7 @@ def _validate_request(request):
         raise RouteError("usage.cache_reuse_confirmed must be a boolean")
 
 
-def load_catalog():
+def load_catalog(requested_models):
     try:
         catalog = json.loads(DATA.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
@@ -110,6 +111,13 @@ def load_catalog():
     tier_data = catalog.get("tiers")
     if not isinstance(tier_data, dict) or set(tier_data) != set(TIERS):
         raise RouteError(f"{DATA.name}: tiers must contain Fast, Standard, and Premium")
+    policy = catalog.get("routing_policy")
+    if not isinstance(policy, dict) or any(
+        not isinstance(policy.get(key), list) or
+        not all(isinstance(pattern, str) and pattern for pattern in policy[key])
+        for key in ("never_route", "explicit_only")
+    ):
+        raise RouteError(f"{DATA.name}: invalid routing_policy")
     candidates = []
     for tier in TIERS:
         rows = tier_data[tier]
@@ -150,6 +158,11 @@ def load_catalog():
                 raise RouteError(f"{DATA.name}: invalid effort_spec for {row['model']!r}")
             floor_effort = spec.rstrip("+")
             efforts = list(EFFORT_ORDER[EFFORT_ORDER.index(floor_effort):]) if spec.endswith("+") else [spec]
+            model = row["model"]
+            if any(fnmatchcase(model, pattern) for pattern in policy["never_route"]):
+                continue
+            if model not in requested_models and any(fnmatchcase(model, pattern) for pattern in policy["explicit_only"]):
+                continue
             candidates.append({**row, "tier": tier, "efforts": efforts,
                                "catalog_order": len(candidates)})
 
@@ -199,12 +212,11 @@ def _applicable_rate(rows, input_tokens):
                 return row
             if operator == ">" and input_tokens > limit:
                 return row
-    default = next((row for row in rows if row["condition"] == "default"), None)
-    if default:
-        return default
     today = date.today().isoformat()
-    return next((row for row in rows if row["expires"] and
-                 (today < row["expires"] or row["expiry_inclusive"] and today == row["expires"])), None)
+    for row in rows:
+        if row["expires"] and (today < row["expires"] or row["expiry_inclusive"] and today == row["expires"]):
+            return row
+    return next((row for row in rows if row["condition"] == "default"), None)
 
 
 def _floor(task):
@@ -265,19 +277,19 @@ def _cost(candidate, rates, usage):
     return round(total, 10), []
 
 
-def _planning_pairs(defaults):
-    matching = [item for item in defaults if isinstance(item, dict) and item.get("name") == "Planning"]
+def _default_pairs(defaults, name):
+    matching = [item for item in defaults if isinstance(item, dict) and item.get("name") == name]
     if len(matching) != 1 or not isinstance(matching[0].get("alternatives"), list):
-        raise RouteError(f"{DATA.name}: exactly one valid Planning default is required")
+        raise RouteError(f"{DATA.name}: exactly one valid {name} default is required")
     pairs = [matching[0].get("starting"), *matching[0]["alternatives"]]
     if any(not isinstance(pair, dict) or set(pair) != {"model", "effort"} or
            not isinstance(pair["model"], str) or pair["effort"] not in EFFORT_ORDER for pair in pairs):
-        raise RouteError(f"{DATA.name}: invalid Planning configuration")
+        raise RouteError(f"{DATA.name}: invalid {name} configuration")
     return [(pair["model"], pair["effort"]) for pair in pairs]
 
 
-def _rank_candidates(selected, rates, planning):
-    order = {model: index for index, (model, _) in enumerate(planning or [])}
+def _rank_candidates(selected, rates, preferences, prefer_defaults):
+    order = {model: index for index, (model, _) in enumerate(preferences)}
     def baseline(item):
         row = _applicable_rate(rates.get(item["model"], []), 0)
         if row is None or row["input"] is None or row["output"] is None:
@@ -289,7 +301,7 @@ def _rank_candidates(selected, rates, planning):
         item["estimated_cost_usd"] if item["estimated_cost_usd"] is not None else baseline(item),
         order.get(item["model"], len(order)), bool(item["eligibility"]), item["catalog_order"], item["effort"],
     ))
-    if not planning:
+    if not prefer_defaults:
         family = re.fullmatch(r"(.*?)(\d+(?:\.\d+)?)(.*)", selected[0]["model"])
         if family:
             def comparable(item):
@@ -302,13 +314,12 @@ def _rank_candidates(selected, rates, planning):
                          re.fullmatch(r"(.*?)(\d+(?:\.\d+)?)(.*)", item["model"]).group(2).split(".")))
             selected.remove(newest)
             selected.insert(0, newest)
-    if planning:
-        starting = next((item for item in selected if (item["model"], item["effort"]) == planning[0]), None)
-        if starting is None:
-            starting = next((item for item in selected if item["model"] == planning[0][0]), None)
-        if starting is not None:
-            selected.remove(starting)
-            selected.insert(0, starting)
+    else:
+        efforts = dict(preferences)
+        selected.sort(key=lambda item: (
+            order.get(item["model"], len(order)),
+            item["effort"] != efforts.get(item["model"]),
+        ))
 
 
 def route(request):
@@ -330,10 +341,8 @@ def route(request):
                        task.get("review") in ("substantive", "security") or
                        "efforts" in constraints)
     effort_policy = "explicit" if effort_required else "host_default"
-    candidates, rates, defaults = load_catalog()
-    planning = None
-    if work in ("planning", "execplan"):
-        planning = _planning_pairs(defaults)
+    candidates, rates, defaults = load_catalog(constraints.get("models", []))
+    planning = work in ("planning", "execplan")
     eligible = []
     for candidate in candidates:
         for effort in candidate["efforts"]:
@@ -346,8 +355,9 @@ def route(request):
             item = {**candidate, "effort": effort}
             item["estimated_cost_usd"], item["cost_unknowns"] = _cost(item, rates, usage)
             eligible.append(item)
-    if planning is not None and "models" not in constraints:
-        eligible = [item for item in eligible if item["model"] in {model for model, _ in planning}]
+    if planning and "models" not in constraints:
+        models = {model for model, _ in _default_pairs(defaults, "Planning")}
+        eligible = [item for item in eligible if item["model"] in models]
     tier = next((name for name in TIERS[TIER_RANK[start]:] if any(item["tier"] == name for item in eligible)), None)
     if tier is None:
         return {"route_available": False, "availability_verified": False, "floor": floor,
@@ -356,16 +366,28 @@ def route(request):
                 "reason": reason + "; no catalog configuration meets the floor and constraints",
                 "fallback": "none", "estimated_cost_usd": None, "cost_minimum_verified": False}
     selected = [item for item in eligible if item["tier"] == tier]
-    _rank_candidates(selected, rates, planning)
+    if planning:
+        name = "Planning"
+    elif tier == "Fast":
+        name = "Bounded work"
+    elif task.get("review"):
+        name = "Budget review" if tier == "Standard" else "Demanding review"
+    else:
+        name = "General work" if tier == "Standard" else "Demanding autonomous work"
+    preferences = _default_pairs(defaults, name)
+    prefer_defaults = "models" not in constraints or not all(
+        usage.get(key) is not None for key in ("input_tokens", "output_tokens")
+    )
+    _rank_candidates(selected, rates, preferences, prefer_defaults)
     chosen = selected[0]
     alternative = next((item for item in selected[1:]
                         if effort_policy == "explicit" or item["model"] != chosen["model"]), None)
     reason += "; provisional catalog fit; live availability is not verified"
-    if planning and chosen["model"] == planning[0][0]:
-        reason += "; Planning starting model is preferred"
+    if prefer_defaults and chosen["model"] in dict(preferences):
+        reason += f"; {name} catalog order is preferred"
     reason += "; GitHub Copilot token estimates exclude retries, verification, and other overhead"
     if chosen["estimated_cost_usd"] is None:
-        reason += "; token estimates or applicable rates are incomplete; ranking uses equal uncached input and output unit rates at ordinary context"
+        reason += "; token estimates or applicable rates are incomplete; price comparisons use equal uncached input and output unit rates at ordinary context"
     if TIER_RANK[tier] > TIER_RANK[floor]:
         reason += f"; selected {tier} from requested tier {start}; task floor remains {floor}"
     fallback = ({"model": alternative["model"],
@@ -393,6 +415,8 @@ def main():
             "  task.risks and task.failure: all supported flags default false.\n"
             "  task.prior_important_miss: false. Model/effort constraints are unrestricted\n"
             "  when omitted, except Planning uses its catalog pool unless models are given.\n"
+            "  Gemini Argon, Hydrogen and Carbon are excluded. Claude Fable and GPT Astra\n"
+            "  require their exact model ID in the user model constraints.\n"
             "  Missing input/output token counts make cost unknown. Omitted cache token\n"
             "  counts are zero; cache reuse confirmation defaults false.\n"
             "\n"
@@ -431,9 +455,10 @@ def main():
             "  execplan, substantive/security review, or a user effort constraint; otherwise\n"
             "  it is host_default and reasoning_effort is null. The caller omits the effort\n"
             "  argument in host_default mode. Host-default capability is unverified.\n"
-            "  Live availability is not verified, and\n"
+            "  Task defaults rank eligible models unless an allowlist and input/output\n"
+            "  estimates request price comparison. Live availability is not verified, and\n"
             "  estimated cost is not a verified minimum. If token estimates or rates\n"
-            "  are incomplete, ranking assumes equal uncached input/output unit rates\n"
+            "  are incomplete, price comparisons assume equal uncached input/output unit rates\n"
             "  at ordinary context. GitHub Copilot estimates exclude retries, verification,\n"
             "  and other overhead. The caller checks the returned model and\n"
             "  checks the required model control and, for explicit policy, the exact effort\n"

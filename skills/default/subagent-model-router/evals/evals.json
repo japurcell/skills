@@ -5,10 +5,10 @@
       "id": 1,
       "eval_name": "minimal-planning-route",
       "prompt": "Route a low-risk planning task. Use the bundled CLI and snapshot; do not ask for a billing platform, model inventory, or token estimates. Return the unchanged CLI result.",
-      "expected_output": "The minimal planning request yields a Standard catalog route of gpt-6.1-sol at medium with gpt-6-sol at medium as fallback. Actual completion cost is unverified.",
+      "expected_output": "The minimal planning request yields a Standard catalog route of gpt-6.2-sol at medium with gpt-6.1-sol at medium as fallback. Actual completion cost is unverified.",
       "expectations": [
         "Runs the CLI with a minimal planning task and no billing or runtime inventory fields.",
-        "Returns gpt-6.1-sol and medium at Standard and a gpt-6-sol medium fallback.",
+        "Returns gpt-6.2-sol and medium at Standard and a gpt-6.1-sol medium fallback.",
         "Does not claim a verified actual minimum cost.",
         "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
@@ -93,7 +93,7 @@
       "id": 8,
       "eval_name": "substantive-plan-update-coordination",
       "prompt": "Select a model for an agent coordinating updates to an existing plan whose original author used Premium gpt-6.1-sol at high. Two workers disagree about which acceptance criteria are complete. The coordinator must read their test evidence, reconcile the conflicting reports, and update the plan's status and evidence links. It must preserve the agreed scope, architecture, dependencies, and sequencing. This requires ordinary judgment, with no security sensitivity or unusually difficult reasoning. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
-      "expected_output": "Classifies the reconciliation as standard, selects Standard gpt-6-luna with host_default and null reasoning_effort. It neither reduces substantive judgment to Fast nor applies the planning pool or inherits the author's Premium route.",
+      "expected_output": "Classifies the reconciliation as standard, selects Standard gpt-6.2-sol with host_default and null reasoning_effort. It neither reduces substantive judgment to Fast nor applies the planning pool or inherits the author's Premium route.",
       "expectations": [
         "Runs the CLI with task.work standard for substantive reconciliation without redesigning the plan.",
         "Does not inherit the author's selected_tier or model/effort constraints.",
@@ -106,13 +106,13 @@
       "id": 9,
       "eval_name": "existing-plan-substantive-redesign",
       "prompt": "Select a model for an agent described as the coordinator of updates to an existing plan. A new constraint invalidates the agreed service boundaries and creates a dependency cycle. This agent must choose a new decomposition, revise scope, and design a viable migration sequence. Resolving the competing constraints is unusually difficult. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
-      "expected_output": "Uses planning or execplan with unusually_difficult risk and returns Premium gpt-6.1-sol at high with explicit effort. The coordinator title and existing artifact do not change the classification.",
+      "expected_output": "Uses planning or execplan with unusually_difficult risk and returns Premium gpt-6.2-sol at high with explicit effort. The coordinator title and existing artifact do not change the classification.",
       "expectations": [
         "Runs the CLI with task.work planning or execplan because the task owns material planning decisions.",
         "Sets unusually_difficult risk from this agent's assigned reasoning, preserving the Premium floor.",
         "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
         "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
-        "Returns Premium gpt-6.1-sol at high with explicit effort."
+        "Returns Premium gpt-6.2-sol at high with explicit effort."
       ],
       "files": []
     },
@@ -120,10 +120,10 @@
       "id": 10,
       "eval_name": "new-plan-substantive-design",
       "prompt": "Select a model for an agent creating a plan for a migration across three coupled subsystems. The agent must choose service boundaries, settle scope, identify dependencies, and design the rollout order. The competing compatibility and availability constraints make the reasoning unusually difficult. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
-      "expected_output": "Uses planning or execplan with unusually_difficult risk, preserving Premium gpt-6.1-sol at high for difficult plan creation. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
+      "expected_output": "Uses planning or execplan with unusually_difficult risk, preserving Premium gpt-6.2-sol at high for difficult plan creation. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
       "expectations": [
         "Runs the CLI with task.work planning or execplan for new substantive plan creation.",
-        "Sets unusually_difficult risk and returns Premium gpt-6.1-sol at high.",
+        "Sets unusually_difficult risk and returns Premium gpt-6.2-sol at high.",
         "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
         "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller."
       ],
@@ -133,13 +133,13 @@
       "id": 11,
       "eval_name": "security-sensitive-plan-coordination",
       "prompt": "Select a model for an agent coordinating evidence updates to an existing rollout plan. The scope, architecture, dependencies, and sequencing are settled. The coordinator must adjudicate conflicting authentication-bypass review findings and decide whether the security acceptance criterion is satisfied before rollout. This agent owns that security-sensitive judgment, not only the transcription of an approved decision. No model or effort constraint applies. Use the bundled CLI and return the request and unchanged CLI result without dispatching.",
-      "expected_output": "Classifies the task as substantive coordination/security review, not planning merely because it updates a plan. Records security sensitivity or a security review, preserves a Premium floor, and selects gpt-6.1-terra at high from the ordinary pool. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
+      "expected_output": "Classifies the task as substantive coordination/security review, not planning merely because it updates a plan. Records security sensitivity or a security review, preserves a Premium floor, and selects gpt-6.2-sol at high from the ordinary pool. Effort is explicit only for material planning or architecture, substantive or security review, or an explicit user effort constraint; elevated risk alone does not require effort.",
       "expectations": [
         "Uses standard or review work with task.review security or task.risks.security_sensitive true, rather than planning or execplan.",
         "Preserves Premium for the coordinator's own security-sensitive responsibility instead of treating all coordination as Fast or Standard.",
         "Applies task-based effort policy: risk escalation alone never requires effort, while material planning/review or explicit user effort does.",
         "Runs the bundled CLI and returns its JSON unchanged, leaving dispatch validation to the caller.",
-        "Classifies the assigned security review with task.review security and returns Premium gpt-6.1-terra at high with explicit effort."
+        "Classifies the assigned security review with task.review security and returns Premium gpt-6.2-sol at high with explicit effort."
       ],
       "files": []
     },
@@ -176,6 +176,60 @@
         "Preserves the unavailable catalog result without inserting the user model into CLI output.",
         "Returns host_default for coding and explicit for planning.",
         "Leaves host overrides and dispatch validation to the caller."
+      ]
+    },
+    {
+      "id": 15,
+      "eval_name": "bounded-and-cross-file-investigation",
+      "prompt": "The release coordinator wants two assignments routed. First locate the single documented retry interval in the provided settings file and confirm its value. Second trace retries across the worker, queue and coordinator to reconcile contradictory traces. Their previous coordinator used Premium. Return the requests and unchanged routes for each.",
+      "expected_output": "Uses exploration for the settings lookup and standard for cross-file reconciliation. Returns both CLI results with host-default effort.",
+      "expectations": [
+        "Runs the CLI separately with exploration and standard work, respectively.",
+        "Uses the new responsibilities to set the tiers without inheriting Premium or escalating risk from cross-file scope alone.",
+        "Returns both unchanged CLI results."
+      ]
+    },
+    {
+      "id": 16,
+      "eval_name": "debugging-with-environmental-failures",
+      "prompt": "Route the release engineer's task of debugging an ordinary unit test failure. The previous attempt failed because a dependency could not be installed and the host denied access to a model. No model or effort was requested. Return the invocation and unchanged result.",
+      "expected_output": "Uses coding for ordinary debugging and retains host-default effort. The environment failures do not diagnose a model capability gap.",
+      "expectations": [
+        "Invokes the CLI with coding work.",
+        "Supplies no capability failure, model constraint or effort constraint based on the unavailable dependency or denied access.",
+        "Returns the unchanged CLI result."
+      ]
+    },
+    {
+      "id": 17,
+      "eval_name": "frozen-catalog-maintenance",
+      "prompt": "Using the frozen snapshot only, give the evidence needed before restoring a retired model with a price row. Report the November 16 retirements and annual-plan exception, the October 2, October 19 and May 1 exclusions, Qwen status, the Argon routing exclusion, provisional Terra and Flash configurations, cache and billing checks, and how to record the refresh. Do not browse or edit.",
+      "expected_output": "Uses the frozen catalog and historical exclusions to explain availability, provisional dispatch configurations and refresh checks.",
+      "expectations": [
+        "Distinguishes supported-model eligibility and runtime verification from price rows.",
+        "Preserves dated retirement groups, Qwen status, the Argon routing exclusion, and both provisional model configurations.",
+        "Covers cache freshness, charges, thresholds, promotions, units, legacy multipliers, snapshot dates and provenance."
+      ]
+    },
+    {
+      "id": 18,
+      "eval_name": "review-judgment-and-risk",
+      "prompt": "Classify these independent review assignments and return the router requests and actual JSON for each: (1) verifying a nonsemantic whitespace-only change across 200 files, (2) assessing a test guard that can falsely report success due to cache consistency, (3) assessing changed authorization checks at a trust boundary after a materially similar important review miss. State the risks supported by each description.",
+      "expected_output": "Runs the CLI for mechanical, substantive/high_stakes and security/security_sensitive reviews. Records the prior relevant miss.",
+      "expectations": [
+        "Assigns no risk from file count alone.",
+        "Uses high_stakes for the false-pass and cache-consistency risk and security_sensitive for the authorization change.",
+        "Returns each request and unchanged result."
+      ]
+    },
+    {
+      "id": 19,
+      "eval_name": "excluded-and-explicit-only-models",
+      "prompt": "Run four independent coding routes. First select a Premium worker without a model constraint. Then route each of my exact model requests separately: gemini-4-argon, claude-fable-5.2, and gpt-6.2-astra. Return each CLI result verbatim without dispatching.",
+      "expected_output": "Premium coding defaults to GPT-6.2 Sol with GPT-6.1 Sol as fallback. Argon has no route. Each named Fable or Astra request returns that model.",
+      "expectations": [
+        "Leaves the first request unconstrained by model and returns neither Fable nor Astra as primary or fallback.",
+        "Preserves the unavailable Argon result and returns the explicitly named Fable and Astra models for their respective requests."
       ]
     }
   ]

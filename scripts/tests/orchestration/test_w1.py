@@ -50,7 +50,9 @@ class W1BoundaryTests(unittest.TestCase):
     def test_actor_visible_inputs_hide_simulator_outcomes(self) -> None:
         cases = json.loads(self.command("case38", "list").stdout)
         self.assertNotIn("simulator", json.dumps(cases))
-        self.assertNotIn("gpt-5.6-luna", json.dumps(cases))
+        fallback = next(model for model, outcome in json.loads(OUTCOMES.read_text())["case03"].items()
+                        if outcome == "worker_completed")
+        self.assertNotIn(fallback, json.dumps(cases))
         controls = json.loads(self.command("host38", "case03").stdout)
         self.assertNotIn("dispatch_outcomes", controls)
         self.assertNotIn("allowed_models", controls)
