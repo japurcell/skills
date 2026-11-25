@@ -14,8 +14,8 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 - For each assignment, including reuse, activate the `subagent-model-router` skill. Route once per assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Append actual arguments and the returned worker ID or blocker. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
-- After the coordinator acknowledges readiness, start one implementer. Assign one task per implementer. For each ready task, reuse an eligible idle implementer or start another when capacity allows.
-- Brief each implementer with its task, base revision, acceptance checks and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.
+- After the coordinator acknowledges readiness, start one implementer. Assign one task per implementer. For each ready task in the active milestone, reuse an eligible idle implementer or start another when capacity allows.
+- Brief each implementer with its task, base revision, write scope, assigned acceptance checks, and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.
 - Delegate integration to one persistent **integration coordinator** subagent in background mode. Before relying on it, obtain its agent ID, send a bounded follow-up readiness request, and observe its acknowledgment. Record the verified follow-up handle. A launch response alone does not prove follow-up delivery.
 - Reuse the **integration coordinator** across merge waves, progress updates, and final checks. Give it bounded assignments; leave it idle between waves instead of assigning an indefinite wait. It should handle deterministic commits and status checks directly when safe.
 
@@ -35,7 +35,7 @@ Native observations are not latency guarantees: in one Codex standalone inverse 
 
 ## Steps
 
-1. Activate the `exec-plans` skill and identify the next authorized action from the entry file. If the graph spans files, consult only the linked index sections needed to schedule affected tasks. Open implementation detail only for selected work and its explicit prerequisites. Apply the skill's size check at each checkpoint.
+1. Activate the `exec-plans` skill and identify the next authorized action and active milestone from the entry file. If the graph spans files, consult only the linked index sections needed to schedule affected tasks. Open implementation detail only for selected work and its explicit prerequisites. Apply the skill's size check at each checkpoint.
 
 2. (optional) Use an **exploration subagent** to conduct any exploration required by the tasks - relevant codebase files or external documentation. Brief it with the needed context, acceptance criteria, and known negative cases, using context pointers where those facts are already available. Ensure the exploration subagent can save files - it should save its markdown notes in a directory next to the plan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
 
@@ -45,13 +45,13 @@ Native observations are not latency guarantees: in one Codex standalone inverse 
    - confirms its worktree is based on the integration branch before starting, and resets onto it if not;
    - merges the integration branch tip into its own branch before reporting done
 
-5. Each implementer records results, evidence and blockers in its assigned file when the plan is split. Send the tested base and task revisions, checks and interface changes to the coordinator for integration. For a single-file plan, the coordinator reconciles the required sections and records the integration revision, verification results and unresolved dependencies in the checkpoint. For a split plan, it reports that evidence to the parent, who reconciles the milestone and shared entry together at the checkpoint. A replacement coordinator resumes from the checkpoint and the links for its assignment.
+5. Implementers run their assigned acceptance checks and stop after reporting the base and tested task revisions, commands, relevant environment, outcomes, evidence links, interface changes, and blockers to the coordinator. Record results in the assigned file when the plan is split. The coordinator owns integration-wide checks. For a single-file plan, the coordinator reconciles the required sections and records the integration revision, verification results and unresolved dependencies in the checkpoint. For a split plan, it reports that evidence to the parent, who reconciles the milestone and shared entry together at the checkpoint. A replacement coordinator resumes from the checkpoint and the links for its assignment.
 
-6. Recompute the **frontier** after each merge. Start ready tasks that unblock dependent work first. If completed branches are accumulating faster than integration or CI can verify them, slow new starts until verification catches up.
+6. Default to one active milestone. Recompute the **frontier** after each merge. Within the active milestone, prioritize ready tasks that unblock dependent work, and dispatch in parallel only when write scopes do not overlap. If completed branches are accumulating faster than integration or CI can verify them, slow new starts until verification catches up. Before opening the next milestone, checkpoint the integrated revision, verification results, and blockers. Continue within the user's authorization when dependencies permit; a fully authorized plan needs no new approval at each checkpoint.
 
 7. Once all tickets are complete, follow the [code review fix cycle](#code-review-fix-cycle).
 
-8. Before closing the plan, verify all tasks and milestones are resolved. Record the integration branch and exact revision with the build and test commands required by the plan and repository, their outcomes, and evidence. Report local verification separately from CI. A local handoff may report CI pending or unavailable; leave any milestone that requires CI open until the matching revision passes.
+8. Before closing the plan, verify all tasks and milestones are resolved. For each required check, reuse passing evidence only when the exact revision, command, and relevant environment match. Ensure missing checks run on the final integrated revision in the required environment. Record the integration branch and exact revision with the build and test commands required by the plan and repository, their outcomes, and evidence. Report local verification separately from CI. A local handoff may report CI pending or unavailable; leave any milestone that requires CI open until the matching revision passes.
 
 9. Clean up all **implementer subagent** worktrees and their related branches.
 
