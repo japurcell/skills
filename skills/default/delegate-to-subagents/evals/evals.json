@@ -1,0 +1,17 @@
+{
+  "skill_name": "delegate-to-subagents",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "reused-worker-result-delivery",
+      "prompt": "Dry-run independent host scenarios. Copilot worker A returned turn 0, already verified and recorded. You reuse A. Its blocking wait expires with no turns 7 seconds before its deadline. The next bounded wait returns complete turn 1. At the deadline worker B, never read, needs a status read. State the call arguments and cursor before and after each read. How would you consume the same result through Codex, Claude Code background mode, and a Gemini CLI exposing only a synchronous named subagent tool? Identify any missing background capability. Do not invoke tools or dispatch.",
+      "expected_output": "Both waits for A request since_turn=1. Keep 1 on timeout, advance to 2 after recording turn 1. B starts at 0. Use each host's native delivery and identify the synchronous host's background limitation.",
+      "files": [],
+      "assertions": [
+        "Both blocking waits for A include its agent ID, wait=true, since_turn=1 and a timeout capped by remaining time (at most 7 seconds on the second wait).",
+        "Record turn 1 once before advancing to 2. The due read for B uses since_turn=0.",
+        "Use Codex completion messages or a bounded wait_agent, Claude Code background completion, and Gemini CLI's named tool result. Recognize synchronous-only delivery cannot enforce this background workflow."
+      ]
+    }
+  ]
+}

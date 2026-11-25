@@ -8,7 +8,7 @@ compatibility: Requires an agent environment with subagent dispatch.
 
 Dispatch a subagent, and instruct it to adversarially review your work.
 
-Prefer using a model from a different family when available. For example, if the work was done by a OpenAI GPT model, use an Anthropic model for the review.
+Follow the caller's model route. When the caller leaves model selection to you, prefer an eligible reviewer from a different model family than the author.
 
 The subagent should:
 

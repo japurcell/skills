@@ -82,6 +82,12 @@ def grade(eid: int, r_dir: Path) -> list[dict]:
             expectation("The decision sets 'should_review' to false.", d.get("should_review") is False, txt),
             expectation("The reason explains that the change is trivial or non-functional.", any(x in reason for x in ["trivial", "typo", "doc", "comment", "receive"]), txt),
         ]
+    if eid == 3:
+        txt, selections = load_out(r_dir, "models.json")
+        return [
+            expectation(f"{host} selects {model}.", isinstance(selections, dict) and selections.get(host) == model, txt)
+            for host, model in (("routed", "GPT-B"), ("open", "Claude-C"), ("restricted", "GPT-B"))
+        ]
     return [expectation(f"Unknown eval id {eid}.", False, f"Unsupported: {eid}")]
 
 def main() -> int:

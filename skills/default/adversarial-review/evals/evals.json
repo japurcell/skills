@@ -46,6 +46,18 @@
         "should_review is false",
         "reason notes trivial typo/docs change"
       ]
+    },
+    {
+      "id": 3,
+      "eval_name": "caller-route-and-family-preference",
+      "prompt": "Plan reviewer model selection only. The author used GPT-A. Compare three independent hosts. Routed host: the caller's route selected GPT-B, and both GPT-B and Claude-C are eligible. Open host: both are eligible and the caller leaves model selection to you. Restricted host: selection is yours but only GPT-B is eligible. Return outputs/models.json as an object with string fields routed, open, and restricted containing exact model IDs. Do not dispatch.",
+      "expected_output": "The three selections are GPT-B, Claude-C and GPT-B respectively.",
+      "files": [],
+      "assertions": [
+        "Honor the routed model.",
+        "Prefer the other eligible family when selection is delegated.",
+        "Use the sole eligible same-family reviewer."
+      ]
     }
   ]
 }

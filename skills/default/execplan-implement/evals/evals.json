@@ -202,6 +202,42 @@
         "Distinguishes live model unavailability from a control permission failure and follows router fallback rules.",
         "Uses host_default with omitted effort for routine implementation and explicit effort for material planning when the user requests it."
       ]
+    },
+    {
+      "id": 16,
+      "eval_name": "reused-worker-result-delivery",
+      "prompt": "Dry-run independent host scenarios. Copilot worker A returned turn 0, already verified and recorded. You reuse A. Its blocking wait expires with no turns 7 seconds before its deadline. The next bounded wait returns complete turn 1. At the deadline worker B, never read, needs a status read. State the call arguments and cursor before and after each read. How would you consume the same result through Codex, Claude Code background mode, and a Gemini CLI exposing only a synchronous named subagent tool? Identify any missing background capability. Do not invoke tools or dispatch.",
+      "expected_output": "Both waits for A request since_turn=1. Keep 1 on timeout, advance to 2 after recording turn 1. B starts at 0. Use each host's native delivery and identify the synchronous host's background limitation.",
+      "files": [],
+      "assertions": [
+        "Both blocking waits for A include its agent ID, wait=true, since_turn=1 and a timeout capped by remaining time (at most 7 seconds on the second wait).",
+        "Record turn 1 once before advancing to 2. The due read for B uses since_turn=0.",
+        "Use Codex completion messages or a bounded wait_agent, Claude Code background completion, and Gemini CLI's named tool result. Recognize synchronous-only delivery cannot enforce this background workflow."
+      ]
+    },
+    {
+      "id": 17,
+      "eval_name": "checkpoint-and-check-ownership",
+      "prompt": "Describe dispatch, worker briefs, evidence handoff, and the milestone transition without executing anything. The entry identifies M1 as active. Task A edits parser.py and unblocks D. B also edits parser.py. C edits docs.md. M2 task E is independently ready. Three slots are idle and the coordinator is ready. A owns the focused parser check. A full integration suite is required at the M1 checkpoint. The whole plan is authorized.",
+      "expected_output": "Start A and C, serialize B, defer E. Give workers write scopes and assigned checks. Coordinator verifies integration. Checkpoint M1, then proceed without another approval.",
+      "files": [],
+      "assertions": [
+        "Start A and C concurrently, hold B and defer E.",
+        "Brief workers with write scope and assigned checks. A runs its focused check and stops after reporting base and tested revision, command, environment, outcome, evidence, interface changes and blockers.",
+        "Coordinator owns the integration suite. Record integrated revision, verification and blockers before opening M2 without asking again."
+      ]
+    },
+    {
+      "id": 18,
+      "eval_name": "baseline-final-and-ci-evidence",
+      "prompt": "Reconcile acceptance without running tools. BASE has recorded the required original failure for `test repro` on Linux. The same command passed on Linux on branch TASK. Final revision TIP of integration/parser already passed `build` on Linux with evidence build.log. `test repro` passed at TIP on macOS only. Acceptance requires the fixed reproducer and build on Linux at TIP, and CI green at TIP. CI is green on TASK and pending on TIP. Specify what to retain, run, report and leave open, including what changes when matching CI succeeds.",
+      "expected_output": "Keep the original failure and matching build proof. Run only the missing final local reproducer on Linux at TIP. Report revision, branch, command, environment and evidence separately from pending CI. Close after all required proof matches.",
+      "files": [],
+      "assertions": [
+        "Keep baseline failure at BASE. Reuse build.log.",
+        "Run test repro on Linux at TIP, rejecting the stale TASK and macOS passes.",
+        "Report branch and exact revision, commands, outcomes and evidence; separate local results and pending CI. Leave the CI milestone open until TIP passes."
+      ]
     }
   ]
 }
