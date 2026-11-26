@@ -34,33 +34,99 @@ def command_event(item, caller):
             return "failed invocation"
         if "--help" in argv or "-h" in argv:
             return "help"
-        route = json.loads(item["aggregated_output"])
-        return "route" if route.get("reason") else "missing route"
+        return "route"
     return "unclassified router access" if ambiguous else None
+
+
+def route_matches(candidate, args):
+    if not isinstance(candidate, dict) or candidate.get("model") != args["model"]:
+        return False
+    effort = candidate["reasoning_effort"]
+    if candidate["effort_policy"] == "host_default":
+        return effort is None and "reasoning_effort" not in args
+    return (candidate["effort_policy"] == "explicit" and isinstance(effort, str)
+            and bool(effort) and args.get("reasoning_effort") == effort)
+
+
+def authorized(route, args, blocked_models):
+    if not route or route.get("route_available") is not True or not route.get("reason"):
+        return False
+    if args["model"] in blocked_models:
+        return False
+    candidate = route.get("fallback") if route["model"] in blocked_models else route
+    return route_matches(candidate, args)
+
+
+def model_rejected(output, model):
+    # Only a host error for this spawn can establish a model-wide blocker.
+    try:
+        receipt = json.loads(output)
+    except (ValueError, TypeError):
+        return False
+    error = receipt.get("error") if isinstance(receipt, dict) else None
+    if not isinstance(error, str):
+        return False
+    return bool(re.fullmatch(
+        rf"model(?: ['\"]?{re.escape(model)}['\"]?)? (?:is )?(?:unavailable|not supported)\.?",
+        error.strip(), re.IGNORECASE))
+
+
+def read_spawn_args(payload):
+    args = json.loads(payload.get("arguments") or "{}")
+    if not isinstance(args.get("model"), str) or not args["model"]:
+        raise ValueError("insufficient evidence: missing spawn model or arguments")
+    return args
 
 
 def grade(rows, caller):
     events = []
     workers = set()
+    route = None
+    spawn_args = None
+    worker_args = None
+    pending_spawns = {}
+    blocked_models = set()
     for line, row in enumerate(rows, 1):
         payload = row["payload"]
         label = None
         if row["type"] == "response_item" and payload.get("type") == "function_call":
-            label = {"spawn_agent": "spawn", "followup_task": "followup"}.get(payload["name"])
+            if payload["name"] == "spawn_agent":
+                spawn_args = read_spawn_args(payload)
+                if authorized(route, spawn_args, blocked_models):
+                    label = "spawn"
+                    pending_spawns[payload["call_id"]] = (len(events), spawn_args["model"])
+                else:
+                    label = "unauthorized spawn"
+            elif payload["name"] == "followup_task":
+                can_reuse = worker_args and authorized(route, worker_args, blocked_models)
+                label = "followup" if can_reuse else "unauthorized followup"
+        elif row["type"] == "response_item" and payload.get("type") == "function_call_output":
+            pending = pending_spawns.pop(payload.get("call_id"), None)
+            if pending:
+                index, model = pending
+                if model_rejected(payload["output"], model) and index == len(events) - 1:
+                    events[index] = (events[index][0], "rejected spawn")
+                    blocked_models.add(model)
+                    spawn_args = None
         elif row["type"] == "event_msg" and payload.get("type") == "item_completed":
             item = payload["item"]
             if item["type"] == "CommandExecution":
                 label = command_event(item, caller)
+                if label == "route":
+                    route = json.loads(item["aggregated_output"])
             elif item["type"] == "SubAgentActivity":
                 label = item["kind"]
                 workers.add(item["agent_thread_id"])
+                if label == "started":
+                    worker_args = spawn_args
         if label:
             events.append((line, label))
     labels = [label for _, label in events]
     # Caller and router instructions can be read in the same preparation phase.
     expected = ["read", "help", "route", "spawn", "started", "completed",
                 "route", "followup", "interacted", "completed"]
-    passed = ("caller" in labels and [x for x in labels if x != "caller"] == expected
+    sequence = [label for label in labels if label not in {"caller", "rejected spawn"}]
+    passed = ("caller" in labels and sequence == expected
               and len(workers) == 1 and all(workers))
     return {"passed": passed, "events": events, "workers": sorted(workers)}
 

@@ -12,6 +12,30 @@
         "Record turn 1 once before advancing to 2. The due read for B uses since_turn=0.",
         "Use Codex completion messages or a bounded wait_agent, Claude Code background completion, and Gemini CLI's named tool result. Recognize synchronous-only delivery cannot enforce this background workflow."
       ]
+    },
+    {
+      "id": 1,
+      "eval_name": "full-host-independent-review",
+      "prompt": "The host has no free threads. An implementation worker and an independent reviewer have both finished. The reviewer matches the routed model, profile and omitted effort. An active reviewer and a reviewer with explicit medium effort are also on record. Walk through assigning an independent review. What changes if fresh context is mandatory?",
+      "expected_output": "Query reusable workers before spawning, exclude the implementer, verify the completed reviewer is idle and independent, and follow up. Wait for fresh capacity when a fresh context is required.",
+      "files": [],
+      "assertions": [
+        "Query with the exact profile and model and omit effort.",
+        "Exclude implementers and reject busy or differently configured workers.",
+        "Register the follow-up with its actual configuration. Preserve a mandatory fresh-context requirement."
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "standalone-follow-up-at-capacity",
+      "prompt": "Dry-run this assignment using the supplied delegate-to-subagents guidance. The host is full. Its only eligible idle worker previously counted invoices. The new self-contained task is to count the data rows of releases.csv and supply reproducible evidence. Give the worker brief and every check you would require before accepting the result. Do not invoke tools or dispatch.",
+      "expected_output": "Reuse the available worker, verify the release row count against the CSV, and accept the result without requiring recall of the invoice task.",
+      "files": [],
+      "assertions": [
+        "Send the standalone release-count assignment to the eligible idle worker.",
+        "Verify evidence for the requested row count.",
+        "Neither the brief nor the acceptance checks require any observation from the invoice assignment."
+      ]
     }
   ]
 }

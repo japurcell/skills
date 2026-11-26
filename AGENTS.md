@@ -8,7 +8,7 @@ For installer CLI verification, category selection, generated agents, or install
 
 For every skill change, add a new behavioral eval first. Run it against the old skill and confirm it fails for the intended reason before editing the skill. Then run the same eval against the updated skill and verify it passes.
 
-Use Codex by default for live evals and wording iterations. Copilot credits are limited. Run Copilot when requested or when a check requires Copilot-specific evidence, using the fewest scenarios and repetitions that satisfy the requested coverage.
+Use Codex by default for live evals and wording iterations. Copilot credits are limited. Run Copilot when requested or when a check requires Copilot-specific evidence, using the fewest scenarios and repetitions that satisfy the requested coverage. If the user doesn't specify a model, use Luna by default to keep costs minimal.
 
 ## Brain
 

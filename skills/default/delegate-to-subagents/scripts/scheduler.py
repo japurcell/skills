@@ -57,6 +57,12 @@ def load(path):
                 raise ValueError('invalid assignment identity')
             if any(not isinstance(a.get(k), str) for k in ('agent', 'task', 'route')):
                 raise ValueError('invalid assignment metadata')
+            if 'worker_config' in a:
+                config = a['worker_config']
+                if (not isinstance(config, dict) or set(config) != {'model', 'profile', 'effort'}
+                        or not all(isinstance(config[k], str) and config[k] for k in ('model', 'profile'))
+                        or (config['effort'] is not None and not isinstance(config['effort'], str))):
+                    raise ValueError('invalid worker configuration')
             if a.get('status') not in ('active', 'completed', 'cancelled') or a.get('phase') not in ('running', 'checkpoint', 'decision', 'extended', 'stop'):
                 raise ValueError('invalid assignment status or phase')
             if any(not finite(a.get(k)) for k in ('deadline', 'checkpoint_grace')) or a['checkpoint_grace'] < 0:
@@ -172,6 +178,7 @@ def parser():
     sub = p.add_subparsers(dest='cmd', required=True)
     purposes = {
         'register': 'Register an assignment with a future deadline.',
+        'reusable': 'List completed workers matching the exact dispatch configuration.',
         'checkpoint': 'Record timely worker status.',
         'extend': 'Grant the one allowed ETA-based extension.',
         'complete': 'Mark an assignment complete.',
@@ -186,6 +193,13 @@ def parser():
     def command(name):
         return sub.add_parser(name, help=purposes[name], description=purposes[name], epilog=contract)
     r = command('register')
+    reuse = command('reusable')
+    for cmd in (r, reuse):
+        cmd.add_argument('--model', required=cmd is reuse, help='exact host model ID (pair with --profile)')
+        cmd.add_argument('--profile', required=cmd is reuse, help='exact host worker role/profile (pair with --model)')
+        cmd.add_argument('--effort', help='explicit reasoning effort; omit for host default')
+    reuse.add_argument('--exclude', action='append', default=[], metavar='AGENT',
+                      help='omit a worker, e.g. the author of work under independent review (repeatable)')
     for name in ('id', 'agent', 'task'):
         r.add_argument(name)
     r.add_argument('--deadline', type=float, required=True, help='future Unix timestamp in seconds')
@@ -214,6 +228,12 @@ def main():
     args = parser().parse_args()
     supplied_now = getattr(args, 'now', None)
     try:
+        config = None
+        if args.cmd in ('register', 'reusable') and any(
+                value is not None for value in (args.model, args.profile, args.effort)):
+            if not args.model or not args.profile or args.effort == '':
+                raise ValueError('supply both --model and --profile; omit --effort for host default')
+            config = dict(model=args.model, profile=args.profile, effort=args.effort)
         for name in ('now', 'deadline', 'checkpoint', 'grace', 'eta', 'max_wait'):
             value = getattr(args, name, None)
             if value is not None and not finite(value):
@@ -259,12 +279,24 @@ def main():
                     if not args.id or args.id in assignments or args.deadline <= now or (args.checkpoint is not None and args.checkpoint <= 0) or args.grace < 0:
                         raise ValueError('duplicate ID or invalid deadline/checkpoint/grace')
                     assignment = dict(id=args.id, agent=args.agent, task=args.task, route=args.route, status='active', phase='running', deadline=args.deadline, checkpoint_grace=args.grace, extension_used=False, stop_confirmed=False, transferred=False)
+                    if config is not None:
+                        assignment['worker_config'] = config
                     if args.checkpoint is not None:
                         assignment.update(checkpoint_interval=args.checkpoint, next_checkpoint=add_time(now, args.checkpoint))
                     assignments[args.id] = assignment
                     out = {'registered': args.id}
                 elif args.cmd == 'list':
                     out = {'assignments': list(assignments.values())}
+                elif args.cmd == 'reusable':
+                    eligible = set()
+                    excluded = set(args.exclude)
+                    for a in assignments.values():
+                        if (a['status'] == 'completed' and a['phase'] != 'stop' and not a['stop_confirmed']
+                                and a.get('worker_config') == config):
+                            eligible.add(a['agent'])
+                        else:
+                            excluded.add(a['agent'])
+                    out = {'agents': sorted(eligible - excluded)}
                 else:
                     if args.id not in assignments:
                         raise ValueError('unknown assignment')
@@ -310,7 +342,7 @@ def main():
                         a['transferred'] = True
                         out = {'host_action': 'ownership transfer may now be performed by host'}
                 if args.cmd not in ('tick', 'wait'):
-                    if args.cmd not in ('list', 'next-wake'):
+                    if args.cmd not in ('list', 'next-wake', 'reusable'):
                         save(args.state, data)
                     break
             time.sleep(pause)

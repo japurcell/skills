@@ -21,6 +21,47 @@ class SchedulerCliTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_reuse_matches_idle_worker_configuration_and_review_exclusions(self):
+        profile = ("--model", "m", "--profile", "worker")
+        def reusable(*options):
+            return self.run_cli("reusable", *profile, *options)["agents"]
+        def register(task, *options):
+            self.run_cli("register", task, "A", "work", "--now", "0", "--deadline", "30", *options)
+
+        register("first", *profile)
+        self.assertEqual(reusable(), [])
+        self.run_cli("complete", "first")
+        self.assertEqual(reusable(), ["A"])
+        self.assertEqual(reusable("--effort", "medium"), [])
+        self.assertEqual(reusable("--exclude", "A"), [])
+        self.assertEqual(self.run_cli("reusable", "--model", "other", "--profile", "worker")["agents"], [])
+        self.assertEqual(self.run_cli("reusable", "--model", "m", "--profile", "reviewer")["agents"], [])
+        register("again", *profile)
+        self.assertEqual(reusable(), [])
+        self.run_cli("cancel", "again")
+        self.assertEqual(reusable(), [])
+
+    def test_late_completion_after_stop_request_prevents_reuse(self):
+        config = ("--model", "m", "--profile", "worker")
+        self.run_cli("register", "first", "A", "work", "--now", "0",
+                     "--deadline", "1", "--grace", "1", *config)
+        self.run_cli("tick", "--now", "1")
+        event, = self.run_cli("tick", "--now", "2")["events"]
+        self.assertEqual(event["type"], "checkpoint_expired")
+        self.assertIn("stop", event["host_action"])
+        self.assertEqual(self.run_cli("complete", "first"), {"status": "completed"})
+        self.assertEqual(self.run_cli("reusable", *config)["agents"], [])
+
+    def test_legacy_workers_are_unknown_and_explicit_effort_is_exact(self):
+        args = ("--now", "0", "--deadline", "30")
+        self.run_cli("register", "old", "unknown", "old task", *args)
+        self.run_cli("complete", "old")
+        profile = ("--model", "m", "--profile", "reviewer", "--effort", "high")
+        self.run_cli("register", "review", "B", "review task", *args, *profile)
+        self.run_cli("complete", "review")
+        self.assertEqual(self.run_cli("reusable", *profile)["agents"], ["B"])
+        self.assertEqual(self.run_cli("reusable", "--model", "m", "--profile", "reviewer")["agents"], [])
+
     def run_cli(self, *args, ok=True):
         p = subprocess.run([sys.executable, str(CLI), "--state", str(self.state), *args], text=True, capture_output=True)
         if ok:
