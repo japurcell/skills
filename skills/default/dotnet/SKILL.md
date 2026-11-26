@@ -3,101 +3,61 @@ name: dotnet
 description: Mandatory for all C#/.NET work. DO NOT use when delegating C#/.NET work to a subagent, but you MUST explicitly instruct the subagent to activate the dotnet skill in it's prompt. Always use for any work that touches, creates, modifies, reviews, or is likely to touch `.cs`, `.fs`, `.vb`, `.csproj`, `.fsproj`, `.vbproj`, `.sln`, `Directory.Build.props`, `Directory.Build.targets`, NuGet/package config, ASP.NET Core controllers/APIs, xUnit/NUnit/MSTest tests, EF Core, dependency injection, async/performance code, or any `dotnet` CLI command such as `dotnet build`, `dotnet test`, `dotnet run`, `dotnet restore`, or `dotnet format`. This skill takes precedence over workflow skills such as `code-review`; load `dotnet` first, then run the workflow skill inside the .NET context.
 ---
 
-# .NET / C# Engineering
+# .NET engineering
 
-Write clear, safe, idiomatic C# that matches the project’s target framework and style.
+Inspect project files, framework, language version, nullable settings, analyzers, `.editorconfig` and existing style. Follow conventions unless unsafe or clearly wrong. Apply relevant sections using only supported language and framework features.
 
-## First Steps
+## C# defaults
 
-1. Check `.csproj`, `.editorconfig`, analyzers, nullable settings, and existing style.
-2. Follow project conventions unless they are unsafe or clearly wrong.
-3. Do not introduce preview/new language features unless the project already supports them.
-4. Read only the extra references relevant to the task.
+- Use Allman braces and four-space indentation. Prefer file-scoped namespaces. Sort file-top usings with `System.*` first. Remove unused code and imports.
+- Explicit visibility first. Name private/internal instance fields `_camelCase`, static fields `s_camelCase`, and thread-static fields `t_camelCase`. Use PascalCase for types, methods, properties, constants and public members, camelCase for parameters and locals.
+- Prefer C# keywords, `nameof` for member names, explicit types where `var` obscures meaning.
+- Prefer immutable models (`record`, `init`, `required`, `readonly`), positional records for simple DTOs, named records/classes for domain data. Seal internal/private types or make them static unless inheritance is required.
+- Reserve interfaces for boundaries, multiple implementations, external dependencies or test seams. Require clear benefit for wrappers.
+- Use collection expressions, patterns, switch expressions, ranges, obvious target-typed `new()`, and readable primary constructors matching project style.
 
-## Extra References
+## Validation and failures
 
-- ASP.NET Core web apps/APIs: `references/aspnet-core.md`
-- EF Core queries/models/updates: `references/ef-core.md`
-- DI, constructors, composition root, test seams: `references/dependency-injection.md`
-- Async, streaming, hot paths, allocation concerns: `references/async-performance.md`
+Enable nullable references where supported. Resolve warnings without blanket `!`. Test with `is null` / `is not null`. Guard public inputs early with `ArgumentNullException.ThrowIfNull`, `ArgumentException.ThrowIfNullOrWhiteSpace`, or `ArgumentOutOfRangeException.ThrowIfNegativeOrZero` for positive inputs.
 
-## Core C# Rules
+Throw specific exceptions. Catch `Exception` only where a boundary requires it. Never swallow errors. Rethrow with `throw;`.
 
-### Formatting and Naming
+## Async and performance
 
-Use these defaults when the project has no stronger convention:
+- Suffix async methods with `Async`. Await tasks or queue the work for a background service. Avoid blocking waits (`.Result`, `.Wait()`). Reserve `async void` for event handlers. Use `await using` for async disposal.
+- Propagate cancellation through calls and delays. Check `ct.ThrowIfCancellationRequested()` in long loops. Use `Task.WhenAll` for independent concurrent work and `ConfigureAwait(false)` where appropriate in libraries.
+- Prefer `Task`. Use `ValueTask` only with measured benefit, frequent synchronous completion and callers that follow its consumption rules.
+- Stream large results with `IAsyncEnumerable<T>` and `[EnumeratorCancellation] CancellationToken` unless materialization is required. Stream large HTTP JSON with `GetAsync(..., HttpCompletionOption.ResponseHeadersRead, ct)`, `ReadAsStreamAsync(ct)`, then `JsonSerializer.DeserializeAsync<T>(stream, cancellationToken: ct)`.
+- Use `StringBuilder` for repeated appends. Favor readability unless performance is measured or clearly important. On hot paths avoid allocations, costly LINQ and exceptions for normal control flow. Slice transient memory with `Span<T>` or `ReadOnlySpan<T>`. Reuse large buffers/objects with `ArrayPool<T>` or `ObjectPool<T>`. Keep logging structured and quiet.
+- Choose arrays for fixed sizes, `List<T>` for appends, `Dictionary<TKey,TValue>` for keyed lookups, `HashSet<T>` for membership, `string.Contains` for substrings and `.Chunk(size)` for simple batching.
 
-- Use Allman braces and 4 spaces.
-- Put `using` directives at file top, sorted with `System.*` first.
-- Prefer file-scoped namespaces.
-- Make visibility explicit and first: `public sealed class Foo`.
-- Use `_camelCase` for private/internal instance fields.
-- Use `s_camelCase` for static fields and `t_camelCase` for thread-static fields.
-- Use `PascalCase` for types, methods, properties, constants, and public members.
-- Use `camelCase` for parameters and locals.
-- Prefer C# keywords: `string`, `int`, `bool`.
-- Use `nameof(...)` instead of hard-coded member names.
-- Remove unused code and unused `using` directives.
+## Dependency injection
 
-### Types and Design
+- Inject required collaborators through mandatory constructor parameters. Constructors only store dependencies. Keep production construction and graph assembly in `Program.cs`, `Startup.cs`, registration extensions, or explicit factories/composition code. Avoid optional null defaults and fallback construction.
+- Both high- and low-level modules depend on abstractions. Details implement those contracts. Put contracts and options in the consuming lower-level project. The composition root references it to bind configuration.
+- Model optional behavior with registered defaults, null objects, factories/providers, `IEnumerable<T>`, or options.
+- Prefer stateless services. Let DI dispose what it creates. Singletons and background workers resolve scoped services inside an `IServiceScopeFactory` scope.
+- Tests may construct the subject directly. Supply explicit fakes, stubs, mocks, or DI dependencies.
 
-- Prefer immutable models: `record`, `init`, `required`, `readonly` where useful.
-- Use positional records for simple DTOs.
-- Use `record`/class with named members instead of domain tuples.
-- Mark internal/private types `sealed` or `static` unless inheritance is required.
-- Add interfaces only for real boundaries, multiple implementations, external dependencies, or useful test seams.
-- Do not wrap an existing abstraction without a clear benefit.
-- Prefer explicit types when `var` would hide meaning.
+## ASP.NET Core
 
-### Modern C#
+- Keep controllers and minimal handlers thin. Put business logic in services. Use async request I/O, including body reads. Avoid wrapping synchronous work in `Task.Run`.
+- Set status and headers before the response starts. Return after middleware completes a response.
+- Page large collections server-side. Materialize bounded results with `ToListAsync()` or stream `IAsyncEnumerable<T>` to avoid synchronous lazy serialization. Stream large bodies in both directions.
+- Read `HttpContext` per request through `IHttpContextAccessor` if needed. Never store the context in fields, access it from parallel threads, or use it after request completion. Copy required values before queuing work.
+- Move long CPU-bound or blocking work to a queue, `BackgroundService`, or external worker.
+- Prefer `IHttpClientFactory` for outbound calls. Avoid per-request client construction and disposal.
+- Use framework binding and validation. Enforce request size limits, explicitly handling `ContentLength is null` when size matters.
 
-Use modern syntax only when supported by the project:
+## EF Core
 
-- Collection expressions: `[]`
-- Pattern matching and switch expressions
-- Target-typed `new()` when the left-side type is obvious
-- Range/slice syntax: `text[..^4]`
-- Primary constructors when they improve clarity and match project style
+- Use async queries. For read-only queries, use `AsNoTracking()` and project needed columns with `Select`. Choose projection or eager loading to avoid lazy N+1 queries. Use `AsSplitQuery()` for collection includes that multiply rows. Index frequent filters and joins.
+- Bound results with `Take` or pagination, preferring keyset pagination for large or scrolling datasets. Buffer bounded results with `ToListAsync()` or `ToArrayAsync()`. Stream large results with `AsAsyncEnumerable()` only while the context remains alive.
+- Use `SaveChangesAsync()` for unit-of-work updates and `ExecuteUpdateAsync` or `ExecuteDeleteAsync` for bulk changes without loading rows.
+- Keep contexts scoped, short-lived, and confined to one concurrent operation. Never store them in singletons. Use scoped services or `IDbContextFactory<T>` for background work. Pool contexts only if their state resets safely.
+- Prefer simple mappings and TPH inheritance. Justify TPT on performance-sensitive queries. Consider computed or persisted columns or denormalized read models to avoid repeated expensive calculations.
+- Measure before compiling hot repeated queries or very large models, tuning batch sizes, or using provider-specific indexes or query hints.
 
-### Nulls, Validation, and Exceptions
+## Review
 
-- Enable and respect nullable reference types when available.
-- Do not use blanket null-forgiving `!`.
-- Use `is null` / `is not null`.
-- Validate public inputs early:
-  - `ArgumentNullException.ThrowIfNull(value)`
-  - `ArgumentException.ThrowIfNullOrWhiteSpace(text)`
-  - `ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number)` when positive is required
-- Throw precise exceptions.
-- Do not catch base `Exception` unless required at a boundary.
-- Do not swallow errors.
-- Rethrow with `throw;`, not `throw ex;`.
-
-### Async Basics
-
-- Async methods end with `Async`.
-- Prefer `Task` over `ValueTask` unless a measured hot path often completes synchronously.
-- Await tasks unless intentionally handing work to a safe background mechanism.
-- Avoid `.Result`, `.Wait()`, and sync-over-async.
-- Pass `CancellationToken` through async calls.
-- Use `await using` for async disposables.
-
-### General Performance
-
-- Avoid database/network calls inside loops.
-- Do not concatenate strings in loops; use `StringBuilder`.
-- Stream large payloads instead of buffering into `string` or `byte[]`.
-- Avoid LINQ in measured hot paths when allocations matter.
-- Prefer readable code unless performance is measured or clearly important.
-
-## Review Checklist
-
-- [ ] Code matches project target framework, language version, and style.
-- [ ] Nullable warnings are handled correctly.
-- [ ] Async code is awaited, cancellable, and named `Async`.
-- [ ] No `.Result`, `.Wait()`, `async void` except event handlers, or unsafe fire-and-forget.
-- [ ] Exceptions preserve context with `throw;`.
-- [ ] DTOs/domain data are named immutable types where appropriate.
-- [ ] No unnecessary interfaces, wrappers, or abstractions.
-- [ ] No N+1 database/service calls.
-- [ ] Large payloads/results are paged or streamed.
+Check changes against the applicable sections. Avoid database/network calls in loops. Check for N+1 calls and large results that need paging or streaming.
