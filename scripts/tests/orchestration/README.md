@@ -58,3 +58,5 @@ routed fallback that began after that rejection was recorded. Two concurrent cal
 finish in the expected order and still fail. The per-case report retains the raw
 observations in file order and flags missing or conflicting ordering evidence.
 Older traces remain reportable. Case 03 requires the start evidence to pass.
+
+Run the [shared live router reuse regression](router-reuse.md) to check routing across two assignments to the same worker.
