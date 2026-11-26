@@ -72,6 +72,18 @@
         "A fresh reviewer challenges the dynamic reachability judgment using the actual entry point.",
         "The original dispatch and blank-label outcomes survive."
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Run one deduplication pass with explicit scope:fields.py (the entire file). Follow the skill’s default candidate-selection rule for this pass. Preserve the public functions and their behavior. Use python3 -B check.py to replay the contract.",
+      "files": [
+        "fixtures-many"
+      ],
+      "expected_output": "Each of the five distinct field rules has one implementation.",
+      "expectations": [
+        "Page-size clamping, slug generation, suffix extraction, priority classification and minute rounding each have a single implementation shared by both public callers. Score each rule separately and require five out of five.",
+        "The original check.py passes before and after editing. Only fields.py changes."
+      ]
     }
   ]
 }

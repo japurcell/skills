@@ -6,6 +6,8 @@ For installer CLI verification, category selection, generated agents, or install
 
 ## Evaluations
 
+For every skill change, add a new behavioral eval first. Run it against the old skill and confirm it fails for the intended reason before editing the skill. Then run the same eval against the updated skill and verify it passes.
+
 Use Codex by default for live evals and wording iterations. Copilot credits are limited. Run Copilot when requested or when a check requires Copilot-specific evidence, using the fewest scenarios and repetitions that satisfy the requested coverage.
 
 ## Brain

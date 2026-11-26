@@ -1,8 +1,10 @@
 # Evaluating refactor
 
-Use a fresh Git repository per case and condition. Copy the contents of `fixtures/` to its root and commit them. For case 1 only, apply `active.patch` after committing. Keep the rubric and other runs outside the project. The supported inputs for the label tasks are plain Python strings.
+Use a fresh Git repository per case and condition. For case 6 use `fixtures-many/`. For the other cases use `fixtures/`. Copy the contents of the selected directory to its root and commit them. For case 1 only, apply `active.patch` after committing. Keep the rubric and other runs outside the project. The supported inputs for the label tasks are plain Python strings.
 
-Run the prompt from `evals.json` against the candidate, the uncut draft and a control without a cleanup skill. The previous simplifier and deduplicator supply additional baselines for cases 1 and 2. Point each skill-enabled run at the exact snapshot under test. Use the same provider, model, effort, worker capabilities and user authorization in every condition.
+For case 6, compare the old and updated skill snapshots. Inspect each public pair in `fields.py` for a single shared implementation and run the original `python3 -B check.py`. A partial consolidation fails even when behavior is preserved.
+
+For cases 1 through 5, run the prompt from `evals.json` against the candidate, the uncut draft and a control without a cleanup skill. The previous simplifier and deduplicator supply additional baselines for cases 1 and 2. Point each skill-enabled run at the exact snapshot under test. Use the same provider, model, effort, worker capabilities and user authorization in every condition.
 
 Grade the project and tool trace together. For structural edits, verify that the original entry-point check ran before the first edit and passed again afterward.
 
