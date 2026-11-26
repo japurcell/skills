@@ -12,7 +12,9 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 
 **Subagent management rules:**
 
-- For each assignment, including reuse, activate the `subagent-model-router` skill. Route once per assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Append actual arguments and the returned worker ID or blocker. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
+Activate the `subagent-model-router` skill once per session, before the first routing evaluation.
+
+- Run `route.py` once for each assignment, including assignments given to a reused worker. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Append actual arguments and the returned worker ID or blocker. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
 - **Implementer subagents** should run in the background when their tasks can progress independently.
 - After the coordinator acknowledges readiness, start one implementer. Assign one task per implementer. For each ready task in the active milestone, reuse an eligible idle implementer or start another when capacity allows.
 - Brief each implementer with its task, base revision, write scope, assigned acceptance checks, and constraints that could invalidate its work. Give it the entry path, a direct link to its assignment, and the specific prerequisite decisions, results or research notes it needs. Send interface changes to affected owners as soon as they are known.

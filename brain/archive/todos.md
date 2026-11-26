@@ -11,6 +11,8 @@
 
 ## Investigations
 
+43. [x] Clarified router activation in `execplan-implement`, `delegate-to-subagents`, and `subagent-model-router`. Load routing guidance once per session and evaluate each assignment, including worker reuse.
+
 39. [x] Create a [fan-out skill](../../skills/default/fan-out/SKILL.md) for independent background Fast workers with explicit scope, file ownership, and acceptance criteria. Verified concurrent dispatch, dependent index assembly, and direct handling of an indivisible edit in three live Copilot CLI [scenarios](../../skills/default/fan-out/evals/evals.json).
 
 38. [x] Verified deadline-driven coordination and dispatch on Codex and Copilot. Exercised transfer, compact reporting, same-worker continuity and replacement handoff in controlled tests. All four native writer trials retained ownership while writes continued after the stop action. The user excluded user-only invocation guidance. Completed on 2026-11-18. [Plan and host evidence](plans/38-dispatch-and-deadlines/exec-plan.md)

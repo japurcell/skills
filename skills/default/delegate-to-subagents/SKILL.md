@@ -19,12 +19,14 @@ Keep routine messages sparse. When one worker produces an artifact another consu
 
 ## Dispatch loop
 
+Activate the `subagent-model-router` skill once per session, before the first routing evaluation.
+
 For each assignment, including reuse:
 
 - Assign a new ID for status updates. Define scope, ownership, acceptance criteria, and required completion evidence.
 - Put constraints and known negative cases that change the worker's decisions in the brief. Point to the relevant file, section, commit or research note for supporting detail.
-- Activate the `subagent-model-router` skill. Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
-- Route once per assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Record actual arguments and the returned worker ID or blocker. For structured records, update named fields and validate the saved file before dispatch and after recording the result. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
+- Resume an eligible worker when its prior investigation helps with the next decision. For independent work, a second opinion or stale history, start a fresh worker with only the task brief and pointers. Inherit the parent transcript only when the worker needs a sequence of observations that would be costly to reconstruct. Record the context choice in the existing assignment record.
+- Run `route.py` once for this assignment. Before launch, write the router invocation, unchanged JSON and intended arguments to the assignment record. Dispatch the required worker with the exact eligible model, even if absent from an advisory list. Pass explicit effort only. Record actual arguments and the returned worker ID or blocker. For structured records, update named fields and validate the saved file before dispatch and after recording the result. Keep routing metadata out of worker briefs. Continue independent assignments as slots open.
 - Ask for the result, evidence pointer and any open decision that affects another task. Retrieve the underlying evidence when verifying a claim or resolving a disagreement.
 
 ## Runtime enforcement

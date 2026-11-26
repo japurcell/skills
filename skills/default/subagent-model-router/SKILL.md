@@ -4,7 +4,7 @@ description: Select a subagent model and effort policy using task requirements a
 compatibility: Requires python3
 ---
 
-Run `python3 <skill-root>/scripts/route.py --help` before first use. Reuse current instructions and help in context. Run per assignment, including reuse. Copy CLI output verbatim, including the full `reason` string.
+Load these instructions and read `python3 <skill-root>/scripts/route.py --help` once per session. Reuse both for subsequent assignments. Run `route.py` with each assignment’s inputs, including when reusing a worker. Copy CLI output verbatim, including the full `reason` string.
 
 Classify independently. Use `bounded` for routine updates, `standard` for reconciling reports without a review assignment. Straightforward, bounded, low-risk investigation is `exploration`, substantive or cross-file reasoning `standard`. Creating or materially revising scope, architecture, dependencies or sequencing is planning. Implementation and debugging are `coding`. Route separable planning and coding independently.
 
