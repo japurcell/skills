@@ -1,0 +1,12 @@
+diff --git a/intake.py b/intake.py
+--- a/intake.py
++++ b/intake.py
+@@ -8,2 +8,7 @@
+ def caption(text):
+-    return text.strip() or "(untitled)"
++    if text.strip():
++        if len(text.strip()) > 0:
++            return text.strip()
++        else:
++            return "(untitled)"
++    return "(untitled)"

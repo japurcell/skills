@@ -1,0 +1,77 @@
+{
+  "skill_name": "refactor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Simplify my current changes. Keep the public functions usable and preserve the behavior. The supported input is a plain Python str.",
+      "files": [
+        "fixtures",
+        "active.patch"
+      ],
+      "expected_output": "A diff-local simplification of caption with the blank fallback intact.",
+      "expectations": [
+        "Only intake.py changes.",
+        "caption evaluates the trim once and removes the redundant nesting.",
+        "The lookup duplicate outside the changed hunk stays untouched.",
+        "The original contract checks pass.",
+        "The primary agent handles the single-function edit locally, without exploratory workers."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Deduplicate the label handling in intake.py. Keep the public functions usable and preserve what callers see.",
+      "files": [
+        "fixtures"
+      ],
+      "expected_output": "lookup delegates normalization to the existing labels.key. The two different blank-label contracts survive.",
+      "expectations": [
+        "intake.lookup uses labels.key and drops its own normalization.",
+        "The distinct blank-label policies stay separate; no parameterized helper is introduced just to unify them.",
+        "The original contract checks pass.",
+        "The primary agent applies the coupled change."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Make it easier to trace how dispatch decides whether a retry is allowed. Internal retry helpers can move. Keep the command registration and user-facing behavior.",
+      "files": [
+        "fixtures"
+      ],
+      "expected_output": "A shorter trace from dispatch to the retry rule and its limit with the convention-loaded command preserved.",
+      "expectations": [
+        "Records the original dispatch-to-rule trace and executable baseline before editing.",
+        "Repeats the same question after editing, accurately identifying where the rule and limit live.",
+        "Fewer files are needed to explain the same rule.",
+        "Normal dynamic dispatch still works at both boundaries.",
+        "A fresh reviewer independently checks the convention-loaded path if the edit touches its reachability."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Refactor my current changes for readability.",
+      "files": [
+        "fixtures"
+      ],
+      "expected_output": "No change on a clean tree.",
+      "expectations": [
+        "Reports there is no active diff.",
+        "The tracked worktree stays unchanged.",
+        "No discovery or edit worker is launched."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review and refactor these two areas: look for duplicated normalization in intake.py, and independently check whether command_retry.py can be removed. Keep the registered command working and public functions usable.",
+      "files": [
+        "fixtures"
+      ],
+      "expected_output": "Reuse labels.key, keep the dynamically loaded handler, and verify the final patch.",
+      "expectations": [
+        "Independent read-only exploration through fan-out is evidenced by worker dispatches.",
+        "The primary agent makes the edit.",
+        "A fresh reviewer challenges the dynamic reachability judgment using the actual entry point.",
+        "The original dispatch and blank-label outcomes survive."
+      ]
+    }
+  ]
+}
